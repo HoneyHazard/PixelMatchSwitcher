@@ -59,7 +59,7 @@ static void cas_filter_destroy(void *data)
 
 static void cas_filter_update(void *data, obs_data_t *settings)
 {
-        struct cas_filter_data *filter;
+        struct cas_filter_data *filter = data;
 
         filter->enabled = obs_data_get_bool(settings, "enabled");
         filter->roi_left = (int)obs_data_get_int(settings, "roi_left");
