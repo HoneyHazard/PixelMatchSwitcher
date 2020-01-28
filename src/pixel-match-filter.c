@@ -1,6 +1,6 @@
 #include <obs-module.h>
 
-struct cas_filter_data {
+struct pixel_match_filter_data {
     obs_source_t *context;
 
     bool enabled;
@@ -20,16 +20,17 @@ struct cas_filter_data {
     bool frame_matched;
 };
 
-static const char *cas_filter_get_name(void* unused)
+static const char *pixel_match_filter_get_name(void* unused)
 {
         UNUSED_PARAMETER(unused);
-        return obs_module_text("ContentActivatedSwitcher");
+        return obs_module_text("Pixel Match Filter");
 }
 
-static void *cas_filter_create(obs_data_t *settings, obs_source_t *context)
+static void *pixel_match_filter_create(
+        obs_data_t *settings, obs_source_t *context)
 {
-        struct cas_filter_data *filter = bzalloc(sizeof(*filter));
-        // char *effect_path = obs_module_file("cas_filter.effect");
+        struct pixel_match_filter_data *filter = bzalloc(sizeof(*filter));
+        // char *effect_path = obs_module_file("pixel_match_filter.effect");
 
         filter->context = context;
 
@@ -46,9 +47,9 @@ static void *cas_filter_create(obs_data_t *settings, obs_source_t *context)
         return filter;
 }
 
-static void cas_filter_destroy(void *data)
+static void pixel_match_filter_destroy(void *data)
 {
-        struct cas_filter_data *filter = data;
+        struct pixel_match_filter_data *filter = data;
 
         //obs_enter_graphics();
         //gs_effect_destroy(filter->effect);
@@ -57,9 +58,9 @@ static void cas_filter_destroy(void *data)
         bfree(filter);
 }
 
-static void cas_filter_update(void *data, obs_data_t *settings)
+static void pixel_match_filter_update(void *data, obs_data_t *settings)
 {
-        struct cas_filter_data *filter = data;
+        struct pixel_match_filter_data *filter = data;
 
         filter->enabled = obs_data_get_bool(settings, "enabled");
         filter->roi_left = (int)obs_data_get_int(settings, "roi_left");
@@ -76,15 +77,16 @@ static void cas_filter_update(void *data, obs_data_t *settings)
         UNUSED_PARAMETER(data);
 }
 
-static bool cas_prop_changed_callback(
+static bool pixel_match_prop_changed_callback(
         obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
         UNUSED_PARAMETER(props);
         UNUSED_PARAMETER(p);
         UNUSED_PARAMETER(settings);
+        return true;
 }
 
-static obs_properties_t *cas_filter_properties(void *data)
+static obs_properties_t *pixel_match_filter_properties(void *data)
 {
         obs_properties_t *props = obs_properties_create();
 
@@ -113,7 +115,8 @@ static obs_properties_t *cas_filter_properties(void *data)
                 obs_module_text("TotalMatchThreshold"),
                 0, 100, 1);
 
-        obs_property_set_modified_callback(p, cas_prop_changed_callback);
+        obs_property_set_modified_callback(
+                p, pixel_match_prop_changed_callback);
 
         // TODO scenes
         // TODO mask image
@@ -122,24 +125,24 @@ static obs_properties_t *cas_filter_properties(void *data)
         return props;
 }
 
-static void cas_filter_defaults(obs_data_t *settings)
+static void pixel_match_filter_defaults(obs_data_t *settings)
 {
         obs_data_set_default_bool(settings, "enabled", false);
         obs_data_set_default_int(settings, "per_pixel_err_thresh", 10);
         obs_data_set_default_int(settings, "total_match_thresh", 90);
 }
 
-static void cas_filter_tick(void *data, float seconds)
+static void pixel_match_filter_tick(void *data, float seconds)
 {
-        struct cas_filter_data *filter = data;
+        struct pixel_match_filter_data *filter = data;
         UNUSED_PARAMETER(seconds);
         UNUSED_PARAMETER(filter);
         // TODO: dispatch pixel processing every 100ms?
 }
 
-static void cas_filter_render(void *data, gs_effect_t *effect)
+static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
-        struct cas_filter_data *filter = data;
+        struct pixel_match_filter_data *filter = data;
 
         // TODO: render data to an RGB tex, when it's time
         obs_source_skip_video_filter(filter->context);
@@ -147,32 +150,32 @@ static void cas_filter_render(void *data, gs_effect_t *effect)
         return;
 }
 
-static uint32_t cas_filter_width(void *data)
+static uint32_t pixel_match_filter_width(void *data)
 {
-        struct cas_filter_data *filter = data;
+        struct pixel_match_filter_data *filter = data;
         obs_source_t *parent = obs_filter_get_parent(filter->context);
         return obs_source_get_base_width(parent);
 }
 
-static uint32_t cas_filter_height(void *data)
+static uint32_t pixel_match_filter_height(void *data)
 {
-        struct cas_filter_data *filter = data;
+        struct pixel_match_filter_data *filter = data;
         obs_source_t *parent = obs_filter_get_parent(filter->context);
         return obs_source_get_base_height(parent);
 }
 
-struct obs_source_info cas_filter = {
-        .id = "cas_filter",
+struct obs_source_info pixel_match_filter = {
+        .id = "pixel_match_filter",
         .type = OBS_SOURCE_TYPE_FILTER,
         .output_flags = OBS_SOURCE_VIDEO,
-        .get_name = cas_filter_get_name,
-        .create = cas_filter_create,
-        .destroy = cas_filter_destroy,
-        .update = cas_filter_update,
-        .get_properties = cas_filter_properties,
-        .get_defaults = cas_filter_defaults,
-        .video_tick = cas_filter_tick,
-        .video_render = cas_filter_render,
-        .get_width = cas_filter_width,
-        .get_height = cas_filter_height,
+        .get_name = pixel_match_filter_get_name,
+        .create = pixel_match_filter_create,
+        .destroy = pixel_match_filter_destroy,
+        .update = pixel_match_filter_update,
+        .get_properties = pixel_match_filter_properties,
+        .get_defaults = pixel_match_filter_defaults,
+        .video_tick = pixel_match_filter_tick,
+        .video_render = pixel_match_filter_render,
+        .get_width = pixel_match_filter_width,
+        .get_height = pixel_match_filter_height,
 };

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(content-activated-switcher)
+project(pixel-match-switcher)
 
 set(CMAKE_PREFIX_PATH "${QTDIR}")
 set(CMAKE_INCLUDE_CURRENT_DIR ON) ## do we need this?
@@ -15,23 +15,23 @@ find_package(Qt5Widgets REQUIRED)
 find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
 
-set(content-activated-switcher_HEADERS
+set(pixel-match-switcher_HEADERS
   # TODO: headers
   )
 
-set(content-activated-switcher_SOURCES
-        src/cas-filter.c
-        src/cas-plugin.c
+set(pixel-match-switcher_SOURCES
+        src/pixel-match-filter.c
+        src/pixel-match-switcher.c
 )
 
-set(content-activated-switcher_UI
+set(pixel-match-switcher_UI
   # TODO: .ui file
 )
       
-add_library(content-activated-switcher MODULE
-        ${content-activated-switcher_HEADERS}
-        ${content-activated-switcher_SOURCES}
-        ${content-activated-switcher_UI})
+add_library(pixel-match-switcher MODULE
+        ${pixel-match-switcher_HEADERS}
+        ${pixel-match-switcher_SOURCES}
+        ${pixel-match-switcher_UI})
 
 include_directories(
         "${LIBOBS_INCLUDE_DIRS}"
@@ -39,7 +39,7 @@ include_directories(
         ${Qt5Core_INCLUDES}
         ${Qt5Widgets_INCLUDES})
 
-target_link_libraries(content-activated-switcher
+target_link_libraries(pixel-match-switcher
         ${LIBOBS_LIB}
         ${LIBOBS_FRONTEND_API_LIB}
         Qt5::Core
@@ -50,7 +50,7 @@ target_link_libraries(content-activated-switcher
 #file(GLOB ASS_TRANSLATION_FILES
 #  "data/locale/*.ini")
 
-#install_obs_plugin_with_data(content-activated-switcher data)
+#install_obs_plugin_with_data(pixel-match-switcher data)
 
 # Linux
 if(UNIX AND NOT APPLE)
@@ -62,10 +62,10 @@ if(UNIX AND NOT APPLE)
 		set(ARCH_NAME "i686")
 	endif()
 
-	set_target_properties(content-activated-switcher PROPERTIES PREFIX "")
+	set_target_properties(pixel-match-switcher PROPERTIES PREFIX "")
 
-	install(TARGETS content-activated-switcher
+	install(TARGETS pixel-match-switcher
 			LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
 #	install(FILES ${ASS_TRANSLATION_FILES}
-#			DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/content-activated-switcher/locale")
+#			DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher/locale")
 endif()
