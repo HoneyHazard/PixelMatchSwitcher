@@ -18,6 +18,7 @@ find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB
 set(pixel-match-switcher_HEADERS
         src/pixel-match-core.hpp
         src/pixel-match-dialog.hpp
+        src/pixel-match-debug-tab.hpp
 )
 
 set(pixel-match-switcher_SOURCES
@@ -25,6 +26,7 @@ set(pixel-match-switcher_SOURCES
         src/pixel-match-filter.c
         src/pixel-match-core.cpp
         src/pixel-match-dialog.cpp
+        src/pixel-match-debug-tab.cpp
 )
 
 set(pixel-match-switcher_UI

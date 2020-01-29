@@ -2,12 +2,14 @@
 
 #include <QDialog>
 
+class PixelMatcher;
+
 class PixelMatchDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    PixelMatchDialog(QWidget *parent = nullptr);
+    PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent);
 
 private:
 
