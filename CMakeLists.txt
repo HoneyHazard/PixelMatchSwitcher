@@ -16,12 +16,15 @@ find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
 
 set(pixel-match-switcher_HEADERS
-  # TODO: headers
-  )
+        src/pixel-match-core.hpp
+        src/pixel-match-dialog.hpp
+)
 
 set(pixel-match-switcher_SOURCES
-        src/pixel-match-filter.c
         src/pixel-match-switcher.c
+        src/pixel-match-filter.c
+        src/pixel-match-core.cpp
+        src/pixel-match-dialog.cpp
 )
 
 set(pixel-match-switcher_UI
