@@ -7,7 +7,7 @@ class PixelMatchDialog : public QDialog
     Q_OBJECT
 
 public:
-    PixelMatchDialog();
+    PixelMatchDialog(QWidget *parent = nullptr);
 
 private:
 

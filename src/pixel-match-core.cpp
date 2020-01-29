@@ -27,8 +27,6 @@ PixelMatcher::PixelMatcher()
     connect(action, &QAction::triggered, m_dialog, &QDialog::exec);
 }
 
-
-
 PixelMatcher *PixelMatcher::getInstance()
 {
     return m_instance;
