@@ -2,6 +2,9 @@
 #include "pixel-match-dialog.hpp"
 #include "pixel-match-filter.h"
 
+#include <ostream>
+#include <sstream>
+
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 #include <obs.h>
@@ -9,7 +12,6 @@
 #include <QAction>
 #include <QMainWindow>
 
-#include <iostream> // debugging
 
 PixelMatcher* PixelMatcher::m_instance = nullptr;
 
@@ -27,7 +29,6 @@ void free_pixel_match_switcher()
 //------------------------------------
 
 PixelMatcher::PixelMatcher()
-: m_filter()
 {
     auto mainWindow = static_cast<QMainWindow*>(obs_frontend_get_main_window());
     m_dialog = new PixelMatchDialog(this, mainWindow);
@@ -38,70 +39,77 @@ PixelMatcher::PixelMatcher()
     connect(action, &QAction::triggered, m_dialog, &QDialog::exec);
 }
 
-void PixelMatcher::findFilter()
+std::string PixelMatcher::enumSceneElements()
 {
+    using namespace std;
+    ostringstream oss;
+
     obs_frontend_source_list scenes = {};
     obs_frontend_get_scenes(&scenes);
 
-    using namespace std;
-    //cout << "--------- SCENES ------------------\n";
+    oss << "--------- SCENES ------------------\n";
     for (size_t i = 0; i < scenes.sources.num; ++i) {
         auto src = scenes.sources.array[i];
-        cout << obs_source_get_name(src) << endl;
+        oss << obs_source_get_name(src) << endl;
 
         auto scene = obs_scene_from_source(src);
         obs_scene_enum_items(
             scene,
-            [](obs_scene_t*, obs_scene_item *item, void*) {
-                cout << "  scene item id: " << obs_sceneitem_get_id(item) << endl;
+            [](obs_scene_t*, obs_scene_item *item, void* p) {
+                ostringstream &oss = *static_cast<ostringstream*>(p);
+                oss << "  scene item id: "
+                    << obs_sceneitem_get_id(item) << endl;
                 auto itemSrc = obs_sceneitem_get_source(item);
-                cout << "    src name: " << obs_source_get_name(itemSrc) << endl;
+                oss << "    src name: "
+                    << obs_source_get_name(itemSrc) << endl;
 
                 obs_source_enum_filters(
                     itemSrc,
-                    [](obs_source_t *, obs_source_t *filter, void *) {
-                        auto name = obs_source_get_name(filter);
-                        cout << "      "
-                             << "filter id = \"" << obs_source_get_id(filter)
-                             << "\", name = \"" << obs_source_get_name(filter)
-                             << "\"" << endl;
+                    [](obs_source_t *, obs_source_t *filter, void *p) {
+                    ostringstream &oss = *static_cast<ostringstream*>(p);
+                    oss << "      "
+                         << "filter id = \"" << obs_source_get_id(filter)
+                         << "\", name = \"" << obs_source_get_name(filter)
+                         << "\"" << endl;
                     },
-                    nullptr
+                    &oss
                 );
 
                 return true;
             },
-            nullptr
+            &oss
         );
-
-#if 0
-        obs_source_enum_filters(
-            src,
-            [](obs_source_t *, obs_source_t *filter, void *) {
-                auto name = obs_source_get_name(filter);
-                cout << name << endl;
-            },
-            nullptr
-        );
-#endif
-        //auto scene = obs_scene_from_source(src);
-
-        //auto sceneSrc = obs_scene_get_source(scene);
-        //cout << obs_source_get_name(sceneSrc) << endl;
-#if 0
-        for (size_t i = 0; i < src->filters.num; i++) {
-            obs_source_t *filter =
-                //obs_source_get_filter_by_name(sceneSrc, PIXEL_MATCH_FILTER_DISPLAY_NAME);
-                src->filters.array[i];
-            if (filter) {
-                cout << "filter: " << filter->info.id << endl;
-                m_filter = filter;
-                break;
-            }
-        }
-#endif
     }
-    //cout << "------------------------------------\n";
+    return oss.str();
+}
 
+void PixelMatcher::findFilters()
+{
+    using namespace std;
+    obs_frontend_source_list scenes = {};
+    obs_frontend_get_scenes(&scenes);
+    m_filters.clear();
+
+    for (size_t i = 0; i < scenes.sources.num; ++i) {
+        auto src = scenes.sources.array[i];
+
+        auto scene = obs_scene_from_source(src);
+        obs_scene_enum_items(
+            scene,
+            [](obs_scene_t*, obs_scene_item *item, void* p) {
+                auto &filters = *static_cast<vector<obs_source_t*>*>(p);
+                auto itemSrc = obs_sceneitem_get_source(item);
+                auto filter =
+                    obs_source_get_filter_by_name(itemSrc,
+                        PIXEL_MATCH_FILTER_DISPLAY_NAME);
+                if (filter) {
+                    filters.push_back(filter);
+                }
+                return true;
+            },
+            &m_filters
+        );
+
+    }
 }
 

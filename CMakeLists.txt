@@ -58,6 +58,11 @@ target_link_libraries(pixel-match-switcher
 
 #install_obs_plugin_with_data(pixel-match-switcher data)
 
+if(UNIX)
+       set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-old-style-cast")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-old-style-cast")
+endif()
+
 # Linux
 if(UNIX AND NOT APPLE)
 	set(CMAKE_C_FLAGS "-Wall -Wextra -Wvla -Wno-unused-function -Werror-implicit-function-declaration -Wno-missing-braces -Wno-missing-field-initializers ${CMAKE_C_FLAGS} -std=c99 -fno-strict-aliasing")

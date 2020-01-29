@@ -3,6 +3,7 @@
 #include <QWidget>
 
 class QLabel;
+class QTextEdit;
 class PixelMatcher;
 
 class PixelMatchDebugTab : public QWidget
@@ -13,10 +14,11 @@ public:
     PixelMatchDebugTab(PixelMatcher *pixelMatcher, QWidget *parent);
 
 private slots:
-    void findReleased();
+    void enumReleased();
 
 private:
     PixelMatcher *m_pixelMatcher;
 
     QLabel *m_statusDisplay;
+    QTextEdit *m_textDisplay;
 };

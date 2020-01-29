@@ -5,6 +5,8 @@ extern "C" void free_pixel_match_switcher();
 
 #include <QObject>
 #include <obs.hpp>
+#include <string>
+#include <vector>
 
 struct pixel_match_filter_data;
 class PixelMatchDialog;
@@ -18,13 +20,15 @@ class PixelMatcher : public QObject
 public:
     PixelMatcher();
 
-    obs_source_t* filter() const { return m_filter; }
+    std::vector<obs_source_t*> filters() const { return m_filters; }
+
+    std::string enumSceneElements();
 
 public slots:
-    void findFilter();
+    void findFilters();
 
 private:
     static PixelMatcher *m_instance;
     PixelMatchDialog *m_dialog;
-    obs_source_t *m_filter;
+    std::vector<obs_source_t*> m_filters;
 };

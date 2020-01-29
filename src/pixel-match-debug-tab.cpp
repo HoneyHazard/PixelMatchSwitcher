@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QTextEdit>
 
 PixelMatchDebugTab::PixelMatchDebugTab(
     PixelMatcher *pixelMatcher, QWidget *parent)
@@ -14,28 +15,32 @@ PixelMatchDebugTab::PixelMatchDebugTab(
 
     // status
     QLabel *statusLabel = new QLabel("Status: ", this);
+    statusLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     layout->addWidget(statusLabel, 0, 0);
 
     m_statusDisplay = new QLabel("--status--", this);
+    m_statusDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     layout->addWidget(m_statusDisplay, 0, 1);
 
     // find button
-    QPushButton *findButton = new QPushButton("Find Filter", this);
-    connect(findButton, &QPushButton::released,
-            this, &PixelMatchDebugTab::findReleased);
-    layout->addWidget(findButton, 1, 0);
+    QPushButton *enumButton = new QPushButton("Enum Filters", this);
+    connect(enumButton, &QPushButton::released,
+            this, &PixelMatchDebugTab::enumReleased);
+    layout->addWidget(enumButton, 1, 0);
+
+    // text display
+    m_textDisplay = new QTextEdit(this);
+    m_textDisplay->setReadOnly(true);
+    m_textDisplay->setSizePolicy(
+        QSizePolicy::Expanding, QSizePolicy::Expanding);
+    layout->addWidget(m_textDisplay, 2, 0, 2, 2);
 
     setLayout(layout);
 }
 
-void PixelMatchDebugTab::findReleased()
+void PixelMatchDebugTab::enumReleased()
 {
-    m_pixelMatcher->findFilter();
+    std::string str = m_pixelMatcher->enumSceneElements();
 
-    auto filter = m_pixelMatcher->filter();
-    if (filter) {
-        m_statusDisplay->setText(obs_source_get_name(filter));
-    } else {
-        m_statusDisplay->setText("NOT FOUND");
-    }
+    m_textDisplay->setText(str.data());
 }
