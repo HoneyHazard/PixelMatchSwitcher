@@ -20,6 +20,7 @@ public:
     PixelMatcher();
 
 private:
+    static PixelMatcher *m_instance;
     QPointer<PixelMatchDialog> m_dialog;
 
 };

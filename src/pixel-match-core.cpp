@@ -4,20 +4,20 @@
 #include <obs-frontend-api.h>
 #include <QAction>
 
-PixelMatcher *pixelMatcherInstance;
-
 void init_pixel_match_switcher()
 {
-    pixelMatcherInstance = new PixelMatcher();
+    PixelMatcher::m_instance = new PixelMatcher();
 }
 
 void free_pixel_match_switcher()
 {
-    delete pixelMatcherInstance;
-    pixelMatcherInstance = nullptr;
+    delete PixelMatcher::m_instance;
+    PixelMatcher::m_instance = nullptr;
 }
 
 //------------------------------------
+
+PixelMatcher* PixelMatcher::m_instance = nullptr;
 
 PixelMatcher::PixelMatcher()
 : m_dialog(new PixelMatchDialog())
@@ -31,5 +31,5 @@ PixelMatcher::PixelMatcher()
 
 PixelMatcher *PixelMatcher::getInstance()
 {
-    return pixelMatcherInstance;
+    return m_instance;
 }
