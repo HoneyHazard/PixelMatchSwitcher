@@ -1,4 +1,5 @@
 #include "pixel-match-debug-tab.hpp"
+#include "pixel-match-core.hpp"
 
 #include <QGridLayout>
 #include <QLabel>
@@ -29,5 +30,12 @@ PixelMatchDebugTab::PixelMatchDebugTab(
 
 void PixelMatchDebugTab::findReleased()
 {
+    m_pixelMatcher->findFilter();
 
+    auto filter = m_pixelMatcher->filter();
+    if (filter) {
+        m_statusDisplay->setText(obs_source_get_name(filter));
+    } else {
+        m_statusDisplay->setText("NOT FOUND");
+    }
 }

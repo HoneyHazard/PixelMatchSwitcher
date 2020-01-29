@@ -1,29 +1,9 @@
-#include <obs-module.h>
-
-struct pixel_match_filter_data {
-    obs_source_t *context;
-
-    bool enabled;
-
-    int roi_left;
-    int roi_bottom;
-    int roi_right;
-    int roi_top;
-
-    int per_pixel_err_thresh;
-    int total_match_thresh;
-
-    bool frame_wanted;
-    bool frame_available;
-    gs_texrender_t *frame_copy;
-    bool frame_matched_prev;
-    bool frame_matched;
-};
+#include "pixel-match-filter.h"
 
 static const char *pixel_match_filter_get_name(void* unused)
 {
         UNUSED_PARAMETER(unused);
-        return obs_module_text("Pixel Match Filter");
+        return PIXEL_MATCH_FILTER_DISPLAY_NAME;
 }
 
 static void *pixel_match_filter_create(
@@ -165,7 +145,7 @@ static uint32_t pixel_match_filter_height(void *data)
 }
 
 struct obs_source_info pixel_match_filter = {
-        .id = "pixel_match_filter",
+        .id = PIXEL_MATCH_FILTER_ID,
         .type = OBS_SOURCE_TYPE_FILTER,
         .output_flags = OBS_SOURCE_VIDEO,
         .get_name = pixel_match_filter_get_name,

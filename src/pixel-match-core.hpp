@@ -4,8 +4,9 @@ extern "C" void init_pixel_match_switcher();
 extern "C" void free_pixel_match_switcher();
 
 #include <QObject>
-#include <QPointer>
+#include <obs.hpp>
 
+struct pixel_match_filter_data;
 class PixelMatchDialog;
 
 class PixelMatcher : public QObject
@@ -15,12 +16,15 @@ class PixelMatcher : public QObject
     friend void free_pixel_match_switcher();
 
 public:
-    static PixelMatcher* getInstance();
-
     PixelMatcher();
+
+    obs_source_t* filter() const { return m_filter; }
+
+public slots:
+    void findFilter();
 
 private:
     static PixelMatcher *m_instance;
-    QPointer<PixelMatchDialog> m_dialog;
-
+    PixelMatchDialog *m_dialog;
+    obs_source_t *m_filter;
 };
