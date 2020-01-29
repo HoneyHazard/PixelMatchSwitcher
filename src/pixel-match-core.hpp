@@ -15,13 +15,11 @@ class PixelMatcher : public QObject
     friend void free_pixel_match_switcher();
 
 public:
-    static QPointer<PixelMatcher> getInstance() { return m_instance; }
+    static PixelMatcher* getInstance();
 
     PixelMatcher();
 
 private:
-    static QPointer<PixelMatcher> m_instance;
-
     QPointer<PixelMatchDialog> m_dialog;
 
 };
