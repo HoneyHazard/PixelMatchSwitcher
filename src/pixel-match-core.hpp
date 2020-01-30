@@ -7,11 +7,18 @@ extern "C" void free_pixel_match_switcher();
 #include <QMutex>
 
 #include <string>
-#include <set>
+#include <vector>
 #include <obs.hpp>
 
 struct pixel_match_filter_data;
 class PixelMatchDialog;
+
+struct PixelMatchFilterInfo
+{
+    std::string scene;
+    std::string sceneItem;
+    OBSSource filter = nullptr;
+};
 
 class PixelMatcher : public QObject
 {
@@ -22,13 +29,10 @@ class PixelMatcher : public QObject
 public:
     PixelMatcher();
 
-    std::set<OBSWeakSource> filters() const;
-    OBSWeakSource activeFilter() const;
+    std::vector<PixelMatchFilterInfo> filters() const;
+    PixelMatchFilterInfo activeFilterInfo() const;
 
     std::string scenesInfo();
-
-public slots:
-    void findFilters();
 
 private slots:
     void periodicUpdate();
@@ -37,7 +41,10 @@ private:
     static PixelMatcher *m_instance;
     PixelMatchDialog *m_dialog;
 
+    void findFilters();
+
     mutable QMutex m_mutex;
-    std::set<OBSWeakSource> m_filters;
-    OBSWeakSource m_activeFilter;
+    std::vector<PixelMatchFilterInfo> m_filters;
+    PixelMatchFilterInfo m_activeFilter;
+    pixel_match_filter_data *m_filterData = nullptr;
 };

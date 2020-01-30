@@ -53,13 +53,13 @@ PixelMatcher::PixelMatcher()
     timer->start(100);
 }
 
-std::set<OBSWeakSource> PixelMatcher::filters() const
+std::vector<PixelMatchFilterInfo> PixelMatcher::filters() const
 {
     QMutexLocker locker(&m_mutex);
     return m_filters;
 }
 
-OBSWeakSource PixelMatcher::activeFilter() const
+PixelMatchFilterInfo PixelMatcher::activeFilterInfo() const
 {
     QMutexLocker locker(&m_mutex);
     return m_activeFilter;
@@ -113,28 +113,36 @@ std::string PixelMatcher::scenesInfo()
 void PixelMatcher::findFilters()
 {
     using namespace std;
+
     QMutexLocker locker(&m_mutex);
 
     obs_frontend_source_list scenes = {};
     obs_frontend_get_scenes(&scenes);
+
     m_filters.clear();
+    m_filters.push_back(PixelMatchFilterInfo());
 
     for (size_t i = 0; i < scenes.sources.num; ++i) {
         auto sceneSrc = scenes.sources.array[i];
         auto scene = obs_scene_from_source(sceneSrc);
+        auto &fi = m_filters.back();
+        fi.scene = obs_source_get_name(sceneSrc);
         obs_scene_enum_items(
             scene,
             [](obs_scene_t*, obs_scene_item *item, void* p) {
-                auto &filters = *static_cast<set<OBSWeakSource>*>(p);
+                auto &filters = *static_cast<vector<PixelMatchFilterInfo>*>(p);
+                auto &fi = filters.back();
                 auto itemSrc = obs_sceneitem_get_source(item);
+                fi.sceneItem = obs_source_get_name(itemSrc);
                 obs_source_enum_filters(
                     itemSrc,
                     [](obs_source_t *, obs_source_t *filter, void *p) {
-                        auto &filters = *static_cast<set<OBSWeakSource>*>(p);
+                    auto &filters = *static_cast<vector<PixelMatchFilterInfo>*>(p);
                         auto id = obs_source_get_id(filter);
                         if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
-                            auto weakRef = obs_source_get_weak_source(filter);
-                            filters.insert(OBSWeakSource(weakRef));
+                            auto copy = filters.back();
+                            filters.back().filter = filter;
+                            filters.push_back(copy);
                         }
                     },
                     &filters
@@ -144,6 +152,7 @@ void PixelMatcher::findFilters()
             &m_filters
         );
     }
+    m_filters.pop_back();
 }
 
 void PixelMatcher::periodicUpdate()
@@ -151,13 +160,20 @@ void PixelMatcher::periodicUpdate()
     findFilters();
 
     QMutexLocker locker(&m_mutex);
-    if (!m_activeFilter) {
+    if (!m_activeFilter.filter) {
         if (m_filters.size()) {
-            m_activeFilter = *(m_filters.begin());
+            m_activeFilter = m_filters.front();
         }
     } else {
-        if (m_filters.find(m_activeFilter) == m_filters.end()) {
-            m_activeFilter = nullptr;
+        bool found = false;
+        for (const auto &fi: m_filters) {
+            if (fi.filter == m_activeFilter.filter) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            m_activeFilter.filter = nullptr;
         }
     }
 }

@@ -77,13 +77,11 @@ void PixelMatchDebugTab::periodicUpdate()
     m_filtersStatusDisplay->setText(oss.str().data());
 
     oss.str("");
-    auto activeFilter = m_pixelMatcher->activeFilter();
-    if (activeFilter) {
-        OBSSource source = obs_weak_source_get_source(activeFilter);
-        //obs_scene_t *scene = obs_scene_from_source(source);
-        //obs_source_t *sceneSource = obs_scene_get_source(scene);
-        oss << "name = " << obs_source_get_name(source);
-            //<< ", scene = " << obs_source_get_name(sceneSource);
+    auto activeFilterInfo = m_pixelMatcher->activeFilterInfo();
+    if (activeFilterInfo.filter) {
+        oss << activeFilterInfo.scene << " -> "
+            << activeFilterInfo.sceneItem << " -> "
+            << obs_source_get_name(activeFilterInfo.filter);
     } else {
         oss << "no filter is active.";
     }
