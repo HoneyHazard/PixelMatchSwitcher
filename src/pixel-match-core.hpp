@@ -41,7 +41,10 @@ private:
     static PixelMatcher *m_instance;
     PixelMatchDialog *m_dialog;
 
+    void unsetActiveFilter();
+    void setActiveFilter(const PixelMatchFilterInfo &fi);
     void findFilters();
+    void updateActiveFilter();
 
     mutable QMutex m_mutex;
     std::vector<PixelMatchFilterInfo> m_filters;

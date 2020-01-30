@@ -155,14 +155,26 @@ void PixelMatcher::findFilters()
     m_filters.pop_back();
 }
 
-void PixelMatcher::periodicUpdate()
+void PixelMatcher::unsetActiveFilter()
 {
-    findFilters();
+    m_activeFilter.filter = nullptr;
+    m_filterData = nullptr;
+}
 
+void PixelMatcher::setActiveFilter(const PixelMatchFilterInfo &fi)
+{
+    m_activeFilter = fi;
+    m_filterData = static_cast<pixel_match_filter_data*>(
+        obs_obj_get_data(m_activeFilter.filter));
+
+}
+
+void PixelMatcher::updateActiveFilter()
+{
     QMutexLocker locker(&m_mutex);
     if (!m_activeFilter.filter) {
         if (m_filters.size()) {
-            m_activeFilter = m_filters.front();
+            setActiveFilter(m_filters.front());
         }
     } else {
         bool found = false;
@@ -173,8 +185,15 @@ void PixelMatcher::periodicUpdate()
             }
         }
         if (!found) {
-            m_activeFilter.filter = nullptr;
+            unsetActiveFilter();
         }
     }
+}
+
+void PixelMatcher::periodicUpdate()
+{
+    findFilters();
+    updateActiveFilter();
+
 }
 
