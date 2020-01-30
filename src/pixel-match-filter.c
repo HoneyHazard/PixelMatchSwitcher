@@ -1,4 +1,5 @@
 #include "pixel-match-filter.h"
+//#include
 
 static const char *pixel_match_filter_get_name(void* unused)
 {
@@ -13,6 +14,9 @@ static void *pixel_match_filter_create(
         // char *effect_path = obs_module_file("pixel_match_filter.effect");
 
         filter->context = context;
+        filter->frame_wanted = false;
+        filter->frame_available = false;
+        filter->tex_render = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
 
         //obs_enter_graphics();
         //filter->effect = gs_effect_create_from_file(effect_path, NULL);
@@ -31,6 +35,9 @@ static void pixel_match_filter_destroy(void *data)
 {
         struct pixel_match_filter_data *filter = data;
 
+        if (filter->tex_render) {
+            gs_texrender_destroy(filter->tex_render);
+        }
         //obs_enter_graphics();
         //gs_effect_destroy(filter->effect);
         //obs_leave_graphics();
@@ -122,10 +129,40 @@ static void pixel_match_filter_tick(void *data, float seconds)
 
 static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
-        struct pixel_match_filter_data *filter = data;
+        struct pixel_match_filter_data *filter = data;              
 
-        // TODO: render data to an RGB tex, when it's time
+        // passthrough
         obs_source_skip_video_filter(filter->context);
+
+        if (filter->frame_wanted && !filter->frame_available) {
+            obs_source_t *target = obs_filter_get_target(filter->context);
+            obs_source_t *parent = obs_filter_get_parent(filter->context);
+
+            filter->cx = obs_source_get_base_width(target);
+            filter->cy = obs_source_get_base_height(target);
+            uint32_t parent_flags = obs_source_get_output_flags(target);
+            bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
+            bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
+
+            gs_texrender_begin(filter->tex_render, filter->cx, filter->cy);
+            struct vec4 clear_color;
+            vec4_zero(&clear_color);
+            gs_clear(GS_CLEAR_COLOR, &clear_color, .0f, 0);
+            gs_ortho(0.0f, (float)filter->cx, 0.0f, (float)filter->cy,
+                     -100.0f, 100.0f);
+
+            if (target == parent && !custom_draw && !async)
+                obs_source_default_render(target);
+            else
+                obs_source_video_render(target);
+
+            gs_texrender_end(filter->tex_render);
+
+            //filter->tex_id = filter->tex_render->
+            filter->frame_wanted = false;
+            filter->frame_available = true;
+        }
+
         UNUSED_PARAMETER(effect);
         return;
 }

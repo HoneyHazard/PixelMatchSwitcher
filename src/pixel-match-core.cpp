@@ -47,10 +47,16 @@ PixelMatcher::PixelMatcher()
     connect(action, &QAction::triggered, m_dialog, &QDialog::show);
 
     // periodic update timer
-    QTimer *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout,
+    QTimer *periodicUpdateTimer = new QTimer(this);
+    connect(periodicUpdateTimer, &QTimer::timeout,
             this, &PixelMatcher::periodicUpdate);
-    timer->start(100);
+    periodicUpdateTimer->start(100);
+
+    // timer to fetch rendered frames
+    QTimer *checkFrameTimer = new QTimer(this);
+    connect(checkFrameTimer, &QTimer::timeout,
+            this, &PixelMatcher::checkFrame);
+    checkFrameTimer->start(10);
 }
 
 std::vector<PixelMatchFilterInfo> PixelMatcher::filters() const
@@ -195,5 +201,19 @@ void PixelMatcher::periodicUpdate()
     findFilters();
     updateActiveFilter();
 
+    if (m_filterData) {
+        m_filterData->frame_wanted = true;
+    }
+}
+
+#include <GL/gl.h>
+
+void PixelMatcher::checkFrame()
+{
+    if (m_filterData && m_filterData->frame_available) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_filterData->tex_id);
+        // TODO read?
+    }
 }
 

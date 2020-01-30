@@ -5,6 +5,7 @@ extern "C" void free_pixel_match_switcher();
 
 #include <QObject>
 #include <QMutex>
+#include <QByteArray>
 
 #include <string>
 #include <vector>
@@ -36,6 +37,7 @@ public:
 
 private slots:
     void periodicUpdate();
+    void checkFrame();
 
 private:
     static PixelMatcher *m_instance;
@@ -50,4 +52,5 @@ private:
     std::vector<PixelMatchFilterInfo> m_filters;
     PixelMatchFilterInfo m_activeFilter;
     pixel_match_filter_data *m_filterData = nullptr;
+    QByteArray m_frameRgba;
 };
