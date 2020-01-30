@@ -15,10 +15,12 @@ public:
 
 private slots:
     void enumReleased();
+    void periodicUpdate();
 
 private:
     PixelMatcher *m_pixelMatcher;
 
-    QLabel *m_statusDisplay;
+    QLabel *m_filtersStatusDisplay;
+    QLabel *m_activeFilterDisplay;
     QTextEdit *m_textDisplay;
 };

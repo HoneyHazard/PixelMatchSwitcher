@@ -5,6 +5,9 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QTimer>
+
+#include <sstream>
 
 PixelMatchDebugTab::PixelMatchDebugTab(
     PixelMatcher *pixelMatcher, QWidget *parent)
@@ -12,30 +15,47 @@ PixelMatchDebugTab::PixelMatchDebugTab(
 , m_pixelMatcher(pixelMatcher)
 {
     QGridLayout *layout = new QGridLayout;
+    int row = 0;
 
-    // status
-    QLabel *statusLabel = new QLabel("Status: ", this);
-    statusLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    layout->addWidget(statusLabel, 0, 0);
+    // filters
+    QLabel *filtersLabel = new QLabel("Filters: ", this);
+    filtersLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    layout->addWidget(filtersLabel, row, 0);
 
-    m_statusDisplay = new QLabel("--status--", this);
-    m_statusDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    layout->addWidget(m_statusDisplay, 0, 1);
+    m_filtersStatusDisplay = new QLabel("--", this);
+    m_filtersStatusDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    layout->addWidget(m_filtersStatusDisplay, row++, 1);
+
+    // active filter
+    QLabel *activeFilterLabel = new QLabel("Active Filter: ", this);
+    activeFilterLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    layout->addWidget(activeFilterLabel, row, 0);
+
+    m_activeFilterDisplay = new QLabel("--", this);
+    m_activeFilterDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    layout->addWidget(m_activeFilterDisplay, row++, 1);
 
     // find button
     QPushButton *enumButton = new QPushButton("Enum Filters", this);
     connect(enumButton, &QPushButton::released,
             this, &PixelMatchDebugTab::enumReleased);
-    layout->addWidget(enumButton, 1, 0);
+    layout->addWidget(enumButton, row++, 0);
 
     // text display
     m_textDisplay = new QTextEdit(this);
     m_textDisplay->setReadOnly(true);
     m_textDisplay->setSizePolicy(
         QSizePolicy::Expanding, QSizePolicy::Expanding);
-    layout->addWidget(m_textDisplay, 2, 0, 2, 2);
+    layout->addWidget(m_textDisplay, row, 0, 2, 2);
+    row += 2;
 
     setLayout(layout);
+
+    // periodic update timer
+    QTimer *timer = new QTimer(this);
+    connect(timer, &QTimer::timeout,
+            this, &PixelMatchDebugTab::periodicUpdate);
+    timer->start(100);
 }
 
 void PixelMatchDebugTab::enumReleased()
@@ -43,4 +63,29 @@ void PixelMatchDebugTab::enumReleased()
     std::string str = m_pixelMatcher->enumSceneElements();
 
     m_textDisplay->setText(str.data());
+}
+
+void PixelMatchDebugTab::periodicUpdate()
+{
+    std::ostringstream oss;
+    auto filters = m_pixelMatcher->filters();
+    if (filters.empty()) {
+        oss << "no filters found.";
+    } else {
+        oss << filters.size() << " filter(s) available.";
+    }
+    m_filtersStatusDisplay->setText(oss.str().data());
+
+    oss.str("");
+    auto activeFilter = m_pixelMatcher->activeFilter();
+    if (activeFilter) {
+        OBSSource source = obs_weak_source_get_source(activeFilter);
+        //obs_scene_t *scene = obs_scene_from_source(source);
+        //obs_source_t *sceneSource = obs_scene_get_source(scene);
+        oss << "name = " << obs_source_get_name(source);
+            //<< ", scene = " << obs_source_get_name(sceneSource);
+    } else {
+        oss << "no filter is active.";
+    }
+    m_activeFilterDisplay->setText(oss.str().data());
 }
