@@ -14,7 +14,7 @@ public:
     PixelMatchDebugTab(PixelMatcher *pixelMatcher, QWidget *parent);
 
 private slots:
-    void enumReleased();
+    void scenesInfoReleased();
     void periodicUpdate();
 
 private:

@@ -65,7 +65,7 @@ OBSWeakSource PixelMatcher::activeFilter() const
     return m_activeFilter;
 }
 
-std::string PixelMatcher::enumSceneElements()
+std::string PixelMatcher::scenesInfo()
 {
     using namespace std;
     ostringstream oss;

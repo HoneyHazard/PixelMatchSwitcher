@@ -19,7 +19,7 @@ PixelMatchDebugTab::PixelMatchDebugTab(
 
     // filters
     QLabel *filtersLabel = new QLabel("Filters: ", this);
-    filtersLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    filtersLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     layout->addWidget(filtersLabel, row, 0);
 
     m_filtersStatusDisplay = new QLabel("--", this);
@@ -28,7 +28,7 @@ PixelMatchDebugTab::PixelMatchDebugTab(
 
     // active filter
     QLabel *activeFilterLabel = new QLabel("Active Filter: ", this);
-    activeFilterLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    activeFilterLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     layout->addWidget(activeFilterLabel, row, 0);
 
     m_activeFilterDisplay = new QLabel("--", this);
@@ -36,10 +36,10 @@ PixelMatchDebugTab::PixelMatchDebugTab(
     layout->addWidget(m_activeFilterDisplay, row++, 1);
 
     // find button
-    QPushButton *enumButton = new QPushButton("Enum Filters", this);
-    connect(enumButton, &QPushButton::released,
-            this, &PixelMatchDebugTab::enumReleased);
-    layout->addWidget(enumButton, row++, 0);
+    QPushButton *scenesInfoButton = new QPushButton("Scenes Info", this);
+    connect(scenesInfoButton, &QPushButton::released,
+            this, &PixelMatchDebugTab::scenesInfoReleased);
+    layout->addWidget(scenesInfoButton, row++, 0);
 
     // text display
     m_textDisplay = new QTextEdit(this);
@@ -58,9 +58,9 @@ PixelMatchDebugTab::PixelMatchDebugTab(
     timer->start(100);
 }
 
-void PixelMatchDebugTab::enumReleased()
+void PixelMatchDebugTab::scenesInfoReleased()
 {
-    std::string str = m_pixelMatcher->enumSceneElements();
+    std::string str = m_pixelMatcher->scenesInfo();
 
     m_textDisplay->setText(str.data());
 }

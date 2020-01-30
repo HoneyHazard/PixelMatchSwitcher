@@ -25,7 +25,7 @@ public:
     std::set<OBSWeakSource> filters() const;
     OBSWeakSource activeFilter() const;
 
-    std::string enumSceneElements();
+    std::string scenesInfo();
 
 public slots:
     void findFilters();
