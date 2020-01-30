@@ -37,14 +37,14 @@ PixelMatcher::PixelMatcher()
     setParent(qApp);
 
     // parent the dialog to the main window
-    auto mainWindow = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    m_dialog = new PixelMatchDialog(this, mainWindow);
+    //auto mainWindow = static_cast<QMainWindow*>(obs_frontend_get_main_window());
+    m_dialog = new PixelMatchDialog(this, nullptr);
 
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
         obs_frontend_add_tools_menu_qaction(
             obs_module_text("Pixel Match Switcher")));
-    connect(action, &QAction::triggered, m_dialog, &QDialog::exec);
+    connect(action, &QAction::triggered, m_dialog, &QDialog::show);
 
     // periodic update timer
     QTimer *timer = new QTimer(this);
@@ -53,7 +53,7 @@ PixelMatcher::PixelMatcher()
     timer->start(100);
 }
 
-std::vector<OBSWeakSource> PixelMatcher::filters() const
+std::set<OBSWeakSource> PixelMatcher::filters() const
 {
     QMutexLocker locker(&m_mutex);
     return m_filters;
@@ -125,16 +125,16 @@ void PixelMatcher::findFilters()
         obs_scene_enum_items(
             scene,
             [](obs_scene_t*, obs_scene_item *item, void* p) {
-                auto &filters = *static_cast<vector<OBSWeakSource>*>(p);
+                auto &filters = *static_cast<set<OBSWeakSource>*>(p);
                 auto itemSrc = obs_sceneitem_get_source(item);
                 obs_source_enum_filters(
                     itemSrc,
                     [](obs_source_t *, obs_source_t *filter, void *p) {
-                        auto &filters = *static_cast<vector<OBSWeakSource>*>(p);
+                        auto &filters = *static_cast<set<OBSWeakSource>*>(p);
                         auto id = obs_source_get_id(filter);
                         if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
                             auto weakRef = obs_source_get_weak_source(filter);
-                            filters.push_back(OBSWeakSource(weakRef));
+                            filters.insert(OBSWeakSource(weakRef));
                         }
                     },
                     &filters
@@ -151,8 +151,14 @@ void PixelMatcher::periodicUpdate()
     findFilters();
 
     QMutexLocker locker(&m_mutex);
-    if (!m_activeFilter && m_filters.size()) {
-        m_activeFilter = m_filters.front();
+    if (!m_activeFilter) {
+        if (m_filters.size()) {
+            m_activeFilter = *(m_filters.begin());
+        }
+    } else {
+        if (m_filters.find(m_activeFilter) == m_filters.end()) {
+            m_activeFilter = nullptr;
+        }
     }
 }
 
