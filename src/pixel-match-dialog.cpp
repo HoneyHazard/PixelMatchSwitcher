@@ -1,6 +1,7 @@
 #include "pixel-match-dialog.hpp"
 #include "pixel-match-core.hpp"
 #include "pixel-match-debug-tab.hpp"
+
 #include <obs-module.h>
 
 #include <QHBoxLayout>
@@ -14,10 +15,8 @@ PixelMatchDialog::PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent)
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
 
     // main tab
-    QLabel *mainTabTest = new QLabel(obs_module_text("main widget"), this);
 
     QGridLayout *mainTabLayout = new QGridLayout;
-    mainTabLayout->addWidget(mainTabTest, 0, 0);
 
     QWidget *mainTab = new QWidget(this);
     mainTab->setLayout(mainTabLayout);

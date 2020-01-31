@@ -1,7 +1,6 @@
 #pragma once
 
 #include <obs-module.h>
-#include <GL/gl.h>
 
 #define PIXEL_MATCH_FILTER_ID "pixel_match_filter"
 
@@ -24,8 +23,8 @@ struct pixel_match_filter_data
 
     bool frame_wanted;
     bool frame_available;
-    gs_texrender_t *tex_render;
-    GLenum tex_id;
     unsigned int cx;
     unsigned int cy;
+    gs_texrender_t *tex_render;
+    uint8_t *pixel_data;
 };

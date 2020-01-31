@@ -211,9 +211,8 @@ void PixelMatcher::periodicUpdate()
 void PixelMatcher::checkFrame()
 {
     if (m_filterData && m_filterData->frame_available) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_filterData->tex_id);
-        // TODO read?
+        // TODO: copy; signal display
+        m_filterData->frame_available = false;
     }
 }
 

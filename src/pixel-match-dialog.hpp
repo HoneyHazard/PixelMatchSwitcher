@@ -12,5 +12,4 @@ public:
     PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent);
 
 private:
-
 };

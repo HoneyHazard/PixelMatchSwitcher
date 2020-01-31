@@ -1,5 +1,7 @@
 #include "pixel-match-filter.h"
-//#include
+
+#include <graphics/graphics.h>
+#include <gl-subsystem.h>
 
 static const char *pixel_match_filter_get_name(void* unused)
 {
@@ -16,7 +18,10 @@ static void *pixel_match_filter_create(
         filter->context = context;
         filter->frame_wanted = false;
         filter->frame_available = false;
-        filter->tex_render = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
+        filter->cx = 0;
+        filter->cy = 0;
+        filter->pixel_data = NULL;
+        filter->tex_render = NULL;
 
         //obs_enter_graphics();
         //filter->effect = gs_effect_create_from_file(effect_path, NULL);
@@ -35,9 +40,13 @@ static void pixel_match_filter_destroy(void *data)
 {
         struct pixel_match_filter_data *filter = data;
 
+        if (filter->pixel_data) {
+            bfree(filter->pixel_data);
+        }
         if (filter->tex_render) {
             gs_texrender_destroy(filter->tex_render);
         }
+
         //obs_enter_graphics();
         //gs_effect_destroy(filter->effect);
         //obs_leave_graphics();
@@ -131,18 +140,46 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
         struct pixel_match_filter_data *filter = data;              
 
+        obs_source_t *target = obs_filter_get_target(filter->context);
+        obs_source_t *parent = obs_filter_get_parent(filter->context);
+        unsigned int cx = 0;
+        unsigned int cy = 0;
+
         // passthrough
         obs_source_skip_video_filter(filter->context);
 
-        if (filter->frame_wanted && !filter->frame_available) {
-            obs_source_t *target = obs_filter_get_target(filter->context);
-            obs_source_t *parent = obs_filter_get_parent(filter->context);
+        // adjust structres
+        if (target && parent) {
+            cx = obs_source_get_base_width(target);
+            cy = obs_source_get_base_height(target);
+        }
 
-            filter->cx = obs_source_get_base_width(target);
-            filter->cy = obs_source_get_base_height(target);
-            uint32_t parent_flags = obs_source_get_output_flags(target);
+        if (cx != filter->cx || cy != filter->cy) {
+            filter->frame_available = false;
+            if (filter->tex_render) {
+                gs_texrender_destroy(filter->tex_render);
+                filter->tex_render = NULL;
+            }
+            if (filter->pixel_data) {
+                bfree(filter->pixel_data);
+                filter->pixel_data = NULL;
+            }
+            filter->cx = cx;
+            filter->cy = cy;
+            if (cx > 0 && cy > 0) {
+                filter->tex_render = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
+                filter->pixel_data = bzalloc(cx * cy * 4);
+            }
+        }
+
+        // frame capture
+        if (cx > 0 && cy > 0 && filter->frame_wanted && !filter->frame_available) {                uint32_t parent_flags = obs_source_get_output_flags(target);
             bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
             bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
+
+            gs_texrender_reset(filter->tex_render);
+            gs_blend_state_push();
+            gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
 
             gs_texrender_begin(filter->tex_render, filter->cx, filter->cy);
             struct vec4 clear_color;
@@ -157,10 +194,21 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
                 obs_source_video_render(target);
 
             gs_texrender_end(filter->tex_render);
+            gs_blend_state_pop();
 
-            //filter->tex_id = filter->tex_render->
-            filter->frame_wanted = false;
-            filter->frame_available = true;
+            gs_texture_t *texture = gs_texrender_get_texture(filter->tex_render);
+            if (texture) {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, texture->texture);
+                glGetTexImage(GL_TEXTURE_2D,
+                              0,
+                              GL_RGBA,
+                              GL_UNSIGNED_BYTE,
+                              filter->pixel_data);
+                //printf("reading stuff!\n");
+                filter->frame_wanted = false;
+                filter->frame_available = true;
+            }
         }
 
         UNUSED_PARAMETER(effect);

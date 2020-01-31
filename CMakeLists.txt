@@ -15,6 +15,10 @@ find_package(Qt5Widgets REQUIRED)
 find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
 
+find_path(LIBOBS_OPENGL_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
+find_path(LIBOBS_GLAD_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
+find_file(LIBOBS_GLAD_LIB NAMES libobsglad.* HINTS ${LIBSOBS_LIB})
+
 set(pixel-match-switcher_HEADERS
         src/pixel-match-filter.h
         src/pixel-match-core.hpp
@@ -42,12 +46,15 @@ add_library(pixel-match-switcher MODULE
 include_directories(
         "${LIBOBS_INCLUDE_DIRS}"
         "${LIBOBS_FRONTEND_INCLUDE_DIR}"
+        "${LIBOBS_OPENGL_INCLUDE_DIR}"        # TODO: conditional
+        "${LIBOBS_GLAD_INCLUDE_DIR}"          # TODO: conditional?
         ${Qt5Core_INCLUDES}
         ${Qt5Widgets_INCLUDES})
 
 target_link_libraries(pixel-match-switcher
         ${LIBOBS_LIB}
         ${LIBOBS_FRONTEND_API_LIB}
+        ${LIBOBS_GLAD_LIB}
         Qt5::Core
         Qt5::Widgets)
 
