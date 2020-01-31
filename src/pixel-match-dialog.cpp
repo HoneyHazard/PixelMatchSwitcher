@@ -11,12 +11,15 @@
 
 PixelMatchDialog::PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent)
 : QDialog(parent)
+, m_pixelMatcher(pixelMatcher)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
 
     // main tab
-
     QGridLayout *mainTabLayout = new QGridLayout;
+
+    m_testLabel = new QLabel(this);
+    mainTabLayout->addWidget(m_testLabel, 0, 0);
 
     QWidget *mainTab = new QWidget(this);
     mainTab->setLayout(mainTabLayout);
@@ -32,4 +35,14 @@ PixelMatchDialog::PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent)
     QHBoxLayout *topLevelLayout = new QHBoxLayout;
     topLevelLayout->addWidget(tabWidget);
     setLayout(topLevelLayout);
+
+    // connections
+    connect(m_pixelMatcher, &PixelMatcher::newFrameImage,
+            this, &PixelMatchDialog::onNewFrameImage);
+}
+
+void PixelMatchDialog::onNewFrameImage()
+{
+    auto pixMap = QPixmap::fromImage(m_pixelMatcher->frameImage());
+    m_testLabel->setPixmap(pixMap);
 }

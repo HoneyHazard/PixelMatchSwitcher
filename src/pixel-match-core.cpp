@@ -59,19 +59,19 @@ PixelMatcher::PixelMatcher()
     checkFrameTimer->start(10);
 }
 
-std::vector<PixelMatchFilterInfo> PixelMatcher::filters() const
+std::vector<PmFilterInfo> PixelMatcher::filters() const
 {
     QMutexLocker locker(&m_mutex);
     return m_filters;
 }
 
-PixelMatchFilterInfo PixelMatcher::activeFilterInfo() const
+PmFilterInfo PixelMatcher::activeFilterInfo() const
 {
     QMutexLocker locker(&m_mutex);
     return m_activeFilter;
 }
 
-std::string PixelMatcher::scenesInfo()
+std::string PixelMatcher::scenesInfo() const
 {
     using namespace std;
     ostringstream oss;
@@ -116,7 +116,7 @@ std::string PixelMatcher::scenesInfo()
     return oss.str();
 }
 
-void PixelMatcher::findFilters()
+void PixelMatcher::scanScene()
 {
     using namespace std;
 
@@ -126,7 +126,7 @@ void PixelMatcher::findFilters()
     obs_frontend_get_scenes(&scenes);
 
     m_filters.clear();
-    m_filters.push_back(PixelMatchFilterInfo());
+    m_filters.push_back(PmFilterInfo());
 
     for (size_t i = 0; i < scenes.sources.num; ++i) {
         auto sceneSrc = scenes.sources.array[i];
@@ -136,14 +136,14 @@ void PixelMatcher::findFilters()
         obs_scene_enum_items(
             scene,
             [](obs_scene_t*, obs_scene_item *item, void* p) {
-                auto &filters = *static_cast<vector<PixelMatchFilterInfo>*>(p);
+                auto &filters = *static_cast<vector<PmFilterInfo>*>(p);
                 auto &fi = filters.back();
                 auto itemSrc = obs_sceneitem_get_source(item);
                 fi.sceneItem = obs_source_get_name(itemSrc);
                 obs_source_enum_filters(
                     itemSrc,
                     [](obs_source_t *, obs_source_t *filter, void *p) {
-                    auto &filters = *static_cast<vector<PixelMatchFilterInfo>*>(p);
+                    auto &filters = *static_cast<vector<PmFilterInfo>*>(p);
                         auto id = obs_source_get_id(filter);
                         if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
                             auto copy = filters.back();
@@ -167,7 +167,7 @@ void PixelMatcher::unsetActiveFilter()
     m_filterData = nullptr;
 }
 
-void PixelMatcher::setActiveFilter(const PixelMatchFilterInfo &fi)
+void PixelMatcher::setActiveFilter(const PmFilterInfo &fi)
 {
     m_activeFilter = fi;
     m_filterData = static_cast<pixel_match_filter_data*>(
@@ -198,7 +198,7 @@ void PixelMatcher::updateActiveFilter()
 
 void PixelMatcher::periodicUpdate()
 {
-    findFilters();
+    scanScene();
     updateActiveFilter();
 
     if (m_filterData) {
@@ -206,12 +206,24 @@ void PixelMatcher::periodicUpdate()
     }
 }
 
-#include <GL/gl.h>
-
 void PixelMatcher::checkFrame()
 {
     if (m_filterData && m_filterData->frame_available) {
-        // TODO: copy; signal display
+        // store a copy of the frame data
+        int cx = int(m_filterData->cx);
+        int cy = int(m_filterData->cy);
+        int sz = cx * cy * 4;
+        if (m_frameImage.width() != cx || m_frameImage.height() != cy) {
+            m_frameRgba.resize(sz);
+            // QImage provides an abstraction to utilize the frame data in previews
+            m_frameImage = QImage(
+                (const uchar*)m_frameRgba.data(),
+                cx, cy, cx * 4,
+                QImage::Format_RGBA8888);
+        }
+        memcpy(m_frameRgba.data(), m_filterData->pixel_data, size_t(sz));
+        emit newFrameImage();
+
         m_filterData->frame_available = false;
     }
 }

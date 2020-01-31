@@ -6,6 +6,7 @@ extern "C" void free_pixel_match_switcher();
 #include <QObject>
 #include <QMutex>
 #include <QByteArray>
+#include <QImage>
 
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ extern "C" void free_pixel_match_switcher();
 struct pixel_match_filter_data;
 class PixelMatchDialog;
 
-struct PixelMatchFilterInfo
+struct PmFilterInfo
 {
     std::string scene;
     std::string sceneItem;
@@ -27,13 +28,17 @@ class PixelMatcher : public QObject
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
 
+signals:
+    void newFrameImage();
+
 public:
     PixelMatcher();
 
-    std::vector<PixelMatchFilterInfo> filters() const;
-    PixelMatchFilterInfo activeFilterInfo() const;
+    std::vector<PmFilterInfo> filters() const;
+    PmFilterInfo activeFilterInfo() const;
 
-    std::string scenesInfo();
+    std::string scenesInfo() const;
+    const QImage &frameImage() const { return m_frameImage; }
 
 private slots:
     void periodicUpdate();
@@ -44,13 +49,15 @@ private:
     PixelMatchDialog *m_dialog;
 
     void unsetActiveFilter();
-    void setActiveFilter(const PixelMatchFilterInfo &fi);
-    void findFilters();
+    void setActiveFilter(const PmFilterInfo &fi);
+
+    void scanScene();
     void updateActiveFilter();
 
     mutable QMutex m_mutex;
-    std::vector<PixelMatchFilterInfo> m_filters;
-    PixelMatchFilterInfo m_activeFilter;
+    std::vector<PmFilterInfo> m_filters;
+    PmFilterInfo m_activeFilter;
     pixel_match_filter_data *m_filterData = nullptr;
     QByteArray m_frameRgba;
+    QImage m_frameImage;
 };

@@ -3,6 +3,7 @@
 #include <QDialog>
 
 class PixelMatcher;
+class QLabel;
 
 class PixelMatchDialog : public QDialog
 {
@@ -11,5 +12,10 @@ class PixelMatchDialog : public QDialog
 public:
     PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent);
 
+private slots:
+    void onNewFrameImage();
+
 private:
+    QLabel *m_testLabel;
+    PixelMatcher *m_pixelMatcher;
 };
