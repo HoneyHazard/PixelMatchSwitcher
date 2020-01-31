@@ -10,16 +10,22 @@ extern "C" void free_pixel_match_switcher();
 
 #include <string>
 #include <vector>
-#include <obs.hpp>
 
 struct pixel_match_filter_data;
+struct obs_scene_item;
+struct obs_scene;
+struct obs_source;
 class PixelMatchDialog;
 
 struct PmFilterInfo
 {
-    std::string scene;
-    std::string sceneItem;
-    OBSSource filter = nullptr;
+    obs_scene *scene = nullptr;
+    obs_source *sceneSrc = nullptr;
+
+    obs_scene_item *sceneItem = nullptr;
+    obs_source *itemSrc = nullptr;
+
+    obs_source *filter = nullptr;
 };
 
 class PixelMatcher : public QObject
@@ -51,7 +57,7 @@ private:
     void unsetActiveFilter();
     void setActiveFilter(const PmFilterInfo &fi);
 
-    void scanScene();
+    void scanScenes();
     void updateActiveFilter();
 
     mutable QMutex m_mutex;

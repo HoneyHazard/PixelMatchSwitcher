@@ -7,7 +7,7 @@
 
 #include <obs-module.h>
 #include <obs-frontend-api.h>
-#include <obs.h>
+//#include <obs-scene.h>
 
 #include <QAction>
 #include <QMainWindow>
@@ -87,7 +87,7 @@ std::string PixelMatcher::scenesInfo() const
         auto scene = obs_scene_from_source(src);
         obs_scene_enum_items(
             scene,
-            [](obs_scene_t*, obs_scene_item *item, void* p) {
+            [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
                 ostringstream &oss = *static_cast<ostringstream*>(p);
                 oss << "  scene item id: "
                     << obs_sceneitem_get_id(item) << endl;
@@ -116,7 +116,7 @@ std::string PixelMatcher::scenesInfo() const
     return oss.str();
 }
 
-void PixelMatcher::scanScene()
+void PixelMatcher::scanScenes()
 {
     using namespace std;
 
@@ -129,19 +129,18 @@ void PixelMatcher::scanScene()
     m_filters.push_back(PmFilterInfo());
 
     for (size_t i = 0; i < scenes.sources.num; ++i) {
-        auto sceneSrc = scenes.sources.array[i];
-        auto scene = obs_scene_from_source(sceneSrc);
         auto &fi = m_filters.back();
-        fi.scene = obs_source_get_name(sceneSrc);
+        fi.sceneSrc = scenes.sources.array[i];
+        fi.scene = obs_scene_from_source(fi.sceneSrc);
         obs_scene_enum_items(
-            scene,
-            [](obs_scene_t*, obs_scene_item *item, void* p) {
+            fi.scene,
+            [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
                 auto &filters = *static_cast<vector<PmFilterInfo>*>(p);
                 auto &fi = filters.back();
-                auto itemSrc = obs_sceneitem_get_source(item);
-                fi.sceneItem = obs_source_get_name(itemSrc);
+                fi.sceneItem = item;
+                fi.itemSrc = obs_sceneitem_get_source(item);
                 obs_source_enum_filters(
-                    itemSrc,
+                    fi.itemSrc,
                     [](obs_source_t *, obs_source_t *filter, void *p) {
                     auto &filters = *static_cast<vector<PmFilterInfo>*>(p);
                         auto id = obs_source_get_id(filter);
@@ -163,7 +162,7 @@ void PixelMatcher::scanScene()
 
 void PixelMatcher::unsetActiveFilter()
 {
-    m_activeFilter.filter = nullptr;
+    m_activeFilter = PmFilterInfo();
     m_filterData = nullptr;
 }
 
@@ -178,27 +177,29 @@ void PixelMatcher::setActiveFilter(const PmFilterInfo &fi)
 void PixelMatcher::updateActiveFilter()
 {
     QMutexLocker locker(&m_mutex);
-    if (!m_activeFilter.filter) {
-        if (m_filters.size()) {
-            setActiveFilter(m_filters.front());
-        }
-    } else {
+    if (m_activeFilter.filter) {
         bool found = false;
         for (const auto &fi: m_filters) {
-            if (fi.filter == m_activeFilter.filter) {
+            if (fi.filter == m_activeFilter.filter
+             && obs_source_active(fi.itemSrc)) {
                 found = true;
                 break;
             }
         }
-        if (!found) {
-            unsetActiveFilter();
+        if (found) return;
+
+        unsetActiveFilter();
+    }
+    for (const auto &fi: m_filters) {
+        if (obs_source_active(fi.itemSrc)) {
+            setActiveFilter(fi);
         }
     }
 }
 
 void PixelMatcher::periodicUpdate()
 {
-    scanScene();
+    scanScenes();
     updateActiveFilter();
 
     if (m_filterData) {
@@ -208,23 +209,32 @@ void PixelMatcher::periodicUpdate()
 
 void PixelMatcher::checkFrame()
 {
-    if (m_filterData && m_filterData->frame_available) {
-        // store a copy of the frame data
-        int cx = int(m_filterData->cx);
-        int cy = int(m_filterData->cy);
-        int sz = cx * cy * 4;
-        if (m_frameImage.width() != cx || m_frameImage.height() != cy) {
-            m_frameRgba.resize(sz);
-            // QImage provides an abstraction to utilize the frame data in previews
-            m_frameImage = QImage(
-                (const uchar*)m_frameRgba.data(),
-                cx, cy, cx * 4,
-                QImage::Format_RGBA8888);
-        }
-        memcpy(m_frameRgba.data(), m_filterData->pixel_data, size_t(sz));
-        emit newFrameImage();
+    if (m_filterData) {
+        if (m_filterData->frame_available) {
+            // store a copy of the frame data
+            int cx = int(m_filterData->cx);
+            int cy = int(m_filterData->cy);
+            int sz = cx * cy * 4;
+            if (m_frameImage.width() != cx || m_frameImage.height() != cy) {
+                m_frameRgba.resize(sz);
+                // QImage provides an abstraction to utilize the frame data in previews
+                m_frameImage = QImage(
+                    (const uchar*)m_frameRgba.data(),
+                    cx, cy, cx * 4,
+                    QImage::Format_RGBA8888);
+            }
+            memcpy(m_frameRgba.data(), m_filterData->pixel_data, size_t(sz));
 
-        m_filterData->frame_available = false;
+            m_filterData->frame_available = false;
+        }
+    } else {
+        if (m_frameImage.width() != 0 || m_frameImage.height()) {
+            m_frameImage = QImage();
+        }
+        if (m_frameRgba.size()) {
+            m_frameRgba.clear();
+        }
     }
+    emit newFrameImage();
 }
 
