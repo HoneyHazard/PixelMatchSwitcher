@@ -4,6 +4,7 @@
 
 class PixelMatcher;
 class QLabel;
+class OBSQTDisplay;
 
 class PixelMatchDialog : public QDialog
 {
@@ -16,6 +17,9 @@ private slots:
     void onNewFrameImage();
 
 private:
+    static void drawPreview(void *data, uint32_t cx, uint32_t cy);
+
     QLabel *m_testLabel;
+    OBSQTDisplay *m_filterDisplay;
     PixelMatcher *m_pixelMatcher;
 };

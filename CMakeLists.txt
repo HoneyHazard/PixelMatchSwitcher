@@ -12,6 +12,12 @@ include(external/FindLibObs.cmake)
 find_package(LibObs REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
+#if(UNIX)
+  find_package(Qt5X11Extras REQUIRED)
+#endif()
+
+
+
 find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
 
@@ -19,11 +25,15 @@ find_path(LIBOBS_OPENGL_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_path(LIBOBS_GLAD_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_file(LIBOBS_GLAD_LIB NAMES libobsglad.* HINTS ${LIBSOBS_LIB})
 
+find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
+
 set(pixel-match-switcher_HEADERS
         src/pixel-match-filter.h
         src/pixel-match-core.hpp
         src/pixel-match-dialog.hpp
         src/pixel-match-debug-tab.hpp
+        ${LIBOBS_UI_DIR}/qt-display.hpp
+        ${LIBOBS_UI_DIR}/qt-wrappers.hpp
 )
 
 set(pixel-match-switcher_SOURCES
@@ -32,22 +42,23 @@ set(pixel-match-switcher_SOURCES
         src/pixel-match-core.cpp
         src/pixel-match-dialog.cpp
         src/pixel-match-debug-tab.cpp
+        ${LIBOBS_UI_DIR}/qt-display.cpp
+        ${LIBOBS_UI_DIR}/qt-wrappers.cpp        
 )
 
-set(pixel-match-switcher_UI
-  # TODO: .ui file
-)
-      
 add_library(pixel-match-switcher MODULE
         ${pixel-match-switcher_HEADERS}
         ${pixel-match-switcher_SOURCES}
-        ${pixel-match-switcher_UI})
+)
 
 include_directories(
         "${LIBOBS_INCLUDE_DIRS}"
         "${LIBOBS_FRONTEND_INCLUDE_DIR}"
         "${LIBOBS_OPENGL_INCLUDE_DIR}"        # TODO: conditional
         "${LIBOBS_GLAD_INCLUDE_DIR}"          # TODO: conditional?
+        "${LIBOBS_UI_DIR}"
+        "${Qt5X11Extras_DIR}"
+        ${Qt5X11Extras_INCLUDE_DIRS} # TODO conditional
         ${Qt5Core_INCLUDES}
         ${Qt5Widgets_INCLUDES})
 
@@ -58,6 +69,7 @@ target_link_libraries(pixel-match-switcher
         Qt5::Core
         Qt5::Widgets)
 
+      
 # TODO: installation
       
 #file(GLOB ASS_TRANSLATION_FILES
