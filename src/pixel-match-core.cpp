@@ -51,12 +51,6 @@ PixelMatcher::PixelMatcher()
     connect(periodicUpdateTimer, &QTimer::timeout,
             this, &PixelMatcher::periodicUpdate);
     periodicUpdateTimer->start(100);
-
-    // timer to fetch rendered frames
-    QTimer *checkFrameTimer = new QTimer(this);
-    connect(checkFrameTimer, &QTimer::timeout,
-            this, &PixelMatcher::checkFrame);
-    checkFrameTimer->start(10);
 }
 
 std::vector<PmFilterInfo> PixelMatcher::filters() const
@@ -201,40 +195,5 @@ void PixelMatcher::periodicUpdate()
 {
     scanScenes();
     updateActiveFilter();
-
-    if (m_filterData) {
-        m_filterData->frame_wanted = true;
-    }
-}
-
-void PixelMatcher::checkFrame()
-{
-    if (m_filterData) {
-        if (m_filterData->frame_available) {
-            // store a copy of the frame data
-            int cx = int(m_filterData->cx);
-            int cy = int(m_filterData->cy);
-            int sz = cx * cy * 4;
-            if (m_frameImage.width() != cx || m_frameImage.height() != cy) {
-                m_frameRgba.resize(sz);
-                // QImage provides an abstraction to utilize the frame data in previews
-                m_frameImage = QImage(
-                    (const uchar*)m_frameRgba.data(),
-                    cx, cy, cx * 4,
-                    QImage::Format_RGBA8888);
-            }
-            memcpy(m_frameRgba.data(), m_filterData->pixel_data, size_t(sz));
-
-            m_filterData->frame_available = false;
-        }
-    } else {
-        if (m_frameImage.width() != 0 || m_frameImage.height()) {
-            m_frameImage = QImage();
-        }
-        if (m_frameRgba.size()) {
-            m_frameRgba.clear();
-        }
-    }
-    emit newFrameImage();
 }
 

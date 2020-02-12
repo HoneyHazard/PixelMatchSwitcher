@@ -44,11 +44,9 @@ public:
     PmFilterInfo activeFilterInfo() const;
 
     std::string scenesInfo() const;
-    const QImage &frameImage() const { return m_frameImage; }
 
 private slots:
     void periodicUpdate();
-    void checkFrame();
 
 private:
     static PixelMatcher *m_instance;
@@ -64,6 +62,4 @@ private:
     std::vector<PmFilterInfo> m_filters;
     PmFilterInfo m_activeFilter;
     pixel_match_filter_data *m_filterData = nullptr;
-    QByteArray m_frameRgba;
-    QImage m_frameImage;
 };

@@ -1,0 +1,12 @@
+uniform float per_pixel_err_thresh;
+
+layout (binding = 1, offset = 0) uniform atomic_uint match_counter;
+
+technique Draw
+{
+  pass
+  {
+    vertex_shader = VSDefault(v_in);
+    pixel_shader = PSDefault(v_in);
+  }
+}
