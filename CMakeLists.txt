@@ -88,7 +88,7 @@ endif()
 install(TARGETS pixel-match-switcher
 	LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
 install(FILES ${EFFECT_FILES}
-	DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher/data")
+	DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher")
 
 #install_external_plugin_with_data(pixel-match-switcher "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/")
 
