@@ -1,12 +1,39 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
 uniform float per_pixel_err_thresh;
 
-layout (binding = 1, offset = 0) uniform atomic_uint match_counter;
+layout (binding = 1, offset = 8) uniform atomic_uint match_counter;
+
+sampler_state def_sampler {
+        Filter   = Linear;
+ 	AddressU = Clamp;
+        AddressV = Clamp;
+};
+
+struct VertInOut {
+        float4 pos : POSITION;
+        float2 uv  : TEXCOORD0;
+};
+
+VertInOut VSDefault(VertInOut vert_in)
+{
+        VertInOut vert_out;
+        vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
+        vert_out.uv  = vert_in.uv;
+        return vert_out;
+}
+
+float4 PSDefault(VertInOut vert_in) : TARGET
+{
+	return image.Sample(def_sampler, vert_in.uv);
+}
 
 technique Draw
 {
   pass
   {
-    vertex_shader = VSDefault(v_in);
-    pixel_shader = PSDefault(v_in);
+    vertex_shader = VSDefault(vert_in);
+    pixel_shader = PSDefault(vert_in);
   }
 }
