@@ -3,7 +3,7 @@ uniform texture2d image;
 
 uniform float per_pixel_err_thresh;
 
-layout (binding = 1, offset = 8) uniform atomic_uint match_counter;
+layout (binding = 1, offset = 2) uniform atomic_uint match_counter;
 
 sampler_state def_sampler {
         Filter   = Linear;
@@ -26,6 +26,7 @@ VertInOut VSDefault(VertInOut vert_in)
 
 float4 PSDefault(VertInOut vert_in) : TARGET
 {
+        atomicCounterIncrement(match_counter);
 	return image.Sample(def_sampler, vert_in.uv);
 }
 
