@@ -69,6 +69,8 @@ void PixelMatchDebugTab::scenesInfoReleased()
 
 void PixelMatchDebugTab::periodicUpdate()
 {
+    if (!isVisible()) return;
+
     std::ostringstream oss;
     auto filters = m_pixelMatcher->filters();
     if (filters.empty()) {
