@@ -157,6 +157,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
                                   filter->cx, filter->cy);
     filter->num_matched =
         gs_effect_get_atomic_uint_result(filter->result_match_counter);
+    //printf("num matched = %u\n", filter->num_matched);
 
 #if 0
     // passthrough
