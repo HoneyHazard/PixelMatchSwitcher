@@ -1,6 +1,6 @@
-uniform texture2d image;
 layout (binding = 0, offset = 0) uniform atomic_uint match_counter;
 
+uniform texture2d image;
 uniform float4x4 ViewProj;
 uniform float per_pixel_err_thresh;
 
@@ -24,27 +24,13 @@ VertInOut VSDefault(VertInOut vert_in)
 }
 
 float4 PSDefault(VertInOut vert_in) : TARGET
-{
-    atomicCounterIncrement(match_counter);    
-    uint val = atomicCounterMax(match_counter, 1);
-    val = val + 1;
-    float r = 0.0f;
-    float g = 0.0f;
-    float b = 0.0f;
-    if (bool(val & 0x1))
-      r = 1.0f;
-    if (bool(val & 0x2))
-      g = 1.0f;
-    if (bool(val & 0x4))
-      b = 1.0f;
-    
-    float4 ret;
-    if (val == 1000) {
-        ret = image.Sample(def_sampler, vert_in.uv);  
-    } else {
-        ret = float4(r, g, b, 1.0);
+{   
+    float4 val = image.Sample(def_sampler, vert_in.uv); 
+    if (val.r > 0.05 && val.g > 0.05 && val.b > 0.05) {
+        atomicCounterIncrement(match_counter);
+        val = float4(0, 1, 0, 1);
     }
-    return ret;
+    return val;
 }
 
 technique Draw
