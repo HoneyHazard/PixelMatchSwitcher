@@ -3,41 +3,48 @@ layout (binding = 0, offset = 0) uniform atomic_uint match_counter;
 uniform texture2d image;
 uniform float4x4 ViewProj;
 uniform float per_pixel_err_thresh;
+uniform bool debug;
+uniform bool count_enabled;
 
 sampler_state def_sampler {
-        Filter   = Linear;
-        AddressU = Clamp;
-        AddressV = Clamp;
+    Filter   = Linear;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 struct VertInOut {
-        float4 pos : POSITION;
-        float2 uv  : TEXCOORD0;
+    float4 pos : POSITION;
+    float2 uv  : TEXCOORD0;
 };
 
 VertInOut VSDefault(VertInOut vert_in)
 {
-        VertInOut vert_out;
-        vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
-        vert_out.uv  = vert_in.uv;
-        return vert_out;
+    VertInOut vert_out;
+    vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
+    vert_out.uv  = vert_in.uv;
+    return vert_out;
 }
 
-float4 PSDefault(VertInOut vert_in) : TARGET
-{   
-    float4 val = image.Sample(def_sampler, vert_in.uv); 
-    if (val.r > 0.05 && val.g > 0.05 && val.b > 0.05) {
-        atomicCounterIncrement(match_counter);
-        val = float4(0, 1, 0, 1);
+float4 PSMatch(VertInOut vert_in) : TARGET
+{
+    float4 val = image.Sample(def_sampler, vert_in.uv);
+    bool match = val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
+    if (match) {
+        if (count_enabled) {
+            atomicCounterIncrement(match_counter);
+        }
+        if (debug) {
+            val = float4(0, 1, 0, 1);
+        }
     }
     return val;
 }
 
 technique Draw
 {
-  pass
-  {
-    vertex_shader = VSDefault(vert_in);
-    pixel_shader = PSDefault(vert_in);
-  }
+    pass
+    {
+        vertex_shader = VSDefault(vert_in);
+        pixel_shader = PSMatch(vert_in);
+    }
 }

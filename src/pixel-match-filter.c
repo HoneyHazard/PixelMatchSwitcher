@@ -1,7 +1,6 @@
 #include "pixel-match-filter.h"
 
 #include <graphics/graphics.h>
-//#include <gl-subsystem.h>
 
 static const char *pixel_match_filter_get_name(void* unused)
 {
@@ -16,6 +15,9 @@ static void *pixel_match_filter_create(
     char *effect_path = obs_module_file("pixel_match.effect");
 
     filter->context = context;
+    filter->settings = settings;
+    filter->debug = false;
+    filter->count_enabled = true;
 
     obs_enter_graphics();
     filter->effect = gs_effect_create_from_file(effect_path, NULL);
@@ -31,6 +33,10 @@ static void *pixel_match_filter_create(
     filter->param_per_pixel_err_thresh =
         gs_effect_get_param_by_name(filter->effect,
                                     "per_pixel_err_thresh");
+
+    filter->param_debug = gs_effect_get_param_by_name(filter->effect, "debug");
+    filter->param_count_enabled = gs_effect_get_param_by_name(
+        filter->effect, "count_enabled");
     filter->param_match_counter =
         gs_effect_get_param_by_name(filter->effect, "match_counter");
     filter->result_match_counter =
@@ -81,41 +87,47 @@ static bool pixel_match_prop_changed_callback(
 
 static obs_properties_t *pixel_match_filter_properties(void *data)
 {
-    obs_properties_t *props = obs_properties_create();
+    struct pixel_match_filter_data *filter
+        = (struct pixel_match_filter_data*)data;
 
-    obs_property_t *p = obs_properties_add_bool(
-        props, "enabled", obs_module_text("Enabled"));
+    obs_properties_t *properties = obs_properties_create();
 
-    obs_properties_add_int(props,
-        "roi_left", obs_module_text("RoiLeft"),
+    obs_properties_add_bool(properties, "enabled", obs_module_text("Enabled"));
+
+    obs_properties_add_int(properties,
+        "roi_left", obs_module_text("Roi Left"),
         0, 10000, 1);
-    obs_properties_add_int(props,
-        "roi_bottom", obs_module_text("RoiBottom"),
+    obs_properties_add_int(properties,
+        "roi_bottom", obs_module_text("Roi Bottom"),
         0, 10000, 1);
-    obs_properties_add_int(props,
-        "roi_right", obs_module_text("RoiRight"),
+    obs_properties_add_int(properties,
+        "roi_right", obs_module_text("Roi Right"),
         0, 10000, 1);
-    obs_properties_add_int(props,
-        "roi_top", obs_module_text("RoiTop"),
+    obs_properties_add_int(properties,
+        "roi_top", obs_module_text("Roi Top"),
         0, 10000, 1);
 
-    obs_properties_add_int(props,
+    obs_properties_add_int(properties,
         "per_pixel_err_thresh",
-        obs_module_text("PerPixelErrorThreshold"),
+        obs_module_text("Per-Pixel Error Threshold, %"),
         0, 100, 1);
-    obs_properties_add_int(props,
+    obs_properties_add_int(properties,
         "total_match_thresh",
-        obs_module_text("TotalMatchThreshold"),
+        obs_module_text("Total Match Threshold, %"),
         0, 100, 1);
 
-    obs_property_set_modified_callback(
-        p, pixel_match_prop_changed_callback);
+    obs_properties_add_int(properties,
+        "num_matched",
+        obs_module_text("Number Matched:"),
+        0, 65536, 1);
+
+    //obs_property_set_modified_callback(
+    //    p, pixel_match_prop_changed_callback);
 
     // TODO scenes
     // TODO mask image
 
-    UNUSED_PARAMETER(data);
-    return props;
+    return properties;
 }
 
 static void pixel_match_filter_defaults(obs_data_t *settings)
@@ -125,13 +137,15 @@ static void pixel_match_filter_defaults(obs_data_t *settings)
     obs_data_set_default_int(settings, "total_match_thresh", 90);
 }
 
+#if 0
 static void pixel_match_filter_tick(void *data, float seconds)
 {
     struct pixel_match_filter_data *filter = data;
     UNUSED_PARAMETER(seconds);
     UNUSED_PARAMETER(filter);
-    // TODO: dispatch pixel processing every 100ms?
+    // TODO: dispatch pixel processing every
 }
+#endif
 
 static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
@@ -145,19 +159,23 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     }
 
     if (!obs_source_process_filter_begin(
-        filter->context, GS_RGBA,
-            OBS_NO_DIRECT_RENDERING))
+            filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING))
         return;
 
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_int(filter->param_per_pixel_err_thresh,
                       filter->per_pixel_err_thresh);
+    gs_effect_set_int(filter->param_count_enabled,
+                      filter->count_enabled);
+    gs_effect_set_int(filter->param_debug,
+                      filter->debug);
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->cx, filter->cy);
     filter->num_matched =
         gs_effect_get_atomic_uint_result(filter->result_match_counter);
-    //printf("num matched = %u\n", filter->num_matched);
+
+    obs_data_set_int(filter->settings, "num_matched", filter->num_matched);
 
 #if 0
     // passthrough
@@ -237,7 +255,7 @@ struct obs_source_info pixel_match_filter = {
     .update = pixel_match_filter_update,
     .get_properties = pixel_match_filter_properties,
     .get_defaults = pixel_match_filter_defaults,
-    .video_tick = pixel_match_filter_tick,
+    //.video_tick = pixel_match_filter_tick,
     .video_render = pixel_match_filter_render,
     .get_width = pixel_match_filter_width,
     .get_height = pixel_match_filter_height,
