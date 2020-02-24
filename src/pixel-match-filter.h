@@ -1,6 +1,8 @@
 #pragma once
 
+#include <pthread.h>
 #include <obs-module.h>
+#include <graphics/image-file.h>
 
 #define PIXEL_MATCH_FILTER_ID "pixel_match_filter"
 
@@ -10,30 +12,35 @@
 
 struct pixel_match_filter_data
 {
+    // plugin basics
     obs_source_t *context;
     gs_effect_t *effect;
     obs_data_t *settings;
 
-    gs_texture_t *match_tex;
+    // shader parameters and results
     gs_eparam_t *param_per_pixel_err_thresh;
-    gs_eparam_t *param_match_counter;
     gs_eparam_t *param_debug;
-    gs_eparam_t *param_count_enabled;
+    gs_eparam_t *param_match_counter;
     gs_eresult_t *result_match_counter;
 
-    bool enabled;
-
+    // match stuff: image
+    gs_image_file_t match_file;
+    gs_texture_t *match_img;
     int roi_left;
     int roi_bottom;
     int roi_right;
     int roi_top;
 
+    // match stuff:
     int per_pixel_err_thresh;
     int total_match_thresh;
-    bool count_enabled;
-    bool debug;
 
+    // dynamic data
+    pthread_mutex_t mutex;
     unsigned int cx;
     unsigned int cy;
     unsigned int num_matched;
+
+    // debug and visualization
+    bool debug;
 };

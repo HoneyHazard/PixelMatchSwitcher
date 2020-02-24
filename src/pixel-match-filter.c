@@ -14,14 +14,11 @@ static void *pixel_match_filter_create(
     struct pixel_match_filter_data *filter = bzalloc(sizeof(*filter));
     char *effect_path = obs_module_file("pixel_match.effect");
 
+    memset(filter, 0, sizeof(struct pixel_match_filter_data));
     filter->context = context;
     filter->settings = settings;
-    filter->debug = false;
-    filter->count_enabled = true;
 
-    obs_enter_graphics();
-    filter->effect = gs_effect_create_from_file(effect_path, NULL);
-    obs_leave_graphics();
+    pthread_mutex_init(&filter->mutex, NULL);
 
     bfree(effect_path);
 
@@ -30,13 +27,21 @@ static void *pixel_match_filter_create(
         return NULL;
     }
 
+    // will be made dynamic
+    gs_image_file_init(&filter->match_file, "~/Documents/mask2.png");
+
+    //  gfx init
+    obs_enter_graphics();
+    filter->effect = gs_effect_create_from_file(effect_path, NULL);
+    gs_image_file_init_texture(&filter->match_file);
+    obs_leave_graphics();
+
+    // init filters and result handles
     filter->param_per_pixel_err_thresh =
         gs_effect_get_param_by_name(filter->effect,
                                     "per_pixel_err_thresh");
 
     filter->param_debug = gs_effect_get_param_by_name(filter->effect, "debug");
-    filter->param_count_enabled = gs_effect_get_param_by_name(
-        filter->effect, "count_enabled");
     filter->param_match_counter =
         gs_effect_get_param_by_name(filter->effect, "match_counter");
     filter->result_match_counter =
@@ -50,9 +55,14 @@ static void pixel_match_filter_destroy(void *data)
 {
     struct pixel_match_filter_data *filter = data;
 
+    pthread_mutex_lock(&filter->mutex);
     obs_enter_graphics();
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
+    gs_image_file_free(&filter->match_file);
+    pthread_mutex_unlock(&filter->mutex);
+
+    pthread_mutex_destroy(&filter->mutex);
 
     bfree(filter);
 }
@@ -61,7 +71,7 @@ static void pixel_match_filter_update(void *data, obs_data_t *settings)
 {
     struct pixel_match_filter_data *filter = data;
 
-    filter->enabled = obs_data_get_bool(settings, "enabled");
+    pthread_mutex_lock(&filter->mutex);
     filter->roi_left = (int)obs_data_get_int(settings, "roi_left");
     filter->roi_bottom = (int)obs_data_get_int(settings, "roi_bottom");
     filter->roi_right = (int)obs_data_get_int(settings, "roi_right");
@@ -72,6 +82,7 @@ static void pixel_match_filter_update(void *data, obs_data_t *settings)
         = (int)obs_data_get_int(settings, "total_match_thresh");
     // TODO mask image
     // TODO scenes
+    pthread_mutex_unlock(&filter->mutex);
 
     UNUSED_PARAMETER(data);
 }
@@ -91,8 +102,6 @@ static obs_properties_t *pixel_match_filter_properties(void *data)
         = (struct pixel_match_filter_data*)data;
 
     obs_properties_t *properties = obs_properties_create();
-
-    obs_properties_add_bool(properties, "enabled", obs_module_text("Enabled"));
 
     obs_properties_add_int(properties,
         "roi_left", obs_module_text("Roi Left"),
@@ -132,7 +141,6 @@ static obs_properties_t *pixel_match_filter_properties(void *data)
 
 static void pixel_match_filter_defaults(obs_data_t *settings)
 {
-    obs_data_set_default_bool(settings, "enabled", false);
     obs_data_set_default_int(settings, "per_pixel_err_thresh", 10);
     obs_data_set_default_int(settings, "total_match_thresh", 90);
 }
@@ -151,6 +159,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
     struct pixel_match_filter_data *filter = data;
 
+    pthread_mutex_lock(&filter->mutex);
     obs_source_t *target = obs_filter_get_target(filter->context);
     obs_source_t *parent = obs_filter_get_parent(filter->context);
     if (target && parent) {
@@ -165,10 +174,9 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_int(filter->param_per_pixel_err_thresh,
                       filter->per_pixel_err_thresh);
-    gs_effect_set_int(filter->param_count_enabled,
-                      filter->count_enabled);
-    gs_effect_set_int(filter->param_debug,
-                      filter->debug);
+
+    //bool master_render = (active_gfx == filter->main_gfx);
+    gs_effect_set_bool(filter->param_debug, filter->debug);
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->cx, filter->cy);
@@ -176,6 +184,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         gs_effect_get_atomic_uint_result(filter->result_match_counter);
 
     obs_data_set_int(filter->settings, "num_matched", filter->num_matched);
+    pthread_mutex_unlock(&filter->mutex);
 
 #if 0
     // passthrough

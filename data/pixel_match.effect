@@ -4,7 +4,6 @@ uniform texture2d image;
 uniform float4x4 ViewProj;
 uniform float per_pixel_err_thresh;
 uniform bool debug;
-uniform bool count_enabled;
 
 sampler_state def_sampler {
     Filter   = Linear;
@@ -30,9 +29,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     float4 val = image.Sample(def_sampler, vert_in.uv);
     bool match = val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
     if (match) {
-        if (count_enabled) {
-            atomicCounterIncrement(match_counter);
-        }
+        atomicCounterIncrement(match_counter);
         if (debug) {
             val = float4(0, 1, 0, 1);
         }

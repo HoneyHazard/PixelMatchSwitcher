@@ -1,6 +1,8 @@
 #include "pixel-match-dialog.hpp"
 #include "pixel-match-core.hpp"
 #include "pixel-match-debug-tab.hpp"
+#include "pixel-match-core.hpp"
+#include "pixel-match-filter.h"
 
 #include <obs-module.h>
 #include <qt-display.hpp>
@@ -82,6 +84,9 @@ void PixelMatchDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
     gs_projection_push();
     gs_ortho(0.0f, float(sourceCX), 0.0f, float(sourceCY), -100.0f, 100.0f);
     gs_set_viewport(x, y, newCX, newCY);
+
+    auto activeFilter = (pixel_match_filter_data*)
+         dialog->m_pixelMatcher->activeFilterInfo().filter;
 
     obs_source_video_render(source);
 
