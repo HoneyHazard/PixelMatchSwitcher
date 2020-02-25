@@ -2,6 +2,8 @@ layout (binding = 0, offset = 0) uniform atomic_uint match_counter;
 
 uniform texture2d image;
 uniform float4x4 ViewProj;
+
+uniform texture2d match_img;
 uniform float per_pixel_err_thresh;
 uniform bool debug;
 
@@ -27,13 +29,21 @@ VertInOut VSDefault(VertInOut vert_in)
 float4 PSMatch(VertInOut vert_in) : TARGET
 {
     float4 val = image.Sample(def_sampler, vert_in.uv);
-    bool match = val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
-    if (match) {
+    float4 cmp = match_img.Sample(def_sampler, vert_in.uv);
+    bool cmp_on = cmp.r > 0 || cmp.g > 0 || cmp.b > 0;
+    bool match_on = cmp_on && val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
+    if (match_on) {
         atomicCounterIncrement(match_counter);
-        if (debug) {
+    }
+
+    if (debug && cmp_on) {
+        if (match_on) {
             val = float4(0, 1, 0, 1);
+        } else {
+            val = float4(1, 0, 0, 1);
         }
     }
+
     return val;
 }
 

@@ -8,63 +8,78 @@ static const char *pixel_match_filter_get_name(void* unused)
     return PIXEL_MATCH_FILTER_DISPLAY_NAME;
 }
 
-static void *pixel_match_filter_create(
-    obs_data_t *settings, obs_source_t *context)
-{
-    struct pixel_match_filter_data *filter = bzalloc(sizeof(*filter));
-    char *effect_path = obs_module_file("pixel_match.effect");
-
-    memset(filter, 0, sizeof(struct pixel_match_filter_data));
-    filter->context = context;
-    filter->settings = settings;
-
-    pthread_mutex_init(&filter->mutex, NULL);
-
-    bfree(effect_path);
-
-    if (!filter->effect) {
-        bfree(filter);
-        return NULL;
-    }
-
-    // will be made dynamic
-    gs_image_file_init(&filter->match_file, "~/Documents/mask2.png");
-
-    //  gfx init
-    obs_enter_graphics();
-    filter->effect = gs_effect_create_from_file(effect_path, NULL);
-    gs_image_file_init_texture(&filter->match_file);
-    obs_leave_graphics();
-
-    // init filters and result handles
-    filter->param_per_pixel_err_thresh =
-        gs_effect_get_param_by_name(filter->effect,
-                                    "per_pixel_err_thresh");
-
-    filter->param_debug = gs_effect_get_param_by_name(filter->effect, "debug");
-    filter->param_match_counter =
-        gs_effect_get_param_by_name(filter->effect, "match_counter");
-    filter->result_match_counter =
-        gs_effect_get_result_by_name(filter->effect, "match_counter");
-
-    obs_source_update(context, settings);
-    return filter;
-}
-
 static void pixel_match_filter_destroy(void *data)
 {
     struct pixel_match_filter_data *filter = data;
 
     pthread_mutex_lock(&filter->mutex);
     obs_enter_graphics();
+    gs_image_file_free(&filter->match_file);
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
-    gs_image_file_free(&filter->match_file);
     pthread_mutex_unlock(&filter->mutex);
 
     pthread_mutex_destroy(&filter->mutex);
 
     bfree(filter);
+}
+
+static void *pixel_match_filter_create(
+    obs_data_t *settings, obs_source_t *context)
+{
+    pthread_mutexattr_t mutex_attr;
+    struct pixel_match_filter_data *filter = bzalloc(sizeof(*filter));
+    char *effect_path = obs_module_file("pixel_match.effect");
+
+    memset(filter, 0, sizeof(struct pixel_match_filter_data));
+    filter->context = context;
+    filter->settings = settings;
+    filter->debug = true;
+    pthread_mutexattr_init(&mutex_attr);
+    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&filter->mutex, &mutex_attr);
+
+    // will be made dynamic
+    gs_image_file_init(&filter->match_file, "/home/admin/Documents/mask2.png");
+    if (!filter->match_file.loaded)
+        goto error;
+
+    //  gfx init
+    obs_enter_graphics();
+    filter->effect = gs_effect_create_from_file(effect_path, NULL);
+    if (!filter->effect)
+        goto gfx_fail;
+    gs_image_file_init_texture(&filter->match_file);
+    if (!filter->match_file.texture)
+        goto gfx_fail;
+    obs_leave_graphics();
+
+    // init filters and result handles
+    filter->param_match_img = gs_effect_get_param_by_name(
+        filter->effect, "match_img");
+    filter->param_per_pixel_err_thresh =
+        gs_effect_get_param_by_name(filter->effect, "per_pixel_err_thresh");
+    filter->param_debug
+        = gs_effect_get_param_by_name(filter->effect, "debug");
+    filter->param_match_counter =
+        gs_effect_get_param_by_name(filter->effect, "match_counter");
+    filter->result_match_counter =
+        gs_effect_get_result_by_name(filter->effect, "match_counter");
+
+    if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
+          || !filter->param_debug || !filter->param_match_counter
+          || !filter->result_match_counter)
+        goto error;
+
+    obs_source_update(context, settings);
+    return filter;
+
+gfx_fail:
+    obs_leave_graphics();
+
+error:
+    pixel_match_filter_destroy(filter);
+    return NULL;
 }
 
 static void pixel_match_filter_update(void *data, obs_data_t *settings)
@@ -174,9 +189,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_int(filter->param_per_pixel_err_thresh,
                       filter->per_pixel_err_thresh);
-
-    //bool master_render = (active_gfx == filter->main_gfx);
     gs_effect_set_bool(filter->param_debug, filter->debug);
+    gs_effect_set_texture(filter->param_match_img, filter->match_file.texture);
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->cx, filter->cy);

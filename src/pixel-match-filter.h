@@ -20,12 +20,12 @@ struct pixel_match_filter_data
     // shader parameters and results
     gs_eparam_t *param_per_pixel_err_thresh;
     gs_eparam_t *param_debug;
+    gs_eparam_t *param_match_img;
     gs_eparam_t *param_match_counter;
     gs_eresult_t *result_match_counter;
 
     // match stuff: image
     gs_image_file_t match_file;
-    gs_texture_t *match_img;
     int roi_left;
     int roi_bottom;
     int roi_right;
