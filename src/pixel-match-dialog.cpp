@@ -64,18 +64,19 @@ void PixelMatchDialog::onNewFrameImage()
 
 void PixelMatchDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
-    auto dialog = (PixelMatchDialog*)data;
-    auto source = dialog->m_pixelMatcher->activeFilterInfo().filter;
-    if (!source) return;
+    auto dialog = static_cast<PixelMatchDialog*>(data);
+    auto filterRef = dialog->m_pixelMatcher->activeFilterRef();
+    auto renderSrc = filterRef.filter();
+    if (!renderSrc) return;
 
-    uint32_t sourceCX = obs_source_get_width(source);
-    uint32_t sourceCY = obs_source_get_height(source);
+    int sourceCX = int(filterRef.filterSrcWidth());
+    int sourceCY = int(filterRef.filterSrcHeight());
 
     int x, y;
     int newCX, newCY;
     float scale;
 
-    GetScaleAndCenterPos(sourceCX, sourceCY, cx, cy, x, y, scale);
+    GetScaleAndCenterPos(sourceCX, sourceCY, int(cx), int(cy), x, y, scale);
 
     newCX = int(scale * float(sourceCX));
     newCY = int(scale * float(sourceCY));
@@ -85,10 +86,7 @@ void PixelMatchDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
     gs_ortho(0.0f, float(sourceCX), 0.0f, float(sourceCY), -100.0f, 100.0f);
     gs_set_viewport(x, y, newCX, newCY);
 
-    auto activeFilter = (pixel_match_filter_data*)
-         dialog->m_pixelMatcher->activeFilterInfo().filter;
-
-    obs_source_video_render(source);
+    obs_source_video_render(renderSrc);
 
     gs_projection_pop();
     gs_viewport_pop();

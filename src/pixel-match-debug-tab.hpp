@@ -22,5 +22,7 @@ private:
 
     QLabel *m_filtersStatusDisplay;
     QLabel *m_activeFilterDisplay;
+    QLabel *m_resolutionDisplay;
+    QLabel *m_matchCountDisplay;
     QTextEdit *m_textDisplay;
 };

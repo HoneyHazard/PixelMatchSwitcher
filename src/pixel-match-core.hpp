@@ -11,21 +11,51 @@ extern "C" void free_pixel_match_switcher();
 #include <string>
 #include <vector>
 
-struct pixel_match_filter_data;
+#include <obs.h>
+
 struct obs_scene_item;
 struct obs_scene;
-struct obs_source;
+struct pixel_match_filter_data;
 class PixelMatchDialog;
 
-struct PmFilterInfo
+class PmFilterRef
 {
-    obs_scene *scene = nullptr;
-    obs_source *sceneSrc = nullptr;
+public:
+    PmFilterRef() {}
+    PmFilterRef(const PmFilterRef &other);
+    ~PmFilterRef() { reset(); }
 
-    obs_scene_item *sceneItem = nullptr;
-    obs_source *itemSrc = nullptr;
+    obs_scene *scene() const { return m_scene; }
+    obs_source_t *sceneSrc() const { return m_sceneSrc; }
+    obs_scene_item *sceneItem() const { return m_sceneItem; }
+    obs_source_t *itemSrc() const { return m_itemSrc; }
+    obs_source_t *filter() const { return m_filter; }
 
-    obs_source *filter = nullptr;
+    bool isValid() const { return m_filter ? true : false; }
+    bool isActive() const;
+    uint32_t filterSrcWidth() const;
+    uint32_t filterSrcHeight() const;
+    uint32_t filterDataWidth() const;
+    uint32_t filterDataHeight() const;
+    uint32_t numMatched() const;
+
+    void reset();
+    void setScene(obs_source_t *sceneSrc);
+    void setItem(obs_scene_item *item);
+    void setFilter(obs_source_t *filter);
+    void lockData() const;
+    void unlockData() const;
+
+protected:
+    pixel_match_filter_data *filterData() const;
+
+    obs_scene *m_scene = nullptr;
+    obs_source_t *m_sceneSrc = nullptr;
+
+    obs_scene_item *m_sceneItem = nullptr;
+    obs_source_t *m_itemSrc = nullptr;
+
+    obs_source_t *m_filter = nullptr;
 };
 
 class PixelMatcher : public QObject
@@ -40,8 +70,8 @@ signals:
 public:
     PixelMatcher();
 
-    std::vector<PmFilterInfo> filters() const;
-    PmFilterInfo activeFilterInfo() const;
+    std::vector<PmFilterRef> filters() const;
+    PmFilterRef activeFilterRef() const;
 
     std::string scenesInfo() const;
 
@@ -52,14 +82,10 @@ private:
     static PixelMatcher *m_instance;
     PixelMatchDialog *m_dialog;
 
-    void unsetActiveFilter();
-    void setActiveFilter(const PmFilterInfo &fi);
-
     void scanScenes();
     void updateActiveFilter();
 
     mutable QMutex m_mutex;
-    std::vector<PmFilterInfo> m_filters;
-    PmFilterInfo m_activeFilter;
-    pixel_match_filter_data *m_filterData = nullptr;
+    std::vector<PmFilterRef> m_filters;
+    PmFilterRef m_activeFilter;
 };

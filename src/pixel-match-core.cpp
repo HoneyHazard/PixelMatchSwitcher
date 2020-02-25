@@ -53,13 +53,13 @@ PixelMatcher::PixelMatcher()
     periodicUpdateTimer->start(100);
 }
 
-std::vector<PmFilterInfo> PixelMatcher::filters() const
+std::vector<PmFilterRef> PixelMatcher::filters() const
 {
     QMutexLocker locker(&m_mutex);
     return m_filters;
 }
 
-PmFilterInfo PixelMatcher::activeFilterInfo() const
+PmFilterRef PixelMatcher::activeFilterRef() const
 {
     QMutexLocker locker(&m_mutex);
     return m_activeFilter;
@@ -120,27 +120,25 @@ void PixelMatcher::scanScenes()
     obs_frontend_get_scenes(&scenes);
 
     m_filters.clear();
-    m_filters.push_back(PmFilterInfo());
+    m_filters.push_back(PmFilterRef());
 
     for (size_t i = 0; i < scenes.sources.num; ++i) {
         auto &fi = m_filters.back();
-        fi.sceneSrc = scenes.sources.array[i];
-        fi.scene = obs_scene_from_source(fi.sceneSrc);
+        fi.setScene(scenes.sources.array[i]);
         obs_scene_enum_items(
-            fi.scene,
+            fi.scene(),
             [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
-                auto &filters = *static_cast<vector<PmFilterInfo>*>(p);
+                auto &filters = *static_cast<vector<PmFilterRef>*>(p);
                 auto &fi = filters.back();
-                fi.sceneItem = item;
-                fi.itemSrc = obs_sceneitem_get_source(item);
+                fi.setItem(item);
                 obs_source_enum_filters(
-                    fi.itemSrc,
+                    fi.itemSrc(),
                     [](obs_source_t *, obs_source_t *filter, void *p) {
-                    auto &filters = *static_cast<vector<PmFilterInfo>*>(p);
+                    auto &filters = *static_cast<vector<PmFilterRef>*>(p);
                         auto id = obs_source_get_id(filter);
                         if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
                             auto copy = filters.back();
-                            filters.back().filter = filter;
+                            filters.back().setFilter(filter);
                             filters.push_back(copy);
                         }
                     },
@@ -154,42 +152,28 @@ void PixelMatcher::scanScenes()
     m_filters.pop_back();
 }
 
-void PixelMatcher::unsetActiveFilter()
-{
-    m_activeFilter = PmFilterInfo();
-    m_filterData = nullptr;
-}
-
-void PixelMatcher::setActiveFilter(const PmFilterInfo &fi)
-{
-    m_activeFilter = fi;
-    m_filterData = static_cast<pixel_match_filter_data*>(
-        obs_obj_get_data(m_activeFilter.filter));
-
-}
-
 void PixelMatcher::updateActiveFilter()
 {
     QMutexLocker locker(&m_mutex);
-    if (m_activeFilter.filter) {
+    if (m_activeFilter.isValid()) {
         bool found = false;
         for (const auto &fi: m_filters) {
-            if (fi.filter == m_activeFilter.filter
-             && obs_source_active(fi.itemSrc)) {
+            if (fi.filter() == m_activeFilter.filter() && fi.isActive()) {
                 found = true;
                 break;
             }
         }
         if (found) return;
 
-        unsetActiveFilter();
+        m_activeFilter.reset();
     }
     for (const auto &fi: m_filters) {
-        if (obs_source_active(fi.itemSrc)) {
-            setActiveFilter(fi);
+        if (fi.isActive()) {
+            m_activeFilter = fi;
         }
     }
 }
+
 
 void PixelMatcher::periodicUpdate()
 {
@@ -197,3 +181,151 @@ void PixelMatcher::periodicUpdate()
     updateActiveFilter();
 }
 
+//======================================
+
+
+void PmFilterRef::setScene(obs_source_t *sceneSrc)
+{
+    if (m_sceneSrc) {
+        obs_source_release(m_sceneSrc);
+    }
+    m_sceneSrc = sceneSrc;
+    if (m_sceneSrc) {
+        obs_source_addref(m_sceneSrc);
+    }
+
+    if (m_scene) {
+        obs_scene_release(m_scene);
+    }
+    if (m_sceneSrc) {
+        m_scene = obs_scene_from_source(m_sceneSrc);
+    }
+    if (m_scene) {
+        obs_scene_addref(m_scene);
+    }
+}
+
+void PmFilterRef::setItem(obs_scene_item *item)
+{
+    m_sceneItem = item;
+
+    if (m_itemSrc) {
+        obs_source_release(m_itemSrc);
+    }
+    if (m_sceneItem) {
+        m_itemSrc = obs_sceneitem_get_source(item);
+    }
+    if (m_itemSrc) {
+        obs_source_addref(m_itemSrc);
+    }
+}
+
+void PmFilterRef::setFilter(obs_source_t *filter)
+{
+    if (m_filter) {
+        obs_source_release(m_filter);
+    }
+    m_filter = filter;
+    if (m_filter) {
+        obs_source_addref(m_filter);
+    }
+}
+
+void PmFilterRef::lockData() const
+{
+    auto data = filterData();
+    pthread_mutex_lock(&data->mutex);
+}
+
+void PmFilterRef::unlockData() const
+{
+    auto data = filterData();
+    pthread_mutex_unlock(&data->mutex);
+}
+
+PmFilterRef::PmFilterRef(const PmFilterRef &other)
+{
+    setScene(other.sceneSrc());
+    setItem(other.sceneItem());
+    setFilter(other.filter());
+}
+
+void PmFilterRef::reset()
+{
+    if (m_filter) {
+        obs_source_release(m_filter);
+        m_filter = nullptr;
+    }
+    if (m_itemSrc) {
+        obs_source_release(m_itemSrc);
+        m_itemSrc = nullptr;
+    }
+    m_sceneItem = nullptr;
+    if (m_scene) {
+        obs_scene_release(m_scene);
+    }
+    if (m_sceneSrc) {
+        obs_source_release(m_sceneSrc);
+    }
+}
+
+pixel_match_filter_data *PmFilterRef::filterData() const
+{
+    if (!m_filter) {
+        return nullptr;
+    } else {
+        return static_cast<pixel_match_filter_data*>(
+            obs_obj_get_data(m_filter));
+    }
+}
+
+bool PmFilterRef::isActive() const
+{
+    return m_itemSrc != nullptr && obs_source_active(m_itemSrc);
+}
+
+uint32_t PmFilterRef::filterSrcWidth() const
+{
+    return m_filter ? obs_source_get_width(m_filter) : 0;
+}
+
+uint32_t PmFilterRef::filterSrcHeight() const
+{
+    return m_filter ? obs_source_get_height(m_filter) : 0;
+}
+
+uint32_t PmFilterRef::filterDataWidth() const
+{
+    auto data = filterData();
+    uint32_t ret = 0;
+    if (data) {
+        lockData();
+        ret = data->cx;
+        unlockData();
+    }
+    return ret;
+}
+
+uint32_t PmFilterRef::filterDataHeight() const
+{
+    auto data = filterData();
+    uint32_t ret = 0;
+    if (data) {
+        lockData();
+        ret = data->cy;
+        unlockData();
+    }
+    return ret;
+}
+
+uint32_t PmFilterRef::numMatched() const
+{
+    auto data = filterData();
+    uint32_t ret = 0;
+    if (data) {
+        lockData();
+        ret = data->num_matched;
+        unlockData();
+    }
+    return ret;
+}
