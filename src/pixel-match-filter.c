@@ -27,7 +27,6 @@ static void pixel_match_filter_destroy(void *data)
 static void *pixel_match_filter_create(
     obs_data_t *settings, obs_source_t *context)
 {
-    pthread_mutexattr_t mutex_attr;
     struct pixel_match_filter_data *filter = bzalloc(sizeof(*filter));
     char *effect_path = obs_module_file("pixel_match.effect");
 
@@ -35,9 +34,7 @@ static void *pixel_match_filter_create(
     filter->context = context;
     filter->settings = settings;
     filter->debug = true;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&filter->mutex, &mutex_attr);
+    pthread_mutex_init(&filter->mutex, NULL);
 
     // will be made dynamic
     gs_image_file_init(&filter->match_file, "/home/admin/Documents/mask2.png");
@@ -185,7 +182,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     if (!obs_source_process_filter_begin(
             filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING))
-        return;
+        goto done;
 
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_int(filter->param_per_pixel_err_thresh,
@@ -199,9 +196,51 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         gs_effect_get_atomic_uint_result(filter->result_match_counter);
 
     obs_data_set_int(filter->settings, "num_matched", filter->num_matched);
-    pthread_mutex_unlock(&filter->mutex);
 
-#if 0
+done:
+    pthread_mutex_unlock(&filter->mutex);
+    return;
+
+    UNUSED_PARAMETER(effect);
+}
+
+static uint32_t pixel_match_filter_width(void *data)
+{
+    struct pixel_match_filter_data *filter = data;
+    obs_source_t *parent = obs_filter_get_parent(filter->context);
+    return obs_source_get_base_width(parent);
+}
+
+static uint32_t pixel_match_filter_height(void *data)
+{
+    struct pixel_match_filter_data *filter = data;
+    obs_source_t *parent = obs_filter_get_parent(filter->context);
+    return obs_source_get_base_height(parent);
+}
+
+struct obs_source_info pixel_match_filter = {
+    .id = PIXEL_MATCH_FILTER_ID,
+    .type = OBS_SOURCE_TYPE_FILTER,
+    .output_flags = OBS_SOURCE_VIDEO,
+    .get_name = pixel_match_filter_get_name,
+    .create = pixel_match_filter_create,
+    .destroy = pixel_match_filter_destroy,
+    .update = pixel_match_filter_update,
+    .get_properties = pixel_match_filter_properties,
+    .get_defaults = pixel_match_filter_defaults,
+    //.video_tick = pixel_match_filter_tick,
+    .video_render = pixel_match_filter_render,
+    .get_width = pixel_match_filter_width,
+    .get_height = pixel_match_filter_height,
+};
+
+
+//pthread_mutexattr_t mutex_attr;
+//pthread_mutexattr_init(&mutex_attr);
+//pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+//pthread_mutex_init(&filter->mutex, &mutex_attr);
+
+    #if 0
     // passthrough
     obs_source_skip_video_filter(filter->context);
 
@@ -250,37 +289,3 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         }
     }
 #endif
-
-    UNUSED_PARAMETER(effect);
-    return;
-}
-
-static uint32_t pixel_match_filter_width(void *data)
-{
-    struct pixel_match_filter_data *filter = data;
-    obs_source_t *parent = obs_filter_get_parent(filter->context);
-    return obs_source_get_base_width(parent);
-}
-
-static uint32_t pixel_match_filter_height(void *data)
-{
-    struct pixel_match_filter_data *filter = data;
-    obs_source_t *parent = obs_filter_get_parent(filter->context);
-    return obs_source_get_base_height(parent);
-}
-
-struct obs_source_info pixel_match_filter = {
-    .id = PIXEL_MATCH_FILTER_ID,
-    .type = OBS_SOURCE_TYPE_FILTER,
-    .output_flags = OBS_SOURCE_VIDEO,
-    .get_name = pixel_match_filter_get_name,
-    .create = pixel_match_filter_create,
-    .destroy = pixel_match_filter_destroy,
-    .update = pixel_match_filter_update,
-    .get_properties = pixel_match_filter_properties,
-    .get_defaults = pixel_match_filter_defaults,
-    //.video_tick = pixel_match_filter_tick,
-    .video_render = pixel_match_filter_render,
-    .get_width = pixel_match_filter_width,
-    .get_height = pixel_match_filter_height,
-};

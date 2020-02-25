@@ -19,23 +19,53 @@ PixelMatchDebugTab::PixelMatchDebugTab(
     QGridLayout *layout = new QGridLayout;
     int row = 0;
 
+    QSizePolicy fixedPolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    QSizePolicy minimumPolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
     // filters
     QLabel *filtersLabel = new QLabel("Filters: ", this);
-    filtersLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    filtersLabel->setSizePolicy(fixedPolicy);
     layout->addWidget(filtersLabel, row, 0);
 
     m_filtersStatusDisplay = new QLabel("--", this);
-    m_filtersStatusDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    m_filtersStatusDisplay->setSizePolicy(minimumPolicy);
     layout->addWidget(m_filtersStatusDisplay, row++, 1);
 
     // active filter
     QLabel *activeFilterLabel = new QLabel("Active Filter: ", this);
-    activeFilterLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    activeFilterLabel->setSizePolicy(fixedPolicy);
     layout->addWidget(activeFilterLabel, row, 0);
 
     m_activeFilterDisplay = new QLabel("--", this);
-    m_activeFilterDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    m_activeFilterDisplay->setSizePolicy(minimumPolicy);
     layout->addWidget(m_activeFilterDisplay, row++, 1);
+
+    // source/filter resolution
+    QLabel *sourceResLabel = new QLabel("Source Resolution: ", this);
+    sourceResLabel->setSizePolicy(fixedPolicy);
+    layout->addWidget(sourceResLabel, row, 0);
+
+    m_sourceResDisplay = new QLabel("--", this);
+    m_sourceResDisplay->setSizePolicy(minimumPolicy);
+    layout->addWidget(m_sourceResDisplay, row++, 1);
+
+    // filter data resolution
+    QLabel *filterDataResLabel = new QLabel("Data Resolution ", this);
+    filterDataResLabel->setSizePolicy(fixedPolicy);
+    layout->addWidget(filterDataResLabel, row, 0);
+
+    m_filterDataResDisplay = new QLabel("--");
+    m_filterDataResDisplay->setSizePolicy(minimumPolicy);
+    layout->addWidget(m_filterDataResDisplay, row++, 1);
+
+    // number matched
+    QLabel *numMatchedLabel = new QLabel("Number Matched ", this);
+    numMatchedLabel->setSizePolicy(fixedPolicy);
+    layout->addWidget(numMatchedLabel, row, 0);
+
+    m_matchCountDisplay = new QLabel("--", this);
+    m_matchCountDisplay->setSizePolicy(minimumPolicy);
+    layout->addWidget(m_matchCountDisplay, row++, 1);
 
     // find button
     QPushButton *scenesInfoButton = new QPushButton("Scenes Info", this);
@@ -90,4 +120,25 @@ void PixelMatchDebugTab::periodicUpdate()
         oss << "no filter is active.";
     }
     m_activeFilterDisplay->setText(oss.str().data());
+
+    auto activeFilter = m_pixelMatcher->activeFilterRef();
+    if (activeFilter.isValid()) {
+        oss.str("");
+        oss << activeFilter.filterSrcWidth() << " x "
+            << activeFilter.filterSrcHeight();
+        m_sourceResDisplay->setText(oss.str().data());
+
+        oss.str("");
+        oss << activeFilter.filterDataWidth() << " x "
+            << activeFilter.filterDataHeight();
+        m_filterDataResDisplay->setText(oss.str().data());
+
+        oss.str("");
+        oss << m_matchCountDisplay;
+        m_matchCountDisplay->setText(oss.str().data());
+    } else {
+        m_sourceResDisplay->setText("--");
+        m_filterDataResDisplay->setText("--");
+        m_matchCountDisplay->setText("--");
+    }
 }
