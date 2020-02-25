@@ -24,14 +24,12 @@ struct pixel_match_filter_data
     gs_eparam_t *param_match_counter;
     gs_eresult_t *result_match_counter;
 
-    // match stuff: image
+    // match stuff
     gs_image_file_t match_file;
     int roi_left;
     int roi_bottom;
     int roi_right;
     int roi_top;
-
-    // match stuff:
     int per_pixel_err_thresh;
     int total_match_thresh;
 

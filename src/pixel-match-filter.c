@@ -173,10 +173,11 @@ static void pixel_match_filter_tick(void *data, float seconds)
 static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
     struct pixel_match_filter_data *filter = data;
+    obs_source_t *target, *parent;
 
     pthread_mutex_lock(&filter->mutex);
-    obs_source_t *target = obs_filter_get_target(filter->context);
-    obs_source_t *parent = obs_filter_get_parent(filter->context);
+    target = obs_filter_get_target(filter->context);
+    parent = obs_filter_get_parent(filter->context);
     if (target && parent) {
         filter->cx = obs_source_get_base_width(target);
         filter->cy = obs_source_get_base_height(target);
