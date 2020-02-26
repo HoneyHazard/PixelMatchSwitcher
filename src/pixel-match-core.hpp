@@ -32,7 +32,6 @@ public:
 
     std::vector<PmFilterRef> filters() const;
     PmFilterRef activeFilterRef() const;
-
     std::string scenesInfo() const;
 
 private slots:
