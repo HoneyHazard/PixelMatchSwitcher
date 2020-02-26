@@ -18,7 +18,7 @@ private slots:
     void periodicUpdate();
 
 private:
-    PmCore *m_pixelMatcher;
+    PmCore *m_core;
 
     QLabel *m_filtersStatusDisplay;
     QLabel *m_activeFilterDisplay;

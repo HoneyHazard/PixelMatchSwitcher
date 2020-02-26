@@ -14,7 +14,7 @@
 PixelMatchDebugTab::PixelMatchDebugTab(
     PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
-, m_pixelMatcher(pixelMatcher)
+, m_core(pixelMatcher)
 {
     QGridLayout *layout = new QGridLayout;
     int row = 0;
@@ -92,7 +92,7 @@ PixelMatchDebugTab::PixelMatchDebugTab(
 
 void PixelMatchDebugTab::scenesInfoReleased()
 {
-    std::string str = m_pixelMatcher->scenesInfo();
+    std::string str = m_core->scenesInfo();
 
     m_textDisplay->setText(str.data());
 }
@@ -102,7 +102,7 @@ void PixelMatchDebugTab::periodicUpdate()
     if (!isVisible()) return;
 
     std::ostringstream oss;
-    auto filters = m_pixelMatcher->filters();
+    auto filters = m_core->filters();
     if (filters.empty()) {
         oss << "no filters found.";
     } else {
@@ -111,7 +111,7 @@ void PixelMatchDebugTab::periodicUpdate()
     m_filtersStatusDisplay->setText(oss.str().data());
 
     oss.str("");
-    auto fi = m_pixelMatcher->activeFilterRef();
+    auto fi = m_core->activeFilterRef();
     if (fi.isActive()) {
         oss << obs_source_get_name(fi.sceneSrc()) << " -> "
             << obs_source_get_name(fi.itemSrc()) << " -> "
@@ -121,7 +121,7 @@ void PixelMatchDebugTab::periodicUpdate()
     }
     m_activeFilterDisplay->setText(oss.str().data());
 
-    auto activeFilter = m_pixelMatcher->activeFilterRef();
+    auto activeFilter = m_core->activeFilterRef();
     if (activeFilter.isValid()) {
         oss.str("");
         oss << activeFilter.filterSrcWidth() << " x "

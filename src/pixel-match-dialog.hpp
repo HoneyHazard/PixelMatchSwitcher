@@ -21,5 +21,5 @@ private:
 
     QLabel *m_testLabel;
     OBSQTDisplay *m_filterDisplay;
-    PmCore *m_pixelMatcher;
+    PmCore *m_core;
 };

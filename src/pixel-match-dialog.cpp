@@ -15,7 +15,7 @@
 
 PixelMatchDialog::PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent)
 : QDialog(parent)
-, m_pixelMatcher(pixelMatcher)
+, m_core(pixelMatcher)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
 
@@ -44,7 +44,7 @@ PixelMatchDialog::PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent)
     setLayout(topLevelLayout);
 
     // connections
-    connect(m_pixelMatcher, &PmCore::newFrameImage,
+    connect(m_core, &PmCore::newFrameImage,
             this, &PixelMatchDialog::onNewFrameImage);
 
     auto addDrawCallback = [this]() {
@@ -65,7 +65,7 @@ void PixelMatchDialog::onNewFrameImage()
 void PixelMatchDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
     auto dialog = static_cast<PixelMatchDialog*>(data);
-    auto filterRef = dialog->m_pixelMatcher->activeFilterRef();
+    auto filterRef = dialog->m_core->activeFilterRef();
     auto renderSrc = filterRef.filter();
     if (!renderSrc) return;
 
