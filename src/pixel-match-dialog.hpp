@@ -2,7 +2,7 @@
 
 #include <QDialog>
 
-class PixelMatcher;
+class PmCore;
 class QLabel;
 class OBSQTDisplay;
 
@@ -11,7 +11,7 @@ class PixelMatchDialog : public QDialog
     Q_OBJECT
 
 public:
-    PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent);
+    PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent);
 
 private slots:
     void onNewFrameImage();
@@ -21,5 +21,5 @@ private:
 
     QLabel *m_testLabel;
     OBSQTDisplay *m_filterDisplay;
-    PixelMatcher *m_pixelMatcher;
+    PmCore *m_pixelMatcher;
 };

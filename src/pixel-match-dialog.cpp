@@ -13,7 +13,7 @@
 #include <QTabWidget>
 #include <QLabel>
 
-PixelMatchDialog::PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent)
+PixelMatchDialog::PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent)
 : QDialog(parent)
 , m_pixelMatcher(pixelMatcher)
 {
@@ -44,7 +44,7 @@ PixelMatchDialog::PixelMatchDialog(PixelMatcher *pixelMatcher, QWidget *parent)
     setLayout(topLevelLayout);
 
     // connections
-    connect(m_pixelMatcher, &PixelMatcher::newFrameImage,
+    connect(m_pixelMatcher, &PmCore::newFrameImage,
             this, &PixelMatchDialog::onNewFrameImage);
 
     auto addDrawCallback = [this]() {

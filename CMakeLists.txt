@@ -19,15 +19,11 @@ endif()
 
 find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
-
-#find_path(LIBOBS_OPENGL_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
-#find_path(LIBOBS_GLAD_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
-#find_file(LIBOBS_GLAD_LIB NAMES libobsglad.* HINTS ${LIBSOBS_LIB})
-
 find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
 
 set(pixel-match-switcher_HEADERS
         src/pixel-match-filter.h
+        src/pixel-match-filter-ref.hpp
         src/pixel-match-core.hpp
         src/pixel-match-dialog.hpp
         src/pixel-match-debug-tab.hpp
@@ -38,6 +34,7 @@ set(pixel-match-switcher_HEADERS
 set(pixel-match-switcher_SOURCES
         src/pixel-match-switcher.c
         src/pixel-match-filter.c
+        src/pixel-match-filter-ref.cpp
         src/pixel-match-core.cpp
         src/pixel-match-dialog.cpp
         src/pixel-match-debug-tab.cpp

@@ -12,7 +12,7 @@
 #include <sstream>
 
 PixelMatchDebugTab::PixelMatchDebugTab(
-    PixelMatcher *pixelMatcher, QWidget *parent)
+    PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
 , m_pixelMatcher(pixelMatcher)
 {

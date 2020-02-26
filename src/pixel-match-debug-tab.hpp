@@ -4,21 +4,21 @@
 
 class QLabel;
 class QTextEdit;
-class PixelMatcher;
+class PmCore;
 
 class PixelMatchDebugTab : public QWidget
 {
     Q_OBJECT
 
 public:
-    PixelMatchDebugTab(PixelMatcher *pixelMatcher, QWidget *parent);
+    PixelMatchDebugTab(PmCore *pixelMatcher, QWidget *parent);
 
 private slots:
     void scenesInfoReleased();
     void periodicUpdate();
 
 private:
-    PixelMatcher *m_pixelMatcher;
+    PmCore *m_pixelMatcher;
 
     QLabel *m_filtersStatusDisplay;
     QLabel *m_activeFilterDisplay;
