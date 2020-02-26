@@ -122,6 +122,8 @@ void PixelMatcher::scanScenes()
     m_filters.clear();
     m_filters.push_back(PmFilterRef());
 
+    // TODO: interfacing with OBS enumeration is kind of hacky, though not
+    //       without a reason. for sure, this can be cleaned up.
     for (size_t i = 0; i < scenes.sources.num; ++i) {
         auto &fi = m_filters.back();
         fi.setScene(scenes.sources.array[i]);
@@ -263,9 +265,11 @@ void PmFilterRef::reset()
     m_sceneItem = nullptr;
     if (m_scene) {
         obs_scene_release(m_scene);
+        m_scene = nullptr;
     }
     if (m_sceneSrc) {
         obs_source_release(m_sceneSrc);
+        m_sceneSrc = nullptr;
     }
 }
 
