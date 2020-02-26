@@ -134,7 +134,7 @@ void PixelMatchDebugTab::periodicUpdate()
         m_filterDataResDisplay->setText(oss.str().data());
 
         oss.str("");
-        oss << m_matchCountDisplay;
+        oss << activeFilter.numMatched();
         m_matchCountDisplay->setText(oss.str().data());
     } else {
         m_sourceResDisplay->setText("--");
