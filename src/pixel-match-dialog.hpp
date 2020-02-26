@@ -6,12 +6,12 @@ class PmCore;
 class QLabel;
 class OBSQTDisplay;
 
-class PixelMatchDialog : public QDialog
+class PmDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent);
+    PmDialog(PmCore *pixelMatcher, QWidget *parent);
 
 private slots:
     void onNewFrameImage();

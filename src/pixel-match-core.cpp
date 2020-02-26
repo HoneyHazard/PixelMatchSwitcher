@@ -36,7 +36,7 @@ PmCore::PmCore()
 
     // parent the dialog to the main window
     //auto mainWindow = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    m_dialog = new PixelMatchDialog(this, nullptr);
+    m_dialog = new PmDialog(this, nullptr);
 
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(

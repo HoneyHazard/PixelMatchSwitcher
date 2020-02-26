@@ -6,12 +6,12 @@ class QLabel;
 class QTextEdit;
 class PmCore;
 
-class PixelMatchDebugTab : public QWidget
+class PmDebugTab : public QWidget
 {
     Q_OBJECT
 
 public:
-    PixelMatchDebugTab(PmCore *pixelMatcher, QWidget *parent);
+    PmDebugTab(PmCore *pixelMatcher, QWidget *parent);
 
 private slots:
     void scenesInfoReleased();

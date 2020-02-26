@@ -11,7 +11,7 @@
 
 #include <sstream>
 
-PixelMatchDebugTab::PixelMatchDebugTab(
+PmDebugTab::PmDebugTab(
     PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
 , m_core(pixelMatcher)
@@ -70,7 +70,7 @@ PixelMatchDebugTab::PixelMatchDebugTab(
     // find button
     QPushButton *scenesInfoButton = new QPushButton("Scenes Info", this);
     connect(scenesInfoButton, &QPushButton::released,
-            this, &PixelMatchDebugTab::scenesInfoReleased);
+            this, &PmDebugTab::scenesInfoReleased);
     layout->addWidget(scenesInfoButton, row++, 0);
 
     // text display
@@ -86,18 +86,18 @@ PixelMatchDebugTab::PixelMatchDebugTab(
     // periodic update timer
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout,
-            this, &PixelMatchDebugTab::periodicUpdate);
+            this, &PmDebugTab::periodicUpdate);
     timer->start(100);
 }
 
-void PixelMatchDebugTab::scenesInfoReleased()
+void PmDebugTab::scenesInfoReleased()
 {
     std::string str = m_core->scenesInfo();
 
     m_textDisplay->setText(str.data());
 }
 
-void PixelMatchDebugTab::periodicUpdate()
+void PmDebugTab::periodicUpdate()
 {
     if (!isVisible()) return;
 

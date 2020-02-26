@@ -13,7 +13,7 @@
 #include <QTabWidget>
 #include <QLabel>
 
-PixelMatchDialog::PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent)
+PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 : QDialog(parent)
 , m_core(pixelMatcher)
 {
@@ -32,7 +32,7 @@ PixelMatchDialog::PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent)
     mainTab->setLayout(mainTabLayout);
 
     // debug tab
-    PixelMatchDebugTab *debugTab = new PixelMatchDebugTab(pixelMatcher, this);
+    PmDebugTab *debugTab = new PmDebugTab(pixelMatcher, this);
 
     // tab widget
     QTabWidget *tabWidget = new QTabWidget(this);
@@ -45,26 +45,26 @@ PixelMatchDialog::PixelMatchDialog(PmCore *pixelMatcher, QWidget *parent)
 
     // connections
     connect(m_core, &PmCore::newFrameImage,
-            this, &PixelMatchDialog::onNewFrameImage);
+            this, &PmDialog::onNewFrameImage);
 
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
-                          PixelMatchDialog::drawPreview,
+                          PmDialog::drawPreview,
                           this);
     };
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
         addDrawCallback);
 }
 
-void PixelMatchDialog::onNewFrameImage()
+void PmDialog::onNewFrameImage()
 {
     //auto pixMap = QPixmap::fromImage(m_pixelMatcher->frameImage());
     //m_testLabel->setPixmap(pixMap);
 }
 
-void PixelMatchDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
+void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
-    auto dialog = static_cast<PixelMatchDialog*>(data);
+    auto dialog = static_cast<PmDialog*>(data);
     auto filterRef = dialog->m_core->activeFilterRef();
     auto renderSrc = filterRef.filter();
     if (!renderSrc) return;

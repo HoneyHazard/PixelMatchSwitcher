@@ -16,7 +16,7 @@ extern "C" void free_pixel_match_switcher();
 struct obs_scene_item;
 struct obs_scene;
 struct pixel_match_filter_data;
-class PixelMatchDialog;
+class PmDialog;
 
 class PmCore : public QObject
 {
@@ -40,7 +40,7 @@ private slots:
 
 private:
     static PmCore *m_instance;
-    PixelMatchDialog *m_dialog;
+    PmDialog *m_dialog;
 
     void scanScenes();
     void updateActiveFilter();
