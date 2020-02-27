@@ -15,17 +15,16 @@ extern "C" void free_pixel_match_switcher();
 
 struct obs_scene_item;
 struct obs_scene;
-struct pixel_match_filter_data;
+struct pm_filter_data;
 class PmDialog;
 
 class PmCore : public QObject
 {
     Q_OBJECT
+    // interactions with the C components
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
-
-signals:
-    void newFrameImage();
+    friend void on_frame_processed(struct pm_filter_data* filter);
 
 public:
     PmCore();
@@ -34,10 +33,15 @@ public:
     PmFilterRef activeFilterRef() const;
     std::string scenesInfo() const;
 
+signals:
+    void sigFrameProcessed();
+
 private slots:
-    void periodicUpdate();
+    void onPeriodicUpdate();
+    void onFrameProcessed();
 
 private:
+
     static PmCore *m_instance;
     PmDialog *m_dialog;
 

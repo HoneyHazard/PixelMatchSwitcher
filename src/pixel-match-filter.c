@@ -10,7 +10,7 @@ static const char *pixel_match_filter_get_name(void* unused)
 
 static void pixel_match_filter_destroy(void *data)
 {
-    struct pixel_match_filter_data *filter = data;
+    struct pm_filter_data *filter = data;
 
     pthread_mutex_lock(&filter->mutex);
     obs_enter_graphics();
@@ -27,10 +27,10 @@ static void pixel_match_filter_destroy(void *data)
 static void *pixel_match_filter_create(
     obs_data_t *settings, obs_source_t *context)
 {
-    struct pixel_match_filter_data *filter = bzalloc(sizeof(*filter));
+    struct pm_filter_data *filter = bzalloc(sizeof(*filter));
     char *effect_path = obs_module_file("pixel_match.effect");
 
-    memset(filter, 0, sizeof(struct pixel_match_filter_data));
+    memset(filter, 0, sizeof(struct pm_filter_data));
     filter->context = context;
     filter->settings = settings;
     filter->debug = true;
@@ -81,7 +81,7 @@ error:
 
 static void pixel_match_filter_update(void *data, obs_data_t *settings)
 {
-    struct pixel_match_filter_data *filter = data;
+    struct pm_filter_data *filter = data;
 
     pthread_mutex_lock(&filter->mutex);
     filter->roi_left = (int)obs_data_get_int(settings, "roi_left");
@@ -110,8 +110,8 @@ static bool pixel_match_prop_changed_callback(
 
 static obs_properties_t *pixel_match_filter_properties(void *data)
 {
-    struct pixel_match_filter_data *filter
-        = (struct pixel_match_filter_data*)data;
+    struct pm_filter_data *filter
+        = (struct pm_filter_data*)data;
 
     obs_properties_t *properties = obs_properties_create();
 
@@ -169,7 +169,7 @@ static void pixel_match_filter_tick(void *data, float seconds)
 
 static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
-    struct pixel_match_filter_data *filter = data;
+    struct pm_filter_data *filter = data;
     obs_source_t *target, *parent;
 
     pthread_mutex_lock(&filter->mutex);
@@ -181,8 +181,11 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     }
 
     if (!obs_source_process_filter_begin(
-            filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING))
+            filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+        blog(LOG_ERROR,
+            "pm_filter_data: obs_source_process_filter_begin failed.");
         goto done;
+    }
 
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_int(filter->param_per_pixel_err_thresh,
@@ -195,10 +198,14 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     filter->num_matched =
         gs_effect_get_atomic_uint_result(filter->result_match_counter);
 
-    obs_data_set_int(filter->settings, "num_matched", filter->num_matched);
+    //obs_data_set_int(filter->settings, "num_matched", filter->num_matched);
 
 done:
     pthread_mutex_unlock(&filter->mutex);
+
+    if (filter->on_frame_processed)
+        filter->on_frame_processed(filter);
+
     return;
 
     UNUSED_PARAMETER(effect);
@@ -206,14 +213,14 @@ done:
 
 static uint32_t pixel_match_filter_width(void *data)
 {
-    struct pixel_match_filter_data *filter = data;
+    struct pm_filter_data *filter = data;
     obs_source_t *parent = obs_filter_get_parent(filter->context);
     return obs_source_get_base_width(parent);
 }
 
 static uint32_t pixel_match_filter_height(void *data)
 {
-    struct pixel_match_filter_data *filter = data;
+    struct pm_filter_data *filter = data;
     obs_source_t *parent = obs_filter_get_parent(filter->context);
     return obs_source_get_base_height(parent);
 }

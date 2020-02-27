@@ -88,12 +88,12 @@ void PmFilterRef::reset()
     }
 }
 
-pixel_match_filter_data *PmFilterRef::filterData() const
+pm_filter_data *PmFilterRef::filterData() const
 {
     if (!m_filter) {
         return nullptr;
     } else {
-        return static_cast<pixel_match_filter_data*>(
+        return static_cast<pm_filter_data*>(
             obs_obj_get_data(m_filter));
     }
 }

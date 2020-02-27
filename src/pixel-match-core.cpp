@@ -13,6 +13,7 @@
 #include <QMainWindow>
 #include <QApplication>
 #include <QTimer>
+#include <QThread>
 
 PmCore* PmCore::m_instance = nullptr;
 
@@ -27,12 +28,30 @@ void free_pixel_match_switcher()
     PmCore::m_instance = nullptr;
 }
 
+void on_frame_processed(struct pm_filter_data *filter)
+{
+    auto core = PmCore::m_instance;
+    if (core) {
+        QMutexLocker locker(&core->m_mutex);
+        const auto &fr = core->m_activeFilter;
+        if (fr.filterData() == filter) {
+            emit core->sigFrameProcessed();
+        }
+    }
+}
+
 //------------------------------------
 
 PmCore::PmCore()
+//: m_mutex(QMutex::Recursive)
 {
     // parent this to the app
-    setParent(qApp);
+    //setParent(qApp);
+
+    // move to own thread
+    QThread *pmThread = new QThread(qApp);
+    pmThread->setObjectName("pixel match core thread");
+    moveToThread(pmThread);
 
     // parent the dialog to the main window
     //auto mainWindow = static_cast<QMainWindow*>(obs_frontend_get_main_window());
@@ -44,10 +63,16 @@ PmCore::PmCore()
             obs_module_text("Pixel Match Switcher")));
     connect(action, &QAction::triggered, m_dialog, &QDialog::show);
 
-    // periodic update timer
+    // periodic update timer: process in the UI thread
     QTimer *periodicUpdateTimer = new QTimer(this);
     connect(periodicUpdateTimer, &QTimer::timeout,
-            this, &PmCore::periodicUpdate);
+            this, &PmCore::onPeriodicUpdate, Qt::DirectConnection);
+
+    // fast reaction signal/slot: process in the core's thread
+    connect(this, &PmCore::sigFrameProcessed,
+            this, &PmCore::onFrameProcessed, Qt::QueuedConnection);
+
+    pmThread->start();
     periodicUpdateTimer->start(100);
 }
 
@@ -165,19 +190,36 @@ void PmCore::updateActiveFilter()
         }
         if (found) return;
 
+        auto data = m_activeFilter.filterData();
+        if (data) {
+                pthread_mutex_lock(&data->mutex);
+                data->on_frame_processed = nullptr;
+                pthread_mutex_unlock(&data->mutex);
+        }
         m_activeFilter.reset();
     }
     for (const auto &fi: m_filters) {
         if (fi.isActive()) {
             m_activeFilter = fi;
+            auto data = m_activeFilter.filterData();
+            if (data) {
+                pthread_mutex_lock(&data->mutex);
+                data->on_frame_processed = on_frame_processed;
+                pthread_mutex_unlock(&data->mutex);
+            }
         }
     }
 }
 
 
-void PmCore::periodicUpdate()
+void PmCore::onPeriodicUpdate()
 {
     scanScenes();
     updateActiveFilter();
+}
+
+void PmCore::onFrameProcessed()
+{
+
 }
 

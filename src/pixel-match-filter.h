@@ -10,7 +10,7 @@
 
 #define READBACK 1
 
-struct pixel_match_filter_data
+struct pm_filter_data
 {
     // plugin basics
     obs_source_t *context;
@@ -41,4 +41,7 @@ struct pixel_match_filter_data
 
     // debug and visualization
     bool debug;
+
+    // callbacks for fast reactions
+    void (*on_frame_processed)(struct pm_filter_data *sender);
 };

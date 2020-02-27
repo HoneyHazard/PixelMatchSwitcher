@@ -11,6 +11,7 @@ https://docs.google.com/document/d/1k657WGIwOCGDUhERAb_LpTHWAqHb9IHX43TfSKo6f5A/
 - Clone the PixelMatchSwitcher repository
 - Use cmake, cmake-gui, or any editor that works with CMakeLists.txt to configure
 - Set the variables, if not auto-configured:
+- TODO: List packages needed to build: Qt, libXScrnSaver-devel, etc.
 ```
 LIBOBS_FRONTEND_API_LIB=/usr/local/lib/libobs-frontend-api.so
 LIBOBS_FRONTEND_INCLUDE_DIR=/home/user/obs-studio/UI/obs-frontend-api/
