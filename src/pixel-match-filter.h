@@ -18,18 +18,24 @@ struct pm_filter_data
     obs_data_t *settings;
 
     // shader parameters and results
+    gs_eparam_t *param_roi_left;
+    gs_eparam_t *param_roi_bottom;
+    gs_eparam_t *param_roi_right;
+    gs_eparam_t *param_roi_top;
     gs_eparam_t *param_per_pixel_err_thresh;
     gs_eparam_t *param_debug;
     gs_eparam_t *param_match_img;
     gs_eparam_t *param_match_counter;
     gs_eresult_t *result_match_counter;
 
-    // match stuff
-    gs_image_file_t match_file;
+    // match image
+    void *match_img_data;
+    int match_img_width, match_img_height;
+    gs_texture_t *match_img_tex;
+
+    // match configuration
     int roi_left;
     int roi_bottom;
-    int roi_right;
-    int roi_top;
     int per_pixel_err_thresh;
     int total_match_thresh;
 

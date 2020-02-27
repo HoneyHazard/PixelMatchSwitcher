@@ -34,12 +34,17 @@ public:
     PmFilterRef activeFilterRef() const;
     std::string scenesInfo() const;
 
+    const QImage& qImage() { return m_qImage; }
+
 signals:
     void sigFrameProcessed();
+    void sigImgSuccess(QString filename);
+    void sigImgFailed(QString filename);
 
 private slots:
     void onPeriodicUpdate();
     void onFrameProcessed();
+    void onOpenImage(QString filename);
 
 private:
 
@@ -48,8 +53,11 @@ private:
 
     void scanScenes();
     void updateActiveFilter();
+    void supplyImageToFilter();
 
     mutable QMutex m_mutex;
     std::vector<PmFilterRef> m_filters;
     PmFilterRef m_activeFilter;
+
+    QImage m_qImage;
 };

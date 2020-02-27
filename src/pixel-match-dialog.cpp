@@ -15,6 +15,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QComboBox>
+#include <QFileDialog>
 
 #include <obs-module.h>
 
@@ -94,6 +95,12 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     };
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
+
+    // signals & slots
+    connect(m_core, &PmCore::sigImgSuccess,
+            this, &PmDialog::onImgSuccess, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigImgFailed,
+            this, &PmDialog::onImgFailed, Qt::QueuedConnection);
 }
 
 void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
@@ -126,12 +133,7 @@ void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
     gs_viewport_pop();
 }
 
-void PmDialog::onBrowseButtonReleased()
-{
-
-}
-
-void PmDialog::colorChanged(PmDialog::ColorMode mode, QColor color)
+void PmDialog::colorModeChanged(PmDialog::ColorMode mode, QColor color)
 {
     QColor bgColor = color, textColor = Qt::black;
     const QString ss;
@@ -164,5 +166,34 @@ void PmDialog::onColorComboIndexChanged()
 {
     // send color mode to core? obs data API?
     ColorMode mode = ColorMode(m_colorModeCombo->currentIndex());
-    colorChanged(mode, QColor());
+    colorModeChanged(mode, QColor());
+}
+
+void PmDialog::onBrowseButtonReleased()
+{
+    static const QString filter
+        = "JPEG (*.jpg *.jpeg);;PNG (*.png);; BMP (*.bmp);; All files (*.*)";
+
+    QString curPath = QFileInfo(m_imgPathEdit->text()).absoluteDir().path();
+
+    QString path = QFileDialog::getOpenFileName(
+        this, obs_module_text("Open an image file"), curPath,
+        filter);
+    if (path.isEmpty())
+        onImgFailed(path);
+    else
+        emit sigOpenImage(path);
+}
+
+void PmDialog::onImgSuccess(QString filename)
+{
+    m_imgPathEdit->setText(filename);
+    m_imgPathEdit->setStyleSheet("");
+}
+
+void PmDialog::onImgFailed(QString filename)
+{
+    m_imgPathEdit->setText(
+        filename.size() ? QString("[FAILED] %1").arg(filename) : "");
+    m_imgPathEdit->setStyleSheet("text-color: red");
 }

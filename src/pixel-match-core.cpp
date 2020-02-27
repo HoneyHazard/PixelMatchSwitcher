@@ -14,6 +14,7 @@
 #include <QApplication>
 #include <QTimer>
 #include <QThread>
+#include <QTextStream>
 
 PmCore* PmCore::m_instance = nullptr;
 
@@ -53,9 +54,12 @@ PmCore::PmCore()
     pmThread->setObjectName("pixel match core thread");
     moveToThread(pmThread);
 
+    // main UI dialog
     // parent the dialog to the main window
     //auto mainWindow = static_cast<QMainWindow*>(obs_frontend_get_main_window());
     m_dialog = new PmDialog(this, nullptr);
+    connect(m_dialog, &PmDialog::sigOpenImage,
+            this, &PmCore::onOpenImage, Qt::QueuedConnection);
 
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
@@ -209,11 +213,12 @@ void PmCore::updateActiveFilter()
                 pthread_mutex_lock(&data->mutex);
                 data->on_frame_processed = on_frame_processed;
                 pthread_mutex_unlock(&data->mutex);
+                if (!m_qImage.isNull())
+                    supplyImageToFilter();
             }
         }
     }
 }
-
 
 void PmCore::onPeriodicUpdate()
 {
@@ -226,3 +231,46 @@ void PmCore::onFrameProcessed()
 
 }
 
+void PmCore::onOpenImage(QString filename)
+{
+    QImage imgIn(filename);
+    if (imgIn.isNull()) {
+        blog(LOG_WARNING, "Unable to open filename: %s",
+             filename.toUtf8().constData());
+        emit sigImgFailed(filename);
+        return;
+    }
+
+    QMutexLocker locker(&m_mutex);
+    m_qImage = imgIn.convertToFormat(QImage::Format_ARGB32);
+    if (m_qImage.isNull()) {
+        blog(LOG_WARNING, "Image conversion failed: %s",
+             filename.toUtf8().constData());
+        emit sigImgFailed(filename);
+        return;
+    }
+
+    supplyImageToFilter();
+    emit sigImgSuccess(filename);
+}
+
+void PmCore::supplyImageToFilter()
+{
+    auto filterData = m_activeFilter.filterData();
+    if (filterData) {
+        pthread_mutex_lock(&filterData->mutex);
+        if (filterData->match_img_data) {
+            bfree(filterData->match_img_data);
+        }
+        size_t sz = size_t(m_qImage.sizeInBytes());
+        filterData->match_img_data = bmalloc(sz);
+        memcpy(filterData->match_img_data, m_qImage.bits(), sz);
+
+        filterData->match_img_width = uint32_t(m_qImage.width());
+        filterData->match_img_height = uint32_t(m_qImage.height());
+        filterData->roi_left = 100;
+        filterData->roi_bottom = 100;
+
+        pthread_mutex_unlock(&filterData->mutex);
+    }
+}

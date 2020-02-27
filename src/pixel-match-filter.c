@@ -14,9 +14,12 @@ static void pixel_match_filter_destroy(void *data)
 
     pthread_mutex_lock(&filter->mutex);
     obs_enter_graphics();
-    gs_image_file_free(&filter->match_file);
+    if (filter->match_img_tex)
+        gs_texture_destroy(filter->match_img_tex);
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
+    if (filter->match_img_data)
+        bfree(filter->match_img_data);
     pthread_mutex_unlock(&filter->mutex);
 
     pthread_mutex_destroy(&filter->mutex);
@@ -43,23 +46,32 @@ static void *pixel_match_filter_create(
     pthread_mutex_init(&filter->mutex, NULL);
 
     // will be made dynamic
-    gs_image_file_init(&filter->match_file, "/home/admin/Documents/mask2.png");
-    if (!filter->match_file.loaded)
-        goto error;
+    //gs_image_file_init(&filter->match_file, "/home/admin/Documents/mask2.png");
+    //if (!filter->match_file.loaded)
+    //    goto error;
 
     //  gfx init
     obs_enter_graphics();
     filter->effect = gs_effect_create_from_file(effect_path, NULL);
     if (!filter->effect)
         goto gfx_fail;
-    gs_image_file_init_texture(&filter->match_file);
-    if (!filter->match_file.texture)
-        goto gfx_fail;
+    //gs_image_file_init_texture(&filter->match_file);
+    //if (!filter->match_file.texture)
+    //    goto gfx_fail;
     obs_leave_graphics();
 
     // init filters and result handles
     filter->param_match_img = gs_effect_get_param_by_name(
         filter->effect, "match_img");
+    filter->param_roi_left =
+        gs_effect_get_param_by_name(filter->effect, "roi_left");
+    filter->param_roi_bottom =
+        gs_effect_get_param_by_name(filter->effect, "roi_bottom");
+    filter->param_roi_right =
+        gs_effect_get_param_by_name(filter->effect, "roi_right");
+    filter->param_roi_top =
+        gs_effect_get_param_by_name(filter->effect, "roi_top");
+
     filter->param_per_pixel_err_thresh =
         gs_effect_get_param_by_name(filter->effect, "per_pixel_err_thresh");
     filter->param_debug
@@ -92,8 +104,6 @@ static void pixel_match_filter_update(void *data, obs_data_t *settings)
     pthread_mutex_lock(&filter->mutex);
     filter->roi_left = (int)obs_data_get_int(settings, "roi_left");
     filter->roi_bottom = (int)obs_data_get_int(settings, "roi_bottom");
-    filter->roi_right = (int)obs_data_get_int(settings, "roi_right");
-    filter->roi_top = (int)obs_data_get_int(settings, "roi_top");
     filter->per_pixel_err_thresh
         = (int)obs_data_get_int(settings, "per_pixel_err_thresh");
     filter->total_match_thresh
@@ -105,6 +115,7 @@ static void pixel_match_filter_update(void *data, obs_data_t *settings)
     UNUSED_PARAMETER(data);
 }
 
+#if 0
 static bool pixel_match_prop_changed_callback(
     obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
@@ -113,11 +124,12 @@ static bool pixel_match_prop_changed_callback(
     UNUSED_PARAMETER(settings);
     return true;
 }
+#endif
 
 static obs_properties_t *pixel_match_filter_properties(void *data)
 {
-    struct pm_filter_data *filter
-        = (struct pm_filter_data*)data;
+    //struct pm_filter_data *filter
+    //    = (struct pm_filter_data*)data;
 
     obs_properties_t *properties = obs_properties_create();
 
@@ -153,8 +165,9 @@ static obs_properties_t *pixel_match_filter_properties(void *data)
 
     // TODO scenes
     // TODO mask image
-
     return properties;
+
+    UNUSED_PARAMETER(data);
 }
 
 static void pixel_match_filter_defaults(obs_data_t *settings)
@@ -179,6 +192,18 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     obs_source_t *target, *parent;
 
     pthread_mutex_lock(&filter->mutex);
+
+    if (filter->match_img_data) {
+        if (filter->match_img_tex)
+            gs_texture_destroy(filter->match_img_tex);
+        filter->match_img_tex = gs_texture_create(
+            (uint32_t)(filter->match_img_width),
+            (uint32_t)(filter->match_img_height),
+            GS_RGBA, 0, (const uint8_t **)(&filter->match_img_data), 0);
+        bfree(filter->match_img_data);
+        filter->match_img_data = NULL;
+    }
+
     target = obs_filter_get_target(filter->context);
     parent = obs_filter_get_parent(filter->context);
     if (target && parent) {
@@ -194,10 +219,16 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     }
 
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
+    gs_effect_set_int(filter->param_roi_left, filter->roi_left);
+    gs_effect_set_int(filter->param_roi_bottom, filter->roi_bottom);
+    gs_effect_set_int(filter->param_roi_right,
+                      filter->roi_left + filter->match_img_width);
+    gs_effect_set_int(filter->param_roi_top,
+                      filter->roi_bottom + filter->match_img_height);
     gs_effect_set_int(filter->param_per_pixel_err_thresh,
                       filter->per_pixel_err_thresh);
     gs_effect_set_bool(filter->param_debug, filter->debug);
-    gs_effect_set_texture(filter->param_match_img, filter->match_file.texture);
+    gs_effect_set_texture(filter->param_match_img, filter->match_img_tex);
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->cx, filter->cy);

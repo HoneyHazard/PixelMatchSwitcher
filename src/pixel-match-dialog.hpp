@@ -16,9 +16,14 @@ class PmDialog : public QDialog
 public:
     PmDialog(PmCore *pixelMatcher, QWidget *parent);
 
+signals:
+    void sigOpenImage(QString filename);
+
 private slots:
     void onBrowseButtonReleased();
     void onColorComboIndexChanged();
+    void onImgSuccess(QString filename);
+    void onImgFailed(QString filename);
 
 private:
     enum ColorMode : int { GreenMode=0, MagentaMode=1, BlackMode=2,
@@ -27,7 +32,7 @@ private:
 
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
 
-    void colorChanged(ColorMode mode, QColor color);
+    void colorModeChanged(ColorMode mode, QColor color);
 
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;
