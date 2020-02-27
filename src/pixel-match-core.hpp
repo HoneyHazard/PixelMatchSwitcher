@@ -21,6 +21,7 @@ class PmDialog;
 class PmCore : public QObject
 {
     Q_OBJECT
+
     // interactions with the C components
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();

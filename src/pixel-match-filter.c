@@ -34,6 +34,12 @@ static void *pixel_match_filter_create(
     filter->context = context;
     filter->settings = settings;
     filter->debug = true;
+
+    //pthread_mutexattr_t mutex_attr;
+    //pthread_mutexattr_init(&mutex_attr);
+    //pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+    //pthread_mutex_init(&filter->mutex, &mutex_attr);
+
     pthread_mutex_init(&filter->mutex, NULL);
 
     // will be made dynamic

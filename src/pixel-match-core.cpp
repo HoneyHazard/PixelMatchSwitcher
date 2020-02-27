@@ -66,7 +66,7 @@ PmCore::PmCore()
     // periodic update timer: process in the UI thread
     QTimer *periodicUpdateTimer = new QTimer(this);
     connect(periodicUpdateTimer, &QTimer::timeout,
-            this, &PmCore::onPeriodicUpdate, Qt::DirectConnection);
+            this, &PmCore::onPeriodicUpdate, Qt::QueuedConnection);
 
     // fast reaction signal/slot: process in the core's thread
     connect(this, &PmCore::sigFrameProcessed,
@@ -137,18 +137,16 @@ void PmCore::scanScenes()
 {
     using namespace std;
 
-    QMutexLocker locker(&m_mutex);
-
     obs_frontend_source_list scenes = {};
     obs_frontend_get_scenes(&scenes);
 
-    m_filters.clear();
-    m_filters.push_back(PmFilterRef());
+    vector<PmFilterRef> filters;
+    filters.push_back(PmFilterRef());
 
     // TODO: interfacing with OBS enumeration is kind of hacky, though not
     //       without a reason. for sure, this can be cleaned up.
     for (size_t i = 0; i < scenes.sources.num; ++i) {
-        auto &fi = m_filters.back();
+        auto &fi = filters.back();
         fi.setScene(scenes.sources.array[i]);
         obs_scene_enum_items(
             fi.scene(),
@@ -171,10 +169,15 @@ void PmCore::scanScenes()
                 );
                 return true;
             },
-            &m_filters
+            &filters
         );
     }
-    m_filters.pop_back();
+    filters.pop_back();
+
+    {
+        QMutexLocker locker(&m_mutex);
+        m_filters = filters;
+    }
 }
 
 void PmCore::updateActiveFilter()
