@@ -27,6 +27,9 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
 
+    // init config
+    auto config = m_core->config();
+
     // main tab
     QFormLayout *mainTabLayout = new QFormLayout;
     mainTabLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
@@ -77,6 +80,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_posXBox = new QSpinBox(this);
     m_posXBox->setRange(0, 0);
     m_posXBox->setSingleStep(1);
+    m_posXBox->setValue(config.roiLeft);
     connect(m_posXBox, SIGNAL(valueChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posXBox);
@@ -86,11 +90,18 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_posYBox = new QSpinBox(this);
     m_posYBox->setRange(0, 0);
     m_posYBox->setSingleStep(1);
+    m_posYBox->setValue(config.roiBottom);
     connect(m_posYBox, SIGNAL(valueChanged(int)),
         this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posYBox);
 
     mainTabLayout->addRow(obs_module_text("Match Location: "), matchLocSubLayout);
+
+    // match result label
+    m_matchResultDisplay = new QLabel("--", this);
+    m_matchResultDisplay->setTextFormat(Qt::RichText);
+    mainTabLayout->addRow(
+        obs_module_text("Match Result: "), m_matchResultDisplay);
 
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
@@ -236,6 +247,19 @@ void PmDialog::onNewResults(PmResultsPacket results)
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
         m_posYBox->setMaximum(int(results.baseHeight - results.matchImgHeight));
     }
+
+    QString matchLabel = results.isMatched
+        ? obs_module_text("<font color=\"DarkGreen\">[MATCHED]</font>")
+        : obs_module_text("<font color=\"DarkRed\">[NO MATCH]</font>");
+
+    QString resultStr = QString(
+        obs_module_text("%1 %2 out of %3 pixels matched (%4 %)"))
+            .arg(matchLabel)
+            .arg(results.numMatched)
+            .arg(results.numCompared)
+            .arg(double(results.percentageMatched));
+    m_matchResultDisplay->setText(resultStr);
+
     m_prevResults = results;
 }
 

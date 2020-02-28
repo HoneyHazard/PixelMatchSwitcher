@@ -25,7 +25,9 @@ struct pm_filter_data
     gs_eparam_t *param_per_pixel_err_thresh;
     gs_eparam_t *param_debug;
     gs_eparam_t *param_match_img;
+    gs_eparam_t *param_compare_counter;
     gs_eparam_t *param_match_counter;
+    gs_eresult_t *result_compare_counter;
     gs_eresult_t *result_match_counter;
 
     // match image
@@ -36,13 +38,14 @@ struct pm_filter_data
     // match configuration
     int roi_left;
     int roi_bottom;
-    int per_pixel_err_thresh;
-    int total_match_thresh;
+    float per_pixel_err_thresh;
+    float total_match_thresh;
 
     // dynamic data
     pthread_mutex_t mutex;
     uint32_t base_width;
     uint32_t base_height;
+    uint32_t num_compared;
     uint32_t num_matched;
 
     // debug and visualization

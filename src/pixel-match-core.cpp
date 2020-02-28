@@ -104,6 +104,12 @@ PmResultsPacket PmCore::results() const
     return m_results;
 }
 
+PmConfigPacket PmCore::config() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_config;
+}
+
 std::string PmCore::scenesInfo() const
 {
     using namespace std;
@@ -227,6 +233,7 @@ void PmCore::updateActiveFilter()
                 pthread_mutex_unlock(&data->mutex);
                 if (!m_qImage.isNull())
                     supplyImageToFilter();
+                supplyConfigToFilter();
             }
         }
     }
@@ -240,15 +247,27 @@ void PmCore::onPeriodicUpdate()
 
 void PmCore::onFrameProcessed()
 {
+    PmResultsPacket newResults;
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
-        m_results.baseWidth = filterData->base_width;
-        m_results.baseHeight = filterData->base_height;
-        m_results.matchImgWidth = filterData->match_img_width;
-        m_results.matchImgHeight = filterData->match_img_height;
+        newResults.baseWidth = filterData->base_width;
+        newResults.baseHeight = filterData->base_height;
+        newResults.matchImgWidth = filterData->match_img_width;
+        newResults.matchImgHeight = filterData->match_img_height;
+        newResults.numCompared = filterData->num_compared;
+        newResults.numMatched = filterData->num_matched;
         // TODO more results
         pthread_mutex_unlock(&filterData->mutex);
+    }
+
+    newResults.percentageMatched
+        = float(newResults.numMatched) / float(newResults.numCompared) * 100.0f;
+    newResults.isMatched
+        = newResults.percentageMatched >= m_config.totalMatchThresh;
+    {
+        QMutexLocker locker(&m_mutex);
+        m_results = newResults;
     }
     emit sigNewResults(m_results);
 }
@@ -295,13 +314,22 @@ void PmCore::supplyImageToFilter()
     }
 }
 
-void PmCore::onNewUiConfig(PmConfigPacket config)
+void PmCore::supplyConfigToFilter()
 {
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
-        filterData->roi_left = config.roiLeft;
-        filterData->roi_bottom = config.roiBottom;
+        filterData->roi_left = m_config.roiLeft;
+        filterData->roi_bottom = m_config.roiBottom;
+        filterData->per_pixel_err_thresh = m_config.perPixelErrThresh;
+        filterData->total_match_thresh = m_config.totalMatchThresh;
         pthread_mutex_unlock(&filterData->mutex);
     }
+}
+
+void PmCore::onNewUiConfig(PmConfigPacket config)
+{
+    QMutexLocker locker(&m_mutex);
+    m_config = config;
+    supplyConfigToFilter();
 }

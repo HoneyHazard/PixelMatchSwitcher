@@ -37,6 +37,7 @@ public:
 
     const QImage& qImage() { return m_qImage; }
     PmResultsPacket results() const;
+    PmConfigPacket config() const;
 
 signals:
     void sigFrameProcessed();
@@ -58,6 +59,7 @@ private:
     void scanScenes();
     void updateActiveFilter();
     void supplyImageToFilter();
+    void supplyConfigToFilter();
 
     mutable QMutex m_mutex;
     std::vector<PmFilterRef> m_filters;
@@ -65,5 +67,6 @@ private:
 
     QImage m_qImage;
 
+    PmConfigPacket m_config;
     PmResultsPacket m_results;
 };

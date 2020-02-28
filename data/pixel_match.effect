@@ -1,15 +1,20 @@
-layout (binding = 0, offset = 0) uniform atomic_uint match_counter;
+layout (binding = 0, offset = 0) uniform atomic_uint compare_counter;
+layout (binding = 1, offset = 0) uniform atomic_uint match_counter;
+
 
 uniform texture2d image;
 uniform float4x4 ViewProj;
 
 uniform texture2d match_img;
 uniform float per_pixel_err_thresh;
-uniform bool debug;
 uniform float roi_left;
 uniform float roi_bottom;
 uniform float roi_right;
 uniform float roi_top;
+
+uniform bool debug;
+//uniform float border_width;
+//uniform float border_height;
 
 sampler_state def_sampler {
     Filter   = Linear;
@@ -44,6 +49,10 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         / float2(roi_right - roi_left, roi_top - roi_bottom);
     float4 cmp = match_img.Sample(def_sampler, sample_uv);
     bool cmp_on = cmp.r > 0.05 || cmp.g > 0.05 || cmp.b > 0.05;
+    if (cmp_on) {
+        atomicCounterIncrement(compare_counter);
+    }
+
     bool match_on = cmp_on && val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
     if (match_on) {
         atomicCounterIncrement(match_counter);

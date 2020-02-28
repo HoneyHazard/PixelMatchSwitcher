@@ -45,6 +45,7 @@ private:
     QComboBox *m_colorModeCombo;
     QLabel *m_colorModeDisplay;
     QSpinBox *m_posXBox, *m_posYBox;
+    QLabel *m_matchResultDisplay;
 
     PmCore *m_core;
     PmResultsPacket m_prevResults;

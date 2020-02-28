@@ -38,12 +38,11 @@ static void *pixel_match_filter_create(
     filter->settings = settings;
     filter->debug = true;
 
-    //pthread_mutexattr_t mutex_attr;
-    //pthread_mutexattr_init(&mutex_attr);
-    //pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-    //pthread_mutex_init(&filter->mutex, &mutex_attr);
-
-    pthread_mutex_init(&filter->mutex, NULL);
+    pthread_mutexattr_t mutex_attr;
+    pthread_mutexattr_init(&mutex_attr);
+    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&filter->mutex, &mutex_attr);
+    pthread_mutexattr_destroy(&mutex_attr);
 
     // will be made dynamic
     //gs_image_file_init(&filter->match_file, "/home/admin/Documents/mask2.png");
@@ -74,25 +73,33 @@ static void *pixel_match_filter_create(
 
     filter->param_per_pixel_err_thresh =
         gs_effect_get_param_by_name(filter->effect, "per_pixel_err_thresh");
-    filter->param_debug
-        = gs_effect_get_param_by_name(filter->effect, "debug");
+    filter->param_debug =
+        gs_effect_get_param_by_name(filter->effect, "debug");
+    filter->param_compare_counter =
+        gs_effect_get_param_by_name(filter->effect, "compare_counter");
     filter->param_match_counter =
         gs_effect_get_param_by_name(filter->effect, "match_counter");
+
+    filter->result_compare_counter =
+        gs_effect_get_result_by_name(filter->effect, "compare_counter");
     filter->result_match_counter =
         gs_effect_get_result_by_name(filter->effect, "match_counter");
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
           || !filter->param_debug || !filter->param_match_counter
-          || !filter->result_match_counter)
+          || !filter->result_match_counter
+          || !filter->result_compare_counter)
         goto error;
 
     obs_source_update(context, settings);
     return filter;
 
 gfx_fail:
+    blog(LOG_ERROR, "%s", obs_module_text("filter gfx initialization failed."));
     obs_leave_graphics();
 
 error:
+    blog(LOG_ERROR, "%s", obs_module_text("filter initialization failed."));
     pixel_match_filter_destroy(filter);
     return NULL;
 }
@@ -224,18 +231,22 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     float roi_top_v = roi_bottom_v
         + (float)(filter->match_img_height) / (float)(filter->base_height);
 
+    gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_float(filter->param_roi_left, roi_left_u);
     gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
     gs_effect_set_float(filter->param_roi_right, roi_right_u);
     gs_effect_set_float(filter->param_roi_top, roi_top_v);
-    gs_effect_set_int(filter->param_per_pixel_err_thresh,
-                      filter->per_pixel_err_thresh);
+    gs_effect_set_float(filter->param_per_pixel_err_thresh,
+                        filter->per_pixel_err_thresh);
     gs_effect_set_bool(filter->param_debug, filter->debug);
     gs_effect_set_texture(filter->param_match_img, filter->match_img_tex);
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->base_width, filter->base_height);
+
+    filter->num_compared =
+        gs_effect_get_atomic_uint_result(filter->result_compare_counter);
     filter->num_matched =
         gs_effect_get_atomic_uint_result(filter->result_match_counter);
 
