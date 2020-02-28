@@ -30,7 +30,7 @@ struct pm_filter_data
 
     // match image
     void *match_img_data;
-    int match_img_width, match_img_height;
+    uint32_t match_img_width, match_img_height;
     gs_texture_t *match_img_tex;
 
     // match configuration
@@ -41,8 +41,8 @@ struct pm_filter_data
 
     // dynamic data
     pthread_mutex_t mutex;
-    uint32_t cx;
-    uint32_t cy;
+    uint32_t base_width;
+    uint32_t base_height;
     uint32_t num_matched;
 
     // debug and visualization

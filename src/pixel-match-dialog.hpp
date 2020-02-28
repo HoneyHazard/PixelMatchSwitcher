@@ -3,12 +3,13 @@
 #include <QDialog>
 #include <QPalette>
 
-#include "pixel-match-results-packet.hpp"
+#include "pixel-match-structs.hpp"
 
 class PmCore;
 class QLabel;
 class QLineEdit;
 class QComboBox;
+class QSpinBox;
 class OBSQTDisplay;
 
 class PmDialog : public QDialog
@@ -41,6 +42,7 @@ private:
     OBSQTDisplay *m_filterDisplay;
     QComboBox *m_colorModeCombo;
     QLabel *m_colorModeDisplay;
+    QSpinBox *m_posXBox, *m_posYBox;
 
     PmCore *m_core;
     PmResultsPacket m_prevResults;

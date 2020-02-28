@@ -12,7 +12,7 @@ extern "C" void free_pixel_match_switcher();
 #include <vector>
 
 #include "pixel-match-filter-ref.hpp"
-#include "pixel-match-results-packet.hpp"
+#include "pixel-match-structs.hpp"
 
 struct obs_scene_item;
 struct obs_scene;

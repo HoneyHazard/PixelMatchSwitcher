@@ -197,8 +197,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         if (filter->match_img_tex)
             gs_texture_destroy(filter->match_img_tex);
         filter->match_img_tex = gs_texture_create(
-            (uint32_t)(filter->match_img_width),
-            (uint32_t)(filter->match_img_height),
+            filter->match_img_width, filter->match_img_height,
             GS_RGBA, 0, (const uint8_t **)(&filter->match_img_data), 0);
         bfree(filter->match_img_data);
         filter->match_img_data = NULL;
@@ -207,8 +206,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     target = obs_filter_get_target(filter->context);
     parent = obs_filter_get_parent(filter->context);
     if (target && parent) {
-        filter->cx = obs_source_get_base_width(target);
-        filter->cy = obs_source_get_base_height(target);
+        filter->base_width = obs_source_get_base_width(target);
+        filter->base_height = obs_source_get_base_height(target);
     }
 
     if (!obs_source_process_filter_begin(
@@ -218,12 +217,12 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         goto done;
     }
 
-    float roi_left_u = (float)(filter->roi_left) / (float)(filter->cx);
-    float roi_bottom_v = (float)(filter->roi_bottom) / (float)(filter->cy);
+    float roi_left_u = (float)(filter->roi_left) / (float)(filter->base_width);
+    float roi_bottom_v = (float)(filter->roi_bottom) / (float)(filter->base_height);
     float roi_right_u = roi_left_u
-        + (float)(filter->match_img_width) / (float)(filter->cx);
+        + (float)(filter->match_img_width) / (float)(filter->base_width);
     float roi_top_v = roi_bottom_v
-        + (float)(filter->match_img_height) / (float)(filter->cy);
+        + (float)(filter->match_img_height) / (float)(filter->base_height);
 
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_float(filter->param_roi_left, roi_left_u);
@@ -236,7 +235,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     gs_effect_set_texture(filter->param_match_img, filter->match_img_tex);
 
     obs_source_process_filter_end(filter->context, filter->effect,
-                                  filter->cx, filter->cy);
+                                  filter->base_width, filter->base_height);
     filter->num_matched =
         gs_effect_get_atomic_uint_result(filter->result_match_counter);
 

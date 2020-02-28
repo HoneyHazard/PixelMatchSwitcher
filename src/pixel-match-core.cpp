@@ -15,11 +15,15 @@
 #include <QTimer>
 #include <QThread>
 #include <QTextStream>
+#include <QSpinBox>
 
 PmCore* PmCore::m_instance = nullptr;
 
 void init_pixel_match_switcher()
 {
+    qRegisterMetaType<PmResultsPacket>("PmResultsPacket");
+    qRegisterMetaType<PmConfigPacket>("PmConfigPacket");
+
     PmCore::m_instance = new PmCore();
 }
 
@@ -237,8 +241,10 @@ void PmCore::onFrameProcessed()
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
-        m_results.cx = filterData->cx;
-        m_results.cy = filterData->cy;
+        m_results.baseWidth = filterData->base_width;
+        m_results.baseHeight = filterData->base_height;
+        m_results.matchImgWidth = filterData->match_img_width;
+        m_results.matchImgHeight = filterData->match_img_height;
         // TODO more results
         pthread_mutex_unlock(&filterData->mutex);
     }
@@ -282,8 +288,6 @@ void PmCore::supplyImageToFilter()
 
         filterData->match_img_width = uint32_t(m_qImage.width());
         filterData->match_img_height = uint32_t(m_qImage.height());
-        filterData->roi_left = 100;
-        filterData->roi_bottom = 100;
 
         pthread_mutex_unlock(&filterData->mutex);
     }

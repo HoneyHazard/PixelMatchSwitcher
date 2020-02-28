@@ -119,7 +119,7 @@ uint32_t PmFilterRef::filterDataWidth() const
     uint32_t ret = 0;
     if (data) {
         lockData();
-        ret = data->cx;
+        ret = data->base_width;
         unlockData();
     }
     return ret;
@@ -131,7 +131,7 @@ uint32_t PmFilterRef::filterDataHeight() const
     uint32_t ret = 0;
     if (data) {
         lockData();
-        ret = data->cy;
+        ret = data->base_height;
         unlockData();
     }
     return ret;

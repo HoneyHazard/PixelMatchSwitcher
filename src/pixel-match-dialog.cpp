@@ -16,6 +16,7 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QFileDialog>
+#include <QSpinBox>
 
 #include <obs-module.h>
 
@@ -67,6 +68,26 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 
     mainTabLayout->addRow(obs_module_text("Color Mode: "), colorSubLayout);
 
+    // match location
+    QHBoxLayout *matchLocSubLayout = new QHBoxLayout;
+    matchLocSubLayout->setContentsMargins(0, 0, 0, 0);
+
+    QLabel *posXLabel = new QLabel("X = ", this);
+    matchLocSubLayout->addWidget(posXLabel);
+    m_posXBox = new QSpinBox(this);
+    m_posXBox->setRange(0, 0);
+    m_posXBox->setSingleStep(1);
+    matchLocSubLayout->addWidget(m_posXBox);
+
+    QLabel *posYLabel = new QLabel("Y = ", this);
+    matchLocSubLayout->addWidget(posYLabel);
+    m_posYBox = new QSpinBox(this);
+    m_posYBox->setRange(0, 0);
+    m_posYBox->setSingleStep(1);
+    matchLocSubLayout->addWidget(m_posYBox);
+
+    mainTabLayout->addRow(obs_module_text("Match Location: "), matchLocSubLayout);
+
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
     m_filterDisplay->setSizePolicy(
@@ -102,6 +123,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
             this, &PmDialog::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
             this, &PmDialog::onImgFailed, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNewResults,
+            this, &PmDialog::onNewResults, Qt::QueuedConnection);
 }
 
 void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
@@ -201,11 +224,13 @@ void PmDialog::onImgFailed(QString filename)
 
 void PmDialog::onNewResults(PmResultsPacket results)
 {
-    if (m_prevResults.cx != results.cx) {
-        // set spin box max
+    if (m_prevResults.baseWidth != results.baseWidth
+     || m_prevResults.matchImgWidth != results.matchImgWidth) {
+        m_posXBox->setMaximum(int(results.baseWidth - results.matchImgWidth));
     }
-    if (m_prevResults.cy != results.cy) {
-        // set spin box max
+    if (m_prevResults.baseHeight != results.baseHeight
+     || m_prevResults.matchImgHeight != results.matchImgHeight) {
+        m_posYBox->setMaximum(int(results.baseHeight - results.matchImgHeight));
     }
-
+    m_prevResults = results;
 }

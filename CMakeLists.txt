@@ -22,11 +22,11 @@ find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB
 find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
 
 set(pixel-match-switcher_HEADERS
-        src/pixel-match-results-packet.hpp
         src/pixel-match-filter.h
         src/pixel-match-filter-ref.hpp
         src/pixel-match-core.hpp
         src/pixel-match-dialog.hpp
+        src/pixel-match-structs.hpp
         src/pixel-match-debug-tab.hpp
         ${LIBOBS_UI_DIR}/qt-display.hpp
         ${LIBOBS_UI_DIR}/qt-wrappers.hpp
