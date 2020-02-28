@@ -3,6 +3,8 @@
 #include <QDialog>
 #include <QPalette>
 
+#include "pixel-match-results-packet.hpp"
+
 class PmCore;
 class QLabel;
 class QLineEdit;
@@ -24,6 +26,7 @@ private slots:
     void onColorComboIndexChanged();
     void onImgSuccess(QString filename);
     void onImgFailed(QString filename);
+    void onNewResults(PmResultsPacket results);
 
 private:
     enum ColorMode : int { GreenMode=0, MagentaMode=1, BlackMode=2,
@@ -40,4 +43,5 @@ private:
     QLabel *m_colorModeDisplay;
 
     PmCore *m_core;
+    PmResultsPacket m_prevResults;
 };

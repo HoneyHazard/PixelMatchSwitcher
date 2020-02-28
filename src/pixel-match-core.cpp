@@ -92,6 +92,12 @@ PmFilterRef PmCore::activeFilterRef() const
     return m_activeFilter;
 }
 
+PmResultsPacket PmCore::results() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_results;
+}
+
 std::string PmCore::scenesInfo() const
 {
     using namespace std;
@@ -228,7 +234,15 @@ void PmCore::onPeriodicUpdate()
 
 void PmCore::onFrameProcessed()
 {
-
+    auto filterData = m_activeFilter.filterData();
+    if (filterData) {
+        pthread_mutex_lock(&filterData->mutex);
+        m_results.cx = filterData->cx;
+        m_results.cy = filterData->cy;
+        // TODO more results
+        pthread_mutex_unlock(&filterData->mutex);
+    }
+    emit sigNewResults(m_results);
 }
 
 void PmCore::onOpenImage(QString filename)

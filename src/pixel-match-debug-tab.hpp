@@ -2,6 +2,7 @@
 
 #include <QWidget>
 
+
 class QLabel;
 class QTextEdit;
 class PmCore;

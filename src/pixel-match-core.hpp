@@ -12,6 +12,7 @@ extern "C" void free_pixel_match_switcher();
 #include <vector>
 
 #include "pixel-match-filter-ref.hpp"
+#include "pixel-match-results-packet.hpp"
 
 struct obs_scene_item;
 struct obs_scene;
@@ -35,11 +36,13 @@ public:
     std::string scenesInfo() const;
 
     const QImage& qImage() { return m_qImage; }
+    PmResultsPacket results() const;
 
 signals:
     void sigFrameProcessed();
     void sigImgSuccess(QString filename);
     void sigImgFailed(QString filename);
+    void sigNewResults(PmResultsPacket);
 
 private slots:
     void onPeriodicUpdate();
@@ -60,4 +63,6 @@ private:
     PmFilterRef m_activeFilter;
 
     QImage m_qImage;
+
+    PmResultsPacket m_results;
 };

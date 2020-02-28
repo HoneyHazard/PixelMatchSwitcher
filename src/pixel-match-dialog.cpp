@@ -22,6 +22,7 @@
 PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 : QDialog(parent)
 , m_core(pixelMatcher)
+, m_prevResults(pixelMatcher->results())
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
 
@@ -196,4 +197,15 @@ void PmDialog::onImgFailed(QString filename)
     m_imgPathEdit->setText(
         filename.size() ? QString("[FAILED] %1").arg(filename) : "");
     m_imgPathEdit->setStyleSheet("text-color: red");
+}
+
+void PmDialog::onNewResults(PmResultsPacket results)
+{
+    if (m_prevResults.cx != results.cx) {
+        // set spin box max
+    }
+    if (m_prevResults.cy != results.cy) {
+        // set spin box max
+    }
+
 }
