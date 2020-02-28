@@ -172,7 +172,7 @@ void PmDialog::onColorComboIndexChanged()
 void PmDialog::onBrowseButtonReleased()
 {
     static const QString filter
-        = "JPEG (*.jpg *.jpeg);;PNG (*.png);; BMP (*.bmp);; All files (*.*)";
+        = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
 
     QString curPath = QFileInfo(m_imgPathEdit->text()).absoluteDir().path();
 

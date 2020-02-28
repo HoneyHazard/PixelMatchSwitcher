@@ -218,13 +218,18 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         goto done;
     }
 
+    float roi_left_u = (float)(filter->roi_left) / (float)(filter->cx);
+    float roi_bottom_v = (float)(filter->roi_bottom) / (float)(filter->cy);
+    float roi_right_u = roi_left_u
+        + (float)(filter->match_img_width) / (float)(filter->cx);
+    float roi_top_v = roi_bottom_v
+        + (float)(filter->match_img_height) / (float)(filter->cy);
+
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
-    gs_effect_set_int(filter->param_roi_left, filter->roi_left);
-    gs_effect_set_int(filter->param_roi_bottom, filter->roi_bottom);
-    gs_effect_set_int(filter->param_roi_right,
-                      filter->roi_left + filter->match_img_width);
-    gs_effect_set_int(filter->param_roi_top,
-                      filter->roi_bottom + filter->match_img_height);
+    gs_effect_set_float(filter->param_roi_left, roi_left_u);
+    gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
+    gs_effect_set_float(filter->param_roi_right, roi_right_u);
+    gs_effect_set_float(filter->param_roi_top, roi_top_v);
     gs_effect_set_int(filter->param_per_pixel_err_thresh,
                       filter->per_pixel_err_thresh);
     gs_effect_set_bool(filter->param_debug, filter->debug);

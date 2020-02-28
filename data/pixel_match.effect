@@ -6,6 +6,10 @@ uniform float4x4 ViewProj;
 uniform texture2d match_img;
 uniform float per_pixel_err_thresh;
 uniform bool debug;
+uniform float roi_left;
+uniform float roi_bottom;
+uniform float roi_right;
+uniform float roi_top;
 
 sampler_state def_sampler {
     Filter   = Linear;
@@ -29,19 +33,36 @@ VertInOut VSDefault(VertInOut vert_in)
 float4 PSMatch(VertInOut vert_in) : TARGET
 {
     float4 val = image.Sample(def_sampler, vert_in.uv);
-    float4 cmp = match_img.Sample(def_sampler, vert_in.uv);
-    bool cmp_on = cmp.r > 0 || cmp.g > 0 || cmp.b > 0;
+    float u = vert_in.uv.x, v = vert_in.uv.y;
+    bool hbound = (u >= roi_left && u <= roi_right);
+    bool vbound = (v >= roi_bottom && v <= roi_top);
+
+    if (!hbound && !vbound)
+        return val;
+
+    float2 sample_uv = (vert_in.uv - float2(roi_left, roi_bottom))
+        / float2(roi_right - roi_left, roi_top - roi_bottom);
+    float4 cmp = match_img.Sample(def_sampler, sample_uv);
+    bool cmp_on = cmp.r > 0.05 || cmp.g > 0.05 || cmp.b > 0.05;
     bool match_on = cmp_on && val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
     if (match_on) {
         atomicCounterIncrement(match_counter);
     }
 
-    if (debug && cmp_on) {
-        if (match_on) {
-            val = float4(0, 1, 0, 1);
-        } else {
-            val = float4(1, 0, 0, 1);
+    if (debug) {
+        if (vbound
+          && (abs(u - roi_left) < 0.002 || abs(u - roi_right) < 0.002)) {
+            // show white border for the ROI region
+            val = float4(1, 1, 1, 1);
+        } else if (hbound
+                 && (abs(v - roi_bottom) < 0.002 || abs(v - roi_top) < 0.002)) {
+            // show white border for the ROI region
+            val = float4(1, 1, 1, 1);
+        } else if (cmp_on) {
+            // show green or red, depending on a match/no match
+            val = match_on ? float4(0, 1, 0, 1) : float4(1, 0, 0, 1);
         }
+        // else: compare off, no border -> keep the passthrough value
     }
 
     return val;
