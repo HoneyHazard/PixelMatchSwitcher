@@ -64,6 +64,8 @@ PmCore::PmCore()
     m_dialog = new PmDialog(this, nullptr);
     connect(m_dialog, &PmDialog::sigOpenImage,
             this, &PmCore::onOpenImage, Qt::QueuedConnection);
+    connect(m_dialog, &PmDialog::sigNewUiConfig,
+            this, &PmCore::onNewUiConfig, Qt::QueuedConnection);
 
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
@@ -289,6 +291,17 @@ void PmCore::supplyImageToFilter()
         filterData->match_img_width = uint32_t(m_qImage.width());
         filterData->match_img_height = uint32_t(m_qImage.height());
 
+        pthread_mutex_unlock(&filterData->mutex);
+    }
+}
+
+void PmCore::onNewUiConfig(PmConfigPacket config)
+{
+    auto filterData = m_activeFilter.filterData();
+    if (filterData) {
+        pthread_mutex_lock(&filterData->mutex);
+        filterData->roi_left = config.roiLeft;
+        filterData->roi_bottom = config.roiBottom;
         pthread_mutex_unlock(&filterData->mutex);
     }
 }

@@ -11,5 +11,5 @@ struct PmResultsPacket
 
 struct  PmConfigPacket
 {
-    uint32_t roiLeft, roiRight;
+    int roiLeft, roiBottom;
 };

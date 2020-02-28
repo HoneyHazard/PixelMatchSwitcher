@@ -48,6 +48,7 @@ private slots:
     void onPeriodicUpdate();
     void onFrameProcessed();
     void onOpenImage(QString filename);
+    void onNewUiConfig(PmConfigPacket);
 
 private:
 

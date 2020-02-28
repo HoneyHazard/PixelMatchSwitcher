@@ -77,6 +77,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_posXBox = new QSpinBox(this);
     m_posXBox->setRange(0, 0);
     m_posXBox->setSingleStep(1);
+    connect(m_posXBox, SIGNAL(valueChanged(int)),
+            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posXBox);
 
     QLabel *posYLabel = new QLabel("Y = ", this);
@@ -84,6 +86,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_posYBox = new QSpinBox(this);
     m_posYBox->setRange(0, 0);
     m_posYBox->setSingleStep(1);
+    connect(m_posYBox, SIGNAL(valueChanged(int)),
+        this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posYBox);
 
     mainTabLayout->addRow(obs_module_text("Match Location: "), matchLocSubLayout);
@@ -233,4 +237,12 @@ void PmDialog::onNewResults(PmResultsPacket results)
         m_posYBox->setMaximum(int(results.baseHeight - results.matchImgHeight));
     }
     m_prevResults = results;
+}
+
+void PmDialog::onConfigUiChanged()
+{
+    PmConfigPacket config;
+    config.roiLeft = m_posXBox->value();
+    config.roiBottom = m_posYBox->value();
+    emit sigNewUiConfig(config);
 }

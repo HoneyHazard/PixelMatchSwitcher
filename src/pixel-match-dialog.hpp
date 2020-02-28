@@ -21,6 +21,7 @@ public:
 
 signals:
     void sigOpenImage(QString filename);
+    void sigNewUiConfig(PmConfigPacket);
 
 private slots:
     void onBrowseButtonReleased();
@@ -28,6 +29,7 @@ private slots:
     void onImgSuccess(QString filename);
     void onImgFailed(QString filename);
     void onNewResults(PmResultsPacket results);
+    void onConfigUiChanged();
 
 private:
     enum ColorMode : int { GreenMode=0, MagentaMode=1, BlackMode=2,
