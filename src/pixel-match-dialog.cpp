@@ -17,6 +17,7 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 
 #include <obs-module.h>
 
@@ -84,6 +85,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     connect(m_posXBox, SIGNAL(valueChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posXBox);
+    matchLocSubLayout->addWidget(new QLabel("px, ", this));
+    matchLocSubLayout->addItem(new QSpacerItem(10, 1));
 
     QLabel *posYLabel = new QLabel("Y = ", this);
     matchLocSubLayout->addWidget(posYLabel);
@@ -94,8 +97,24 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     connect(m_posYBox, SIGNAL(valueChanged(int)),
         this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posYBox);
+    matchLocSubLayout->addWidget(new QLabel("px", this));
 
     mainTabLayout->addRow(obs_module_text("Match Location: "), matchLocSubLayout);
+
+    // total match error threshold
+    QHBoxLayout *totalMatchThreshLayout = new QHBoxLayout;
+    m_totalMatchThreshBox = new QDoubleSpinBox(this);
+    m_totalMatchThreshBox->setRange(0.0, 100.0);
+    m_totalMatchThreshBox->setSingleStep(1.0);
+    m_totalMatchThreshBox->setDecimals(1);
+    m_totalMatchThreshBox->setValue(double(config.totalMatchThresh));
+    connect(m_totalMatchThreshBox, SIGNAL(valueChanged(double)),
+            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+    totalMatchThreshLayout->addWidget(m_totalMatchThreshBox);
+    totalMatchThreshLayout->addWidget(new QLabel("%", this));
+
+    mainTabLayout->addRow(
+        obs_module_text("Global Match Threshold: "), totalMatchThreshLayout);
 
     // match result label
     m_matchResultDisplay = new QLabel("--", this);
@@ -258,7 +277,7 @@ void PmDialog::onNewResults(PmResultsPacket results)
             .arg(matchLabel)
             .arg(results.numMatched)
             .arg(results.numCompared)
-            .arg(double(results.percentageMatched));
+            .arg(double(results.percentageMatched), 0, 'f', 1);
     m_matchResultDisplay->setText(resultStr);
 
     m_prevResults = results;
@@ -269,5 +288,6 @@ void PmDialog::onConfigUiChanged()
     PmConfigPacket config;
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
+    config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     emit sigNewUiConfig(config);
 }

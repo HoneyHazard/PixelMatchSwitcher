@@ -11,6 +11,7 @@ class QLineEdit;
 class QComboBox;
 class QSpinBox;
 class OBSQTDisplay;
+class QDoubleSpinBox;
 
 class PmDialog : public QDialog
 {
@@ -45,6 +46,7 @@ private:
     QComboBox *m_colorModeCombo;
     QLabel *m_colorModeDisplay;
     QSpinBox *m_posXBox, *m_posYBox;
+    QDoubleSpinBox *m_totalMatchThreshBox;
     QLabel *m_matchResultDisplay;
 
     PmCore *m_core;
