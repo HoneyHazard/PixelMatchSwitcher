@@ -18,12 +18,15 @@ struct pm_filter_data
     obs_data_t *settings;
 
     // shader parameters and results
+    gs_eparam_t *param_debug;
+    gs_eparam_t *param_border_width;
+    gs_eparam_t *param_border_height;
+
     gs_eparam_t *param_roi_left;
     gs_eparam_t *param_roi_bottom;
     gs_eparam_t *param_roi_right;
     gs_eparam_t *param_roi_top;
     gs_eparam_t *param_per_pixel_err_thresh;
-    gs_eparam_t *param_debug;
     gs_eparam_t *param_match_img;
     gs_eparam_t *param_compare_counter;
     gs_eparam_t *param_match_counter;

@@ -1,6 +1,5 @@
-layout (binding = 0, offset = 0) uniform atomic_uint compare_counter;
-layout (binding = 1, offset = 0) uniform atomic_uint match_counter;
-
+layout (binding = 0) uniform atomic_uint compare_counter;
+layout (binding = 1) uniform atomic_uint match_counter;
 
 uniform texture2d image;
 uniform float4x4 ViewProj;
@@ -13,8 +12,8 @@ uniform float roi_right;
 uniform float roi_top;
 
 uniform bool debug;
-//uniform float border_width;
-//uniform float border_height;
+uniform float border_width;
+uniform float border_height;
 
 sampler_state def_sampler {
     Filter   = Linear;
@@ -60,11 +59,13 @@ float4 PSMatch(VertInOut vert_in) : TARGET
 
     if (debug) {
         if (vbound
-          && (abs(u - roi_left) < 0.002 || abs(u - roi_right) < 0.002)) {
+          && (abs(u - roi_left) < border_width
+           || abs(u - roi_right) < border_width)) {
             // show white border for the ROI region
             val = float4(1, 1, 1, 1);
         } else if (hbound
-                 && (abs(v - roi_bottom) < 0.002 || abs(v - roi_top) < 0.002)) {
+                 && (abs(v - roi_bottom) < border_height
+                  || abs(v - roi_top) < border_height)) {
             // show white border for the ROI region
             val = float4(1, 1, 1, 1);
         } else if (cmp_on) {

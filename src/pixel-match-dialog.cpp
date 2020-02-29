@@ -108,6 +108,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_filterDisplay->setSizePolicy(
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
     m_filterDisplay->setMinimumSize(400, 300);
+    m_filterDisplay->setMaximumSize(4000, 3000);
     mainTabLayout->addRow(m_filterDisplay);
 
     QWidget *mainTab = new QWidget(this);

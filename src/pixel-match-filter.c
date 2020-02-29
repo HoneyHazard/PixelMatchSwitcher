@@ -38,25 +38,23 @@ static void *pixel_match_filter_create(
     filter->settings = settings;
     filter->debug = true;
 
+#if 0
+    // recursive mutex
     pthread_mutexattr_t mutex_attr;
     pthread_mutexattr_init(&mutex_attr);
     pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&filter->mutex, &mutex_attr);
     pthread_mutexattr_destroy(&mutex_attr);
-
-    // will be made dynamic
-    //gs_image_file_init(&filter->match_file, "/home/admin/Documents/mask2.png");
-    //if (!filter->match_file.loaded)
-    //    goto error;
+#else
+    // non-recursive mutex
+    pthread_mutex_init(&filter->mutex, NULL);
+#endif
 
     //  gfx init
     obs_enter_graphics();
     filter->effect = gs_effect_create_from_file(effect_path, NULL);
     if (!filter->effect)
         goto gfx_fail;
-    //gs_image_file_init_texture(&filter->match_file);
-    //if (!filter->match_file.texture)
-    //    goto gfx_fail;
     obs_leave_graphics();
 
     // init filters and result handles
@@ -73,17 +71,23 @@ static void *pixel_match_filter_create(
 
     filter->param_per_pixel_err_thresh =
         gs_effect_get_param_by_name(filter->effect, "per_pixel_err_thresh");
-    filter->param_debug =
-        gs_effect_get_param_by_name(filter->effect, "debug");
+
     filter->param_compare_counter =
         gs_effect_get_param_by_name(filter->effect, "compare_counter");
     filter->param_match_counter =
         gs_effect_get_param_by_name(filter->effect, "match_counter");
-
     filter->result_compare_counter =
         gs_effect_get_result_by_name(filter->effect, "compare_counter");
     filter->result_match_counter =
         gs_effect_get_result_by_name(filter->effect, "match_counter");
+
+    filter->param_debug =
+        gs_effect_get_param_by_name(filter->effect, "debug");
+    filter->param_border_width =
+        gs_effect_get_param_by_name(filter->effect, "border_width");
+    filter->param_border_height =
+        gs_effect_get_param_by_name(filter->effect, "border_height");
+
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
           || !filter->param_debug || !filter->param_match_counter
@@ -239,8 +243,13 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     gs_effect_set_float(filter->param_roi_top, roi_top_v);
     gs_effect_set_float(filter->param_per_pixel_err_thresh,
                         filter->per_pixel_err_thresh);
-    gs_effect_set_bool(filter->param_debug, filter->debug);
     gs_effect_set_texture(filter->param_match_img, filter->match_img_tex);
+
+    gs_effect_set_bool(filter->param_debug, filter->debug);
+    gs_effect_set_float(filter->param_border_width,
+                        1.f / (float)(filter->base_width));
+    gs_effect_set_float(filter->param_border_height,
+                        1.f / (float)(filter->base_height));
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->base_width, filter->base_height);
@@ -292,12 +301,6 @@ struct obs_source_info pixel_match_filter = {
     .get_width = pixel_match_filter_width,
     .get_height = pixel_match_filter_height,
 };
-
-
-//pthread_mutexattr_t mutex_attr;
-//pthread_mutexattr_init(&mutex_attr);
-//pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-//pthread_mutex_init(&filter->mutex, &mutex_attr);
 
     #if 0
     // passthrough
