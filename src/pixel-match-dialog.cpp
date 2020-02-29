@@ -79,42 +79,40 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     QLabel *posXLabel = new QLabel("X = ", this);
     matchLocSubLayout->addWidget(posXLabel);
     m_posXBox = new QSpinBox(this);
+    m_posXBox->setSuffix(" px");
     m_posXBox->setRange(0, 0);
     m_posXBox->setSingleStep(1);
     m_posXBox->setValue(config.roiLeft);
     connect(m_posXBox, SIGNAL(valueChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posXBox);
-    matchLocSubLayout->addWidget(new QLabel("px, ", this));
     matchLocSubLayout->addItem(new QSpacerItem(10, 1));
 
     QLabel *posYLabel = new QLabel("Y = ", this);
     matchLocSubLayout->addWidget(posYLabel);
     m_posYBox = new QSpinBox(this);
+    m_posYBox->setSuffix(" px");
     m_posYBox->setRange(0, 0);
     m_posYBox->setSingleStep(1);
     m_posYBox->setValue(config.roiBottom);
     connect(m_posYBox, SIGNAL(valueChanged(int)),
         this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posYBox);
-    matchLocSubLayout->addWidget(new QLabel("px", this));
 
     mainTabLayout->addRow(obs_module_text("Match Location: "), matchLocSubLayout);
 
     // total match error threshold
-    QHBoxLayout *totalMatchThreshLayout = new QHBoxLayout;
     m_totalMatchThreshBox = new QDoubleSpinBox(this);
+    m_totalMatchThreshBox->setSuffix(" %");
     m_totalMatchThreshBox->setRange(0.0, 100.0);
     m_totalMatchThreshBox->setSingleStep(1.0);
     m_totalMatchThreshBox->setDecimals(1);
     m_totalMatchThreshBox->setValue(double(config.totalMatchThresh));
     connect(m_totalMatchThreshBox, SIGNAL(valueChanged(double)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
-    totalMatchThreshLayout->addWidget(m_totalMatchThreshBox);
-    totalMatchThreshLayout->addWidget(new QLabel("%", this));
 
     mainTabLayout->addRow(
-        obs_module_text("Global Match Threshold: "), totalMatchThreshLayout);
+        obs_module_text("Global Match Threshold: "), m_totalMatchThreshBox);
 
     // match result label
     m_matchResultDisplay = new QLabel("--", this);
