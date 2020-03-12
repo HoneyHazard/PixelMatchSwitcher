@@ -19,17 +19,17 @@ LIBOBS_UI_DIR=<obs clone location>/UI
 LIBOBS_LIB=<obs build location>/libobs/libobs.so
 LIBOBS_FRONTEND_API_LIB=<obs build location>/UI/obs-frontend-api/libobs-frontend-api.so
 ```
-- Finish configure, generate. build and install*
-
-## Run instructions
-- [*] You shouldn't need to do anything special to run if you have performed install of the OBS studio (atomic effects fork) and PixelMatchSwitcher plugin
-- TODO: instructions for referencing directly to OBS fork workspace if install was not performed
+- Finish configure, generate and generate*
 
 ## Install Instructions (Linux)
 ```
 cd build
 sudo make install
 ```
+
+## Run instructions
+- [*] You shouldn't need to do anything special to run if you have performed install of the OBS studio (atomic effects fork) and PixelMatchSwitcher plugin
+- TODO: instructions for referencing directly to OBS fork workspace if install was not performed
 
 ## Use Instructions
 TODO
