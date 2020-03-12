@@ -219,7 +219,13 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (target && parent) {
         filter->base_width = obs_source_get_base_width(target);
         filter->base_height = obs_source_get_base_height(target);
+    } else {
+        filter->base_width = 0;
+        filter->base_height = 0;
     }
+
+    if (filter->base_width == 0 || filter->base_height == 0)
+        goto done;
 
     if (!obs_source_process_filter_begin(
             filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
