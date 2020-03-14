@@ -8,8 +8,6 @@
 
 #define PIXEL_MATCH_FILTER_DISPLAY_NAME obs_module_text("Pixel Match Filter")
 
-#define READBACK 1
-
 struct pm_filter_data
 {
     // plugin basics
