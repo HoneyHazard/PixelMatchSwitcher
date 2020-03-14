@@ -170,6 +170,9 @@ void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
     int sourceCX = int(filterRef.filterSrcWidth());
     int sourceCY = int(filterRef.filterSrcHeight());
 
+    if (sourceCX == 0 || sourceCY == 0)
+        return;
+
     int x, y;
     int newCX, newCY;
     float scale;

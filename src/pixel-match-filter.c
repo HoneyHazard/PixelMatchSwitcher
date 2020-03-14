@@ -273,8 +273,6 @@ done:
     if (filter->on_frame_processed)
         filter->on_frame_processed(filter);
 
-    return;
-
     UNUSED_PARAMETER(effect);
 }
 
