@@ -41,7 +41,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     bool hbound = (u >= roi_left && u <= roi_right);
     bool vbound = (v >= roi_bottom && v <= roi_top);
 
-    if (!hbound && !vbound)
+    if (!hbound || !vbound)
         return val;
 
     float2 sample_uv = (vert_in.uv - float2(roi_left, roi_bottom))
