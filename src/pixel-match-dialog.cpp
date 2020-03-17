@@ -163,6 +163,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
     auto dialog = static_cast<PmDialog*>(data);
+    if (!dialog->m_core) return;
+
     auto filterRef = dialog->m_core->activeFilterRef();
     auto renderSrc = filterRef.filter();
     if (!renderSrc) return;

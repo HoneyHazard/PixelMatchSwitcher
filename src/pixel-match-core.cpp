@@ -58,20 +58,12 @@ PmCore::PmCore()
     pmThread->setObjectName("pixel match core thread");
     moveToThread(pmThread);
 
-    // main UI dialog
-    // parent the dialog to the main window
-    //auto mainWindow = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    m_dialog = new PmDialog(this, nullptr);
-    connect(m_dialog, &PmDialog::sigOpenImage,
-            this, &PmCore::onOpenImage, Qt::QueuedConnection);
-    connect(m_dialog, &PmDialog::sigNewUiConfig,
-            this, &PmCore::onNewUiConfig, Qt::QueuedConnection);
-
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
         obs_frontend_add_tools_menu_qaction(
             obs_module_text("Pixel Match Switcher")));
-    connect(action, &QAction::triggered, m_dialog, &QDialog::show);
+    connect(action, &QAction::triggered, this, &PmCore::onMenuAction,
+            Qt::DirectConnection);
 
     // periodic update timer: process in the UI thread
     QTimer *periodicUpdateTimer = new QTimer(this);
@@ -84,6 +76,13 @@ PmCore::PmCore()
 
     pmThread->start();
     periodicUpdateTimer->start(100);
+}
+
+PmCore::~PmCore()
+{
+    if (m_dialog) {
+        m_dialog->deleteLater();
+    }
 }
 
 std::vector<PmFilterRef> PmCore::filters() const
@@ -237,6 +236,24 @@ void PmCore::updateActiveFilter()
             }
         }
     }
+}
+
+void PmCore::onMenuAction()
+{
+    // main UI dialog
+    if (!m_dialog) {
+        // parent a dialog parented to the main window;
+        // make sure it is destroyed once closed
+        auto mainWindow
+            = static_cast<QMainWindow*>(obs_frontend_get_main_window());
+        m_dialog = new PmDialog(this, mainWindow);
+        m_dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+        connect(m_dialog, &PmDialog::sigOpenImage,
+                this, &PmCore::onOpenImage, Qt::QueuedConnection);
+        connect(m_dialog, &PmDialog::sigNewUiConfig,
+                this, &PmCore::onNewUiConfig, Qt::QueuedConnection);
+    }
+    m_dialog->show();
 }
 
 void PmCore::onPeriodicUpdate()

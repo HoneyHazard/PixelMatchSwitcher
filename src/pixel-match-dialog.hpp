@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QDialog>
-#include <QPalette>
+#include <QPointer>
 
 #include "pixel-match-structs.hpp"
 
@@ -19,6 +19,7 @@ class PmDialog : public QDialog
 
 public:
     PmDialog(PmCore *pixelMatcher, QWidget *parent);
+    ~PmDialog() {}
 
 signals:
     void sigOpenImage(QString filename);
@@ -49,6 +50,6 @@ private:
     QDoubleSpinBox *m_totalMatchThreshBox;
     QLabel *m_matchResultDisplay;
 
-    PmCore *m_core;
+    QPointer<PmCore> m_core;
     PmResultsPacket m_prevResults;
 };

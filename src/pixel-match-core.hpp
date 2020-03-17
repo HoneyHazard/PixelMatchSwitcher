@@ -7,6 +7,7 @@ extern "C" void free_pixel_match_switcher();
 #include <QMutex>
 #include <QByteArray>
 #include <QImage>
+#include <QPointer>
 
 #include <string>
 #include <vector>
@@ -30,6 +31,7 @@ class PmCore : public QObject
 
 public:
     PmCore();
+    ~PmCore();
 
     std::vector<PmFilterRef> filters() const;
     PmFilterRef activeFilterRef() const;
@@ -46,6 +48,7 @@ signals:
     void sigNewResults(PmResultsPacket);
 
 private slots:
+    void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed();
     void onOpenImage(QString filename);
@@ -54,7 +57,7 @@ private slots:
 private:
 
     static PmCore *m_instance;
-    PmDialog *m_dialog;
+    QPointer<PmDialog> m_dialog;
 
     void scanScenes();
     void updateActiveFilter();
