@@ -75,7 +75,6 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_colorModeDisplay = new QLabel(this);
     m_colorModeDisplay->setFrameStyle(QFrame::Sunken | QFrame::Panel);
     colorSubLayout->addWidget(m_colorModeDisplay);
-    onColorComboIndexChanged();
 
     mainTabLayout->addRow(obs_module_text("Color Mode: "), colorSubLayout);
 
@@ -165,6 +164,9 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
             this, &PmDialog::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewResults,
             this, &PmDialog::onNewResults, Qt::QueuedConnection);
+
+    // finish init
+    onColorComboIndexChanged();
 }
 
 void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
@@ -241,6 +243,7 @@ void PmDialog::onColorComboIndexChanged()
     // send color mode to core? obs data API?
     PmColorMode mode = PmColorMode(m_colorModeCombo->currentIndex());
     colorModeChanged(mode, QColor());
+    onConfigUiChanged();
 }
 
 void PmDialog::onBrowseButtonReleased()
@@ -304,5 +307,6 @@ void PmDialog::onConfigUiChanged()
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
+    config.colorMode = PmColorMode(m_colorModeCombo->currentIndex());
     emit sigNewUiConfig(config);
 }
