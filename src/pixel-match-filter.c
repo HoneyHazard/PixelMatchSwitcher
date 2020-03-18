@@ -260,18 +260,20 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->base_width, filter->base_height);
 
-    filter->num_compared =
-        gs_effect_get_atomic_uint_result(filter->result_compare_counter);
-    filter->num_matched =
-        gs_effect_get_atomic_uint_result(filter->result_match_counter);
-
+    if (!filter->preview_mode) {
+        filter->num_compared =
+            gs_effect_get_atomic_uint_result(filter->result_compare_counter);
+        filter->num_matched =
+            gs_effect_get_atomic_uint_result(filter->result_match_counter);
+    }
     //obs_data_set_int(filter->settings, "num_matched", filter->num_matched);
 
 done:
     pthread_mutex_unlock(&filter->mutex);
 
-    if (filter->on_frame_processed)
+    if (!filter->preview_mode && filter->on_frame_processed)
         filter->on_frame_processed(filter);
+    filter->preview_mode = false;
 
     UNUSED_PARAMETER(effect);
 }

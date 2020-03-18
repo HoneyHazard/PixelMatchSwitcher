@@ -40,6 +40,10 @@ private:
 
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
 
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+    void closeEvent(QCloseEvent *event) override { hide(); }
+
     void colorModeChanged(ColorMode mode, QColor color);
 
     QLineEdit* m_imgPathEdit;

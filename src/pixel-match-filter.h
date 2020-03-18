@@ -43,6 +43,7 @@ struct pm_filter_data
     float total_match_thresh;
 
     // dynamic data
+    bool preview_mode;
     pthread_mutex_t mutex;
     uint32_t base_width;
     uint32_t base_height;

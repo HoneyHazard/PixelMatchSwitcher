@@ -143,6 +143,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     topLevelLayout->addWidget(tabWidget);
     setLayout(topLevelLayout);
 
+#if 1
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
                           PmDialog::drawPreview,
@@ -150,6 +151,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     };
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
+#endif
 
     // signals & slots
     connect(m_core, &PmCore::sigImgSuccess,
@@ -160,13 +162,14 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
             this, &PmDialog::onNewResults, Qt::QueuedConnection);
 }
 
-void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
+void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
     auto dialog = static_cast<PmDialog*>(data);
     if (!dialog->m_core) return;
 
     auto filterRef = dialog->m_core->activeFilterRef();
     auto renderSrc = filterRef.filter();
+
     if (!renderSrc) return;
 
     int sourceCX = int(filterRef.filterSrcWidth());
@@ -189,10 +192,26 @@ void PmDialog::drawPreview(void *data, uint32_t cx, uint32_t cy)
     gs_ortho(0.0f, float(sourceCX), 0.0f, float(sourceCY), -100.0f, 100.0f);
     gs_set_viewport(x, y, newCX, newCY);
 
+    filterRef.lockData();
+    filterRef.filterData()->preview_mode = true;
+    filterRef.unlockData();
+
     obs_source_video_render(renderSrc);
 
     gs_projection_pop();
     gs_viewport_pop();
+}
+
+void PmDialog::showEvent(QShowEvent *event)
+{
+    obs_display_add_draw_callback(
+        m_filterDisplay->GetDisplay(), PmDialog::drawPreview, this);
+}
+
+void PmDialog::hideEvent(QHideEvent *event)
+{
+    obs_display_remove_draw_callback(
+                m_filterDisplay->GetDisplay(), PmDialog::drawPreview, this);
 }
 
 void PmDialog::colorModeChanged(PmDialog::ColorMode mode, QColor color)
