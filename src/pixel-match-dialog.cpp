@@ -86,7 +86,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     matchLocSubLayout->addWidget(posXLabel);
     m_posXBox = new QSpinBox(this);
     m_posXBox->setSuffix(" px");
-    m_posXBox->setRange(0, 0);
+    m_posXBox->setMinimum(0);
     m_posXBox->setSingleStep(1);
     m_posXBox->setValue(config.roiLeft);
     connect(m_posXBox, SIGNAL(valueChanged(int)),
@@ -98,7 +98,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     matchLocSubLayout->addWidget(posYLabel);
     m_posYBox = new QSpinBox(this);
     m_posYBox->setSuffix(" px");
-    m_posYBox->setRange(0, 0);
+    m_posYBox->setMinimum(0);
     m_posYBox->setSingleStep(1);
     m_posYBox->setValue(config.roiBottom);
     connect(m_posYBox, SIGNAL(valueChanged(int)),
@@ -167,6 +167,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 
     // finish init
     onColorComboIndexChanged();
+    onNewResults(m_core->results());
 }
 
 void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
