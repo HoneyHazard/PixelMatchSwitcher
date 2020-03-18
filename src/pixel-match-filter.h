@@ -16,7 +16,7 @@ struct pm_filter_data
     obs_data_t *settings;
 
     // shader parameters and results
-    gs_eparam_t *param_debug;
+    gs_eparam_t *param_visualize;
     gs_eparam_t *param_border_width;
     gs_eparam_t *param_border_height;
 
@@ -51,7 +51,7 @@ struct pm_filter_data
     uint32_t num_matched;
 
     // debug and visualization
-    bool debug;
+    bool visualize;
 
     // callbacks for fast reactions
     void (*on_frame_processed)(struct pm_filter_data *sender);

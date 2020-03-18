@@ -36,7 +36,7 @@ static void *pixel_match_filter_create(
     memset(filter, 0, sizeof(struct pm_filter_data));
     filter->context = context;
     filter->settings = settings;
-    filter->debug = true;
+    filter->visualize = true;
 
 #if 0
     // recursive mutex
@@ -81,8 +81,8 @@ static void *pixel_match_filter_create(
     filter->result_match_counter =
         gs_effect_get_result_by_name(filter->effect, "match_counter");
 
-    filter->param_debug =
-        gs_effect_get_param_by_name(filter->effect, "debug");
+    filter->param_visualize =
+        gs_effect_get_param_by_name(filter->effect, "visualize");
     filter->param_border_width =
         gs_effect_get_param_by_name(filter->effect, "border_width");
     filter->param_border_height =
@@ -90,7 +90,7 @@ static void *pixel_match_filter_create(
 
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
-          || !filter->param_debug || !filter->param_match_counter
+          || !filter->param_visualize || !filter->param_match_counter
           || !filter->result_match_counter
           || !filter->result_compare_counter)
         goto error;
@@ -209,7 +209,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
             gs_texture_destroy(filter->match_img_tex);
         filter->match_img_tex = gs_texture_create(
             filter->match_img_width, filter->match_img_height,
-            GS_RGBA, 0, (const uint8_t **)(&filter->match_img_data), 0);
+            GS_RGBA, (uint8_t)-1,
+            (const uint8_t **)(&filter->match_img_data), 0);
         bfree(filter->match_img_data);
         filter->match_img_data = NULL;
     }
@@ -251,7 +252,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
                         filter->per_pixel_err_thresh);
     gs_effect_set_texture(filter->param_match_img, filter->match_img_tex);
 
-    gs_effect_set_bool(filter->param_debug, filter->debug);
+    gs_effect_set_bool(filter->param_visualize,
+        filter->visualize && filter->preview_mode);
     gs_effect_set_float(filter->param_border_width,
                         1.f / (float)(filter->base_width));
     gs_effect_set_float(filter->param_border_height,

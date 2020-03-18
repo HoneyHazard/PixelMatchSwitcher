@@ -1,6 +1,15 @@
 #pragma once
 
 #include <stdint.h>
+#include <QString>
+
+enum class PmColorMode : int {
+    GreenMode=0,
+    MagentaMode=1,
+    BlackMode=2,
+    AlphaMode=3,
+    CustomClrMode=4
+};
 
 struct PmResultsPacket
 {
@@ -17,4 +26,7 @@ struct  PmConfigPacket
     int roiLeft = 0, roiBottom = 0;
     float perPixelErrThresh = 25.f;
     float totalMatchThresh = 90.f;
+    PmColorMode colorMode = PmColorMode::GreenMode;
+    // bool visualize; // TODO
+    // Color customColor; // TODO
 };

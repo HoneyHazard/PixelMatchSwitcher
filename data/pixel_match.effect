@@ -11,7 +11,7 @@ uniform float roi_bottom;
 uniform float roi_right;
 uniform float roi_top;
 
-uniform bool debug;
+uniform bool visualize;
 uniform float border_width;
 uniform float border_height;
 
@@ -57,7 +57,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         atomicCounterIncrement(match_counter);
     }
 
-    if (debug) {
+    if (visualize) {
         if (vbound
           && (abs(u - roi_left) < border_width
            || abs(u - roi_right) < border_width)) {

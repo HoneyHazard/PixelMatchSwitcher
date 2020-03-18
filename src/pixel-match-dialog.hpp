@@ -33,13 +33,9 @@ private slots:
     void onConfigUiChanged();
 
 private:
-    enum ColorMode : int { GreenMode=0, MagentaMode=1, BlackMode=2,
-                           AlphaMode=3, CustomClrMode=4 };
-    enum DisplayMode { MatchImage, FilterOutput, MatchArea };
-
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
 
-    void colorModeChanged(ColorMode mode, QColor color);
+    void colorModeChanged(PmColorMode mode, QColor color);
 
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;

@@ -41,6 +41,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 
     m_imgPathEdit = new QLineEdit(this);
     m_imgPathEdit->setReadOnly(true);
+    m_imgPathEdit->setText(m_core->matchImgFilename());
     imgPathSubLayout->addWidget(m_imgPathEdit);
 
     QPushButton *browseImgPathBtn = new QPushButton(
@@ -56,11 +57,17 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     colorSubLayout->setContentsMargins(0, 0, 0, 0);
 
     m_colorModeCombo = new QComboBox(this);
-    m_colorModeCombo->insertItem(int(GreenMode), obs_module_text("Green"));
-    m_colorModeCombo->insertItem(int(MagentaMode), obs_module_text("Pink"));
-    m_colorModeCombo->insertItem(int(BlackMode), obs_module_text("Black"));
-    m_colorModeCombo->insertItem(int(AlphaMode), obs_module_text("Alpha"));
-    m_colorModeCombo->insertItem(int(CustomClrMode), obs_module_text("Custom"));
+    m_colorModeCombo->insertItem(
+        int(PmColorMode::GreenMode), obs_module_text("Green"));
+    m_colorModeCombo->insertItem(
+        int(PmColorMode::MagentaMode), obs_module_text("Pink"));
+    m_colorModeCombo->insertItem(
+        int(PmColorMode::BlackMode), obs_module_text("Black"));
+    m_colorModeCombo->insertItem(
+        int(PmColorMode::AlphaMode), obs_module_text("Alpha"));
+    m_colorModeCombo->insertItem(
+        int(PmColorMode::CustomClrMode), obs_module_text("Custom"));
+    m_colorModeCombo->setCurrentIndex(int(config.colorMode));
     connect(m_colorModeCombo, SIGNAL(currentIndexChanged(int)),
         this, SLOT(onColorComboIndexChanged()));
     colorSubLayout->addWidget(m_colorModeCombo);
@@ -200,21 +207,21 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     gs_viewport_pop();
 }
 
-void PmDialog::colorModeChanged(PmDialog::ColorMode mode, QColor color)
+void PmDialog::colorModeChanged(PmColorMode mode, QColor color)
 {
     QColor bgColor = color, textColor = Qt::black;
     const QString ss;
 
     switch(mode) {
-    case GreenMode:
+    case PmColorMode::GreenMode:
         color = QColor(0, 255, 0);
         textColor = Qt::white;
         break;
-    case MagentaMode:
+    case PmColorMode::MagentaMode:
         color = QColor(255, 0, 255);
         textColor = Qt::white;
         break;
-    case BlackMode:
+    case PmColorMode::BlackMode:
         color = QColor(0, 0, 0);
         textColor = Qt::white;
         break;
@@ -232,7 +239,7 @@ void PmDialog::colorModeChanged(PmDialog::ColorMode mode, QColor color)
 void PmDialog::onColorComboIndexChanged()
 {
     // send color mode to core? obs data API?
-    ColorMode mode = ColorMode(m_colorModeCombo->currentIndex());
+    PmColorMode mode = PmColorMode(m_colorModeCombo->currentIndex());
     colorModeChanged(mode, QColor());
 }
 

@@ -37,7 +37,8 @@ public:
     PmFilterRef activeFilterRef() const;
     std::string scenesInfo() const;
 
-    const QImage& qImage() { return m_qImage; }
+    const QString &matchImgFilename() { return m_matchImgFilename; }
+    const QImage& matchImage() { return m_matchImg; }
     PmResultsPacket results() const;
     PmConfigPacket config() const;
 
@@ -68,7 +69,8 @@ private:
     std::vector<PmFilterRef> m_filters;
     PmFilterRef m_activeFilter;
 
-    QImage m_qImage;
+    QString m_matchImgFilename;
+    QImage m_matchImg;
 
     PmConfigPacket m_config;
     PmResultsPacket m_results;

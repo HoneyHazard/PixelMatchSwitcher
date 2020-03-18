@@ -230,7 +230,7 @@ void PmCore::updateActiveFilter()
                 pthread_mutex_lock(&data->mutex);
                 data->on_frame_processed = on_frame_processed;
                 pthread_mutex_unlock(&data->mutex);
-                if (!m_qImage.isNull())
+                if (!m_matchImg.isNull())
                     supplyImageToFilter();
                 supplyConfigToFilter();
             }
@@ -293,6 +293,7 @@ void PmCore::onOpenImage(QString filename)
 {
     QImage imgIn(filename);
     if (imgIn.isNull()) {
+        m_matchImgFilename.clear();
         blog(LOG_WARNING, "Unable to open filename: %s",
              filename.toUtf8().constData());
         emit sigImgFailed(filename);
@@ -300,14 +301,16 @@ void PmCore::onOpenImage(QString filename)
     }
 
     QMutexLocker locker(&m_mutex);
-    m_qImage = imgIn.convertToFormat(QImage::Format_ARGB32);
-    if (m_qImage.isNull()) {
+    m_matchImg = imgIn.convertToFormat(QImage::Format_ARGB32);
+    if (m_matchImg.isNull()) {
+        m_matchImgFilename.clear();
         blog(LOG_WARNING, "Image conversion failed: %s",
              filename.toUtf8().constData());
         emit sigImgFailed(filename);
         return;
     }
 
+    m_matchImgFilename = filename;
     supplyImageToFilter();
     emit sigImgSuccess(filename);
 }
@@ -320,12 +323,12 @@ void PmCore::supplyImageToFilter()
         if (filterData->match_img_data) {
             bfree(filterData->match_img_data);
         }
-        size_t sz = size_t(m_qImage.sizeInBytes());
+        size_t sz = size_t(m_matchImg.sizeInBytes());
         filterData->match_img_data = bmalloc(sz);
-        memcpy(filterData->match_img_data, m_qImage.bits(), sz);
+        memcpy(filterData->match_img_data, m_matchImg.bits(), sz);
 
-        filterData->match_img_width = uint32_t(m_qImage.width());
-        filterData->match_img_height = uint32_t(m_qImage.height());
+        filterData->match_img_width = uint32_t(m_matchImg.width());
+        filterData->match_img_height = uint32_t(m_matchImg.height());
 
         pthread_mutex_unlock(&filterData->mutex);
     }
