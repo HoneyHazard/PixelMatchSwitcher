@@ -19,7 +19,6 @@ class PmDialog : public QDialog
 
 public:
     PmDialog(PmCore *pixelMatcher, QWidget *parent);
-    ~PmDialog() {}
 
 signals:
     void sigOpenImage(QString filename);
@@ -39,10 +38,6 @@ private:
     enum DisplayMode { MatchImage, FilterOutput, MatchArea };
 
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
-
-    void showEvent(QShowEvent *event) override;
-    void hideEvent(QHideEvent *event) override;
-    void closeEvent(QCloseEvent *event) override { hide(); }
 
     void colorModeChanged(ColorMode mode, QColor color);
 

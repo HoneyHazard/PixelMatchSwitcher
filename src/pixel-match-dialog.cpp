@@ -143,7 +143,6 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     topLevelLayout->addWidget(tabWidget);
     setLayout(topLevelLayout);
 
-#if 1
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
                           PmDialog::drawPreview,
@@ -151,7 +150,6 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     };
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
-#endif
 
     // signals & slots
     connect(m_core, &PmCore::sigImgSuccess,
@@ -200,18 +198,6 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     gs_projection_pop();
     gs_viewport_pop();
-}
-
-void PmDialog::showEvent(QShowEvent *event)
-{
-    obs_display_add_draw_callback(
-        m_filterDisplay->GetDisplay(), PmDialog::drawPreview, this);
-}
-
-void PmDialog::hideEvent(QHideEvent *event)
-{
-    obs_display_remove_draw_callback(
-                m_filterDisplay->GetDisplay(), PmDialog::drawPreview, this);
 }
 
 void PmDialog::colorModeChanged(PmDialog::ColorMode mode, QColor color)
