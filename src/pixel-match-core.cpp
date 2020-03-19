@@ -378,7 +378,7 @@ void PmCore::supplyConfigToFilter()
         pthread_mutex_lock(&filterData->mutex);
         filterData->roi_left = m_config.roiLeft;
         filterData->roi_bottom = m_config.roiBottom;
-        filterData->per_pixel_err_thresh = m_config.perPixelErrThresh;
+        filterData->per_pixel_err_thresh = m_config.perPixelErrThresh / 100.f;
         filterData->total_match_thresh = m_config.totalMatchThresh;
         filterData->mask_alpha = maskAlpha;
         filterData->mask_color = maskColor;
