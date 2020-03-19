@@ -37,6 +37,7 @@ static void *pixel_match_filter_create(
     filter->context = context;
     filter->settings = settings;
     filter->visualize = true;
+    filter->per_pixel_err_thresh = 0.1f;
 
 #if 0
     // recursive mutex
@@ -94,9 +95,9 @@ static void *pixel_match_filter_create(
 
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
-          || !filter->param_visualize || !filter->param_match_counter
-          || !filter->result_match_counter
-          || !filter->result_compare_counter)
+            || !filter->param_visualize || !filter->param_match_counter
+            || !filter->result_match_counter
+            || !filter->result_compare_counter)
         goto error;
 
     obs_source_update(context, settings);

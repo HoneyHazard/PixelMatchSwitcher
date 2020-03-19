@@ -78,12 +78,12 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         if (vbound
           && (abs(u - roi_left) < border_width
            || abs(u - roi_right) < border_width)) {
-            // show white border for the ROI region
+            // show inverted for the ROI region
             val = float4(float3(1) - val.xyz, 1.0);
         } else if (hbound
                  && (abs(v - roi_bottom) < border_height
                   || abs(v - roi_top) < border_height)) {
-            // show white border for the ROI region
+            // show inverted for the ROI region
             val = float4(float3(1) - val.xyz, 1.0);
         } else if (cmp_on) {
             // show green or red, depending on a match/no match
