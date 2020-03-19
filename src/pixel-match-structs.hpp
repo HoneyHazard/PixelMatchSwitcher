@@ -21,12 +21,13 @@ struct PmResultsPacket
     bool isMatched;
 };
 
-struct  PmConfigPacket
+struct PmConfigPacket
 {
     int roiLeft = 0, roiBottom = 0;
     float perPixelErrThresh = 25.f;
     float totalMatchThresh = 90.f;
     PmColorMode colorMode = PmColorMode::GreenMode;
+    uint32_t customColor = 0xff00ff00;
     // bool visualize; // TODO
     // Color customColor; // TODO
 };

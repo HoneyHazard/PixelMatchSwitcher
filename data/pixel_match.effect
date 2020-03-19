@@ -1,10 +1,12 @@
-layout (binding = 0, offset = 0) uniform atomic_uint compare_counter;
-layout (binding = 1, offset = 0) uniform atomic_uint match_counter;
+layout (binding = 0) uniform atomic_uint compare_counter;
+layout (binding = 1) uniform atomic_uint match_counter;
 
 uniform texture2d image;
 uniform float4x4 ViewProj;
 
 uniform texture2d match_img;
+uniform float3 mask_color;
+uniform bool mask_alpha;
 uniform float per_pixel_err_thresh;
 uniform float roi_left;
 uniform float roi_bottom;
@@ -26,6 +28,12 @@ struct VertInOut {
     float2 uv  : TEXCOORD0;
 };
 
+float match_ratio(float3 val, float3 expect)
+{
+    float3 diff = abs(val - expect);
+    return (diff.x + diff.y + diff.z) / 3.0;
+}
+
 VertInOut VSDefault(VertInOut vert_in)
 {
     VertInOut vert_out;
@@ -46,13 +54,22 @@ float4 PSMatch(VertInOut vert_in) : TARGET
 
     float2 sample_uv = (vert_in.uv - float2(roi_left, roi_bottom))
         / float2(roi_right - roi_left, roi_top - roi_bottom);
-    float4 cmp = match_img.Sample(def_sampler, sample_uv);
-    bool cmp_on = cmp.r > 0.05 || cmp.g > 0.05 || cmp.b > 0.05;
+    float4 cmp_val = match_img.Sample(def_sampler, sample_uv);
+    //bool cmp_on = cmp.r > 0.05 || cmp.g > 0.05 || cmp.b > 0.05;
+    bool cmp_on;
+    if (mask_alpha) {
+        cmp_on = (cmp_val.a > 0);
+    } else {
+        cmp_on = (cmp_val.xyz != mask_color);
+    }
+
     if (cmp_on) {
         atomicCounterIncrement(compare_counter);
     }
 
-    bool match_on = cmp_on && val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
+    //bool match_on = cmp_on && val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
+    bool match_on
+        = (cmp_on && match_ratio(val.xyz, cmp_val.xyz) <= per_pixel_err_thresh);
     if (match_on) {
         atomicCounterIncrement(match_counter);
     }
@@ -62,12 +79,12 @@ float4 PSMatch(VertInOut vert_in) : TARGET
           && (abs(u - roi_left) < border_width
            || abs(u - roi_right) < border_width)) {
             // show white border for the ROI region
-            val = float4(1, 1, 1, 1);
+            val = float4(float3(1) - val.xyz, 1.0);
         } else if (hbound
                  && (abs(v - roi_bottom) < border_height
                   || abs(v - roi_top) < border_height)) {
             // show white border for the ROI region
-            val = float4(1, 1, 1, 1);
+            val = float4(float3(1) - val.xyz, 1.0);
         } else if (cmp_on) {
             // show green or red, depending on a match/no match
             val = match_on ? float4(0, 1, 0, 1) : float4(1, 0, 0, 1);

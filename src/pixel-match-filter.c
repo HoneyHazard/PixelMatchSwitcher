@@ -69,6 +69,10 @@ static void *pixel_match_filter_create(
     filter->param_roi_top =
         gs_effect_get_param_by_name(filter->effect, "roi_top");
 
+    filter->param_mask_color =
+        gs_effect_get_param_by_name(filter->effect, "mask_color");
+    filter->param_mask_alpha =
+        gs_effect_get_param_by_name(filter->effect, "mask_alpha");
     filter->param_per_pixel_err_thresh =
         gs_effect_get_param_by_name(filter->effect, "per_pixel_err_thresh");
 
@@ -250,14 +254,16 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     gs_effect_set_float(filter->param_roi_top, roi_top_v);
     gs_effect_set_float(filter->param_per_pixel_err_thresh,
                         filter->per_pixel_err_thresh);
+    gs_effect_set_bool(filter->param_mask_alpha, filter->mask_alpha);
+    gs_effect_set_vec3(filter->param_mask_color, &filter->mask_color);
     gs_effect_set_texture(filter->param_match_img, filter->match_img_tex);
 
     gs_effect_set_bool(filter->param_visualize,
         filter->visualize && filter->preview_mode);
     gs_effect_set_float(filter->param_border_width,
-                        1.f / (float)(filter->base_width));
+                        2.f / (float)(filter->base_width));
     gs_effect_set_float(filter->param_border_height,
-                        1.f / (float)(filter->base_height));
+                        2.f / (float)(filter->base_height));
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->base_width, filter->base_height);

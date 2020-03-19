@@ -60,7 +60,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_colorModeCombo->insertItem(
         int(PmColorMode::GreenMode), obs_module_text("Green"));
     m_colorModeCombo->insertItem(
-        int(PmColorMode::MagentaMode), obs_module_text("Pink"));
+        int(PmColorMode::MagentaMode), obs_module_text("Magenta"));
     m_colorModeCombo->insertItem(
         int(PmColorMode::BlackMode), obs_module_text("Black"));
     m_colorModeCombo->insertItem(
@@ -309,5 +309,6 @@ void PmDialog::onConfigUiChanged()
     config.roiBottom = m_posYBox->value();
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.colorMode = PmColorMode(m_colorModeCombo->currentIndex());
+    config.customColor = 0xffffffff;
     emit sigNewUiConfig(config);
 }

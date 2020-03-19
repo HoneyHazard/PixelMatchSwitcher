@@ -2,7 +2,6 @@
 
 #include <pthread.h>
 #include <obs-module.h>
-#include <graphics/image-file.h>
 
 #define PIXEL_MATCH_FILTER_ID "pixel_match_filter"
 
@@ -25,6 +24,8 @@ struct pm_filter_data
     gs_eparam_t *param_roi_right;
     gs_eparam_t *param_roi_top;
     gs_eparam_t *param_per_pixel_err_thresh;
+    gs_eparam_t *param_mask_color;
+    gs_eparam_t *param_mask_alpha;
     gs_eparam_t *param_match_img;
     gs_eparam_t *param_compare_counter;
     gs_eparam_t *param_match_counter;
@@ -39,6 +40,8 @@ struct pm_filter_data
     // match configuration
     int roi_left;
     int roi_bottom;
+    bool mask_alpha;
+    struct vec3 mask_color;
     float per_pixel_err_thresh;
     float total_match_thresh;
 

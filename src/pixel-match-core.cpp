@@ -336,6 +336,43 @@ void PmCore::supplyImageToFilter()
 
 void PmCore::supplyConfigToFilter()
 {
+    struct vec3 maskColor;
+    bool maskAlpha = false;
+
+    switch(m_config.colorMode) {
+    case PmColorMode::AlphaMode:
+        maskAlpha = true;
+        break;
+    case PmColorMode::BlackMode:
+        vec3_set(&maskColor, 0.f, 0.f, 0.f);
+        break;
+    case PmColorMode::GreenMode:
+        vec3_set(&maskColor, 0.f, 1.f, 0.f);
+        break;
+    case PmColorMode::MagentaMode:
+        vec3_set(&maskColor, 1.f, 0.f, 1.f);
+        break;
+    case PmColorMode::CustomClrMode:
+        {
+            uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&m_config.customColor);
+            if (__BYTE_ORDER == __LITTLE_ENDIAN) {
+                vec3_set(&maskColor,
+                         float(colorBytes[2])/255.f,
+                         float(colorBytes[1])/255.f,
+                         float(colorBytes[0])/255.f);
+            } else {
+                vec3_set(&maskColor,
+                         float(colorBytes[1])/255.f,
+                         float(colorBytes[2])/255.f,
+                         float(colorBytes[3])/255.f);
+            }
+        }
+        break;
+    default:
+        blog(LOG_ERROR, "Unknown color mode: %i", m_config.colorMode);
+        break;
+    }
+
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
@@ -343,6 +380,8 @@ void PmCore::supplyConfigToFilter()
         filterData->roi_bottom = m_config.roiBottom;
         filterData->per_pixel_err_thresh = m_config.perPixelErrThresh;
         filterData->total_match_thresh = m_config.totalMatchThresh;
+        filterData->mask_alpha = maskAlpha;
+        filterData->mask_color = maskColor;
         pthread_mutex_unlock(&filterData->mutex);
     }
 }
