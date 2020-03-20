@@ -92,8 +92,10 @@ float4 PSMatch(VertInOut vert_in) : TARGET
             // show inverted border for the ROI region
             val = float4(float3(1) - val.xyz, 1.0);
         } else if (cmp_on) {
-            // show green or red, depending on a match/no match
-            val = match_on ? float4(0, 1, 0, 1) : float4(1, 0, 0, 1);
+            // show green or red hues, depending on a match/no match
+            float intensity = 0.3 + (val.r + val.g + val.b) / 3.0 * 0.7;
+            val = match_on ? float4(0, intensity, 0, 1)
+                           : float4(intensity, 0, 0, 1);
         }
         // else: compare off, no border -> keep the passthrough value
     }
