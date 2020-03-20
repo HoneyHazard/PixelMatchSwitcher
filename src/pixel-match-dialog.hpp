@@ -42,6 +42,7 @@ private:
     QComboBox *m_maskModeCombo;
     QLabel *m_maskModeDisplay;
     QSpinBox *m_posXBox, *m_posYBox;
+    QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
     QLabel *m_matchResultDisplay;
 

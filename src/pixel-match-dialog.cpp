@@ -106,10 +106,23 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 
     mainTabLayout->addRow(obs_module_text("Location: "), matchLocSubLayout);
 
+    // per pixel error tolerance
+    m_perPixelErrorBox = new QDoubleSpinBox(this);
+    m_perPixelErrorBox->setSuffix(" %");
+    m_perPixelErrorBox->setRange(0.0, 100.0);
+    m_perPixelErrorBox->setSingleStep(1.0);
+    m_perPixelErrorBox->setDecimals(1);
+    m_perPixelErrorBox->setValue(double(config.perPixelErrThresh));
+    connect(m_perPixelErrorBox, SIGNAL(valueChanged(double)),
+            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+
+    mainTabLayout->addRow(
+        obs_module_text("Allowed Pixel Error: "), m_perPixelErrorBox);
+
     // total match error threshold
     m_totalMatchThreshBox = new QDoubleSpinBox(this);
     m_totalMatchThreshBox->setSuffix(" %");
-    m_totalMatchThreshBox->setRange(0.0, 100.0);
+    m_totalMatchThreshBox->setRange(1.0, 100.0);
     m_totalMatchThreshBox->setSingleStep(1.0);
     m_totalMatchThreshBox->setDecimals(1);
     m_totalMatchThreshBox->setValue(double(config.totalMatchThresh));
@@ -177,9 +190,6 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     if (!renderSrc) return;
 
-    //int sourceCX = int(filterRef.filterSrcWidth());
-    //int sourceCY = int(filterRef.filterSrcHeight());
-    //int sourceCX = obs_scene_get
     QSize videoSz = core->videoBaseSize();
     QSize previewSz = videoSz * double(dialog->m_previewScale);
 
@@ -314,6 +324,7 @@ void PmDialog::onConfigUiChanged()
     PmConfigPacket config;
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
+    config.perPixelErrThresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
     config.customColor = 0xffffffff;
