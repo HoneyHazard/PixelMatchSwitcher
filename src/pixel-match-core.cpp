@@ -109,6 +109,13 @@ PmConfigPacket PmCore::config() const
     return m_config;
 }
 
+QSize PmCore::videoBaseSize() const
+{
+    obs_video_info ovi;
+    obs_get_video_info(&ovi);
+    return QSize(int(ovi.base_width), int(ovi.base_height));
+}
+
 std::string PmCore::scenesInfo() const
 {
     using namespace std;
@@ -339,20 +346,20 @@ void PmCore::supplyConfigToFilter()
     struct vec3 maskColor;
     bool maskAlpha = false;
 
-    switch(m_config.colorMode) {
-    case PmColorMode::AlphaMode:
+    switch(m_config.maskMode) {
+    case PmMaskMode::AlphaMode:
         maskAlpha = true;
         break;
-    case PmColorMode::BlackMode:
+    case PmMaskMode::BlackMode:
         vec3_set(&maskColor, 0.f, 0.f, 0.f);
         break;
-    case PmColorMode::GreenMode:
+    case PmMaskMode::GreenMode:
         vec3_set(&maskColor, 0.f, 1.f, 0.f);
         break;
-    case PmColorMode::MagentaMode:
+    case PmMaskMode::MagentaMode:
         vec3_set(&maskColor, 1.f, 0.f, 1.f);
         break;
-    case PmColorMode::CustomClrMode:
+    case PmMaskMode::CustomClrMode:
         {
             uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&m_config.customColor);
             if (__BYTE_ORDER == __LITTLE_ENDIAN) {
@@ -369,7 +376,7 @@ void PmCore::supplyConfigToFilter()
         }
         break;
     default:
-        blog(LOG_ERROR, "Unknown color mode: %i", m_config.colorMode);
+        blog(LOG_ERROR, "Unknown color mode: %i", m_config.maskMode);
         break;
     }
 

@@ -35,12 +35,12 @@ private slots:
 private:
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
 
-    void colorModeChanged(PmColorMode mode, QColor color);
+    void maskModeChanged(PmMaskMode mode, QColor color);
 
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;
-    QComboBox *m_colorModeCombo;
-    QLabel *m_colorModeDisplay;
+    QComboBox *m_maskModeCombo;
+    QLabel *m_maskModeDisplay;
     QSpinBox *m_posXBox, *m_posYBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
     QLabel *m_matchResultDisplay;

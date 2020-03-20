@@ -50,33 +50,33 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
             this, &PmDialog::onBrowseButtonReleased);
     imgPathSubLayout->addWidget(browseImgPathBtn);
 
-    mainTabLayout->addRow(obs_module_text("Match Image: "), imgPathSubLayout);
+    mainTabLayout->addRow(obs_module_text("Image: "), imgPathSubLayout);
 
     // color mode selection
     QHBoxLayout *colorSubLayout = new QHBoxLayout;
     colorSubLayout->setContentsMargins(0, 0, 0, 0);
 
-    m_colorModeCombo = new QComboBox(this);
-    m_colorModeCombo->insertItem(
-        int(PmColorMode::GreenMode), obs_module_text("Green"));
-    m_colorModeCombo->insertItem(
-        int(PmColorMode::MagentaMode), obs_module_text("Magenta"));
-    m_colorModeCombo->insertItem(
-        int(PmColorMode::BlackMode), obs_module_text("Black"));
-    m_colorModeCombo->insertItem(
-        int(PmColorMode::AlphaMode), obs_module_text("Alpha"));
-    m_colorModeCombo->insertItem(
-        int(PmColorMode::CustomClrMode), obs_module_text("Custom"));
-    m_colorModeCombo->setCurrentIndex(int(config.colorMode));
-    connect(m_colorModeCombo, SIGNAL(currentIndexChanged(int)),
+    m_maskModeCombo = new QComboBox(this);
+    m_maskModeCombo->insertItem(
+        int(PmMaskMode::GreenMode), obs_module_text("Green"));
+    m_maskModeCombo->insertItem(
+        int(PmMaskMode::MagentaMode), obs_module_text("Magenta"));
+    m_maskModeCombo->insertItem(
+        int(PmMaskMode::BlackMode), obs_module_text("Black"));
+    m_maskModeCombo->insertItem(
+        int(PmMaskMode::AlphaMode), obs_module_text("Alpha"));
+    m_maskModeCombo->insertItem(
+        int(PmMaskMode::CustomClrMode), obs_module_text("Custom"));
+    m_maskModeCombo->setCurrentIndex(int(config.maskMode));
+    connect(m_maskModeCombo, SIGNAL(currentIndexChanged(int)),
         this, SLOT(onColorComboIndexChanged()));
-    colorSubLayout->addWidget(m_colorModeCombo);
+    colorSubLayout->addWidget(m_maskModeCombo);
 
-    m_colorModeDisplay = new QLabel(this);
-    m_colorModeDisplay->setFrameStyle(QFrame::Sunken | QFrame::Panel);
-    colorSubLayout->addWidget(m_colorModeDisplay);
+    m_maskModeDisplay = new QLabel(this);
+    m_maskModeDisplay->setFrameStyle(QFrame::Sunken | QFrame::Panel);
+    colorSubLayout->addWidget(m_maskModeDisplay);
 
-    mainTabLayout->addRow(obs_module_text("Color Mode: "), colorSubLayout);
+    mainTabLayout->addRow(obs_module_text("Mask Mode: "), colorSubLayout);
 
     // match location
     QHBoxLayout *matchLocSubLayout = new QHBoxLayout;
@@ -105,7 +105,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
         this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posYBox);
 
-    mainTabLayout->addRow(obs_module_text("Match Location: "), matchLocSubLayout);
+    mainTabLayout->addRow(obs_module_text("Location: "), matchLocSubLayout);
 
     // total match error threshold
     m_totalMatchThreshBox = new QDoubleSpinBox(this);
@@ -130,8 +130,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_filterDisplay = new OBSQTDisplay(this);
     m_filterDisplay->setSizePolicy(
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
-    m_filterDisplay->setMinimumSize(400, 300);
-    m_filterDisplay->setMaximumSize(4000, 3000);
+    m_filterDisplay->setMinimumSize(m_core->videoBaseSize());
+    m_filterDisplay->setMaximumSize(m_core->videoBaseSize());
     mainTabLayout->addRow(m_filterDisplay);
 
     QWidget *mainTab = new QWidget(this);
@@ -180,25 +180,29 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     if (!renderSrc) return;
 
-    int sourceCX = int(filterRef.filterSrcWidth());
-    int sourceCY = int(filterRef.filterSrcHeight());
+    //int sourceCX = int(filterRef.filterSrcWidth());
+    //int sourceCY = int(filterRef.filterSrcHeight());
+    //int sourceCX = obs_scene_get
+    QSize outputSz = dialog->m_core->videoBaseSize();
+    int outputCx = outputSz.width();
+    int outputCy = outputSz.height();
 
-    if (sourceCX == 0 || sourceCY == 0)
+    if (outputCx == 0 || outputCy == 0)
         return;
 
     int x, y;
-    int newCX, newCY;
+    int scaledCx, scaledCy;
     float scale;
 
-    GetScaleAndCenterPos(sourceCX, sourceCY, int(cx), int(cy), x, y, scale);
+    GetScaleAndCenterPos(outputCx, outputCy, int(outputCx), int(cy), x, y, scale);
 
-    newCX = int(scale * float(sourceCX));
-    newCY = int(scale * float(sourceCY));
+    scaledCx = int(scale * float(outputCx));
+    scaledCy = int(scale * float(outputCy));
 
     gs_viewport_push();
     gs_projection_push();
-    gs_ortho(0.0f, float(sourceCX), 0.0f, float(sourceCY), -100.0f, 100.0f);
-    gs_set_viewport(x, y, newCX, newCY);
+    gs_ortho(0.0f, float(outputCx), 0.0f, float(outputCy), -100.0f, 100.0f);
+    gs_set_viewport(x, y, scaledCx, scaledCy);
 
     filterRef.lockData();
     filterRef.filterData()->preview_mode = true;
@@ -210,21 +214,21 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     gs_viewport_pop();
 }
 
-void PmDialog::colorModeChanged(PmColorMode mode, QColor color)
+void PmDialog::maskModeChanged(PmMaskMode mode, QColor color)
 {
     QColor bgColor = color, textColor = Qt::black;
     const QString ss;
 
     switch(mode) {
-    case PmColorMode::GreenMode:
+    case PmMaskMode::GreenMode:
         color = QColor(0, 255, 0);
         textColor = Qt::white;
         break;
-    case PmColorMode::MagentaMode:
+    case PmMaskMode::MagentaMode:
         color = QColor(255, 0, 255);
         textColor = Qt::white;
         break;
-    case PmColorMode::BlackMode:
+    case PmMaskMode::BlackMode:
         color = QColor(0, 0, 0);
         textColor = Qt::white;
         break;
@@ -232,8 +236,8 @@ void PmDialog::colorModeChanged(PmColorMode mode, QColor color)
         break;
     }
 
-    m_colorModeDisplay->setText(color.name(QColor::HexArgb));
-    m_colorModeDisplay->setStyleSheet(
+    m_maskModeDisplay->setText(color.name(QColor::HexArgb));
+    m_maskModeDisplay->setStyleSheet(
         QString("background-color :%1; color: %2;")
             .arg(color.name(QColor::HexArgb))
             .arg(textColor.name(QColor::HexArgb)));
@@ -242,8 +246,8 @@ void PmDialog::colorModeChanged(PmColorMode mode, QColor color)
 void PmDialog::onColorComboIndexChanged()
 {
     // send color mode to core? obs data API?
-    PmColorMode mode = PmColorMode(m_colorModeCombo->currentIndex());
-    colorModeChanged(mode, QColor());
+    PmMaskMode mode = PmMaskMode(m_maskModeCombo->currentIndex());
+    maskModeChanged(mode, QColor());
     onConfigUiChanged();
 }
 
@@ -308,7 +312,7 @@ void PmDialog::onConfigUiChanged()
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
-    config.colorMode = PmColorMode(m_colorModeCombo->currentIndex());
+    config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
     config.customColor = 0xffffffff;
     emit sigNewUiConfig(config);
 }

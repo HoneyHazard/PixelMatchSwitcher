@@ -41,6 +41,7 @@ public:
     const QImage& matchImage() { return m_matchImg; }
     PmResultsPacket results() const;
     PmConfigPacket config() const;
+    QSize videoBaseSize() const;
 
 signals:
     void sigFrameProcessed();
