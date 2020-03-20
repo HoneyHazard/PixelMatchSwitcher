@@ -275,9 +275,9 @@ void PmCore::onFrameProcessed()
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         QSize baseSz = videoBaseSize();
-        pthread_mutex_lock(&filterData->mutex);
         newResults.baseWidth = baseSz.width();
         newResults.baseHeight = baseSz.height();
+        pthread_mutex_lock(&filterData->mutex);
         newResults.matchImgWidth = filterData->match_img_width;
         newResults.matchImgHeight = filterData->match_img_height;
         newResults.numCompared = filterData->num_compared;

@@ -289,12 +289,12 @@ void PmDialog::onNewResults(PmResultsPacket results)
 {
     if (m_prevResults.baseWidth != results.baseWidth
      || m_prevResults.matchImgWidth != results.matchImgWidth) {
-        m_posXBox->setMaximum(int(results.baseWidth - results.matchImgWidth));
+        m_posXBox->setMaximum(results.baseWidth - int(results.matchImgWidth));
         m_filterDisplay->setFixedWidth(results.baseWidth);
     }
     if (m_prevResults.baseHeight != results.baseHeight
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
-        m_posYBox->setMaximum(int(results.baseHeight - results.matchImgHeight));
+        m_posYBox->setMaximum(results.baseHeight - int(results.matchImgHeight));
         m_filterDisplay->setFixedHeight(results.baseHeight);
     }
 
