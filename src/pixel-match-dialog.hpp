@@ -34,6 +34,8 @@ private slots:
 
 private:
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
+    void updateFilterDisplaySize(
+        const PmConfigPacket &config, const PmResultsPacket &results);
 
     void maskModeChanged(PmMaskMode mode, QColor color);
 
@@ -45,8 +47,8 @@ private:
     QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
     QLabel *m_matchResultDisplay;
+    QComboBox *m_previewVideoScaleCombo;
 
     QPointer<PmCore> m_core;
     PmResultsPacket m_prevResults;
-    float m_previewScale = 0.5f;
 };

@@ -28,6 +28,7 @@ struct PmConfigPacket
     float totalMatchThresh = 90.f;
     PmMaskMode maskMode = PmMaskMode::GreenMode;
     uint32_t customColor = 0xff00ff00;
+    float previewVideoScale = 0.5f;
     // bool visualize; // TODO
     // Color customColor; // TODO
 };

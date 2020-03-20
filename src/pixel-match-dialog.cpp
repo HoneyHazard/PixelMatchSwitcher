@@ -138,6 +138,19 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     mainTabLayout->addRow(
         obs_module_text("Match Result: "), m_matchResultDisplay);
 
+    m_previewVideoScaleCombo = new QComboBox(this);
+    m_previewVideoScaleCombo->addItem("100%", 1.f);
+    m_previewVideoScaleCombo->addItem("75%", 0.75f);
+    m_previewVideoScaleCombo->addItem("50%", 0.5f);
+    m_previewVideoScaleCombo->addItem("25%", 0.25f);
+    m_previewVideoScaleCombo->setCurrentIndex(
+        m_previewVideoScaleCombo->findData(config.previewVideoScale));
+    connect(m_previewVideoScaleCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+
+    mainTabLayout->addRow(
+        obs_module_text("Preview Scale: "), m_previewVideoScaleCombo);
+
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
     mainTabLayout->addRow(m_filterDisplay);
@@ -185,13 +198,14 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     if (!core) return;
 
+    auto config = core->config();
     auto filterRef = core->activeFilterRef();
     auto renderSrc = filterRef.filter();
 
     if (!renderSrc) return;
 
     QSize videoSz = core->videoBaseSize();
-    QSize previewSz = videoSz * double(dialog->m_previewScale);
+    QSize previewSz = videoSz * double(config.previewVideoScale);
 
     if (previewSz.width() == 0 || previewSz.height() == 0)
         return;
@@ -289,19 +303,29 @@ void PmDialog::onImgFailed(QString filename)
     m_imgPathEdit->setStyleSheet("text-color: red");
 }
 
+void PmDialog::updateFilterDisplaySize(
+    const PmConfigPacket &config, const PmResultsPacket &results)
+{
+    float previewScale = config.previewVideoScale;
+    int cx = int(results.baseWidth * previewScale);
+    int cy = int(results.baseHeight * previewScale);
+    if (m_filterDisplay->width() != cx) {
+        m_filterDisplay->setFixedWidth(cx);
+    }
+    if (m_filterDisplay->height() != cy) {
+        m_filterDisplay->setFixedHeight(cy);
+    }
+}
+
 void PmDialog::onNewResults(PmResultsPacket results)
 {
     if (m_prevResults.baseWidth != results.baseWidth
      || m_prevResults.matchImgWidth != results.matchImgWidth) {
         m_posXBox->setMaximum(results.baseWidth - int(results.matchImgWidth));
-        int previewWidth = int(results.baseWidth * m_previewScale);
-        m_filterDisplay->setFixedWidth(previewWidth);
     }
     if (m_prevResults.baseHeight != results.baseHeight
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
         m_posYBox->setMaximum(results.baseHeight - int(results.matchImgHeight));
-        int previewHeight = int(results.baseHeight * m_previewScale);
-        m_filterDisplay->setFixedHeight(previewHeight);
     }
 
     QString matchLabel = results.isMatched
@@ -316,6 +340,7 @@ void PmDialog::onNewResults(PmResultsPacket results)
             .arg(double(results.percentageMatched), 0, 'f', 1);
     m_matchResultDisplay->setText(resultStr);
 
+    updateFilterDisplaySize(m_core->config(), results);
     m_prevResults = results;
 }
 
@@ -327,6 +352,9 @@ void PmDialog::onConfigUiChanged()
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
+    config.previewVideoScale
+        = m_previewVideoScaleCombo->currentData().toFloat();
     config.customColor = 0xffffffff;
+    updateFilterDisplaySize(config, m_prevResults);
     emit sigNewUiConfig(config);
 }
