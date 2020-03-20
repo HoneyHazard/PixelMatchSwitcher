@@ -127,8 +127,6 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
-    m_filterDisplay->setSizePolicy(
-        QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
     mainTabLayout->addRow(m_filterDisplay);
 
     QWidget *mainTab = new QWidget(this);
