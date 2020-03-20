@@ -13,7 +13,7 @@ enum class PmMaskMode : int {
 
 struct PmResultsPacket
 {
-    uint32_t baseWidth, baseHeight;
+    int baseWidth, baseHeight;
     uint32_t matchImgWidth, matchImgHeight;
     uint32_t numCompared;
     uint32_t numMatched;
