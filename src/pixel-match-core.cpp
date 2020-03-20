@@ -272,11 +272,12 @@ void PmCore::onPeriodicUpdate()
 void PmCore::onFrameProcessed()
 {
     PmResultsPacket newResults;
+    QSize baseSz = videoBaseSize();
+    newResults.baseWidth = baseSz.width();
+    newResults.baseHeight = baseSz.height();
+
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
-        QSize baseSz = videoBaseSize();
-        newResults.baseWidth = baseSz.width();
-        newResults.baseHeight = baseSz.height();
         pthread_mutex_lock(&filterData->mutex);
         newResults.matchImgWidth = filterData->match_img_width;
         newResults.matchImgHeight = filterData->match_img_height;

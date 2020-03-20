@@ -24,7 +24,6 @@
 PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 : QDialog(parent)
 , m_core(pixelMatcher)
-, m_prevResults(pixelMatcher->results())
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
 
@@ -129,9 +128,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
     m_filterDisplay->setSizePolicy(
-        QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
-    m_filterDisplay->setMinimumSize(m_core->videoBaseSize());
-    m_filterDisplay->setMaximumSize(m_core->videoBaseSize());
+        QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
     mainTabLayout->addRow(m_filterDisplay);
 
     QWidget *mainTab = new QWidget(this);
@@ -185,29 +182,25 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     //int sourceCX = int(filterRef.filterSrcWidth());
     //int sourceCY = int(filterRef.filterSrcHeight());
     //int sourceCX = obs_scene_get
-    QSize outputSz = core->videoBaseSize();
-    int outputCx = outputSz.width();
-    int outputCy = outputSz.height();
+    QSize videoSz = core->videoBaseSize();
+    QSize previewSz = videoSz * double(dialog->m_previewScale);
 
-    if (outputCx == 0 || outputCy == 0)
+    if (previewSz.width() == 0 || previewSz.height() == 0)
         return;
 
     int x, y;
-    int scaledCx, scaledCy;
     float scale;
 
     GetScaleAndCenterPos(
-                outputCx, outputCy,
-                outputCx, outputCy,
+                videoSz.width(), videoSz.height(),
+                previewSz.width(), previewSz.height(),
                 x, y, scale);
-
-    scaledCx = int(scale * float(outputCx));
-    scaledCy = int(scale * float(outputCy));
 
     gs_viewport_push();
     gs_projection_push();
-    gs_ortho(0.0f, float(outputCx), 0.0f, float(outputCy), -100.0f, 100.0f);
-    gs_set_viewport(x, y, scaledCx, scaledCy);
+    gs_ortho(0.0f, float(videoSz.width()), 0.0f, float(videoSz.height()),
+             -100.0f, 100.0f);
+    gs_set_viewport(x, y, previewSz.width(), previewSz.height());
 
     filterRef.lockData();
     filterRef.filterData()->preview_mode = true;
@@ -217,6 +210,9 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     gs_projection_pop();
     gs_viewport_pop();
+
+    UNUSED_PARAMETER(cx);
+    UNUSED_PARAMETER(cy);
 }
 
 void PmDialog::maskModeChanged(PmMaskMode mode, QColor color)
@@ -290,12 +286,14 @@ void PmDialog::onNewResults(PmResultsPacket results)
     if (m_prevResults.baseWidth != results.baseWidth
      || m_prevResults.matchImgWidth != results.matchImgWidth) {
         m_posXBox->setMaximum(results.baseWidth - int(results.matchImgWidth));
-        m_filterDisplay->setFixedWidth(results.baseWidth);
+        int previewWidth = int(results.baseWidth * m_previewScale);
+        m_filterDisplay->setFixedWidth(previewWidth);
     }
     if (m_prevResults.baseHeight != results.baseHeight
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
         m_posYBox->setMaximum(results.baseHeight - int(results.matchImgHeight));
-        m_filterDisplay->setFixedHeight(results.baseHeight);
+        int previewHeight = int(results.baseHeight * m_previewScale);
+        m_filterDisplay->setFixedHeight(previewHeight);
     }
 
     QString matchLabel = results.isMatched

@@ -47,4 +47,5 @@ private:
 
     QPointer<PmCore> m_core;
     PmResultsPacket m_prevResults;
+    float m_previewScale = 0.5f;
 };
