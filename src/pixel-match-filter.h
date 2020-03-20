@@ -16,8 +16,8 @@ struct pm_filter_data
 
     // shader parameters and results
     gs_eparam_t *param_visualize;
-    gs_eparam_t *param_border_width;
-    gs_eparam_t *param_border_height;
+    gs_eparam_t *param_px_width;
+    gs_eparam_t *param_px_height;
 
     gs_eparam_t *param_roi_left;
     gs_eparam_t *param_roi_bottom;

@@ -14,8 +14,8 @@ uniform float roi_right;
 uniform float roi_top;
 
 uniform bool visualize;
-uniform float border_width;
-uniform float border_height;
+uniform float px_width;
+uniform float px_height;
 
 sampler_state def_sampler {
     Filter   = Linear;
@@ -44,15 +44,20 @@ VertInOut VSDefault(VertInOut vert_in)
 
 float4 PSMatch(VertInOut vert_in) : TARGET
 {
-    float4 val = image.Sample(def_sampler, vert_in.uv);
-    float u = vert_in.uv.x, v = vert_in.uv.y;
+    float2 uv = vert_in.uv;
+    if (visualize) {
+        uv += float2(px_width, px_height)/2;
+    }
+    float u = uv.x, v = uv.y;
+
+    float4 val = image.Sample(def_sampler, uv);
     bool hbound = (u >= roi_left && u <= roi_right);
     bool vbound = (v >= roi_bottom && v <= roi_top);
 
     if (!hbound || !vbound)
         return val;
 
-    float2 sample_uv = (vert_in.uv - float2(roi_left, roi_bottom))
+    float2 sample_uv = (uv - float2(roi_left, roi_bottom))
         / float2(roi_right - roi_left, roi_top - roi_bottom);
     float4 cmp_val = match_img.Sample(def_sampler, sample_uv);
     //bool cmp_on = cmp.r > 0.05 || cmp.g > 0.05 || cmp.b > 0.05;
@@ -75,15 +80,16 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     }
 
     if (visualize) {
+        float border_width = px_width * 2.0, border_height = px_height * 2.0;
         if (vbound
           && (abs(u - roi_left) < border_width
            || abs(u - roi_right) < border_width)) {
-            // show inverted for the ROI region
+            // show inverted border for the ROI region
             val = float4(float3(1) - val.xyz, 1.0);
         } else if (hbound
                  && (abs(v - roi_bottom) < border_height
                   || abs(v - roi_top) < border_height)) {
-            // show inverted for the ROI region
+            // show inverted border for the ROI region
             val = float4(float3(1) - val.xyz, 1.0);
         } else if (cmp_on) {
             // show green or red, depending on a match/no match

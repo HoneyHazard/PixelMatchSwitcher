@@ -88,10 +88,10 @@ static void *pixel_match_filter_create(
 
     filter->param_visualize =
         gs_effect_get_param_by_name(filter->effect, "visualize");
-    filter->param_border_width =
-        gs_effect_get_param_by_name(filter->effect, "border_width");
-    filter->param_border_height =
-        gs_effect_get_param_by_name(filter->effect, "border_height");
+    filter->param_px_width =
+        gs_effect_get_param_by_name(filter->effect, "px_width");
+    filter->param_px_height =
+        gs_effect_get_param_by_name(filter->effect, "px_height");
 
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
@@ -261,10 +261,10 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     gs_effect_set_bool(filter->param_visualize,
         filter->visualize && filter->preview_mode);
-    gs_effect_set_float(filter->param_border_width,
-                        2.f / (float)(filter->base_width));
-    gs_effect_set_float(filter->param_border_height,
-                        2.f / (float)(filter->base_height));
+    gs_effect_set_float(filter->param_px_width,
+                        1.f / (float)(filter->base_width));
+    gs_effect_set_float(filter->param_px_height,
+                        1.f / (float)(filter->base_height));
 
     obs_source_process_filter_end(filter->context, filter->effect,
                                   filter->base_width, filter->base_height);
