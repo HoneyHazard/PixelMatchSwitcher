@@ -173,9 +173,11 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
     auto dialog = static_cast<PmDialog*>(data);
-    if (!dialog->m_core) return;
+    auto core = dialog->m_core;
 
-    auto filterRef = dialog->m_core->activeFilterRef();
+    if (!core) return;
+
+    auto filterRef = core->activeFilterRef();
     auto renderSrc = filterRef.filter();
 
     if (!renderSrc) return;
@@ -183,7 +185,7 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     //int sourceCX = int(filterRef.filterSrcWidth());
     //int sourceCY = int(filterRef.filterSrcHeight());
     //int sourceCX = obs_scene_get
-    QSize outputSz = dialog->m_core->videoBaseSize();
+    QSize outputSz = core->videoBaseSize();
     int outputCx = outputSz.width();
     int outputCy = outputSz.height();
 
@@ -194,7 +196,10 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     int scaledCx, scaledCy;
     float scale;
 
-    GetScaleAndCenterPos(outputCx, outputCy, int(outputCx), int(cy), x, y, scale);
+    GetScaleAndCenterPos(
+                outputCx, outputCy,
+                outputCx, outputCy,
+                x, y, scale);
 
     scaledCx = int(scale * float(outputCx));
     scaledCy = int(scale * float(outputCy));
