@@ -251,7 +251,7 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
         orthoLeft = 0.f;
         orthoBottom = 0.f;
         orthoRight = videoSz.width();
-        orthoBottom = videoSz.height();
+        orthoTop = videoSz.height();
 
         float scale;
         GetScaleAndCenterPos(
