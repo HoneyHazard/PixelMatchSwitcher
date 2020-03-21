@@ -11,6 +11,12 @@ enum class PmMaskMode : int {
     CustomClrMode=4
 };
 
+enum class PmPreviewMode : int {
+    Video=0,
+    Region=1,
+    MatchImage=2
+};
+
 struct PmResultsPacket
 {
     int baseWidth, baseHeight;
@@ -28,7 +34,7 @@ struct PmConfigPacket
     float totalMatchThresh = 90.f;
     PmMaskMode maskMode = PmMaskMode::GreenMode;
     uint32_t customColor = 0xff00ff00;
+    PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;
     // bool visualize; // TODO
-    // Color customColor; // TODO
 };

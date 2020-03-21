@@ -45,9 +45,9 @@ VertInOut VSDefault(VertInOut vert_in)
 float4 PSMatch(VertInOut vert_in) : TARGET
 {
     float2 uv = vert_in.uv;
-    if (visualize) {
-        uv += float2(px_width, px_height)/2;
-    }
+    //if (visualize) {
+    //    uv += float2(px_width, px_height)/2;
+    //}
     float u = uv.x, v = uv.y;
 
     float4 val = image.Sample(def_sampler, uv);

@@ -18,6 +18,8 @@
 #include <QFileDialog>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
+#include <QRadioButton>
+#include <QButtonGroup>
 
 #include <obs-module.h>
 
@@ -138,18 +140,53 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     mainTabLayout->addRow(
         obs_module_text("Match Result: "), m_matchResultDisplay);
 
-    m_previewVideoScaleCombo = new QComboBox(this);
-    m_previewVideoScaleCombo->addItem("100%", 1.f);
-    m_previewVideoScaleCombo->addItem("75%", 0.75f);
-    m_previewVideoScaleCombo->addItem("50%", 0.5f);
-    m_previewVideoScaleCombo->addItem("25%", 0.25f);
-    m_previewVideoScaleCombo->setCurrentIndex(
-        m_previewVideoScaleCombo->findData(config.previewVideoScale));
-    connect(m_previewVideoScaleCombo, SIGNAL(currentIndexChanged(int)),
+    // preview mode
+    m_previewModeButtons = new QButtonGroup(this);
+    m_previewModeButtons->setExclusive(true);
+    connect(m_previewModeButtons,SIGNAL(buttonReleased(int)),
+            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+
+    QHBoxLayout *previewModeLayout = new QHBoxLayout;
+    previewModeLayout->setContentsMargins(0, 0, 0, 0);
+
+    QRadioButton *videoModeRadio
+        = new QRadioButton(obs_module_text("Video"), this);
+    m_previewModeButtons->addButton(videoModeRadio, int(PmPreviewMode::Video));
+    previewModeLayout->addWidget(videoModeRadio);
+
+    QRadioButton *regionModeRadio
+        = new QRadioButton(obs_module_text("Region"), this);
+    m_previewModeButtons->addButton(regionModeRadio, int(PmPreviewMode::Region));
+    previewModeLayout->addWidget(regionModeRadio);
+
+    QRadioButton *matchImgRadio
+        = new QRadioButton(obs_module_text("Match Image"), this);
+    m_previewModeButtons->addButton(matchImgRadio, int(PmPreviewMode::MatchImage));
+    previewModeLayout->addWidget(matchImgRadio);
+
+    // divider line
+    QFrame *line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainTabLayout->addRow(line);
+
+    m_previewModeButtons->button(int(config.previewMode))->setChecked(true);
+    mainTabLayout->addRow(
+        obs_module_text("Preview Mode: "), previewModeLayout);
+
+    // video preview scale
+    m_videoScaleCombo = new QComboBox(this);
+    m_videoScaleCombo->addItem("100%", 1.f);
+    m_videoScaleCombo->addItem("75%", 0.75f);
+    m_videoScaleCombo->addItem("50%", 0.5f);
+    m_videoScaleCombo->addItem("25%", 0.25f);
+    m_videoScaleCombo->setCurrentIndex(
+        m_videoScaleCombo->findData(config.previewVideoScale));
+    connect(m_videoScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
 
     mainTabLayout->addRow(
-        obs_module_text("Preview Scale: "), m_previewVideoScaleCombo);
+        obs_module_text("Video Scale: "), m_videoScaleCombo);
 
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
@@ -353,7 +390,7 @@ void PmDialog::onConfigUiChanged()
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
     config.previewVideoScale
-        = m_previewVideoScaleCombo->currentData().toFloat();
+        = m_videoScaleCombo->currentData().toFloat();
     config.customColor = 0xffffffff;
     updateFilterDisplaySize(config, m_prevResults);
     emit sigNewUiConfig(config);
