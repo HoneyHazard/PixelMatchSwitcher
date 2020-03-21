@@ -20,6 +20,7 @@
 #include <QDoubleSpinBox>
 #include <QRadioButton>
 #include <QButtonGroup>
+#include <QStackedWidget>
 
 #include <obs-module.h>
 
@@ -174,7 +175,9 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     mainTabLayout->addRow(
         obs_module_text("Preview Mode: "), previewModeLayout);
 
-    // video preview scale
+    // preview scales
+    m_previewScaleStack = new QStackedWidget(this);
+
     m_videoScaleCombo = new QComboBox(this);
     m_videoScaleCombo->addItem("100%", 1.f);
     m_videoScaleCombo->addItem("75%", 0.75f);
@@ -184,9 +187,25 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
         m_videoScaleCombo->findData(config.previewVideoScale));
     connect(m_videoScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+    m_previewScaleStack->insertWidget(
+        int(PmPreviewMode::Video), m_videoScaleCombo);
+
+    m_regionScaleCombo = new QComboBox(this);
+    m_regionScaleCombo->addItem("50%", 0.5f);
+    m_regionScaleCombo->addItem("100%", 1.f);
+    m_regionScaleCombo->addItem("150%", 1.5f);
+    m_regionScaleCombo->addItem("200%", 2.f);
+    m_regionScaleCombo->addItem("500%", 5.f);
+    m_regionScaleCombo->addItem("1000%", 10.f);
+    m_regionScaleCombo->setCurrentIndex(
+        m_regionScaleCombo->findData(config.previewRegionScale));
+    connect(m_regionScaleCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+    m_previewScaleStack->insertWidget(
+        int(PmPreviewMode::Region), m_regionScaleCombo);
 
     mainTabLayout->addRow(
-        obs_module_text("Video Scale: "), m_videoScaleCombo);
+        obs_module_text("Preview Scale: "), m_previewScaleStack);
 
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
@@ -267,8 +286,8 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
         orthoRight = config.roiLeft + results.matchImgWidth;
         orthoTop = config.roiBottom + results.matchImgHeight;
 
-        //float scale = config.previewRegionScale;
-        float scale = config.previewVideoScale;
+        float scale = config.previewRegionScale;
+        //float scale = config.previewVideoScale;
         vpLeft = 0.f;
         vpBottom = 0.0f;
         vpWidth = int(results.matchImgWidth * scale);
@@ -343,7 +362,7 @@ void PmDialog::onBrowseButtonReleased()
     if (path.isEmpty())
         onImgFailed(path);
     else
-        emit sigOpenImage(path);
+        emit sigOpenImpreviewVideoScaleage(path);
 }
 
 void PmDialog::onImgSuccess(QString filename)
@@ -420,6 +439,8 @@ void PmDialog::onConfigUiChanged()
     config.previewMode = PmPreviewMode(m_previewModeButtons->checkedId());
     config.previewVideoScale
         = m_videoScaleCombo->currentData().toFloat();
+    config.previewRegionScale
+        = m_regionScaleCombo->currentData().toFloat();
     config.customColor = 0xffffffff;
     updateFilterDisplaySize(config, m_prevResults);
     emit sigNewUiConfig(config);

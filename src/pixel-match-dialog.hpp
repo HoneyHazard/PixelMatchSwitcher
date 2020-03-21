@@ -13,6 +13,7 @@ class QSpinBox;
 class OBSQTDisplay;
 class QDoubleSpinBox;
 class QButtonGroup;
+class QStackedWidget;
 
 class PmDialog : public QDialog
 {
@@ -49,7 +50,9 @@ private:
     QDoubleSpinBox *m_totalMatchThreshBox;
     QLabel *m_matchResultDisplay;
     QButtonGroup *m_previewModeButtons;
+    QStackedWidget *m_previewScaleStack;
     QComboBox *m_videoScaleCombo;
+    QComboBox *m_regionScaleCombo;
 
     QPointer<PmCore> m_core;
     PmResultsPacket m_prevResults;
