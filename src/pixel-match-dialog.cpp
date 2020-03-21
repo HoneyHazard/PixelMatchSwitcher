@@ -260,6 +260,19 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
                     vpLeft, vpBottom, scale);
         vpWidth = previewSz.width();
         vpHeight = previewSz.height();
+    } else {
+        const auto &results = dialog->m_prevResults;
+        orthoLeft = config.roiLeft;
+        orthoBottom = config.roiBottom;
+        orthoRight = config.roiLeft + results.matchImgWidth;
+        orthoTop = config.roiBottom + results.matchImgHeight;
+
+        //float scale = config.previewRegionScale;
+        float scale = config.previewVideoScale;
+        vpLeft = 0.f;
+        vpBottom = 0.0f;
+        vpWidth = int(results.matchImgWidth * scale);
+        vpHeight = int(results.matchImgHeight * scale);
     }
 
     gs_viewport_push();
@@ -349,9 +362,18 @@ void PmDialog::onImgFailed(QString filename)
 void PmDialog::updateFilterDisplaySize(
     const PmConfigPacket &config, const PmResultsPacket &results)
 {
-    float previewScale = config.previewVideoScale;
-    int cx = int(results.baseWidth * previewScale);
-    int cy = int(results.baseHeight * previewScale);
+    int cx, cy;
+    if (config.previewMode == PmPreviewMode::Video) {
+        float scale = config.previewVideoScale;
+        cx = int(results.baseWidth * scale);
+        cy = int(results.baseHeight * scale);
+    } else {
+        //float scale = config.previewRegionScale;
+        float scale = config.previewVideoScale;
+        cx = int(results.matchImgWidth * scale);
+        cy = int(results.matchImgHeight * scale);
+    }
+
     if (m_filterDisplay->width() != cx) {
         m_filterDisplay->setFixedWidth(cx);
     }

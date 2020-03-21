@@ -20,7 +20,7 @@ enum class PmPreviewMode : int {
 struct PmResultsPacket
 {
     int baseWidth, baseHeight;
-    uint32_t matchImgWidth, matchImgHeight;
+    int matchImgWidth, matchImgHeight;
     uint32_t numCompared;
     uint32_t numMatched;
     float percentageMatched;
