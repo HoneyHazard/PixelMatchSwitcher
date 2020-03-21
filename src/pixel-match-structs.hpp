@@ -36,5 +36,6 @@ struct PmConfigPacket
     uint32_t customColor = 0xff00ff00;
     PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;
+    float previewRegionScale = 0.5f;
     // bool visualize; // TODO
 };

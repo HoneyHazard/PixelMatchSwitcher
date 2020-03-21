@@ -241,25 +241,31 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     if (!renderSrc) return;
 
-    QSize videoSz = core->videoBaseSize();
-    QSize previewSz = videoSz * double(config.previewVideoScale);
+    float orthoLeft, orthoBottom, orthoRight, orthoTop;
+    int vpLeft, vpBottom, vpWidth, vpHeight;
 
-    if (previewSz.width() == 0 || previewSz.height() == 0)
-        return;
+    if (config.previewMode == PmPreviewMode::Video) {
+        QSize videoSz = core->videoBaseSize();
+        QSize previewSz = videoSz * double(config.previewVideoScale);
 
-    int x, y;
-    float scale;
+        orthoLeft = 0.f;
+        orthoBottom = 0.f;
+        orthoRight = videoSz.width();
+        orthoBottom = videoSz.height();
 
-    GetScaleAndCenterPos(
-                videoSz.width(), videoSz.height(),
-                previewSz.width(), previewSz.height(),
-                x, y, scale);
+        float scale;
+        GetScaleAndCenterPos(
+                    videoSz.width(), videoSz.height(),
+                    previewSz.width(), previewSz.height(),
+                    vpLeft, vpBottom, scale);
+        vpWidth = previewSz.width();
+        vpHeight = previewSz.height();
+    }
 
     gs_viewport_push();
     gs_projection_push();
-    gs_ortho(0.0f, float(videoSz.width()), 0.0f, float(videoSz.height()),
-             -100.0f, 100.0f);
-    gs_set_viewport(x, y, previewSz.width(), previewSz.height());
+    gs_ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, -100.0f, 100.0f);
+    gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
 
     filterRef.lockData();
     filterRef.filterData()->preview_mode = true;
@@ -389,6 +395,7 @@ void PmDialog::onConfigUiChanged()
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
+    config.previewMode = PmPreviewMode(m_previewModeButtons->checkedId());
     config.previewVideoScale
         = m_videoScaleCombo->currentData().toFloat();
     config.customColor = 0xffffffff;
