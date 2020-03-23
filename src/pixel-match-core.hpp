@@ -42,6 +42,7 @@ public:
     PmResultsPacket results() const;
     PmConfigPacket config() const;
     QSize videoBaseSize() const;
+    gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
 
 signals:
     void sigFrameProcessed();
@@ -75,4 +76,7 @@ private:
 
     PmConfigPacket m_config;
     PmResultsPacket m_results;
+
+    gs_effect *m_drawMatchImageEffect = nullptr;
+
 };

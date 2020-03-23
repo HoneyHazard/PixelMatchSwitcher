@@ -24,6 +24,8 @@
 
 #include <obs-module.h>
 
+extern struct obs_core *obs;
+
 PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 : QDialog(parent)
 , m_core(pixelMatcher)
@@ -335,6 +337,26 @@ void PmDialog::drawEffect()
 
     gs_projection_pop();
     gs_viewport_pop();
+}
+
+void PmDialog::drawMatchImage()
+{
+    auto config = m_core->config();
+    auto filterRef = m_core->activeFilterRef();
+    auto filterData = filterRef.filterData();
+
+    float previewScale = config.previewMatchImageScale;
+
+    gs_effect *effect = m_core->drawMatchImageEffect();
+    gs_eparam_t *param = gs_effect_get_param_by_name(effect, "image");
+    gs_effect_set_texture(param, filterData->match_img_tex);
+
+    while (gs_effect_loop(effect, "Draw")) {
+        gs_matrix_push();
+        gs_matrix_scale3f(previewScale, previewScale, previewScale);
+        gs_draw_sprite(filterData->match_img_tex, 0, 0, 0);
+        gs_matrix_pop();
+    }
 }
 
 void PmDialog::maskModeChanged(PmMaskMode mode, QColor color)
