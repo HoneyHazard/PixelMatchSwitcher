@@ -19,7 +19,7 @@ uniform float px_width;
 uniform float px_height;
 
 sampler_state def_sampler {
-    Filter   = Linear;
+    Filter   = Point;
     AddressU = Clamp;
     AddressV = Clamp;
 };
