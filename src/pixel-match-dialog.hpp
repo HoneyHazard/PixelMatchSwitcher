@@ -36,6 +36,8 @@ private slots:
 
 private:
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
+    void drawEffect();
+    void drawMatchImage();
     void updateFilterDisplaySize(
         const PmConfigPacket &config, const PmResultsPacket &results);
 

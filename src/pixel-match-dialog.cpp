@@ -271,7 +271,17 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     if (!core) return;
 
     auto config = core->config();
-    auto filterRef = core->activeFilterRef();
+    if (config.previewMode == PmPreviewMode::MatchImage) {
+        dialog->drawMatchImage();
+    } else {
+        dialog->drawEffect();
+    }
+}
+
+void PmDialog::drawEffect()
+{
+    auto config = m_core->config();
+    auto filterRef = m_core->activeFilterRef();
     auto renderSrc = filterRef.filter();
 
     if (!renderSrc) return;
@@ -280,7 +290,7 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     int vpLeft, vpBottom, vpWidth, vpHeight;
 
     if (config.previewMode == PmPreviewMode::Video) {
-        QSize videoSz = core->videoBaseSize();
+        QSize videoSz = m_core->videoBaseSize();
         QSize previewSz = videoSz * double(config.previewVideoScale);
 
         orthoLeft = 0.f;
@@ -296,7 +306,7 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
         vpWidth = previewSz.width();
         vpHeight = previewSz.height();
     } else if (config.previewMode == PmPreviewMode::Region) {
-        const auto &results = dialog->m_prevResults;
+        const auto &results = m_prevResults;
         orthoLeft = config.roiLeft;
         orthoBottom = config.roiBottom;
         orthoRight = config.roiLeft + results.matchImgWidth;
@@ -325,9 +335,6 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     gs_projection_pop();
     gs_viewport_pop();
-
-    UNUSED_PARAMETER(cx);
-    UNUSED_PARAMETER(cy);
 }
 
 void PmDialog::maskModeChanged(PmMaskMode mode, QColor color)
