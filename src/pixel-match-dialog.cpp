@@ -177,6 +177,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 
     // preview scales
     m_previewScaleStack = new QStackedWidget(this);
+    m_previewScaleStack->setSizePolicy(
+        QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     m_videoScaleCombo = new QComboBox(this);
     m_videoScaleCombo->addItem("100%", 1.f);
@@ -368,6 +370,7 @@ void PmDialog::onBrowseButtonReleased()
 void PmDialog::onImgSuccess(QString filename)
 {
     m_imgPathEdit->setText(filename);
+
     m_imgPathEdit->setStyleSheet("");
 }
 
@@ -388,7 +391,7 @@ void PmDialog::updateFilterDisplaySize(
         cy = int(results.baseHeight * scale);
     } else {
         //float scale = config.previewRegionScale;
-        float scale = config.previewVideoScale;
+        float scale = config.previewRegionScale;
         cx = int(results.matchImgWidth * scale);
         cy = int(results.matchImgHeight * scale);
     }
@@ -436,12 +439,21 @@ void PmDialog::onConfigUiChanged()
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
-    config.previewMode = PmPreviewMode(m_previewModeButtons->checkedId());
+    config.customColor = 0xffffffff;
+
+    int previewModeIdx = m_previewModeButtons->checkedId();
+    m_previewScaleStack->setCurrentIndex(previewModeIdx);
+    auto scaleCombo = m_previewScaleStack->widget(previewModeIdx);
+    if (scaleCombo) {
+        m_previewScaleStack->setFixedSize(scaleCombo->sizeHint());
+    }
+
+    config.previewMode = PmPreviewMode(previewModeIdx);
     config.previewVideoScale
         = m_videoScaleCombo->currentData().toFloat();
     config.previewRegionScale
         = m_regionScaleCombo->currentData().toFloat();
-    config.customColor = 0xffffffff;
+
     updateFilterDisplaySize(config, m_prevResults);
     emit sigNewUiConfig(config);
 }
