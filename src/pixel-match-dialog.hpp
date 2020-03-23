@@ -53,6 +53,7 @@ private:
     QStackedWidget *m_previewScaleStack;
     QComboBox *m_videoScaleCombo;
     QComboBox *m_regionScaleCombo;
+    QComboBox *m_matchImgScaleCombo;
 
     QPointer<PmCore> m_core;
     PmResultsPacket m_prevResults;

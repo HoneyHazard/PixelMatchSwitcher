@@ -206,6 +206,20 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     m_previewScaleStack->insertWidget(
         int(PmPreviewMode::Region), m_regionScaleCombo);
 
+    m_matchImgScaleCombo = new QComboBox(this);
+    m_matchImgScaleCombo->addItem("50%", 0.5f);
+    m_matchImgScaleCombo->addItem("100%", 1.f);
+    m_matchImgScaleCombo->addItem("150%", 1.5f);
+    m_matchImgScaleCombo->addItem("200%", 2.f);
+    m_matchImgScaleCombo->addItem("500%", 5.f);
+    m_matchImgScaleCombo->addItem("1000%", 10.f);
+    m_matchImgScaleCombo->setCurrentIndex(
+        m_matchImgScaleCombo->findData(config.previewMatchImageScale));
+    connect(m_matchImgScaleCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+    m_previewScaleStack->insertWidget(
+        int(PmPreviewMode::MatchImage), m_matchImgScaleCombo);
+
     mainTabLayout->addRow(
         obs_module_text("Preview Scale: "), m_previewScaleStack);
 
@@ -281,7 +295,7 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
                     vpLeft, vpBottom, scale);
         vpWidth = previewSz.width();
         vpHeight = previewSz.height();
-    } else {
+    } else if (config.previewMode == PmPreviewMode::Region) {
         const auto &results = dialog->m_prevResults;
         orthoLeft = config.roiLeft;
         orthoBottom = config.roiBottom;
@@ -391,9 +405,13 @@ void PmDialog::updateFilterDisplaySize(
         float scale = config.previewVideoScale;
         cx = int(results.baseWidth * scale);
         cy = int(results.baseHeight * scale);
-    } else {
+    } else if (config.previewMode == PmPreviewMode::Region) {
         //float scale = config.previewRegionScale;
         float scale = config.previewRegionScale;
+        cx = int(results.matchImgWidth * scale);
+        cy = int(results.matchImgHeight * scale);
+    } else { // PmPreviewMode::MatchImage
+        float scale = config.previewMatchImageScale;
         cx = int(results.matchImgWidth * scale);
         cy = int(results.matchImgHeight * scale);
     }
@@ -455,6 +473,8 @@ void PmDialog::onConfigUiChanged()
         = m_videoScaleCombo->currentData().toFloat();
     config.previewRegionScale
         = m_regionScaleCombo->currentData().toFloat();
+    config.previewMatchImageScale
+        = m_matchImgScaleCombo->currentData().toFloat();
 
     updateFilterDisplaySize(config, m_prevResults);
     emit sigNewUiConfig(config);
