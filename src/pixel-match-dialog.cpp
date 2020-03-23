@@ -362,7 +362,7 @@ void PmDialog::onBrowseButtonReleased()
     if (path.isEmpty())
         onImgFailed(path);
     else
-        emit sigOpenImpreviewVideoScaleage(path);
+        emit sigOpenImage(path);
 }
 
 void PmDialog::onImgSuccess(QString filename)
