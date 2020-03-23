@@ -16,6 +16,7 @@ struct pm_filter_data
 
     // shader parameters and results
     gs_eparam_t *param_visualize;
+    gs_eparam_t *param_show_border;
     gs_eparam_t *param_px_width;
     gs_eparam_t *param_px_height;
 
@@ -47,6 +48,7 @@ struct pm_filter_data
 
     // dynamic data
     bool preview_mode;
+    bool show_border;
     pthread_mutex_t mutex;
     uint32_t base_width;
     uint32_t base_height;

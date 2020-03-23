@@ -14,6 +14,7 @@ uniform float roi_right;
 uniform float roi_top;
 
 uniform bool visualize;
+uniform bool show_border;
 uniform float px_width;
 uniform float px_height;
 
@@ -81,12 +82,12 @@ float4 PSMatch(VertInOut vert_in) : TARGET
 
     if (visualize) {
         float border_width = px_width * 2.0, border_height = px_height * 2.0;
-        if (vbound
+        if (show_border && vbound
           && (abs(u - roi_left) < border_width
            || abs(u - roi_right) < border_width)) {
             // show inverted border for the ROI region
             val = float4(float3(1) - val.xyz, 1.0);
-        } else if (hbound
+        } else if (show_border && hbound
                  && (abs(v - roi_bottom) < border_height
                   || abs(v - roi_top) < border_height)) {
             // show inverted border for the ROI region

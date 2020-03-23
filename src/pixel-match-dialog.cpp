@@ -301,8 +301,10 @@ void PmDialog:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     gs_ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, -100.0f, 100.0f);
     gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
 
+    auto filterData = filterRef.filterData();
     filterRef.lockData();
-    filterRef.filterData()->preview_mode = true;
+    filterData->preview_mode = true;
+    filterData->show_border = (config.previewMode == PmPreviewMode::Video);
     filterRef.unlockData();
 
     obs_source_video_render(renderSrc);

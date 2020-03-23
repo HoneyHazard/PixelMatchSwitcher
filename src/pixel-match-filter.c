@@ -88,6 +88,8 @@ static void *pixel_match_filter_create(
 
     filter->param_visualize =
         gs_effect_get_param_by_name(filter->effect, "visualize");
+    filter->param_show_border =
+        gs_effect_get_param_by_name(filter->effect, "show_border");
     filter->param_px_width =
         gs_effect_get_param_by_name(filter->effect, "px_width");
     filter->param_px_height =
@@ -95,9 +97,9 @@ static void *pixel_match_filter_create(
 
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
-            || !filter->param_visualize || !filter->param_match_counter
-            || !filter->result_match_counter
-            || !filter->result_compare_counter)
+     || !filter->param_visualize || !filter->param_show_border
+     || !filter->param_match_counter || !filter->result_match_counter
+     || !filter->param_compare_counter || !filter->result_compare_counter)
         goto error;
 
     obs_source_update(context, settings);
@@ -261,6 +263,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     gs_effect_set_bool(filter->param_visualize,
         filter->visualize && filter->preview_mode);
+    gs_effect_set_bool(filter->param_show_border, filter->show_border);
     gs_effect_set_float(filter->param_px_width,
                         1.f / (float)(filter->base_width));
     gs_effect_set_float(filter->param_px_height,
@@ -283,6 +286,7 @@ done:
     if (!filter->preview_mode && filter->on_frame_processed)
         filter->on_frame_processed(filter);
     filter->preview_mode = false;
+    filter->show_border = false;
 
     UNUSED_PARAMETER(effect);
 }
