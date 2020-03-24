@@ -265,11 +265,6 @@ void PmCore::onMenuAction()
         auto mainWindow
             = static_cast<QMainWindow*>(obs_frontend_get_main_window());
         m_dialog = new PmDialog(this, mainWindow);
-        m_dialog->setAttribute(Qt::WA_DeleteOnClose, true);
-        connect(m_dialog, &PmDialog::sigOpenImage,
-                this, &PmCore::onOpenImage, Qt::QueuedConnection);
-        connect(m_dialog, &PmDialog::sigNewUiConfig,
-                this, &PmCore::onNewUiConfig, Qt::QueuedConnection);
     }
     m_dialog->show();
 }

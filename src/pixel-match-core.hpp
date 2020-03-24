@@ -50,15 +50,16 @@ signals:
     void sigImgFailed(QString filename);
     void sigNewResults(PmResultsPacket);
 
+public slots:
+    void onOpenImage(QString filename);
+    void onNewUiConfig(PmConfigPacket);
+
 private slots:
     void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed();
-    void onOpenImage(QString filename);
-    void onNewUiConfig(PmConfigPacket);
 
 private:
-
     static PmCore *m_instance;
     QPointer<PmDialog> m_dialog;
 

@@ -25,6 +25,7 @@ set(pixel-match-switcher_HEADERS
         src/pixel-match-filter.h
         src/pixel-match-filter-ref.hpp
         src/pixel-match-core.hpp
+        src/pixel-match-matching-tab.hpp
         src/pixel-match-dialog.hpp
         src/pixel-match-structs.hpp
         src/pixel-match-debug-tab.hpp
@@ -37,6 +38,7 @@ set(pixel-match-switcher_SOURCES
         src/pixel-match-filter.c
         src/pixel-match-filter-ref.cpp
         src/pixel-match-core.cpp
+        src/pixel-match-matching-tab.cpp
         src/pixel-match-dialog.cpp
         src/pixel-match-debug-tab.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
