@@ -194,7 +194,7 @@ void PmCore::scanScenes()
         auto &fi = filters.back();
         auto &scene = scenesInput.sources.array[i];
         auto ws = OBSWeakSource(obs_source_get_weak_source(scene));
-        //scenes.emplace(ws);
+        scenes.insert(ws);
         fi.setScene(scene);
         obs_scene_enum_items(
             fi.scene(),
@@ -225,10 +225,10 @@ void PmCore::scanScenes()
     {
         QMutexLocker locker(&m_mutex);
         m_filters = filters;
-        //if (m_scenes != scenes) {
-        //    m_scenes = scenes;
-        //    emit sigScenesChanged(scenes);
-        //}
+        if (m_scenes != scenes) {
+            m_scenes = scenes;
+            emit sigScenesChanged(scenes);
+        }
     }
 }
 

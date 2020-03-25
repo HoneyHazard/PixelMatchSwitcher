@@ -1,10 +1,10 @@
 #pragma once
 
 #include <stdint.h>
-#include <unordered_set>
-#include <unordered_map>
 #include <utility>
 #include <qmetatype.h>
+#include <QSet>
+#include <QHash>
 
 #include <obs.h>
 #include <obs.hpp>
@@ -48,25 +48,10 @@ struct PmMatchConfig
     // bool visualize; // TODO
 };
 
-namespace std
+static uint qHash(const OBSWeakSource &ws)
 {
-    template<> struct hash<OBSWeakSource>
-    {
-        std::size_t operator()(const OBSWeakSource &s)
-        {
-            obs_source_t* source = obs_weak_source_get_source(s);
-            return std::hash<obs_source_t*>{}(source);
-        }
-    };
-    template<> struct hash<pair<OBSWeakSource,OBSWeakSource>>
-    {
-        std::size_t operator()(pair<OBSWeakSource,OBSWeakSource> p)
-        {
-            size_t first = std::hash<OBSWeakSource>{}(p.first);
-            size_t second = std::hash<OBSWeakSource>{}(p.second);
-            return first + (second >> 16) | ((second & 0xFFFF) << 48);
-        }
-    };
+    obs_source_t* source = obs_weak_source_get_source(ws);
+    return qHash(source);
 }
 
 struct PmSceneConfig
@@ -74,11 +59,11 @@ struct PmSceneConfig
     OBSWeakSource matchScene;
     OBSWeakSource noMatchScene;
     OBSWeakSource defaultTransition;
-    std::unordered_map<std::pair<OBSWeakSource, OBSWeakSource>, OBSWeakSource>
+    QHash<QPair<OBSWeakSource, OBSWeakSource>, OBSWeakSource>
         transitions;
 };
 
-typedef std::unordered_set<OBSWeakSource> PmScenes;
+typedef QSet<OBSWeakSource> PmScenes;
 
 inline void pmRegisterMetaTypes()
 {
