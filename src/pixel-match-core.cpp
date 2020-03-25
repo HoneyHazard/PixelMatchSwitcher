@@ -316,10 +316,13 @@ void PmCore::onFrameProcessed()
     }
     emit sigNewMatchResults(m_results);
 
-    if (m_results.isMatched) {
-        switchScene(m_sceneConfig.matchScene, m_sceneConfig.defaultTransition);
-    } else {
-        switchScene(m_sceneConfig.noMatchScene, m_sceneConfig.defaultTransition);
+    {
+        QMutexLocker locker(&m_mutex);
+        if (m_results.isMatched) {
+            switchScene(m_sceneConfig.matchScene, m_sceneConfig.defaultTransition);
+        } else {
+            switchScene(m_sceneConfig.noMatchScene, m_sceneConfig.defaultTransition);
+        }
     }
 }
 
@@ -451,4 +454,10 @@ void PmCore::onNewMatchConfig(PmMatchConfig config)
     QMutexLocker locker(&m_mutex);
     m_config = config;
     supplyConfigToFilter();
+}
+
+void PmCore::onNewSceneConfig(PmSceneConfig sceneConfig)
+{
+    QMutexLocker locker(&m_mutex);
+    m_sceneConfig = sceneConfig;
 }

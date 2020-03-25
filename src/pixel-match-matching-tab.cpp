@@ -27,9 +27,9 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     // init config
     auto config = m_core->config();
 
-    // main tab
-    QFormLayout *mainTabLayout = new QFormLayout;
-    mainTabLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+    // main layout
+    QFormLayout *mainLayout = new QFormLayout;
+    mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
     // image path display and browse button
     QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
@@ -46,7 +46,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchingTab::onBrowseButtonReleased);
     imgPathSubLayout->addWidget(browseImgPathBtn);
 
-    mainTabLayout->addRow(obs_module_text("Image: "), imgPathSubLayout);
+    mainLayout->addRow(obs_module_text("Image: "), imgPathSubLayout);
 
     // color mode selection
     QHBoxLayout *colorSubLayout = new QHBoxLayout;
@@ -72,7 +72,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     m_maskModeDisplay->setFrameStyle(QFrame::Sunken | QFrame::Panel);
     colorSubLayout->addWidget(m_maskModeDisplay);
 
-    mainTabLayout->addRow(obs_module_text("Mask Mode: "), colorSubLayout);
+    mainLayout->addRow(obs_module_text("Mask Mode: "), colorSubLayout);
 
     // match location
     QHBoxLayout *matchLocSubLayout = new QHBoxLayout;
@@ -101,7 +101,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
         this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posYBox);
 
-    mainTabLayout->addRow(obs_module_text("Location: "), matchLocSubLayout);
+    mainLayout->addRow(obs_module_text("Location: "), matchLocSubLayout);
 
     // per pixel error tolerance
     m_perPixelErrorBox = new QDoubleSpinBox(this);
@@ -113,7 +113,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     connect(m_perPixelErrorBox, SIGNAL(valueChanged(double)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
 
-    mainTabLayout->addRow(
+    mainLayout->addRow(
         obs_module_text("Allowed Pixel Error: "), m_perPixelErrorBox);
 
     // total match error threshold
@@ -126,13 +126,13 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     connect(m_totalMatchThreshBox, SIGNAL(valueChanged(double)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
 
-    mainTabLayout->addRow(
+    mainLayout->addRow(
         obs_module_text("Global Match Threshold: "), m_totalMatchThreshBox);
 
     // match result label
     m_matchResultDisplay = new QLabel("--", this);
     m_matchResultDisplay->setTextFormat(Qt::RichText);
-    mainTabLayout->addRow(
+    mainLayout->addRow(
         obs_module_text("Match Result: "), m_matchResultDisplay);
 
     // preview mode
@@ -163,10 +163,10 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
-    mainTabLayout->addRow(line);
+    mainLayout->addRow(line);
 
     m_previewModeButtons->button(int(config.previewMode))->setChecked(true);
-    mainTabLayout->addRow(
+    mainLayout->addRow(
         obs_module_text("Preview Mode: "), previewModeLayout);
 
     // preview scales
@@ -214,14 +214,14 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     m_previewScaleStack->insertWidget(
         int(PmPreviewMode::MatchImage), m_matchImgScaleCombo);
 
-    mainTabLayout->addRow(
+    mainLayout->addRow(
         obs_module_text("Preview Scale: "), m_previewScaleStack);
 
     // image/match display area
     m_filterDisplay = new OBSQTDisplay(this);
-    mainTabLayout->addRow(m_filterDisplay);
+    mainLayout->addRow(m_filterDisplay);
 
-    setLayout(mainTabLayout);
+    setLayout(mainLayout);
 
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),

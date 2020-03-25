@@ -6,6 +6,7 @@
 #include "pixel-match-structs.hpp"
 
 class PmCore;
+
 class QLabel;
 class QLineEdit;
 class QComboBox;
