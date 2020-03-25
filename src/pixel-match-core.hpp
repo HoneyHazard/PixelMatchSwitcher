@@ -40,8 +40,8 @@ public:
 
     const QString &matchImgFilename() { return m_matchImgFilename; }
     const QImage& matchImage() { return m_matchImg; }
-    PmMatchResultsPacket results() const;
-    PmMatchConfigPacket config() const;
+    PmMatchResults results() const;
+    PmMatchConfig config() const;
     QSize videoBaseSize() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
 
@@ -49,11 +49,13 @@ signals:
     void sigFrameProcessed();
     void sigImgSuccess(QString filename);
     void sigImgFailed(QString filename);
-    void sigNewMatchResults(PmMatchResultsPacket);
+    void sigNewMatchResults(PmMatchResults);
+    void sigScenesChanged(PmScenes);
 
 public slots:
     void onOpenImage(QString filename);
-    void onNewMatchConfig(PmMatchConfigPacket);
+    void onNewMatchConfig(PmMatchConfig);
+    void onNewSceneConfig(PmSceneConfig);
 
 private slots:
     void onMenuAction();
@@ -73,12 +75,14 @@ private:
     mutable QMutex m_mutex;
     std::vector<PmFilterRef> m_filters;
     PmFilterRef m_activeFilter;
+    PmScenes m_scenes;
 
     QString m_matchImgFilename;
     QImage m_matchImg;
 
-    PmMatchConfigPacket m_config;
-    PmMatchResultsPacket m_results;
+    PmMatchConfig m_config;
+    PmMatchResults m_results;
+    PmSceneConfig m_sceneConfig;
 
     gs_effect *m_drawMatchImageEffect = nullptr;
 };

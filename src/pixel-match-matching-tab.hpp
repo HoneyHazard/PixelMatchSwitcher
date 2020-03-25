@@ -27,14 +27,14 @@ public:
 
 signals:
     void sigOpenImage(QString filename);
-    void sigNewUiConfig(PmMatchConfigPacket);
+    void sigNewUiConfig(PmMatchConfig);
 
 private slots:
     void onBrowseButtonReleased();
     void onColorComboIndexChanged();
     void onImgSuccess(QString filename);
     void onImgFailed(QString filename);
-    void onNewMatchResults(PmMatchResultsPacket results);
+    void onNewMatchResults(PmMatchResults results);
     void onConfigUiChanged();
 
 private:
@@ -42,7 +42,7 @@ private:
     void drawEffect();
     void drawMatchImage();
     void updateFilterDisplaySize(
-        const PmMatchConfigPacket &config, const PmMatchResultsPacket &results);
+        const PmMatchConfig &config, const PmMatchResults &results);
 
     void maskModeChanged(PmMaskMode mode, QColor color);
 
@@ -61,5 +61,5 @@ private:
     QComboBox *m_matchImgScaleCombo;
 
     QPointer<PmCore> m_core;
-    PmMatchResultsPacket m_prevResults;
+    PmMatchResults m_prevResults;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <unordered_set>
 #include <QHash>
 #include <qmetatype.h>
 
@@ -21,7 +22,7 @@ enum class PmPreviewMode : int {
     MatchImage=2
 };
 
-struct PmMatchResultsPacket
+struct PmMatchResults
 {
     int baseWidth, baseHeight;
     int matchImgWidth, matchImgHeight;
@@ -31,7 +32,7 @@ struct PmMatchResultsPacket
     bool isMatched;
 };
 
-struct PmMatchConfigPacket
+struct PmMatchConfig
 {
     int roiLeft = 0, roiBottom = 0;
     float perPixelErrThresh = 25.f;
@@ -52,9 +53,12 @@ struct PmSceneConfig
     QHash<QPair<OBSWeakSource, OBSWeakSource>, OBSWeakSource> transitions;
 };
 
+typedef std::vector<OBSWeakSource> PmScenes;
+
 inline void pmRegisterMetaTypes()
 {
-    qRegisterMetaType<PmMatchResultsPacket>("PmMatchResultsPacket");
-    qRegisterMetaType<PmMatchConfigPacket>("PmMatchConfigPacket");
+    qRegisterMetaType<PmMatchResults>("PmMatchResults");
+    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmSceneConfig>("PmSceneConfig");
+    qRegisterMetaType<PmScenes>("PmScenes");
 }

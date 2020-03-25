@@ -415,7 +415,7 @@ void PmMatchingTab::onImgFailed(QString filename)
 }
 
 void PmMatchingTab::updateFilterDisplaySize(
-    const PmMatchConfigPacket &config, const PmMatchResultsPacket &results)
+    const PmMatchConfig &config, const PmMatchResults &results)
 {
     int cx, cy;
     if (config.previewMode == PmPreviewMode::Video) {
@@ -441,7 +441,7 @@ void PmMatchingTab::updateFilterDisplaySize(
     }
 }
 
-void PmMatchingTab::onNewMatchResults(PmMatchResultsPacket results)
+void PmMatchingTab::onNewMatchResults(PmMatchResults results)
 {
     if (m_prevResults.baseWidth != results.baseWidth
      || m_prevResults.matchImgWidth != results.matchImgWidth) {
@@ -470,7 +470,7 @@ void PmMatchingTab::onNewMatchResults(PmMatchResultsPacket results)
 
 void PmMatchingTab::onConfigUiChanged()
 {
-    PmMatchConfigPacket config;
+    PmMatchConfig config;
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());

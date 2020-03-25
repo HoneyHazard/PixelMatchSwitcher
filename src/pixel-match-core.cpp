@@ -107,13 +107,13 @@ PmFilterRef PmCore::activeFilterRef() const
     return m_activeFilter;
 }
 
-PmMatchResultsPacket PmCore::results() const
+PmMatchResults PmCore::results() const
 {
     QMutexLocker locker(&m_mutex);
     return m_results;
 }
 
-PmMatchConfigPacket PmCore::config() const
+PmMatchConfig PmCore::config() const
 {
     QMutexLocker locker(&m_mutex);
     return m_config;
@@ -276,7 +276,7 @@ void PmCore::onPeriodicUpdate()
 
 void PmCore::onFrameProcessed()
 {
-    PmMatchResultsPacket newResults;
+    PmMatchResults newResults;
     QSize baseSz = videoBaseSize();
     newResults.baseWidth = baseSz.width();
     newResults.baseHeight = baseSz.height();
@@ -426,7 +426,7 @@ void PmCore::supplyConfigToFilter()
     }
 }
 
-void PmCore::onNewMatchConfig(PmMatchConfigPacket config)
+void PmCore::onNewMatchConfig(PmMatchConfig config)
 {
     QMutexLocker locker(&m_mutex);
     m_config = config;
