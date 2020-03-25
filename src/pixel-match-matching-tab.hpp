@@ -15,6 +15,9 @@ class QDoubleSpinBox;
 class QButtonGroup;
 class QStackedWidget;
 
+/*!
+ * \brief UI tab that shows match settings, UI preview and preview settings
+ */
 class PmMatchingTab : public QWidget
 {
     Q_OBJECT
