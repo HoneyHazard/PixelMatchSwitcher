@@ -243,6 +243,11 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
             m_core, &PmCore::onOpenImage, Qt::QueuedConnection);
     connect(this, &PmMatchingTab::sigNewUiConfig,
             m_core, &PmCore::onNewUiConfig, Qt::QueuedConnection);
+
+    // finish init
+    onColorComboIndexChanged();
+    onConfigUiChanged();
+    onNewResults(m_core->results());
 }
 
 void PmMatchingTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)

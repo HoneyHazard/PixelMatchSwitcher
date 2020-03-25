@@ -79,5 +79,4 @@ private:
     PmResultsPacket m_results;
 
     gs_effect *m_drawMatchImageEffect = nullptr;
-
 };
