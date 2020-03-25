@@ -221,8 +221,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     m_filterDisplay = new OBSQTDisplay(this);
     mainTabLayout->addRow(m_filterDisplay);
 
-    QWidget *mainTab = new QWidget(this);
-    mainTab->setLayout(mainTabLayout);
+    setLayout(mainTabLayout);
 
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
