@@ -1,7 +1,11 @@
 #pragma once
 
 #include <stdint.h>
-#include <QString>
+#include <QHash>
+#include <qmetatype.h>
+
+#include <obs.hpp>
+
 
 enum class PmMaskMode : int {
     GreenMode=0,
@@ -17,7 +21,7 @@ enum class PmPreviewMode : int {
     MatchImage=2
 };
 
-struct PmResultsPacket
+struct PmMatchResultsPacket
 {
     int baseWidth, baseHeight;
     int matchImgWidth, matchImgHeight;
@@ -27,7 +31,7 @@ struct PmResultsPacket
     bool isMatched;
 };
 
-struct PmConfigPacket
+struct PmMatchConfigPacket
 {
     int roiLeft = 0, roiBottom = 0;
     float perPixelErrThresh = 25.f;
@@ -40,3 +44,17 @@ struct PmConfigPacket
     float previewMatchImageScale = 1.f;
     // bool visualize; // TODO
 };
+
+struct PmSceneConfig
+{
+    OBSWeakSource matchScene;
+    OBSWeakSource noMatchScene;
+    QHash<QPair<OBSWeakSource, OBSWeakSource>, OBSWeakSource> transitions;
+};
+
+inline void pmRegisterMetaTypes()
+{
+    qRegisterMetaType<PmMatchResultsPacket>("PmMatchResultsPacket");
+    qRegisterMetaType<PmMatchConfigPacket>("PmMatchConfigPacket");
+    qRegisterMetaType<PmSceneConfig>("PmSceneConfig");
+}

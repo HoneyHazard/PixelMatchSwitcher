@@ -236,18 +236,18 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchingTab::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
             this, &PmMatchingTab::onImgFailed, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewResults,
-            this, &PmMatchingTab::onNewResults, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNewMatchResults,
+            this, &PmMatchingTab::onNewMatchResults, Qt::QueuedConnection);
 
     connect(this, &PmMatchingTab::sigOpenImage,
             m_core, &PmCore::onOpenImage, Qt::QueuedConnection);
     connect(this, &PmMatchingTab::sigNewUiConfig,
-            m_core, &PmCore::onNewUiConfig, Qt::QueuedConnection);
+            m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
 
     // finish init
     onColorComboIndexChanged();
     onConfigUiChanged();
-    onNewResults(m_core->results());
+    onNewMatchResults(m_core->results());
 }
 
 void PmMatchingTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
@@ -415,7 +415,7 @@ void PmMatchingTab::onImgFailed(QString filename)
 }
 
 void PmMatchingTab::updateFilterDisplaySize(
-    const PmConfigPacket &config, const PmResultsPacket &results)
+    const PmMatchConfigPacket &config, const PmMatchResultsPacket &results)
 {
     int cx, cy;
     if (config.previewMode == PmPreviewMode::Video) {
@@ -441,7 +441,7 @@ void PmMatchingTab::updateFilterDisplaySize(
     }
 }
 
-void PmMatchingTab::onNewResults(PmResultsPacket results)
+void PmMatchingTab::onNewMatchResults(PmMatchResultsPacket results)
 {
     if (m_prevResults.baseWidth != results.baseWidth
      || m_prevResults.matchImgWidth != results.matchImgWidth) {
@@ -470,7 +470,7 @@ void PmMatchingTab::onNewResults(PmResultsPacket results)
 
 void PmMatchingTab::onConfigUiChanged()
 {
-    PmConfigPacket config;
+    PmMatchConfigPacket config;
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());

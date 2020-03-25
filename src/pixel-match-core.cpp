@@ -21,8 +21,7 @@ PmCore* PmCore::m_instance = nullptr;
 
 void init_pixel_match_switcher()
 {
-    qRegisterMetaType<PmResultsPacket>("PmResultsPacket");
-    qRegisterMetaType<PmConfigPacket>("PmConfigPacket");
+    pmRegisterMetaTypes();
 
     PmCore::m_instance = new PmCore();
 }
@@ -108,13 +107,13 @@ PmFilterRef PmCore::activeFilterRef() const
     return m_activeFilter;
 }
 
-PmResultsPacket PmCore::results() const
+PmMatchResultsPacket PmCore::results() const
 {
     QMutexLocker locker(&m_mutex);
     return m_results;
 }
 
-PmConfigPacket PmCore::config() const
+PmMatchConfigPacket PmCore::config() const
 {
     QMutexLocker locker(&m_mutex);
     return m_config;
@@ -277,7 +276,7 @@ void PmCore::onPeriodicUpdate()
 
 void PmCore::onFrameProcessed()
 {
-    PmResultsPacket newResults;
+    PmMatchResultsPacket newResults;
     QSize baseSz = videoBaseSize();
     newResults.baseWidth = baseSz.width();
     newResults.baseHeight = baseSz.height();
@@ -301,7 +300,33 @@ void PmCore::onFrameProcessed()
         QMutexLocker locker(&m_mutex);
         m_results = newResults;
     }
-    emit sigNewResults(m_results);
+    emit sigNewMatchResults(m_results);
+}
+
+// copied (and slightly simplified) from Advanced Scene Switcher:
+// https://github.com/WarmUpTill/SceneSwitcher/blob/05540b61a118f2190bb3fae574c48aea1b436ac7/src/advanced-scene-switcher.cpp#L1066
+void PmCore::switchScene(OBSWeakSource &scene, OBSWeakSource &transition)
+{
+    obs_source_t* source = obs_weak_source_get_source(scene);
+    obs_source_t* currentSource = obs_frontend_get_current_scene();
+
+    if (source && source != currentSource)
+    {
+        obs_weak_source_t*  currentScene = obs_source_get_weak_source(currentSource);
+        obs_weak_source_release(currentScene);
+
+        if (transition) {
+            obs_source_t* nextTransition = obs_weak_source_get_source(transition);
+            //lock.unlock();
+            //transitionCv.wait(transitionLock, transitionActiveCheck);
+            //lock.lock();
+            obs_frontend_set_current_transition(nextTransition);
+            obs_source_release(nextTransition);
+        }
+        obs_frontend_set_current_scene(source);
+    }
+    obs_source_release(currentSource);
+    obs_source_release(source);
 }
 
 void PmCore::onOpenImage(QString filename)
@@ -401,7 +426,7 @@ void PmCore::supplyConfigToFilter()
     }
 }
 
-void PmCore::onNewUiConfig(PmConfigPacket config)
+void PmCore::onNewMatchConfig(PmMatchConfigPacket config)
 {
     QMutexLocker locker(&m_mutex);
     m_config = config;

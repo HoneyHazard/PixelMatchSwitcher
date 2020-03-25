@@ -16,7 +16,7 @@ public:
 
 signals:
     void sigOpenImage(QString filename);
-    void sigNewUiConfig(PmConfigPacket);
+    void sigNewUiConfig(PmMatchConfigPacket);
 
 protected:
     QPointer<PmCore> m_core;
