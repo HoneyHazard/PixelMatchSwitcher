@@ -119,6 +119,12 @@ PmMatchConfig PmCore::config() const
     return m_config;
 }
 
+PmScenes PmCore::scenes() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_scenes;
+}
+
 QSize PmCore::videoBaseSize() const
 {
     obs_video_info ovi;
@@ -175,17 +181,21 @@ void PmCore::scanScenes()
 {
     using namespace std;
 
-    obs_frontend_source_list scenes = {};
-    obs_frontend_get_scenes(&scenes);
+    obs_frontend_source_list scenesInput = {};
+    obs_frontend_get_scenes(&scenesInput);
 
+    PmScenes scenes;
     vector<PmFilterRef> filters;
     filters.push_back(PmFilterRef());
 
     // TODO: interfacing with OBS enumeration is kind of hacky, though not
     //       without a reason. for sure, this can be cleaned up.
-    for (size_t i = 0; i < scenes.sources.num; ++i) {
+    for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &fi = filters.back();
-        fi.setScene(scenes.sources.array[i]);
+        auto &scene = scenesInput.sources.array[i];
+        auto ws = OBSWeakSource(obs_source_get_weak_source(scene));
+        //scenes.emplace(ws);
+        fi.setScene(scene);
         obs_scene_enum_items(
             fi.scene(),
             [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
@@ -215,6 +225,10 @@ void PmCore::scanScenes()
     {
         QMutexLocker locker(&m_mutex);
         m_filters = filters;
+        //if (m_scenes != scenes) {
+        //    m_scenes = scenes;
+        //    emit sigScenesChanged(scenes);
+        //}
     }
 }
 
@@ -301,6 +315,12 @@ void PmCore::onFrameProcessed()
         m_results = newResults;
     }
     emit sigNewMatchResults(m_results);
+
+    if (m_results.isMatched) {
+        switchScene(m_sceneConfig.matchScene, m_sceneConfig.defaultTransition);
+    } else {
+        switchScene(m_sceneConfig.noMatchScene, m_sceneConfig.defaultTransition);
+    }
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:

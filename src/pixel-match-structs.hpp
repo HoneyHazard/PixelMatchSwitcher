@@ -52,7 +52,7 @@ namespace std
 {
     template<> struct hash<OBSWeakSource>
     {
-        std::size_t operator()(OBSWeakSource const& s)
+        std::size_t operator()(const OBSWeakSource &s)
         {
             obs_source_t* source = obs_weak_source_get_source(s);
             return std::hash<obs_source_t*>{}(source);
@@ -73,6 +73,7 @@ struct PmSceneConfig
 {
     OBSWeakSource matchScene;
     OBSWeakSource noMatchScene;
+    OBSWeakSource defaultTransition;
     std::unordered_map<std::pair<OBSWeakSource, OBSWeakSource>, OBSWeakSource>
         transitions;
 };

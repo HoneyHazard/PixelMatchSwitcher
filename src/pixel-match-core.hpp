@@ -42,6 +42,7 @@ public:
     const QImage& matchImage() { return m_matchImg; }
     PmMatchResults results() const;
     PmMatchConfig config() const;
+    PmScenes scenes() const;
     QSize videoBaseSize() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
 
