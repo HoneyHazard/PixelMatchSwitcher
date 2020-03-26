@@ -25,7 +25,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
 : m_core(pixelMatcher)
 {
     // init config
-    auto config = m_core->config();
+    auto config = m_core->matchConfig();
 
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
@@ -257,7 +257,7 @@ void PmMatchingTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     if (!core) return;
 
-    auto config = core->config();
+    auto config = core->matchConfig();
     if (config.previewMode == PmPreviewMode::MatchImage) {
         dialog->drawMatchImage();
     } else {
@@ -270,7 +270,7 @@ void PmMatchingTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
 void PmMatchingTab::drawEffect()
 {
-    auto config = m_core->config();
+    auto config = m_core->matchConfig();
     auto filterRef = m_core->activeFilterRef();
     auto renderSrc = filterRef.filter();
 
@@ -329,7 +329,7 @@ void PmMatchingTab::drawEffect()
 
 void PmMatchingTab::drawMatchImage()
 {
-    auto config = m_core->config();
+    auto config = m_core->matchConfig();
     auto filterRef = m_core->activeFilterRef();
     auto filterData = filterRef.filterData();
 
@@ -464,7 +464,7 @@ void PmMatchingTab::onNewMatchResults(PmMatchResults results)
             .arg(double(results.percentageMatched), 0, 'f', 1);
     m_matchResultDisplay->setText(resultStr);
 
-    updateFilterDisplaySize(m_core->config(), results);
+    updateFilterDisplaySize(m_core->matchConfig(), results);
     m_prevResults = results;
 }
 

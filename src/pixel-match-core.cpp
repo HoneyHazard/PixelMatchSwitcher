@@ -36,7 +36,7 @@ void on_frame_processed(struct pm_filter_data *filter)
 {
     auto core = PmCore::m_instance;
     if (core) {
-        QMutexLocker locker(&core->m_mutex);
+        QMutexLocker locker(&core->m_filtersMutex);
         const auto &fr = core->m_activeFilter;
         if (fr.filterData() == filter) {
             emit core->sigFrameProcessed();
@@ -73,7 +73,7 @@ PmCore::PmCore()
     connect(this, &PmCore::sigFrameProcessed,
             this, &PmCore::onFrameProcessed, Qt::QueuedConnection);
 
-    // basically the default effect except sampler is Point instead of Linear
+    // basically the default effect except sampler is made Point instead of Linear
     obs_enter_graphics();
     char *effect_path = obs_module_file("draw_match_image.effect");
     m_drawMatchImageEffect
@@ -97,32 +97,38 @@ PmCore::~PmCore()
 
 std::vector<PmFilterRef> PmCore::filters() const
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_filtersMutex);
     return m_filters;
 }
 
 PmFilterRef PmCore::activeFilterRef() const
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_filtersMutex);
     return m_activeFilter;
 }
 
 PmMatchResults PmCore::results() const
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_resultsMutex);
     return m_results;
 }
 
-PmMatchConfig PmCore::config() const
+PmMatchConfig PmCore::matchConfig() const
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_matchConfigMutex);
     return m_config;
 }
 
 PmScenes PmCore::scenes() const
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_scenesMutex);
     return m_scenes;
+}
+
+PmSceneConfig PmCore::sceneConfig() const
+{
+    QMutexLocker locker(&m_sceneConfigMutex);
+    return m_sceneConfig;
 }
 
 QSize PmCore::videoBaseSize() const
@@ -223,8 +229,12 @@ void PmCore::scanScenes()
     filters.pop_back();
 
     {
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker locker(&m_filtersMutex);
         m_filters = filters;
+    }
+
+    {
+        QMutexLocker locker(&m_scenesMutex);
         if (m_scenes != scenes) {
             m_scenes = scenes;
             emit sigScenesChanged(scenes);
@@ -234,7 +244,7 @@ void PmCore::scanScenes()
 
 void PmCore::updateActiveFilter()
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_filtersMutex);
     if (m_activeFilter.isValid()) {
         bool found = false;
         for (const auto &fi: m_filters) {
@@ -311,13 +321,13 @@ void PmCore::onFrameProcessed()
     newResults.isMatched
         = newResults.percentageMatched >= m_config.totalMatchThresh;
     {
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker locker(&m_resultsMutex);
         m_results = newResults;
     }
     emit sigNewMatchResults(m_results);
 
     {
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker locker(&m_sceneConfigMutex);
         if (m_results.isMatched) {
             switchScene(m_sceneConfig.matchScene, m_sceneConfig.defaultTransition);
         } else {
@@ -363,7 +373,6 @@ void PmCore::onOpenImage(QString filename)
         return;
     }
 
-    QMutexLocker locker(&m_mutex);
     m_matchImg = imgIn.convertToFormat(QImage::Format_ARGB32);
     if (m_matchImg.isNull()) {
         m_matchImgFilename.clear();
@@ -451,13 +460,13 @@ void PmCore::supplyConfigToFilter()
 
 void PmCore::onNewMatchConfig(PmMatchConfig config)
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_matchConfigMutex);
     m_config = config;
     supplyConfigToFilter();
 }
 
 void PmCore::onNewSceneConfig(PmSceneConfig sceneConfig)
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_sceneConfigMutex);
     m_sceneConfig = sceneConfig;
 }

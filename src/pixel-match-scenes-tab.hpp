@@ -24,9 +24,15 @@ signals:
 
 private slots:
     void onScenesChanged(PmScenes);
-    void onConfigUiChanged();
+    void onMatchSceneChanged();
+    void onNoMatchSceneChanged();
 
 protected:
+    static OBSWeakSource pickScene(
+        const PmScenes &scenes, const OBSWeakSource &another = nullptr);
+    static void setSelectedScene(QComboBox *combo, OBSWeakSource &scene);
+    static OBSWeakSource findScene(const PmScenes &scenes, const QString &name);
+
     QComboBox *m_matchSceneCombo;
     QComboBox *m_noMatchSceneCombo;
     QComboBox *m_transitionCombo;

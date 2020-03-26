@@ -39,10 +39,10 @@ public:
     std::string scenesInfo() const;
 
     const QString &matchImgFilename() { return m_matchImgFilename; }
-    const QImage& matchImage() { return m_matchImg; }
     PmMatchResults results() const;
-    PmMatchConfig config() const;
+    PmMatchConfig matchConfig() const;
     PmScenes scenes() const;
+    PmSceneConfig sceneConfig() const;
     QSize videoBaseSize() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
 
@@ -73,7 +73,7 @@ private:
     void supplyImageToFilter();
     void supplyConfigToFilter();
 
-    mutable QMutex m_mutex;
+    mutable QMutex m_filtersMutex, m_matchConfigMutex, m_resultsMutex, m_sceneConfigMutex, m_scenesMutex;
     std::vector<PmFilterRef> m_filters;
     PmFilterRef m_activeFilter;
     PmScenes m_scenes;
