@@ -1,9 +1,9 @@
-#include "pixel-match-dialog.hpp"
-#include "pixel-match-core.hpp"
-#include "pixel-match-matching-tab.hpp"
-#include "pixel-match-scenes-tab.hpp"
-#include "pixel-match-debug-tab.hpp"
-#include "pixel-match-filter.h"
+#include "pm-dialog.hpp"
+#include "pm-core.hpp"
+#include "pm-match-tab.hpp"
+#include "pm-switch-tab.hpp"
+#include "pm-debug-tab.hpp"
+#include "pm-filter.h"
 
 #include <QHBoxLayout>
 #include <QTabWidget>
@@ -18,8 +18,8 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // tabs
-    PmMatchingTab *matchingTab = new PmMatchingTab(pixelMatcher, this);
-    PmScenesTab *scenesTab = new PmScenesTab(pixelMatcher, this);
+    PmMatchTab *matchingTab = new PmMatchTab(pixelMatcher, this);
+    PmSwitchTab *scenesTab = new PmSwitchTab(pixelMatcher, this);
     PmDebugTab *debugTab = new PmDebugTab(pixelMatcher, this);
 
     // tab widget

@@ -1,5 +1,5 @@
-#include "pixel-match-filter-ref.hpp"
-#include "pixel-match-filter.h"
+#include "pm-filter-ref.hpp"
+#include "pm-filter.h"
 
 void PmFilterRef::setScene(obs_source_t *sceneSrc)
 {

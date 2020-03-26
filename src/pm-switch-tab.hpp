@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pixel-match-structs.hpp"
+#include "pm-structs.hpp"
 
 #include <QWidget>
 #include <QPointer>
@@ -13,15 +13,15 @@ class QComboBox;
 /*!
  * \brief UI tab that shows settings for active and inactives scens, transitions
  */
-class PmScenesTab : public QWidget
+class PmSwitchTab : public QWidget
 {
     Q_OBJECT
 
 public:
-    PmScenesTab(PmCore *core, QWidget *parent);
+    PmSwitchTab(PmCore *core, QWidget *parent);
 
 signals:
-    void sigSceneConfigChanged(PmSceneConfig);
+    void sigSceneConfigChanged(PmSwitchConfig);
 
 private slots:
     void onScenesChanged(PmScenes);

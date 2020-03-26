@@ -1,6 +1,6 @@
-#include "pixel-match-core.hpp"
-#include "pixel-match-dialog.hpp"
-#include "pixel-match-filter.h"
+#include "pm-core.hpp"
+#include "pm-dialog.hpp"
+#include "pm-filter.h"
 
 #include <ostream>
 #include <sstream>
@@ -116,7 +116,7 @@ PmMatchResults PmCore::results() const
 PmMatchConfig PmCore::matchConfig() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    return m_config;
+    return m_matchConfig;
 }
 
 PmScenes PmCore::scenes() const
@@ -125,10 +125,10 @@ PmScenes PmCore::scenes() const
     return m_scenes;
 }
 
-PmSceneConfig PmCore::sceneConfig() const
+PmSwitchConfig PmCore::switchConfig() const
 {
-    QMutexLocker locker(&m_sceneConfigMutex);
-    return m_sceneConfig;
+    QMutexLocker locker(&m_switchConfigMutex);
+    return m_switchConfig;
 }
 
 QSize PmCore::videoBaseSize() const
@@ -319,7 +319,7 @@ void PmCore::onFrameProcessed()
     newResults.percentageMatched
         = float(newResults.numMatched) / float(newResults.numCompared) * 100.0f;
     newResults.isMatched
-        = newResults.percentageMatched >= m_config.totalMatchThresh;
+        = newResults.percentageMatched >= m_matchConfig.totalMatchThresh;
     {
         QMutexLocker locker(&m_resultsMutex);
         m_results = newResults;
@@ -327,13 +327,13 @@ void PmCore::onFrameProcessed()
     emit sigNewMatchResults(m_results);
 
     {
-        QMutexLocker locker(&m_sceneConfigMutex);
-        if (m_sceneConfig.isEnabled) {
+        QMutexLocker locker(&m_switchConfigMutex);
+        if (m_switchConfig.isEnabled) {
             QMutexLocker locker(&m_resultsMutex);
             if (m_results.isMatched) {
-                switchScene(m_sceneConfig.matchScene, m_sceneConfig.defaultTransition);
+                switchScene(m_switchConfig.matchScene, m_switchConfig.defaultTransition);
             } else {
-                switchScene(m_sceneConfig.noMatchScene, m_sceneConfig.defaultTransition);
+                switchScene(m_switchConfig.noMatchScene, m_switchConfig.defaultTransition);
             }
         }
     }
@@ -414,7 +414,7 @@ void PmCore::supplyConfigToFilter()
     struct vec3 maskColor;
     bool maskAlpha = false;
 
-    switch(m_config.maskMode) {
+    switch(m_matchConfig.maskMode) {
     case PmMaskMode::AlphaMode:
         maskAlpha = true;
         break;
@@ -429,7 +429,7 @@ void PmCore::supplyConfigToFilter()
         break;
     case PmMaskMode::CustomClrMode:
         {
-            uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&m_config.customColor);
+            uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&m_matchConfig.customColor);
             if (__BYTE_ORDER == __LITTLE_ENDIAN) {
                 vec3_set(&maskColor,
                          float(colorBytes[2])/255.f,
@@ -444,17 +444,17 @@ void PmCore::supplyConfigToFilter()
         }
         break;
     default:
-        blog(LOG_ERROR, "Unknown color mode: %i", m_config.maskMode);
+        blog(LOG_ERROR, "Unknown color mode: %i", m_matchConfig.maskMode);
         break;
     }
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
-        filterData->roi_left = m_config.roiLeft;
-        filterData->roi_bottom = m_config.roiBottom;
-        filterData->per_pixel_err_thresh = m_config.perPixelErrThresh / 100.f;
-        filterData->total_match_thresh = m_config.totalMatchThresh;
+        filterData->roi_left = m_matchConfig.roiLeft;
+        filterData->roi_bottom = m_matchConfig.roiBottom;
+        filterData->per_pixel_err_thresh = m_matchConfig.perPixelErrThresh / 100.f;
+        filterData->total_match_thresh = m_matchConfig.totalMatchThresh;
         filterData->mask_alpha = maskAlpha;
         filterData->mask_color = maskColor;
         pthread_mutex_unlock(&filterData->mutex);
@@ -464,12 +464,12 @@ void PmCore::supplyConfigToFilter()
 void PmCore::onNewMatchConfig(PmMatchConfig config)
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    m_config = config;
+    m_matchConfig = config;
     supplyConfigToFilter();
 }
 
-void PmCore::onNewSceneConfig(PmSceneConfig sceneConfig)
+void PmCore::onNewSceneConfig(PmSwitchConfig sceneConfig)
 {
-    QMutexLocker locker(&m_sceneConfigMutex);
-    m_sceneConfig = sceneConfig;
+    QMutexLocker locker(&m_switchConfigMutex);
+    m_switchConfig = sceneConfig;
 }

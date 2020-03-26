@@ -3,7 +3,7 @@
 #include <QWidget>
 #include <QPointer>
 
-#include "pixel-match-structs.hpp"
+#include "pm-structs.hpp"
 
 class PmCore;
 
@@ -19,12 +19,12 @@ class QStackedWidget;
 /*!
  * \brief UI tab that shows match settings, UI preview and preview settings
  */
-class PmMatchingTab : public QWidget
+class PmMatchTab : public QWidget
 {
     Q_OBJECT
 
 public:
-    PmMatchingTab(PmCore *core, QWidget *parent);
+    PmMatchTab(PmCore *core, QWidget *parent);
 
 signals:
     void sigOpenImage(QString filename);

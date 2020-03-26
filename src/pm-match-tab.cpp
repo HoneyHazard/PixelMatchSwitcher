@@ -1,6 +1,6 @@
-#include "pixel-match-matching-tab.hpp"
-#include "pixel-match-core.hpp"
-#include "pixel-match-filter.h"
+#include "pm-match-tab.hpp"
+#include "pm-core.hpp"
+#include "pm-filter.h"
 
 #include <qt-display.hpp>
 #include <display-helpers.hpp>
@@ -21,7 +21,7 @@
 
 #include <obs-module.h>
 
-PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
+PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 : m_core(pixelMatcher)
 {
     // init config
@@ -43,7 +43,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     QPushButton *browseImgPathBtn = new QPushButton(
         obs_module_text("Browse"), this);
     connect(browseImgPathBtn, &QPushButton::released,
-            this, &PmMatchingTab::onBrowseButtonReleased);
+            this, &PmMatchTab::onBrowseButtonReleased);
     imgPathSubLayout->addWidget(browseImgPathBtn);
 
     mainLayout->addRow(obs_module_text("Image: "), imgPathSubLayout);
@@ -225,7 +225,7 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
 
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
-                          PmMatchingTab::drawPreview,
+                          PmMatchTab::drawPreview,
                           this);
     };
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
@@ -233,15 +233,15 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
 
     // signals & slots
     connect(m_core, &PmCore::sigImgSuccess,
-            this, &PmMatchingTab::onImgSuccess, Qt::QueuedConnection);
+            this, &PmMatchTab::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
-            this, &PmMatchingTab::onImgFailed, Qt::QueuedConnection);
+            this, &PmMatchTab::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
-            this, &PmMatchingTab::onNewMatchResults, Qt::QueuedConnection);
+            this, &PmMatchTab::onNewMatchResults, Qt::QueuedConnection);
 
-    connect(this, &PmMatchingTab::sigOpenImage,
+    connect(this, &PmMatchTab::sigOpenImage,
             m_core, &PmCore::onOpenImage, Qt::QueuedConnection);
-    connect(this, &PmMatchingTab::sigNewUiConfig,
+    connect(this, &PmMatchTab::sigNewUiConfig,
             m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
 
     // finish init
@@ -250,9 +250,9 @@ PmMatchingTab::PmMatchingTab(PmCore *pixelMatcher, QWidget *parent)
     onNewMatchResults(m_core->results());
 }
 
-void PmMatchingTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
+void PmMatchTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
-    auto dialog = static_cast<PmMatchingTab*>(data);
+    auto dialog = static_cast<PmMatchTab*>(data);
     auto core = dialog->m_core;
 
     if (!core) return;
@@ -268,7 +268,7 @@ void PmMatchingTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     UNUSED_PARAMETER(cy);
 }
 
-void PmMatchingTab::drawEffect()
+void PmMatchTab::drawEffect()
 {
     auto config = m_core->matchConfig();
     auto filterRef = m_core->activeFilterRef();
@@ -327,7 +327,7 @@ void PmMatchingTab::drawEffect()
     gs_viewport_pop();
 }
 
-void PmMatchingTab::drawMatchImage()
+void PmMatchTab::drawMatchImage()
 {
     auto config = m_core->matchConfig();
     auto filterRef = m_core->activeFilterRef();
@@ -347,7 +347,7 @@ void PmMatchingTab::drawMatchImage()
     }
 }
 
-void PmMatchingTab::maskModeChanged(PmMaskMode mode, QColor color)
+void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
 {
     QColor bgColor = color, textColor = Qt::black;
     const QString ss;
@@ -376,7 +376,7 @@ void PmMatchingTab::maskModeChanged(PmMaskMode mode, QColor color)
             .arg(textColor.name(QColor::HexArgb)));
 }
 
-void PmMatchingTab::onColorComboIndexChanged()
+void PmMatchTab::onColorComboIndexChanged()
 {
     // send color mode to core? obs data API?
     PmMaskMode mode = PmMaskMode(m_maskModeCombo->currentIndex());
@@ -384,7 +384,7 @@ void PmMatchingTab::onColorComboIndexChanged()
     onConfigUiChanged();
 }
 
-void PmMatchingTab::onBrowseButtonReleased()
+void PmMatchTab::onBrowseButtonReleased()
 {
     static const QString filter
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
@@ -400,21 +400,21 @@ void PmMatchingTab::onBrowseButtonReleased()
         emit sigOpenImage(path);
 }
 
-void PmMatchingTab::onImgSuccess(QString filename)
+void PmMatchTab::onImgSuccess(QString filename)
 {
     m_imgPathEdit->setText(filename);
 
     m_imgPathEdit->setStyleSheet("");
 }
 
-void PmMatchingTab::onImgFailed(QString filename)
+void PmMatchTab::onImgFailed(QString filename)
 {
     m_imgPathEdit->setText(
         filename.size() ? QString("[FAILED] %1").arg(filename) : "");
     m_imgPathEdit->setStyleSheet("text-color: red");
 }
 
-void PmMatchingTab::updateFilterDisplaySize(
+void PmMatchTab::updateFilterDisplaySize(
     const PmMatchConfig &config, const PmMatchResults &results)
 {
     int cx, cy;
@@ -441,7 +441,7 @@ void PmMatchingTab::updateFilterDisplaySize(
     }
 }
 
-void PmMatchingTab::onNewMatchResults(PmMatchResults results)
+void PmMatchTab::onNewMatchResults(PmMatchResults results)
 {
     if (m_prevResults.baseWidth != results.baseWidth
      || m_prevResults.matchImgWidth != results.matchImgWidth) {
@@ -468,7 +468,7 @@ void PmMatchingTab::onNewMatchResults(PmMatchResults results)
     m_prevResults = results;
 }
 
-void PmMatchingTab::onConfigUiChanged()
+void PmMatchTab::onConfigUiChanged()
 {
     PmMatchConfig config;
     config.roiLeft = m_posXBox->value();

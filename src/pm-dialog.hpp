@@ -3,7 +3,7 @@
 #include <QDialog>
 #include <QPointer>
 
-#include "pixel-match-structs.hpp"
+#include "pm-structs.hpp"
 
 class PmCore;
 

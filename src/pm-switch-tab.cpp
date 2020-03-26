@@ -1,5 +1,5 @@
-#include "pixel-match-scenes-tab.hpp"
-#include "pixel-match-core.hpp"
+#include "pm-switch-tab.hpp"
+#include "pm-core.hpp"
 
 #include <QFormLayout>
 #include <QComboBox>
@@ -7,11 +7,11 @@
 
 #include <obs-module.h>
 
-PmScenesTab::PmScenesTab(PmCore *core, QWidget *parent)
+PmSwitchTab::PmSwitchTab(PmCore *core, QWidget *parent)
 : QWidget(parent)
 , m_core(core)
 {
-    auto sceneConfig = m_core->sceneConfig();
+    auto sceneConfig = m_core->switchConfig();
 
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
@@ -20,7 +20,7 @@ PmScenesTab::PmScenesTab(PmCore *core, QWidget *parent)
     m_enabledCheck = new QCheckBox("", this);
     m_enabledCheck->setChecked(sceneConfig.isEnabled);
     connect(m_enabledCheck, &QCheckBox::stateChanged,
-            this, &PmScenesTab::onEnabledChanged, Qt::QueuedConnection);
+            this, &PmSwitchTab::onEnabledChanged, Qt::QueuedConnection);
     mainLayout->addRow(obs_module_text("Enabled: "), m_enabledCheck);
 
     // match scene combo
@@ -44,20 +44,20 @@ PmScenesTab::PmScenesTab(PmCore *core, QWidget *parent)
 
     // connections with the core
     connect(m_core, &PmCore::sigScenesChanged,
-            this, &PmScenesTab::onScenesChanged, Qt::QueuedConnection);
-    connect(this, &PmScenesTab::sigSceneConfigChanged,
+            this, &PmSwitchTab::onScenesChanged, Qt::QueuedConnection);
+    connect(this, &PmSwitchTab::sigSceneConfigChanged,
             m_core, &PmCore::onNewSceneConfig, Qt::QueuedConnection);
 
     // finish init
     onScenesChanged(m_core->scenes());
 }
 
-void PmScenesTab::onScenesChanged(PmScenes scenes)
+void PmSwitchTab::onScenesChanged(PmScenes scenes)
 {
     m_matchSceneCombo->clear();
     m_noMatchSceneCombo->clear();
 
-    auto sceneConfig = m_core->sceneConfig();
+    auto sceneConfig = m_core->switchConfig();
     for (auto scene: scenes) {
         auto src = obs_weak_source_get_source(scene);
         auto name = obs_source_get_name(src);
@@ -87,10 +87,10 @@ void PmScenesTab::onScenesChanged(PmScenes scenes)
 
 }
 
-void PmScenesTab::onMatchSceneChanged()
+void PmSwitchTab::onMatchSceneChanged()
 {
     auto scenes = m_core->scenes();
-    auto sc = m_core->sceneConfig();
+    auto sc = m_core->switchConfig();
     sc.matchScene = findScene(scenes, m_matchSceneCombo->currentText());
     if (sc.matchScene && sc.noMatchScene == sc.matchScene) {
         sc.noMatchScene = pickScene(scenes, sc.matchScene);
@@ -99,9 +99,9 @@ void PmScenesTab::onMatchSceneChanged()
     emit sigSceneConfigChanged(sc);
 }
 
-void PmScenesTab::onNoMatchSceneChanged()
+void PmSwitchTab::onNoMatchSceneChanged()
 {
-    auto sc = m_core->sceneConfig();
+    auto sc = m_core->switchConfig();
     auto scenes = m_core->scenes();
     sc.noMatchScene = findScene(scenes, m_noMatchSceneCombo->currentText());
     if (sc.noMatchScene && sc.matchScene == sc.noMatchScene) {
@@ -111,14 +111,14 @@ void PmScenesTab::onNoMatchSceneChanged()
     emit sigSceneConfigChanged(sc);
 }
 
-void PmScenesTab::onEnabledChanged()
+void PmSwitchTab::onEnabledChanged()
 {
-    auto sc = m_core->sceneConfig();
+    auto sc = m_core->switchConfig();
     sc.isEnabled = m_enabledCheck->isChecked();
     emit sigSceneConfigChanged(sc);
 }
 
-OBSWeakSource PmScenesTab::pickScene(
+OBSWeakSource PmSwitchTab::pickScene(
     const PmScenes &scenes, const OBSWeakSource &another)
 {
     for (auto &scene: scenes) {
@@ -129,7 +129,7 @@ OBSWeakSource PmScenesTab::pickScene(
     return nullptr;
 }
 
-void PmScenesTab::setSelectedScene(QComboBox *combo, OBSWeakSource &scene)
+void PmSwitchTab::setSelectedScene(QComboBox *combo, OBSWeakSource &scene)
 {
     combo->blockSignals(true);
     if (!scene) {
@@ -142,7 +142,7 @@ void PmScenesTab::setSelectedScene(QComboBox *combo, OBSWeakSource &scene)
     combo->blockSignals(false);
 }
 
-OBSWeakSource PmScenesTab::findScene(const PmScenes &scenes, const QString &name)
+OBSWeakSource PmSwitchTab::findScene(const PmScenes &scenes, const QString &name)
 {
     for (auto scene: scenes) {
         auto src = obs_weak_source_get_source(scene);

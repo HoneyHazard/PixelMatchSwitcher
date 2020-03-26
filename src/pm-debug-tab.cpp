@@ -1,5 +1,5 @@
-#include "pixel-match-debug-tab.hpp"
-#include "pixel-match-core.hpp"
+#include "pm-debug-tab.hpp"
+#include "pm-core.hpp"
 
 #include <QGridLayout>
 #include <QLabel>

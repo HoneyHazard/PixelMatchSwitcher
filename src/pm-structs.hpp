@@ -54,7 +54,7 @@ static uint qHash(const OBSWeakSource &ws)
     return qHash(source);
 }
 
-struct PmSceneConfig
+struct PmSwitchConfig
 {
     bool isEnabled = false;
     OBSWeakSource matchScene;
@@ -70,6 +70,6 @@ inline void pmRegisterMetaTypes()
 {
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
-    qRegisterMetaType<PmSceneConfig>("PmSceneConfig");
+    qRegisterMetaType<PmSwitchConfig>("PmSwitchConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
 }

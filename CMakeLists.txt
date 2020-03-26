@@ -22,27 +22,27 @@ find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB
 find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
 
 set(pixel-match-switcher_HEADERS
-        src/pixel-match-filter.h
-        src/pixel-match-filter-ref.hpp
-        src/pixel-match-core.hpp
-        src/pixel-match-matching-tab.hpp
-        src/pixel-match-scenes-tab.hpp
-        src/pixel-match-dialog.hpp
-        src/pixel-match-structs.hpp
-        src/pixel-match-debug-tab.hpp
+        src/pm-filter.h
+        src/pm-filter-ref.hpp
+        src/pm-core.hpp
+        src/pm-match-tab.hpp
+        src/pm-switch-tab.hpp
+        src/pm-dialog.hpp
+        src/pm-structs.hpp
+        src/pm-debug-tab.hpp
         ${LIBOBS_UI_DIR}/qt-display.hpp
         ${LIBOBS_UI_DIR}/qt-wrappers.hpp
 )
 
 set(pixel-match-switcher_SOURCES
-        src/pixel-match-switcher.c
-        src/pixel-match-filter.c
-        src/pixel-match-filter-ref.cpp
-        src/pixel-match-core.cpp
-        src/pixel-match-matching-tab.cpp
-        src/pixel-match-scenes-tab.cpp
-        src/pixel-match-dialog.cpp
-        src/pixel-match-debug-tab.cpp
+        src/pm-switcher.c
+        src/pm-filter.c
+        src/pm-filter-ref.cpp
+        src/pm-core.cpp
+        src/pm-match-tab.cpp
+        src/pm-switch-tab.cpp
+        src/pm-debug-tab.cpp
+        src/pm-dialog.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
         ${LIBOBS_UI_DIR}/qt-wrappers.cpp        
 )

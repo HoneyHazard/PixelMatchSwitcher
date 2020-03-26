@@ -1,4 +1,4 @@
-#include "pixel-match-filter.h"
+#include "pm-filter.h"
 
 #include <graphics/graphics.h>
 

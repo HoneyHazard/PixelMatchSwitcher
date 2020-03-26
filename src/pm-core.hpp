@@ -13,8 +13,8 @@ extern "C" void free_pixel_match_switcher();
 
 #include <obs.hpp>
 
-#include "pixel-match-filter-ref.hpp"
-#include "pixel-match-structs.hpp"
+#include "pm-filter-ref.hpp"
+#include "pm-structs.hpp"
 
 struct obs_scene_item;
 struct obs_scene;
@@ -42,7 +42,7 @@ public:
     PmMatchResults results() const;
     PmMatchConfig matchConfig() const;
     PmScenes scenes() const;
-    PmSceneConfig sceneConfig() const;
+    PmSwitchConfig switchConfig() const;
     QSize videoBaseSize() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
 
@@ -56,34 +56,40 @@ signals:
 public slots:
     void onOpenImage(QString filename);
     void onNewMatchConfig(PmMatchConfig);
-    void onNewSceneConfig(PmSceneConfig);
+    void onNewSceneConfig(PmSwitchConfig);
 
 private slots:
     void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed();
 
-private:
-    static PmCore *m_instance;
-    QPointer<PmDialog> m_dialog;
-
+protected:
     static void switchScene(OBSWeakSource& scene, OBSWeakSource& transition);
     void scanScenes();
     void updateActiveFilter();
     void supplyImageToFilter();
     void supplyConfigToFilter();
 
-    mutable QMutex m_filtersMutex, m_matchConfigMutex, m_resultsMutex, m_sceneConfigMutex, m_scenesMutex;
+    static PmCore *m_instance;
+    QPointer<PmDialog> m_dialog;
+
+    mutable QMutex m_filtersMutex;
     std::vector<PmFilterRef> m_filters;
     PmFilterRef m_activeFilter;
+
+    mutable QMutex m_matchConfigMutex;
+    PmMatchConfig m_matchConfig;
+
+    mutable QMutex m_resultsMutex;
+    PmMatchResults m_results;
+
+    mutable QMutex m_scenesMutex;
     PmScenes m_scenes;
+
+    mutable QMutex m_switchConfigMutex;
+    PmSwitchConfig m_switchConfig;
 
     QString m_matchImgFilename;
     QImage m_matchImg;
-
-    PmMatchConfig m_config;
-    PmMatchResults m_results;
-    PmSceneConfig m_sceneConfig;
-
     gs_effect *m_drawMatchImageEffect = nullptr;
 };
