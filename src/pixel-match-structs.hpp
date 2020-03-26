@@ -56,6 +56,7 @@ static uint qHash(const OBSWeakSource &ws)
 
 struct PmSceneConfig
 {
+    bool isEnabled = false;
     OBSWeakSource matchScene;
     OBSWeakSource noMatchScene;
     OBSWeakSource defaultTransition;

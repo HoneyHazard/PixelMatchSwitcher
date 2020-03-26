@@ -3,6 +3,7 @@
 
 #include <QFormLayout>
 #include <QComboBox>
+#include <QCheckBox>
 
 #include <obs-module.h>
 
@@ -10,8 +11,17 @@ PmScenesTab::PmScenesTab(PmCore *core, QWidget *parent)
 : QWidget(parent)
 , m_core(core)
 {
+    auto sceneConfig = m_core->sceneConfig();
+
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+
+    // enabled checkbox
+    m_enabledCheck = new QCheckBox("", this);
+    m_enabledCheck->setChecked(sceneConfig.isEnabled);
+    connect(m_enabledCheck, &QCheckBox::stateChanged,
+            this, &PmScenesTab::onEnabledChanged, Qt::QueuedConnection);
+    mainLayout->addRow(obs_module_text("Enabled: "), m_enabledCheck);
 
     // match scene combo
     m_matchSceneCombo = new QComboBox(this);
@@ -98,6 +108,13 @@ void PmScenesTab::onNoMatchSceneChanged()
         sc.matchScene = pickScene(scenes, sc.noMatchScene);
         setSelectedScene(m_matchSceneCombo, sc.matchScene);
     }
+    emit sigSceneConfigChanged(sc);
+}
+
+void PmScenesTab::onEnabledChanged()
+{
+    auto sc = m_core->sceneConfig();
+    sc.isEnabled = m_enabledCheck->isChecked();
     emit sigSceneConfigChanged(sc);
 }
 

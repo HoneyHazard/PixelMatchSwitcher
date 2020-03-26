@@ -7,6 +7,7 @@
 
 class PmCore;
 
+class QCheckBox;
 class QComboBox;
 
 /*!
@@ -26,6 +27,7 @@ private slots:
     void onScenesChanged(PmScenes);
     void onMatchSceneChanged();
     void onNoMatchSceneChanged();
+    void onEnabledChanged();
 
 protected:
     static OBSWeakSource pickScene(
@@ -33,6 +35,7 @@ protected:
     static void setSelectedScene(QComboBox *combo, OBSWeakSource &scene);
     static OBSWeakSource findScene(const PmScenes &scenes, const QString &name);
 
+    QCheckBox *m_enabledCheck;
     QComboBox *m_matchSceneCombo;
     QComboBox *m_noMatchSceneCombo;
     QComboBox *m_transitionCombo;

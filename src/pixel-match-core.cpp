@@ -328,10 +328,13 @@ void PmCore::onFrameProcessed()
 
     {
         QMutexLocker locker(&m_sceneConfigMutex);
-        if (m_results.isMatched) {
-            switchScene(m_sceneConfig.matchScene, m_sceneConfig.defaultTransition);
-        } else {
-            switchScene(m_sceneConfig.noMatchScene, m_sceneConfig.defaultTransition);
+        if (m_sceneConfig.isEnabled) {
+            QMutexLocker locker(&m_resultsMutex);
+            if (m_results.isMatched) {
+                switchScene(m_sceneConfig.matchScene, m_sceneConfig.defaultTransition);
+            } else {
+                switchScene(m_sceneConfig.noMatchScene, m_sceneConfig.defaultTransition);
+            }
         }
     }
 }
