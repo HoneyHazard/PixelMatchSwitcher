@@ -18,14 +18,14 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // tabs
-    PmMatchTab *matchingTab = new PmMatchTab(pixelMatcher, this);
-    PmSwitchTab *scenesTab = new PmSwitchTab(pixelMatcher, this);
+    PmMatchTab *matchTab = new PmMatchTab(pixelMatcher, this);
+    PmSwitchTab *switchTab = new PmSwitchTab(pixelMatcher, this);
     PmDebugTab *debugTab = new PmDebugTab(pixelMatcher, this);
 
     // tab widget
     QTabWidget *tabWidget = new QTabWidget(this);
-    tabWidget->addTab(matchingTab, obs_module_text("Matching"));
-    tabWidget->addTab(scenesTab, obs_module_text("Scenes"));
+    tabWidget->addTab(matchTab, obs_module_text("Matching"));
+    tabWidget->addTab(switchTab, obs_module_text("Switching"));
     tabWidget->addTab(debugTab, obs_module_text("Debug"));
 
     // top level layout
