@@ -7,6 +7,8 @@
 
 #include <obs-module.h>
 
+const char* PmSwitchTab::k_dontSwitchName = obs_module_text("<don't switch>");
+
 PmSwitchTab::PmSwitchTab(PmCore *core, QWidget *parent)
 : QWidget(parent)
 , m_core(core)
@@ -56,6 +58,8 @@ void PmSwitchTab::onScenesChanged(PmScenes scenes)
 {
     m_matchSceneCombo->clear();
     m_noMatchSceneCombo->clear();
+    m_matchSceneCombo->addItem(k_dontSwitchName);
+    m_noMatchSceneCombo->addItem(k_dontSwitchName);
 
     auto sceneConfig = m_core->switchConfig();
     for (auto scene: scenes) {
@@ -144,6 +148,10 @@ void PmSwitchTab::setSelectedScene(QComboBox *combo, OBSWeakSource &scene)
 
 OBSWeakSource PmSwitchTab::findScene(const PmScenes &scenes, const QString &name)
 {
+    if (name == k_dontSwitchName) {
+        return nullptr;
+    }
+
     for (auto scene: scenes) {
         auto src = obs_weak_source_get_source(scene);
         if (obs_source_get_name(src) == name) {

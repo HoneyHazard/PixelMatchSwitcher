@@ -30,6 +30,8 @@ private slots:
     void onEnabledChanged();
 
 protected:
+    static const char *k_dontSwitchName;
+
     static OBSWeakSource pickScene(
         const PmScenes &scenes, const OBSWeakSource &another = nullptr);
     static void setSelectedScene(QComboBox *combo, OBSWeakSource &scene);
