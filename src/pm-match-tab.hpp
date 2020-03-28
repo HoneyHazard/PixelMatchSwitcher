@@ -25,6 +25,7 @@ class PmMatchTab : public QWidget
 
 public:
     PmMatchTab(PmCore *core, QWidget *parent);
+    ~PmMatchTab();
 
 signals:
     void sigOpenImage(QString filename);
@@ -64,4 +65,5 @@ private:
 
     QPointer<PmCore> m_core;
     PmMatchResults m_prevResults;
+    bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
 };

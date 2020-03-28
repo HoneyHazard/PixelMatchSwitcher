@@ -328,7 +328,8 @@ void PmCore::onFrameProcessed()
 
     {
         QMutexLocker locker(&m_switchConfigMutex);
-        if (m_switchConfig.isEnabled) {
+        if (m_switchConfig.isEnabled
+         && m_activeFilter.isValid() && !m_matchImg.isNull()) {
             QMutexLocker locker(&m_resultsMutex);
             if (m_results.isMatched) {
                 switchScene(m_switchConfig.matchScene, m_switchConfig.defaultTransition);

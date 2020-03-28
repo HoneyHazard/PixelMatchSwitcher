@@ -18,6 +18,7 @@
 #include <QRadioButton>
 #include <QButtonGroup>
 #include <QStackedWidget>
+#include <QThread> // sleep
 
 #include <obs-module.h>
 
@@ -254,6 +255,13 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     onNewMatchResults(m_core->results());
 }
 
+PmMatchTab::~PmMatchTab()
+{
+    while (m_rendering) {
+        QThread::sleep(1);
+    }
+}
+
 void PmMatchTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
     auto dialog = static_cast<PmMatchTab*>(data);
@@ -314,6 +322,7 @@ void PmMatchTab::drawEffect()
         vpHeight = int(results.matchImgHeight * scale);
     }
 
+    m_rendering = true;
     gs_viewport_push();
     gs_projection_push();
     gs_ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, -100.0f, 100.0f);
@@ -329,6 +338,7 @@ void PmMatchTab::drawEffect()
 
     gs_projection_pop();
     gs_viewport_pop();
+    m_rendering = false;
 }
 
 void PmMatchTab::drawMatchImage()
@@ -339,6 +349,7 @@ void PmMatchTab::drawMatchImage()
 
     float previewScale = config.previewMatchImageScale;
 
+    m_rendering = true;
     gs_effect *effect = m_core->drawMatchImageEffect();
     gs_eparam_t *param = gs_effect_get_param_by_name(effect, "image");
     gs_effect_set_texture(param, filterData->match_img_tex);
@@ -349,6 +360,7 @@ void PmMatchTab::drawMatchImage()
         gs_draw_sprite(filterData->match_img_tex, 0, 0, 0);
         gs_matrix_pop();
     }
+    m_rendering = false;
 }
 
 void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
