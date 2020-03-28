@@ -60,6 +60,7 @@ private:
     QComboBox *m_videoScaleCombo;
     QComboBox *m_regionScaleCombo;
     QComboBox *m_matchImgScaleCombo;
+    QLabel *m_notifyLabel;
 
     QPointer<PmCore> m_core;
     PmMatchResults m_prevResults;

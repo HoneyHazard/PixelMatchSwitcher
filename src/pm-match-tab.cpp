@@ -221,6 +221,10 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_filterDisplay = new OBSQTDisplay(this);
     mainLayout->addRow(m_filterDisplay);
 
+    // notification label
+    m_notifyLabel = new QLabel(this);
+    mainLayout->addRow(m_notifyLabel);
+
     setLayout(mainLayout);
 
     auto addDrawCallback = [this]() {
@@ -255,7 +259,7 @@ void PmMatchTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
     auto dialog = static_cast<PmMatchTab*>(data);
     auto core = dialog->m_core;
 
-    if (!core) return;
+    if (!core || !core->activeFilterRef().isValid()) return;
 
     auto config = core->matchConfig();
     if (config.previewMode == PmPreviewMode::MatchImage) {
