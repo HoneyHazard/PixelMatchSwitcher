@@ -236,6 +236,9 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
+    connect(m_filterDisplay, &OBSQTDisplay::destroyed,
+    //connect(parent, &QObject::destroyed,
+            this, &PmMatchTab::onDestroy, Qt::DirectConnection);
 
     // signals & slots
     connect(m_core, &PmCore::sigImgSuccess,
@@ -258,9 +261,10 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 
 PmMatchTab::~PmMatchTab()
 {
-    while (m_rendering) {
+    while(m_rendering) {
         QThread::sleep(1);
     }
+    //onDestroy(nullptr);
 }
 
 void PmMatchTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
@@ -508,7 +512,7 @@ void PmMatchTab::onConfigUiChanged()
         m_previewScaleStack->setFixedSize(scaleCombo->sizeHint());
     }
 
-    config.previewMode = PmPreviewMode(previewModeIdx);
+   config.previewMode = PmPreviewMode(previewModeIdx);
     config.previewVideoScale
         = m_videoScaleCombo->currentData().toFloat();
     config.previewRegionScale
@@ -518,4 +522,13 @@ void PmMatchTab::onConfigUiChanged()
 
     updateFilterDisplaySize(config, m_prevResults);
     emit sigNewUiConfig(config);
+}
+
+void PmMatchTab::onDestroy(QObject *obj)
+{
+    while(m_rendering) {
+        QThread::sleep(1);
+    }
+    obs_display_remove_draw_callback(
+        m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
 }

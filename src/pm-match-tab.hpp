@@ -38,6 +38,7 @@ private slots:
     void onImgFailed(QString filename);
     void onNewMatchResults(PmMatchResults results);
     void onConfigUiChanged();
+    void onDestroy(QObject *obj);
 
 protected:
     virtual void closeEvent(QCloseEvent *e) override;
