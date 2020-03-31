@@ -410,9 +410,7 @@ void PmMatchTab::onBrowseButtonReleased()
     QString path = QFileDialog::getOpenFileName(
         this, obs_module_text("Open an image file"), curPath,
         filter);
-    if (path.isEmpty())
-        onImgFailed(path);
-    else
+    if (!path.isEmpty())
         emit sigOpenImage(path);
 }
 
