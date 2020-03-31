@@ -39,6 +39,9 @@ private slots:
     void onNewMatchResults(PmMatchResults results);
     void onConfigUiChanged();
 
+protected:
+    virtual void closeEvent(QCloseEvent *e) override;
+
 private:
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
     void drawEffect();

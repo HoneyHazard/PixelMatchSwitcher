@@ -233,6 +233,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
                           PmMatchTab::drawPreview,
                           this);
     };
+
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
 
@@ -269,12 +270,14 @@ void PmMatchTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
 
     if (!core || !core->activeFilterRef().isValid()) return;
 
+    dialog->m_rendering = true;
     auto config = core->matchConfig();
     if (config.previewMode == PmPreviewMode::MatchImage) {
         dialog->drawMatchImage();
     } else {
         dialog->drawEffect();
     }
+    dialog->m_rendering = false;
 
     UNUSED_PARAMETER(cx);
     UNUSED_PARAMETER(cy);
@@ -322,7 +325,6 @@ void PmMatchTab::drawEffect()
         vpHeight = int(results.matchImgHeight * scale);
     }
 
-    m_rendering = true;
     gs_viewport_push();
     gs_projection_push();
     gs_ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, -100.0f, 100.0f);
@@ -338,7 +340,6 @@ void PmMatchTab::drawEffect()
 
     gs_projection_pop();
     gs_viewport_pop();
-    m_rendering = false;
 }
 
 void PmMatchTab::drawMatchImage()
@@ -349,7 +350,6 @@ void PmMatchTab::drawMatchImage()
 
     float previewScale = config.previewMatchImageScale;
 
-    m_rendering = true;
     gs_effect *effect = m_core->drawMatchImageEffect();
     gs_eparam_t *param = gs_effect_get_param_by_name(effect, "image");
     gs_effect_set_texture(param, filterData->match_img_tex);
@@ -360,7 +360,6 @@ void PmMatchTab::drawMatchImage()
         gs_draw_sprite(filterData->match_img_tex, 0, 0, 0);
         gs_matrix_pop();
     }
-    m_rendering = false;
 }
 
 void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
@@ -389,7 +388,14 @@ void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
     m_maskModeDisplay->setStyleSheet(
         QString("background-color :%1; color: %2;")
             .arg(color.name(QColor::HexArgb))
-            .arg(textColor.name(QColor::HexArgb)));
+                .arg(textColor.name(QColor::HexArgb)));
+}
+
+void PmMatchTab::closeEvent(QCloseEvent *e)
+{
+    obs_display_remove_draw_callback(
+        m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
+    QWidget::closeEvent(e);
 }
 
 void PmMatchTab::onColorComboIndexChanged()
@@ -432,7 +438,10 @@ void PmMatchTab::updateFilterDisplaySize(
     const PmMatchConfig &config, const PmMatchResults &results)
 {
     int cx, cy;
-    if (config.previewMode == PmPreviewMode::Video) {
+    if (!m_core || !m_core->activeFilterRef().isValid()) {
+        cx = 0;
+        cy = 0;
+    } else if (config.previewMode == PmPreviewMode::Video) {
         float scale = config.previewVideoScale;
         cx = int(results.baseWidth * scale);
         cy = int(results.baseHeight * scale);
