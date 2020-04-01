@@ -27,7 +27,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 , m_core(pixelMatcher)
 {
     // init config
-    auto config = m_core->matchConfig();
+    //auto config = m_core->matchConfig();
 
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
@@ -39,7 +39,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 
     m_imgPathEdit = new QLineEdit(this);
     m_imgPathEdit->setReadOnly(true);
-    m_imgPathEdit->setText(config.matchImgFilename.data());
     imgPathSubLayout->addWidget(m_imgPathEdit);
 
     QPushButton *browseImgPathBtn = new QPushButton(
@@ -65,7 +64,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
         int(PmMaskMode::AlphaMode), obs_module_text("Alpha"));
     m_maskModeCombo->insertItem(
         int(PmMaskMode::CustomClrMode), obs_module_text("Custom"));
-    m_maskModeCombo->setCurrentIndex(int(config.maskMode));
     connect(m_maskModeCombo, SIGNAL(currentIndexChanged(int)),
         this, SLOT(onColorComboIndexChanged()));
     colorSubLayout->addWidget(m_maskModeCombo);
@@ -86,7 +84,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_posXBox->setSuffix(" px");
     m_posXBox->setMinimum(0);
     m_posXBox->setSingleStep(1);
-    m_posXBox->setValue(config.roiLeft);
     connect(m_posXBox, SIGNAL(valueChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posXBox);
@@ -98,7 +95,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_posYBox->setSuffix(" px");
     m_posYBox->setMinimum(0);
     m_posYBox->setSingleStep(1);
-    m_posYBox->setValue(config.roiBottom);
     connect(m_posYBox, SIGNAL(valueChanged(int)),
         this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     matchLocSubLayout->addWidget(m_posYBox);
@@ -111,7 +107,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_perPixelErrorBox->setRange(0.0, 100.0);
     m_perPixelErrorBox->setSingleStep(1.0);
     m_perPixelErrorBox->setDecimals(1);
-    m_perPixelErrorBox->setValue(double(config.perPixelErrThresh));
     connect(m_perPixelErrorBox, SIGNAL(valueChanged(double)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
 
@@ -124,7 +119,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_totalMatchThreshBox->setRange(1.0, 100.0);
     m_totalMatchThreshBox->setSingleStep(1.0);
     m_totalMatchThreshBox->setDecimals(1);
-    m_totalMatchThreshBox->setValue(double(config.totalMatchThresh));
     connect(m_totalMatchThreshBox, SIGNAL(valueChanged(double)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
 
@@ -167,7 +161,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     line->setFrameShadow(QFrame::Sunken);
     mainLayout->addRow(line);
 
-    m_previewModeButtons->button(int(config.previewMode))->setChecked(true);
     mainLayout->addRow(
         obs_module_text("Preview Mode: "), previewModeLayout);
 
@@ -181,8 +174,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_videoScaleCombo->addItem("75%", 0.75f);
     m_videoScaleCombo->addItem("50%", 0.5f);
     m_videoScaleCombo->addItem("25%", 0.25f);
-    m_videoScaleCombo->setCurrentIndex(
-        m_videoScaleCombo->findData(config.previewVideoScale));
     connect(m_videoScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     m_previewScaleStack->insertWidget(
@@ -195,8 +186,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_regionScaleCombo->addItem("200%", 2.f);
     m_regionScaleCombo->addItem("500%", 5.f);
     m_regionScaleCombo->addItem("1000%", 10.f);
-    m_regionScaleCombo->setCurrentIndex(
-        m_regionScaleCombo->findData(config.previewRegionScale));
     connect(m_regionScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     m_previewScaleStack->insertWidget(
@@ -209,8 +198,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_matchImgScaleCombo->addItem("200%", 2.f);
     m_matchImgScaleCombo->addItem("500%", 5.f);
     m_matchImgScaleCombo->addItem("1000%", 10.f);
-    m_matchImgScaleCombo->setCurrentIndex(
-        m_matchImgScaleCombo->findData(config.previewMatchImageScale));
     connect(m_matchImgScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     m_previewScaleStack->insertWidget(
@@ -252,6 +239,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
             m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
 
     // finish init
+    configToUi(m_core->matchConfig());
     onColorComboIndexChanged();
     onConfigUiChanged();
     onNewMatchResults(m_core->results());
@@ -391,6 +379,25 @@ void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
         QString("background-color :%1; color: %2;")
             .arg(color.name(QColor::HexArgb))
                 .arg(textColor.name(QColor::HexArgb)));
+}
+
+void PmMatchTab::configToUi(const PmMatchConfig &config)
+{
+    blockSignals(true);
+    m_imgPathEdit->setText(config.matchImgFilename.data());
+    m_maskModeCombo->setCurrentIndex(int(config.maskMode));
+    m_posXBox->setValue(config.roiLeft);
+    m_posYBox->setValue(config.roiBottom);
+    m_perPixelErrorBox->setValue(double(config.perPixelErrThresh));
+    m_totalMatchThreshBox->setValue(double(config.totalMatchThresh));
+    m_previewModeButtons->button(int(config.previewMode))->setChecked(true);
+    m_videoScaleCombo->setCurrentIndex(
+        m_videoScaleCombo->findData(config.previewVideoScale));
+    m_regionScaleCombo->setCurrentIndex(
+        m_regionScaleCombo->findData(config.previewRegionScale));
+    m_matchImgScaleCombo->setCurrentIndex(
+        m_matchImgScaleCombo->findData(config.previewMatchImageScale));
+    blockSignals(false);
 }
 
 void PmMatchTab::closeEvent(QCloseEvent *e)

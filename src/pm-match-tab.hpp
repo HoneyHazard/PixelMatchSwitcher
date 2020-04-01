@@ -51,6 +51,7 @@ private:
         const PmMatchConfig &config, const PmMatchResults &results);
 
     void maskModeChanged(PmMaskMode mode, QColor color);
+    void configToUi(const PmMatchConfig &config);
 
     QComboBox *m_presetCombo;
     QPushButton *m_presetSaveButton;
