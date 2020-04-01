@@ -25,17 +25,16 @@ class PmMatchTab : public QWidget
 
 public:
     PmMatchTab(PmCore *core, QWidget *parent);
-    ~PmMatchTab();
+    ~PmMatchTab() override;
 
 signals:
-    void sigOpenImage(QString filename);
     void sigNewUiConfig(PmMatchConfig);
 
 private slots:
     void onBrowseButtonReleased();
     void onColorComboIndexChanged();
-    void onImgSuccess(QString filename);
-    void onImgFailed(QString filename);
+    void onImgSuccess(std::string filename);
+    void onImgFailed(std::string filename);
     void onNewMatchResults(PmMatchResults results);
     void onConfigUiChanged();
     void onDestroy(QObject *obj);

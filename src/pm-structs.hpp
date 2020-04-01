@@ -36,6 +36,7 @@ struct PmMatchResults
 
 struct PmMatchConfig
 {
+    std::string matchImgFilename;
     int roiLeft = 0, roiBottom = 0;
     float perPixelErrThresh = 25.f;
     float totalMatchThresh = 90.f;
@@ -68,6 +69,7 @@ typedef QSet<OBSWeakSource> PmScenes;
 
 inline void pmRegisterMetaTypes()
 {
+    qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmSwitchConfig>("PmSwitchConfig");

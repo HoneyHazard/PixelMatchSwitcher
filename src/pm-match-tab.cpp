@@ -23,7 +23,8 @@
 #include <obs-module.h>
 
 PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
-: m_core(pixelMatcher)
+: QWidget(parent)
+, m_core(pixelMatcher)
 {
     // init config
     auto config = m_core->matchConfig();
@@ -38,7 +39,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 
     m_imgPathEdit = new QLineEdit(this);
     m_imgPathEdit->setReadOnly(true);
-    m_imgPathEdit->setText(m_core->matchImgFilename());
+    m_imgPathEdit->setText(config.matchImgFilename.data());
     imgPathSubLayout->addWidget(m_imgPathEdit);
 
     QPushButton *browseImgPathBtn = new QPushButton(
@@ -247,9 +248,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchTab::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
             this, &PmMatchTab::onNewMatchResults, Qt::QueuedConnection);
-
-    connect(this, &PmMatchTab::sigOpenImage,
-            m_core, &PmCore::onOpenImage, Qt::QueuedConnection);
     connect(this, &PmMatchTab::sigNewUiConfig,
             m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
 
@@ -415,27 +413,30 @@ void PmMatchTab::onBrowseButtonReleased()
     static const QString filter
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
 
-    QString curPath = QFileInfo(m_imgPathEdit->text()).absoluteDir().path();
+    QString curPath
+        = QFileInfo(m_core->matchImgFilename().data()).absoluteDir().path();
 
     QString path = QFileDialog::getOpenFileName(
         this, obs_module_text("Open an image file"), curPath,
         filter);
-    if (!path.isEmpty())
-        emit sigOpenImage(path);
+    if (!path.isEmpty()) {
+        PmMatchConfig config = m_core->matchConfig();
+        config.matchImgFilename = path.toUtf8().data();
+        emit sigNewUiConfig(config);
+    }
 }
 
-void PmMatchTab::onImgSuccess(QString filename)
+void PmMatchTab::onImgSuccess(std::string filename)
 {
-    m_imgPathEdit->setText(filename);
-
+    m_imgPathEdit->setText(filename.data());
     m_imgPathEdit->setStyleSheet("");
 }
 
-void PmMatchTab::onImgFailed(QString filename)
+void PmMatchTab::onImgFailed(std::string filename)
 {
     m_imgPathEdit->setText(
-        filename.size() ? QString("[FAILED] %1").arg(filename) : "");
-    m_imgPathEdit->setStyleSheet("text-color: red");
+        filename.size() ? QString("[FAILED] %1").arg(filename.data()) : "");
+    m_imgPathEdit->setStyleSheet("color: red");
 }
 
 void PmMatchTab::updateFilterDisplaySize(
@@ -498,6 +499,7 @@ void PmMatchTab::onNewMatchResults(PmMatchResults results)
 void PmMatchTab::onConfigUiChanged()
 {
     PmMatchConfig config;
+    config.matchImgFilename = m_imgPathEdit->text().toUtf8().data();
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());
@@ -512,7 +514,7 @@ void PmMatchTab::onConfigUiChanged()
         m_previewScaleStack->setFixedSize(scaleCombo->sizeHint());
     }
 
-   config.previewMode = PmPreviewMode(previewModeIdx);
+    config.previewMode = PmPreviewMode(previewModeIdx);
     config.previewVideoScale
         = m_videoScaleCombo->currentData().toFloat();
     config.previewRegionScale

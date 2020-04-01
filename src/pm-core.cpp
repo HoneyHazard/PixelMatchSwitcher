@@ -119,6 +119,12 @@ PmMatchConfig PmCore::matchConfig() const
     return m_matchConfig;
 }
 
+std::string PmCore::matchImgFilename() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchConfig.matchImgFilename;
+}
+
 PmScenes PmCore::scenes() const
 {
     QMutexLocker locker(&m_scenesMutex);
@@ -366,31 +372,6 @@ void PmCore::switchScene(OBSWeakSource &scene, OBSWeakSource &transition)
     obs_source_release(source);
 }
 
-void PmCore::onOpenImage(QString filename)
-{
-    QImage imgIn(filename);
-    if (imgIn.isNull()) {
-        m_matchImgFilename.clear();
-        blog(LOG_WARNING, "Unable to open filename: %s",
-             filename.toUtf8().constData());
-        emit sigImgFailed(filename);
-        return;
-    }
-
-    m_matchImg = imgIn.convertToFormat(QImage::Format_ARGB32);
-    if (m_matchImg.isNull()) {
-        m_matchImgFilename.clear();
-        blog(LOG_WARNING, "Image conversion failed: %s",
-             filename.toUtf8().constData());
-        emit sigImgFailed(filename);
-        return;
-    }
-
-    m_matchImgFilename = filename;
-    supplyImageToFilter();
-    emit sigImgSuccess(filename);
-}
-
 void PmCore::supplyImageToFilter()
 {
     auto filterData = m_activeFilter.filterData();
@@ -465,6 +446,24 @@ void PmCore::supplyConfigToFilter()
 void PmCore::onNewMatchConfig(PmMatchConfig config)
 {
     QMutexLocker locker(&m_matchConfigMutex);
+
+    const char* filename = config.matchImgFilename.data();
+    if (filename != m_matchConfig.matchImgFilename) {
+        QImage imgIn(filename);
+        if (imgIn.isNull()) {
+            blog(LOG_WARNING, "Unable to open filename: %s", filename);
+            emit sigImgFailed(filename);
+        } else {
+            m_matchImg = imgIn.convertToFormat(QImage::Format_ARGB32);
+            if (m_matchImg.isNull()) {
+                blog(LOG_WARNING, "Image conversion failed: %s", filename);
+                emit sigImgFailed(filename);
+            } else {
+                emit sigImgSuccess(filename);
+            }
+        }
+        supplyImageToFilter();
+    }
     m_matchConfig = config;
     supplyConfigToFilter();
 }
