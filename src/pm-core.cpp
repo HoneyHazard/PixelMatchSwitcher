@@ -453,11 +453,13 @@ void PmCore::onNewMatchConfig(PmMatchConfig config)
         if (imgIn.isNull()) {
             blog(LOG_WARNING, "Unable to open filename: %s", filename);
             emit sigImgFailed(filename);
+            m_matchImg = QImage();
         } else {
             m_matchImg = imgIn.convertToFormat(QImage::Format_ARGB32);
             if (m_matchImg.isNull()) {
                 blog(LOG_WARNING, "Image conversion failed: %s", filename);
                 emit sigImgFailed(filename);
+                m_matchImg = QImage();
             } else {
                 emit sigImgSuccess(filename);
             }

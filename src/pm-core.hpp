@@ -7,6 +7,7 @@ extern "C" void free_pixel_match_switcher();
 #include <QMutex>
 #include <QImage>
 #include <QPointer>
+#include <QHash>
 
 #include <string>
 #include <vector>
@@ -79,6 +80,7 @@ protected:
 
     mutable QMutex m_matchConfigMutex;
     PmMatchConfig m_matchConfig;
+    QHash<std::string, PmMatchConfig> m_matchPresets;
 
     mutable QMutex m_resultsMutex;
     PmMatchResults m_results;
