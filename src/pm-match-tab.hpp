@@ -7,6 +7,7 @@
 
 class PmCore;
 
+class QPushButton;
 class QLabel;
 class QLineEdit;
 class QComboBox;
@@ -50,6 +51,13 @@ private:
         const PmMatchConfig &config, const PmMatchResults &results);
 
     void maskModeChanged(PmMaskMode mode, QColor color);
+
+    QComboBox *m_presetCombo;
+    QPushButton *m_presetSaveButton;
+    QPushButton *m_presetSaveAsButton;
+    QPushButton *m_presetResetButton;
+    QPushButton *m_presetRemoveButton;
+    bool m_configDirty = false;
 
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;

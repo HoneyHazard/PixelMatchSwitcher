@@ -443,18 +443,24 @@ void PmMatchTab::updateFilterDisplaySize(
     const PmMatchConfig &config, const PmMatchResults &results)
 {
     int cx, cy;
-    if (!m_core || !m_core->activeFilterRef().isValid()) {
-        cx = 0;
-        cy = 0;
-    } else if (config.previewMode == PmPreviewMode::Video) {
-        float scale = config.previewVideoScale;
-        cx = int(results.baseWidth * scale);
-        cy = int(results.baseHeight * scale);
+    if (config.previewMode == PmPreviewMode::Video) {
+        if (!m_core->activeFilterRef().isValid()) {
+            cx = 0;
+            cy = 0;
+        } else {
+            float scale = config.previewVideoScale;
+            cx = int(results.baseWidth * scale);
+            cy = int(results.baseHeight * scale);
+        }
     } else if (config.previewMode == PmPreviewMode::Region) {
-        //float scale = config.previewRegionScale;
-        float scale = config.previewRegionScale;
-        cx = int(results.matchImgWidth * scale);
-        cy = int(results.matchImgHeight * scale);
+        if (!m_core->activeFilterRef().isValid()) {
+            cx = 0;
+            cy = 0;
+        } else {
+            float scale = config.previewRegionScale;
+            cx = int(results.matchImgWidth * scale);
+            cy = int(results.matchImgHeight * scale);
+        }
     } else { // PmPreviewMode::MatchImage
         float scale = config.previewMatchImageScale;
         cx = int(results.matchImgWidth * scale);

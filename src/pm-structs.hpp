@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <utility>
 #include <qmetatype.h>
+#include <unordered_map>
 #include <QSet>
 #include <QHash>
 
@@ -48,6 +49,8 @@ struct PmMatchConfig
     float previewMatchImageScale = 1.f;
     // bool visualize; // TODO
 };
+
+typedef std::unordered_map<std::string, PmMatchConfig> PmMatchPresets;
 
 static uint qHash(const OBSWeakSource &ws)
 {

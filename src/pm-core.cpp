@@ -113,6 +113,24 @@ PmMatchResults PmCore::results() const
     return m_results;
 }
 
+std::string PmCore::activeMatchPresetName() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_activeMatchPresetName;
+}
+
+bool PmCore::matchPresetExists(const std::string &name) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets.find(name) != m_matchPresets.end();
+}
+
+PmMatchConfig PmCore::matchPresetByName(const std::string &name) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets.at(name);
+}
+
 PmMatchConfig PmCore::matchConfig() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -123,6 +141,24 @@ std::string PmCore::matchImgFilename() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return m_matchConfig.matchImgFilename;
+}
+
+void PmCore::saveMatchPreset(const std::string &name)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    m_matchPresets[name] = m_matchConfig;
+}
+
+PmMatchPresets PmCore::matchPresets() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets;
+}
+
+void PmCore::setActiveMatchPreset(const std::string &name)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    m_activeMatchPresetName = name;
 }
 
 PmScenes PmCore::scenes() const

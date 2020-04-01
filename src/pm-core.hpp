@@ -7,7 +7,6 @@ extern "C" void free_pixel_match_switcher();
 #include <QMutex>
 #include <QImage>
 #include <QPointer>
-#include <QHash>
 
 #include <string>
 #include <vector>
@@ -39,9 +38,16 @@ public:
     PmFilterRef activeFilterRef() const;
     std::string scenesInfo() const;
 
+    std::string activeMatchPresetName() const;
+    bool matchPresetExists(const std::string &name) const;
+    void setActiveMatchPreset(const std::string &name);
+    PmMatchConfig matchPresetByName(const std::string &name) const;
+    void saveMatchPreset(const std::string &name);
+    PmMatchPresets matchPresets() const;
+
     PmMatchConfig matchConfig() const;
     std::string matchImgFilename() const;
-    bool matchImgOk() const { return !m_matchImg.isNull(); }
+
     PmMatchResults results() const;
     PmScenes scenes() const;
     PmSwitchConfig switchConfig() const;
@@ -56,8 +62,8 @@ signals:
     void sigScenesChanged(PmScenes);
 
 public slots:
-    void onNewMatchConfig(PmMatchConfig);
     void onNewSceneConfig(PmSwitchConfig);
+    void onNewMatchConfig(PmMatchConfig);
 
 private slots:
     void onMenuAction();
@@ -80,7 +86,8 @@ protected:
 
     mutable QMutex m_matchConfigMutex;
     PmMatchConfig m_matchConfig;
-    QHash<std::string, PmMatchConfig> m_matchPresets;
+    std::string m_activeMatchPresetName;
+    PmMatchPresets m_matchPresets;
 
     mutable QMutex m_resultsMutex;
     PmMatchResults m_results;
