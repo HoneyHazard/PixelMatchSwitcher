@@ -26,12 +26,47 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
 , m_core(pixelMatcher)
 {
-    // init config
-    //auto config = m_core->matchConfig();
-
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+
+    // preset controls
+    QHBoxLayout *presetLayout = new QHBoxLayout;
+    presetLayout->setContentsMargins(0, 0, 0, 0);
+
+    m_presetCombo = new QComboBox(this);
+    m_presetCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    connect(m_presetCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(onPresetSelected()));
+    presetLayout->addWidget(m_presetCombo);
+
+    m_presetSaveButton = new QPushButton(obs_module_text("Save"), this);
+    connect(m_presetSaveButton, &QPushButton::released,
+            this, &PmMatchTab::onPresetSave, Qt::QueuedConnection);
+    presetLayout->addWidget(m_presetSaveButton);
+
+    m_presetSaveAsButton = new QPushButton(obs_module_text("Save As"), this);
+    connect(m_presetSaveAsButton, &QPushButton::released,
+            this, &PmMatchTab::onPresetSaveAs, Qt::QueuedConnection);
+    presetLayout->addWidget(m_presetSaveAsButton);
+
+    m_presetResetButton = new QPushButton(obs_module_text("Reset"), this);
+    connect(m_presetResetButton, &QPushButton::released,
+            this, &PmMatchTab::onConfigReset, Qt::QueuedConnection);
+    presetLayout->addWidget(m_presetResetButton);
+
+    m_presetRemoveButton = new  QPushButton(obs_module_text("Remove"), this);
+    connect(m_presetRemoveButton, &QPushButton::released,
+            this, &PmMatchTab::onPresetRemove, Qt::QueuedConnection);
+    presetLayout->addWidget(m_presetRemoveButton);
+
+    mainLayout->addRow(obs_module_text("Preset: "), presetLayout);
+
+    // divider line 1
+    QFrame *line1 = new QFrame();
+    line1->setFrameShape(QFrame::HLine);
+    line1->setFrameShadow(QFrame::Sunken);
+    mainLayout->addRow(line1);
 
     // image path display and browse button
     QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
@@ -155,11 +190,11 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_previewModeButtons->addButton(matchImgRadio, int(PmPreviewMode::MatchImage));
     previewModeLayout->addWidget(matchImgRadio);
 
-    // divider line
-    QFrame *line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
-    mainLayout->addRow(line);
+    // divider line 2
+    QFrame *line2 = new QFrame();
+    line2->setFrameShape(QFrame::HLine);
+    line2->setFrameShadow(QFrame::Sunken);
+    mainLayout->addRow(line2);
 
     mainLayout->addRow(
         obs_module_text("Preview Mode: "), previewModeLayout);
@@ -545,5 +580,30 @@ void PmMatchTab::onDestroy(QObject *obj)
         QThread::sleep(1);
     }
     obs_display_remove_draw_callback(
-        m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
+                m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
+}
+
+void PmMatchTab::onPresetSelected()
+{
+
+}
+
+void PmMatchTab::onPresetSave()
+{
+
+}
+
+void PmMatchTab::onPresetSaveAs()
+{
+
+}
+
+void PmMatchTab::onConfigReset()
+{
+
+}
+
+void PmMatchTab::onPresetRemove()
+{
+
 }

@@ -60,6 +60,7 @@ signals:
     void sigImgFailed(std::string filename);
     void sigNewMatchResults(PmMatchResults);
     void sigScenesChanged(PmScenes);
+    void sigPresetsChanged();
 
 public slots:
     void onNewSceneConfig(PmSwitchConfig);

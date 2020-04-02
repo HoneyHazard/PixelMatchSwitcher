@@ -38,7 +38,14 @@ private slots:
     void onImgFailed(std::string filename);
     void onNewMatchResults(PmMatchResults results);
     void onConfigUiChanged();
+    void onPresetsChanged();
     void onDestroy(QObject *obj);
+
+    void onPresetSelected();
+    void onPresetSave();
+    void onPresetSaveAs();
+    void onConfigReset();
+    void onPresetRemove();
 
 protected:
     virtual void closeEvent(QCloseEvent *e) override;

@@ -74,6 +74,7 @@ inline void pmRegisterMetaTypes()
 {
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
+    qRegisterMetaType<PmMatchResults>("PmMatchPresets");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmSwitchConfig>("PmSwitchConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
