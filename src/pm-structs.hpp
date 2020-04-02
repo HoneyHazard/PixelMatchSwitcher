@@ -48,8 +48,11 @@ struct PmMatchConfig
     float previewRegionScale = 1.f;
     float previewMatchImageScale = 1.f;
 
+    // TODO: hacky! clean up.
     bool operator!= (const PmMatchConfig &other) const
-        { return memcmp(this, &other, sizeof(PmMatchConfig)); }
+        { return this->matchImgFilename != other.matchImgFilename
+          || memcmp(&this->roiLeft, &other.roiLeft,
+                    sizeof(PmMatchConfig)-sizeof(std::string)); }
     bool operator== (const PmMatchConfig &other) const
         { return operator!=(other); }
 };

@@ -528,8 +528,8 @@ void PmCore::onNewMatchConfig(PmMatchConfig config)
     }
     if (m_matchConfig != config) {
         m_matchConfig = config;
-        emit sigMatchPresetStateChanged();
         supplyConfigToFilter();
+        emit sigMatchPresetStateChanged();
     }
 }
 
