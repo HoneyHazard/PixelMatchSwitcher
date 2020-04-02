@@ -18,9 +18,13 @@
 #include <QRadioButton>
 #include <QButtonGroup>
 #include <QStackedWidget>
+#include <QInputDialog>
 #include <QThread> // sleep
 
 #include <obs-module.h>
+
+const char * PmMatchTab::k_unsavedPresetStr
+    = obs_module_text("<unsaved preset>");
 
 PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
@@ -35,6 +39,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     presetLayout->setContentsMargins(0, 0, 0, 0);
 
     m_presetCombo = new QComboBox(this);
+    m_presetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
     m_presetCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     connect(m_presetCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onPresetSelected()));
@@ -242,7 +247,17 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
         obs_module_text("Preview Scale: "), m_previewScaleStack);
 
     // image/match display area
+
     m_filterDisplay = new OBSQTDisplay(this);
+    auto addDrawCallback = [this]() {
+        obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
+                          PmMatchTab::drawPreview,
+                          this);
+    };
+    connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
+            addDrawCallback);
+    connect(m_filterDisplay, &OBSQTDisplay::destroyed,
+            this, &PmMatchTab::onDestroy, Qt::DirectConnection);
     mainLayout->addRow(m_filterDisplay);
 
     // notification label
@@ -251,31 +266,34 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 
     setLayout(mainLayout);
 
-    auto addDrawCallback = [this]() {
-        obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
-                          PmMatchTab::drawPreview,
-                          this);
-    };
-
-    connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
-            addDrawCallback);
-    connect(m_filterDisplay, &OBSQTDisplay::destroyed,
-    //connect(parent, &QObject::destroyed,
-            this, &PmMatchTab::onDestroy, Qt::DirectConnection);
-
-    // signals & slots
+    // core signals -> local slots
     connect(m_core, &PmCore::sigImgSuccess,
             this, &PmMatchTab::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
             this, &PmMatchTab::onImgFailed, Qt::QueuedConnection);
+
+    connect(m_core, &PmCore::sigMatchPresetsChanged,
+            this, &PmMatchTab::onPresetsChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchPresetStateChanged,
+            this, &PmMatchTab::onPresetStateChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
             this, &PmMatchTab::onNewMatchResults, Qt::QueuedConnection);
+
+    // local signals -> core slots
     connect(this, &PmMatchTab::sigNewUiConfig,
             m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchTab::sigSaveMatchPreset,
+            m_core, &PmCore::onSaveMatchPreset, Qt::QueuedConnection);
+    connect(this, &PmMatchTab::sigSelectActiveMatchPreset,
+            m_core, &PmCore::onSelectActiveMatchPreset, Qt::QueuedConnection);
+    connect(this, &PmMatchTab::sigRemoveMatchPreset,
+            m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
 
     // finish init
     configToUi(m_core->matchConfig());
     onColorComboIndexChanged();
+    onPresetsChanged();
+    onPresetStateChanged();
     onConfigUiChanged();
     onNewMatchResults(m_core->results());
 }
@@ -581,29 +599,91 @@ void PmMatchTab::onDestroy(QObject *obj)
     }
     obs_display_remove_draw_callback(
                 m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
+    UNUSED_PARAMETER(obj);
+}
+
+void PmMatchTab::onPresetsChanged()
+{
+    PmMatchPresets presets = m_core->matchPresets();
+    m_presetCombo->blockSignals(true);
+    m_presetCombo->clear();
+    for (auto pair: presets) {
+        m_presetCombo->addItem(pair.first.data());
+    }
+    m_presetCombo->blockSignals(false);
+}
+
+void PmMatchTab::onPresetStateChanged()
+{
+    std::string activePreset = m_core->activeMatchPresetName();
+    bool dirty = m_core->matchConfigDirty();
+
+    m_presetCombo->blockSignals(true);
+    int findPlaceholder = m_presetCombo->findText(k_unsavedPresetStr);
+    if (activePreset.empty()) {
+        if (findPlaceholder == -1) {
+            m_presetCombo->addItem(k_unsavedPresetStr);
+        }
+        m_presetCombo->setCurrentText(k_unsavedPresetStr);
+    } else {
+        if (findPlaceholder != -1) {
+            m_presetCombo->removeItem(findPlaceholder);
+        }
+        m_presetCombo->setCurrentText(activePreset.data());
+    }
+    m_presetCombo->blockSignals(false);
+
+    m_presetRemoveButton->setEnabled(!activePreset.empty());
+    m_presetSaveButton->setEnabled(dirty);
 }
 
 void PmMatchTab::onPresetSelected()
 {
-
+    std::string selPreset = m_presetCombo->currentText().toUtf8().data();
+    PmMatchConfig presetConfig = m_core->matchPresetByName(selPreset);
+    emit sigSelectActiveMatchPreset(selPreset);
+    configToUi(presetConfig);
 }
 
 void PmMatchTab::onPresetSave()
 {
-
+    std::string presetName = m_core->activeMatchPresetName();
+    if (presetName.empty()) {
+        onPresetSaveAs();
+    } else {
+        emit sigSaveMatchPreset(presetName);
+    }
 }
 
 void PmMatchTab::onPresetSaveAs()
 {
-
+    bool ok;
+    QString presetName = QInputDialog::getText(
+        this, obs_module_text("Save Preset"), obs_module_text("Enter Name: "),
+        QLineEdit::Normal, QString(), &ok);
+    if (ok && !presetName.isEmpty()) {
+        emit sigSaveMatchPreset(presetName.toUtf8().data());
+    }
 }
 
 void PmMatchTab::onConfigReset()
 {
-
+    PmMatchConfig config; // defaults
+    configToUi(config);
+    emit sigNewUiConfig(config);
+    emit sigSelectActiveMatchPreset("");
 }
 
 void PmMatchTab::onPresetRemove()
 {
-
+    auto presets = m_core->matchPresets();
+    std::string oldPreset = m_core->activeMatchPresetName();
+    emit sigRemoveMatchPreset(oldPreset);
+    for (auto p: presets) {
+        if (p.first != oldPreset) {
+            configToUi(p.second);
+            emit sigSelectActiveMatchPreset(p.first);
+            break;
+        }
+    }
 }

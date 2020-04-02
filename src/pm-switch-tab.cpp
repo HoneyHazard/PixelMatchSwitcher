@@ -48,7 +48,7 @@ PmSwitchTab::PmSwitchTab(PmCore *core, QWidget *parent)
     connect(m_core, &PmCore::sigScenesChanged,
             this, &PmSwitchTab::onScenesChanged, Qt::QueuedConnection);
     connect(this, &PmSwitchTab::sigSceneConfigChanged,
-            m_core, &PmCore::onNewSceneConfig, Qt::QueuedConnection);
+            m_core, &PmCore::onNewSwitchConfig, Qt::QueuedConnection);
 
     // finish init
     onScenesChanged(m_core->scenes());

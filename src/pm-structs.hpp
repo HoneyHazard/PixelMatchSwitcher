@@ -47,7 +47,11 @@ struct PmMatchConfig
     float previewVideoScale = 0.5f;
     float previewRegionScale = 1.f;
     float previewMatchImageScale = 1.f;
-    // bool visualize; // TODO
+
+    bool operator!= (const PmMatchConfig &other) const
+        { return memcmp(this, &other, sizeof(PmMatchConfig)); }
+    bool operator== (const PmMatchConfig &other) const
+        { return operator!=(other); }
 };
 
 typedef std::unordered_map<std::string, PmMatchConfig> PmMatchPresets;

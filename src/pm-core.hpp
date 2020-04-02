@@ -40,10 +40,9 @@ public:
 
     std::string activeMatchPresetName() const;
     bool matchPresetExists(const std::string &name) const;
-    void setActiveMatchPreset(const std::string &name);
     PmMatchConfig matchPresetByName(const std::string &name) const;
-    void saveMatchPreset(const std::string &name);
     PmMatchPresets matchPresets() const;
+    bool matchConfigDirty() const;
 
     PmMatchConfig matchConfig() const;
     std::string matchImgFilename() const;
@@ -60,11 +59,16 @@ signals:
     void sigImgFailed(std::string filename);
     void sigNewMatchResults(PmMatchResults);
     void sigScenesChanged(PmScenes);
-    void sigPresetsChanged();
+    void sigMatchPresetsChanged();
+    void sigMatchPresetStateChanged();
 
 public slots:
-    void onNewSceneConfig(PmSwitchConfig);
+    void onNewSwitchConfig(PmSwitchConfig);
     void onNewMatchConfig(PmMatchConfig);
+
+    void onSelectActiveMatchPreset(std::string name);
+    void onSaveMatchPreset(std::string name);
+    void onRemoveMatchPreset(std::string name);
 
 private slots:
     void onMenuAction();
@@ -87,7 +91,7 @@ protected:
 
     mutable QMutex m_matchConfigMutex;
     PmMatchConfig m_matchConfig;
-    std::string m_activeMatchPresetName;
+    std::string m_activeMatchPreset;
     PmMatchPresets m_matchPresets;
 
     mutable QMutex m_resultsMutex;

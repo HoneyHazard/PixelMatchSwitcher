@@ -30,6 +30,9 @@ public:
 
 signals:
     void sigNewUiConfig(PmMatchConfig);
+    void sigSelectActiveMatchPreset(std::string name);
+    void sigSaveMatchPreset(std::string name);
+    void sigRemoveMatchPreset(std::string name);
 
 private slots:
     void onBrowseButtonReleased();
@@ -38,8 +41,10 @@ private slots:
     void onImgFailed(std::string filename);
     void onNewMatchResults(PmMatchResults results);
     void onConfigUiChanged();
-    void onPresetsChanged();
     void onDestroy(QObject *obj);
+
+    void onPresetsChanged();
+    void onPresetStateChanged();
 
     void onPresetSelected();
     void onPresetSave();
@@ -50,7 +55,6 @@ private slots:
 protected:
     virtual void closeEvent(QCloseEvent *e) override;
 
-private:
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
     void drawEffect();
     void drawMatchImage();
@@ -60,12 +64,14 @@ private:
     void maskModeChanged(PmMaskMode mode, QColor color);
     void configToUi(const PmMatchConfig &config);
 
+protected:
+    static const char *k_unsavedPresetStr;
+
     QComboBox *m_presetCombo;
     QPushButton *m_presetSaveButton;
     QPushButton *m_presetSaveAsButton;
     QPushButton *m_presetResetButton;
     QPushButton *m_presetRemoveButton;
-    bool m_configDirty = false;
 
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;

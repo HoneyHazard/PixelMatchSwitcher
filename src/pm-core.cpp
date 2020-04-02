@@ -47,7 +47,7 @@ void on_frame_processed(struct pm_filter_data *filter)
 //------------------------------------
 
 PmCore::PmCore()
-//: m_mutex(QMutex::Recursive)
+: m_matchConfigMutex(QMutex::Recursive)
 {
     // parent this to the app
     //setParent(qApp);
@@ -116,13 +116,7 @@ PmMatchResults PmCore::results() const
 std::string PmCore::activeMatchPresetName() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    return m_activeMatchPresetName;
-}
-
-bool PmCore::matchPresetExists(const std::string &name) const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    return m_matchPresets.find(name) != m_matchPresets.end();
+    return m_activeMatchPreset;
 }
 
 PmMatchConfig PmCore::matchPresetByName(const std::string &name) const
@@ -143,22 +137,52 @@ std::string PmCore::matchImgFilename() const
     return m_matchConfig.matchImgFilename;
 }
 
-void PmCore::saveMatchPreset(const std::string &name)
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    m_matchPresets[name] = m_matchConfig;
-}
-
 PmMatchPresets PmCore::matchPresets() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return m_matchPresets;
 }
 
-void PmCore::setActiveMatchPreset(const std::string &name)
+bool PmCore::matchConfigDirty() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    m_activeMatchPresetName = name;
+    if (m_activeMatchPreset.empty()) {
+        return true;
+    } else {
+        const PmMatchConfig presetCfg = m_matchPresets.at(m_activeMatchPreset);
+        return presetCfg != m_matchConfig;
+    }
+}
+
+void PmCore::onSaveMatchPreset(std::string name)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    bool isNew = (m_matchPresets.find(name) == m_matchPresets.end());
+    m_matchPresets[name] = m_matchConfig;
+    if (isNew) {
+        emit sigMatchPresetsChanged();
+    }
+    m_activeMatchPreset = name;
+    emit sigMatchPresetStateChanged();
+}
+
+void PmCore::onSelectActiveMatchPreset(std::string name)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    m_activeMatchPreset = name;
+    PmMatchConfig config = name.size() ? m_matchPresets[name] : PmMatchConfig();
+    onNewMatchConfig(config);
+    emit sigMatchPresetStateChanged();
+}
+
+void PmCore::onRemoveMatchPreset(std::string name)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    m_matchPresets.erase(name);
+    emit sigMatchPresetsChanged();
+    if (m_activeMatchPreset == name) {
+        onSelectActiveMatchPreset("");
+    }
 }
 
 PmScenes PmCore::scenes() const
@@ -502,11 +526,14 @@ void PmCore::onNewMatchConfig(PmMatchConfig config)
         }
         supplyImageToFilter();
     }
-    m_matchConfig = config;
-    supplyConfigToFilter();
+    if (m_matchConfig != config) {
+        m_matchConfig = config;
+        emit sigMatchPresetStateChanged();
+        supplyConfigToFilter();
+    }
 }
 
-void PmCore::onNewSceneConfig(PmSwitchConfig sceneConfig)
+void PmCore::onNewSwitchConfig(PmSwitchConfig sceneConfig)
 {
     QMutexLocker locker(&m_switchConfigMutex);
     m_switchConfig = sceneConfig;
