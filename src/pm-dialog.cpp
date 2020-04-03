@@ -9,6 +9,7 @@
 #include <QTabWidget>
 
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 
 PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
 : QDialog(parent)
@@ -32,4 +33,9 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     QHBoxLayout *topLevelLayout = new QHBoxLayout;
     topLevelLayout->addWidget(tabWidget);
     setLayout(topLevelLayout);
+}
+
+void PmDialog::closeEvent(QCloseEvent*)
+{
+    obs_frontend_save();
 }

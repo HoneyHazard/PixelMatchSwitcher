@@ -523,16 +523,6 @@ void PmCore::supplyConfigToFilter()
     }
 }
 
-void PmCore::pmSave(obs_data_t *data)
-{
-
-}
-
-void PmCore::pmLoad(obs_data_t *data)
-{
-
-}
-
 void PmCore::onNewMatchConfig(PmMatchConfig config)
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -567,4 +557,14 @@ void PmCore::onNewSwitchConfig(PmSwitchConfig sceneConfig)
 {
     QMutexLocker locker(&m_switchConfigMutex);
     m_switchConfig = sceneConfig;
+}
+
+void PmCore::pmSave(obs_data_t *data)
+{
+
+}
+
+void PmCore::pmLoad(obs_data_t *data)
+{
+
 }

@@ -19,5 +19,7 @@ signals:
     void sigNewUiConfig(PmMatchConfig);
 
 protected:
+    void closeEvent(QCloseEvent*) override;
+
     QPointer<PmCore> m_core;
 };
