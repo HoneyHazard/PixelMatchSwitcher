@@ -25,10 +25,12 @@ class PmCore : public QObject
 {
     Q_OBJECT
 
-    // interactions with the C components
+    // interactions with OBS C components
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
     friend void on_frame_processed(struct pm_filter_data* filter);
+    friend void pm_save_load_callback(
+        obs_data_t *save_data, bool saving, void *corePtr);
 
 public:
     PmCore();
@@ -81,6 +83,9 @@ protected:
     void updateActiveFilter();
     void supplyImageToFilter();
     void supplyConfigToFilter();
+
+    void pmSave(obs_data_t *data);
+    void pmLoad(obs_data_t *data);
 
     static PmCore *m_instance;
     QPointer<PmDialog> m_dialog;

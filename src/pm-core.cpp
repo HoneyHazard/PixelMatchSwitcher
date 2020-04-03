@@ -7,6 +7,7 @@
 
 #include <obs-module.h>
 #include <obs-frontend-api.h>
+#include <obs-data.h>
 //#include <obs-scene.h>
 
 #include <QAction>
@@ -19,11 +20,24 @@
 
 PmCore* PmCore::m_instance = nullptr;
 
+void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)
+{
+    PmCore *core = static_cast<PmCore*>(corePtr);
+    if (saving) {
+        core->pmSave(save_data);
+    } else {
+        core->pmLoad(save_data);
+    }
+}
+
 void init_pixel_match_switcher()
 {
     pmRegisterMetaTypes();
 
     PmCore::m_instance = new PmCore();
+
+    obs_frontend_add_save_callback(
+        pm_save_load_callback, static_cast<void*>(PmCore::m_instance));
 }
 
 void free_pixel_match_switcher()
@@ -507,6 +521,16 @@ void PmCore::supplyConfigToFilter()
         filterData->mask_color = maskColor;
         pthread_mutex_unlock(&filterData->mutex);
     }
+}
+
+void PmCore::pmSave(obs_data_t *data)
+{
+
+}
+
+void PmCore::pmLoad(obs_data_t *data)
+{
+
 }
 
 void PmCore::onNewMatchConfig(PmMatchConfig config)

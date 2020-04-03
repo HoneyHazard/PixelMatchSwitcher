@@ -88,7 +88,6 @@ void PmSwitchTab::onScenesChanged(PmScenes scenes)
         sceneConfig.noMatchScene = noMatchScene;
         emit sigSceneConfigChanged(sceneConfig);
     }
-
 }
 
 void PmSwitchTab::onMatchSceneChanged()
