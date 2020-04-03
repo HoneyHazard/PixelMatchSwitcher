@@ -10,6 +10,7 @@
 #include <obs.h>
 #include <obs.hpp>
 
+// TODO: organize and add comments
 
 enum class PmMaskMode : int {
     GreenMode=0,
@@ -37,6 +38,10 @@ struct PmMatchResults
 
 struct PmMatchConfig
 {
+    PmMatchConfig() {}
+    PmMatchConfig(obs_data_t* data);
+    obs_data_t* save(const std::string &presetName) const;
+
     std::string matchImgFilename;
     int roiLeft = 0, roiBottom = 0;
     float perPixelErrThresh = 25.f;
@@ -48,41 +53,29 @@ struct PmMatchConfig
     float previewRegionScale = 1.f;
     float previewMatchImageScale = 1.f;
 
-    // TODO: hacky! clean up.
-    bool operator!= (const PmMatchConfig &other) const
-        { return this->matchImgFilename != other.matchImgFilename
-          || memcmp(&this->roiLeft, &other.roiLeft,
-                    sizeof(PmMatchConfig)-sizeof(std::string)); }
+    bool operator!= (const PmMatchConfig &other) const;
     bool operator== (const PmMatchConfig &other) const
         { return operator!=(other); }
+
 };
 
 typedef std::unordered_map<std::string, PmMatchConfig> PmMatchPresets;
 
-static uint qHash(const OBSWeakSource &ws)
-{
-    obs_source_t* source = obs_weak_source_get_source(ws);
-    return qHash(source);
-}
-
 struct PmSwitchConfig
 {
+    PmSwitchConfig() {}
+    PmSwitchConfig(obs_data_t *data);
+    obs_data_t* save() const;
+
     bool isEnabled = false;
     OBSWeakSource matchScene;
     OBSWeakSource noMatchScene;
     OBSWeakSource defaultTransition;
-    QHash<QPair<OBSWeakSource, OBSWeakSource>, OBSWeakSource>
-        transitions;
+    //QHash<QPair<OBSWeakSource, OBSWeakSource>, OBSWeakSource>
+    //    transitions;
 };
 
+uint qHash(const OBSWeakSource &ws);
 typedef QSet<OBSWeakSource> PmScenes;
 
-inline void pmRegisterMetaTypes()
-{
-    qRegisterMetaType<std::string>("std::string");
-    qRegisterMetaType<PmMatchResults>("PmMatchResults");
-    qRegisterMetaType<PmMatchResults>("PmMatchPresets");
-    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
-    qRegisterMetaType<PmSwitchConfig>("PmSwitchConfig");
-    qRegisterMetaType<PmScenes>("PmScenes");
-}
+void pmRegisterMetaTypes();

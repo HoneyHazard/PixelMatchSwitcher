@@ -43,6 +43,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-switch-tab.cpp
         src/pm-debug-tab.cpp
         src/pm-dialog.cpp
+        src/pm-structs.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
         ${LIBOBS_UI_DIR}/qt-wrappers.cpp        
 )
