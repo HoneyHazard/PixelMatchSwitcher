@@ -137,7 +137,7 @@ void PmSwitchTab::setSelectedScene(QComboBox *combo, OBSWeakSource &scene)
 {
     combo->blockSignals(true);
     if (!scene) {
-        combo->setCurrentIndex(-1);
+        combo->setCurrentText(k_dontSwitchName);
     } else {
         auto src = obs_weak_source_get_source(scene);
         const char* name = obs_source_get_name(src);
