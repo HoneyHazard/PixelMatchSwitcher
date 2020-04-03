@@ -438,6 +438,9 @@ void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
 void PmMatchTab::configToUi(const PmMatchConfig &config)
 {
     blockSignals(true);
+
+    roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
+
     m_imgPathEdit->setText(config.matchImgFilename.data());
     m_maskModeCombo->setCurrentIndex(int(config.maskMode));
     m_posXBox->setValue(config.roiLeft);
@@ -536,15 +539,21 @@ void PmMatchTab::updateFilterDisplaySize(
     }
 }
 
+void PmMatchTab::roiRangesChanged(
+    int baseWidth, int baseHeight, int imgWidth, int imgHeight)
+{
+    m_posXBox->setMaximum(baseWidth - imgWidth);
+    m_posYBox->setMaximum(baseHeight - imgHeight);
+}
+
 void PmMatchTab::onNewMatchResults(PmMatchResults results)
 {
     if (m_prevResults.baseWidth != results.baseWidth
-     || m_prevResults.matchImgWidth != results.matchImgWidth) {
-        m_posXBox->setMaximum(results.baseWidth - int(results.matchImgWidth));
-    }
-    if (m_prevResults.baseHeight != results.baseHeight
+     || m_prevResults.matchImgWidth != results.matchImgWidth
+     || m_prevResults.baseHeight != results.baseHeight
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
-        m_posYBox->setMaximum(results.baseHeight - int(results.matchImgHeight));
+        roiRangesChanged(results.baseWidth, results.baseHeight,
+                         results.matchImgWidth, results.matchImgHeight);
     }
 
     QString matchLabel = results.isMatched

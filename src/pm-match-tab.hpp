@@ -62,6 +62,7 @@ protected:
         const PmMatchConfig &config, const PmMatchResults &results);
 
     void maskModeChanged(PmMaskMode mode, QColor color);
+    void roiRangesChanged(int baseWidth, int baseHeight, int imgWidth, int imgHeight);
     void configToUi(const PmMatchConfig &config);
 
 protected:
