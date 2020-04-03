@@ -653,6 +653,7 @@ void PmMatchTab::onPresetSelected()
     PmMatchConfig presetConfig = m_core->matchPresetByName(selPreset);
     emit sigSelectActiveMatchPreset(selPreset);
     configToUi(presetConfig);
+    updateFilterDisplaySize(presetConfig, m_prevResults);
 }
 
 void PmMatchTab::onPresetSave()
@@ -692,6 +693,7 @@ void PmMatchTab::onConfigReset()
 {
     PmMatchConfig config; // defaults
     configToUi(config);
+    updateFilterDisplaySize(config, m_prevResults);
     emit sigNewUiConfig(config);
     emit sigSelectActiveMatchPreset("");
 }
