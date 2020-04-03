@@ -19,6 +19,7 @@
 #include <QButtonGroup>
 #include <QStackedWidget>
 #include <QInputDialog>
+#include <QMessageBox>
 #include <QThread> // sleep
 
 #include <obs-module.h>
@@ -658,12 +659,24 @@ void PmMatchTab::onPresetSave()
 void PmMatchTab::onPresetSaveAs()
 {
     bool ok;
-    QString presetName = QInputDialog::getText(
+    QString presetNameQstr = QInputDialog::getText(
         this, obs_module_text("Save Preset"), obs_module_text("Enter Name: "),
         QLineEdit::Normal, QString(), &ok);
-    if (ok && !presetName.isEmpty()) {
-        emit sigSaveMatchPreset(presetName.toUtf8().data());
+
+    std::string presetName = presetNameQstr.toUtf8().data();
+
+    if (!ok || presetName.empty()) return;
+
+    if (m_core->activeMatchPresetName() != presetName
+     && m_core->matchPresetExists(presetName)) {
+        int ret = QMessageBox::warning(this, "Preset Exists",
+            QString("Overwrite preset \"%1\"?").arg(presetNameQstr),
+            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+
+        if (ret != QMessageBox::Yes) return;
     }
+
+    emit sigSaveMatchPreset(presetName);
 }
 
 void PmMatchTab::onConfigReset()

@@ -81,12 +81,13 @@ protected:
     QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
     QLabel *m_matchResultDisplay;
+
     QButtonGroup *m_previewModeButtons;
     QStackedWidget *m_previewScaleStack;
     QComboBox *m_videoScaleCombo;
     QComboBox *m_regionScaleCombo;
     QComboBox *m_matchImgScaleCombo;
-    QLabel *m_notifyLabel;
+    QLabel *m_notifyLabel; // TODO: use or remove
 
     QPointer<PmCore> m_core;
     PmMatchResults m_prevResults;

@@ -119,6 +119,12 @@ std::string PmCore::activeMatchPresetName() const
     return m_activeMatchPreset;
 }
 
+bool PmCore::matchPresetExists(const std::string &name) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets.find(name) != m_matchPresets.end();
+}
+
 PmMatchConfig PmCore::matchPresetByName(const std::string &name) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -157,7 +163,7 @@ bool PmCore::matchConfigDirty() const
 void PmCore::onSaveMatchPreset(std::string name)
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    bool isNew = (m_matchPresets.find(name) == m_matchPresets.end());
+    bool isNew = !matchPresetExists(name);
     m_matchPresets[name] = m_matchConfig;
     if (isNew) {
         emit sigMatchPresetsChanged();
