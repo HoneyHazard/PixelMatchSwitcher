@@ -632,7 +632,8 @@ void PmCore::pmLoad(obs_data_t *data)
         if (activePresetName.size()) {
             onSelectActiveMatchPreset(activePresetName);
         } else {
-            m_matchConfig = PmMatchConfig(activeCfgObj);
+            PmMatchConfig activeCfg(activeCfgObj);
+            onNewMatchConfig(activeCfg);
         }
         obs_data_release(activeCfgObj);
     }
