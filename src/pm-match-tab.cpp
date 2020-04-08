@@ -291,12 +291,12 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
             m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
 
     // finish init
+    onNewMatchResults(m_core->results());
     configToUi(m_core->matchConfig());
     onColorComboIndexChanged();
     onPresetsChanged();
     onPresetStateChanged();
     onConfigUiChanged();
-    onNewMatchResults(m_core->results());
 }
 
 PmMatchTab::~PmMatchTab()
