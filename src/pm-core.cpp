@@ -563,7 +563,7 @@ void PmCore::pmSave(obs_data_t *saveData)
 {
     obs_data_t *saveObj = obs_data_create();
 
-    // match configuration(s)
+    // match configuration and presets
     {
         QMutexLocker locker(&m_matchConfigMutex);
 
@@ -604,5 +604,46 @@ void PmCore::pmSave(obs_data_t *saveData)
 
 void PmCore::pmLoad(obs_data_t *data)
 {
+    obs_data_t *loadObj = obs_data_get_obj(data, "pixel-match-switcher");
 
+    // match configuration and presets
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+
+        // match presets
+        m_matchPresets.clear();
+        obs_data_array_t *matchPresetArray
+            = obs_data_get_array(loadObj, "match_presets");
+        size_t count = obs_data_array_count(matchPresetArray);
+        for (size_t i = 0; i < count; ++i) {
+            obs_data_t *matchPresetObj
+                = obs_data_array_item(matchPresetArray, i);
+            std::string presetName
+                = obs_data_get_string(matchPresetObj, "name");
+            m_matchPresets[presetName] = PmMatchConfig(matchPresetObj);
+            obs_data_release(matchPresetObj);
+        }
+        obs_data_array_release(matchPresetArray);
+
+        // active match config/preset
+        obs_data_t *activeCfgObj = obs_data_get_obj(loadObj, "match_config");
+        std::string activePresetName
+            = obs_data_get_string(activeCfgObj, "name");
+        if (activePresetName.size()) {
+            onSelectActiveMatchPreset(activePresetName);
+        } else {
+            m_matchConfig = PmMatchConfig(activeCfgObj);
+        }
+        obs_data_release(activeCfgObj);
+    }
+
+    // switch configuration
+    {
+        QMutexLocker locker(&m_switchConfigMutex);
+        obs_data_t *switchCfgObj = obs_data_get_obj(loadObj, "switch_config");
+        m_switchConfig = PmSwitchConfig(switchCfgObj);
+        obs_data_release(switchCfgObj);
+    }
+
+    obs_data_release(loadObj);
 }
