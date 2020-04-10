@@ -339,27 +339,26 @@ void PmMatchTab::drawEffect()
     int vpLeft, vpBottom, vpWidth, vpHeight;
 
     if (config.previewMode == PmPreviewMode::Video) {
-        QSize videoSz = m_core->videoBaseSize();
-        QSize previewSz = videoSz * double(config.previewVideoScale);
+        int cx = int(m_prevResults.baseWidth);
+        int cy = int(m_prevResults.baseHeight);
+        int scaledCx = int(cx * config.previewVideoScale);
+        int scaledCy = int(cy * config.previewVideoScale);
 
         orthoLeft = 0.f;
         orthoBottom = 0.f;
-        orthoRight = videoSz.width();
-        orthoTop = videoSz.height();
+        orthoRight = cx;
+        orthoTop = cy;
 
         float scale;
-        GetScaleAndCenterPos(
-                    videoSz.width(), videoSz.height(),
-                    previewSz.width(), previewSz.height(),
-                    vpLeft, vpBottom, scale);
-        vpWidth = previewSz.width();
-        vpHeight = previewSz.height();
+        GetScaleAndCenterPos(cx, cy, scaledCx, scaledCy, vpLeft, vpBottom, scale);
+        vpWidth = scaledCx;
+        vpHeight = scaledCy;
     } else if (config.previewMode == PmPreviewMode::Region) {
         const auto &results = m_prevResults;
         orthoLeft = config.roiLeft;
         orthoBottom = config.roiBottom;
-        orthoRight = config.roiLeft + results.matchImgWidth;
-        orthoTop = config.roiBottom + results.matchImgHeight;
+        orthoRight = config.roiLeft + int(results.matchImgWidth);
+        orthoTop = config.roiBottom + int(results.matchImgHeight);
 
         float scale = config.previewRegionScale;
         //float scale = config.previewVideoScale;

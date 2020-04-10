@@ -217,13 +217,6 @@ PmSwitchConfig PmCore::switchConfig() const
     return m_switchConfig;
 }
 
-QSize PmCore::videoBaseSize() const
-{
-    obs_video_info ovi;
-    obs_get_video_info(&ovi);
-    return QSize(int(ovi.base_width), int(ovi.base_height));
-}
-
 std::string PmCore::scenesInfo() const
 {
     using namespace std;
@@ -280,8 +273,6 @@ void PmCore::scanScenes()
     vector<PmFilterRef> filters;
     filters.push_back(PmFilterRef());
 
-    // TODO: interfacing with OBS enumeration is kind of hacky, though not
-    //       without a reason. for sure, this can be cleaned up.
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &fi = filters.back();
         auto &scene = scenesInput.sources.array[i];
@@ -387,13 +378,12 @@ void PmCore::onPeriodicUpdate()
 void PmCore::onFrameProcessed()
 {
     PmMatchResults newResults;
-    QSize baseSz = videoBaseSize();
-    newResults.baseWidth = baseSz.width();
-    newResults.baseHeight = baseSz.height();
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
+        newResults.baseWidth = filterData->base_width;
+        newResults.baseHeight = filterData->base_height;
         newResults.matchImgWidth = filterData->match_img_width;
         newResults.matchImgHeight = filterData->match_img_height;
         newResults.numCompared = filterData->num_compared;

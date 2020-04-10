@@ -28,8 +28,8 @@ enum class PmPreviewMode : int {
 
 struct PmMatchResults
 {
-    int baseWidth = 0, baseHeight = 0;
-    int matchImgWidth = 0, matchImgHeight = 0;
+    uint32_t baseWidth = 0, baseHeight = 0;
+    uint32_t matchImgWidth = 0, matchImgHeight = 0;
     uint32_t numCompared = 0;
     uint32_t numMatched = 0;
     float percentageMatched = 0;

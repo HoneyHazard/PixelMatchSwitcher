@@ -52,7 +52,6 @@ public:
     PmMatchResults results() const;
     PmScenes scenes() const;
     PmSwitchConfig switchConfig() const;
-    QSize videoBaseSize() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
 
 signals:
