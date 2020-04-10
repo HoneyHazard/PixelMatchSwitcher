@@ -30,7 +30,26 @@ const char * PmMatchTab::k_unsavedPresetStr
 PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
 , m_core(pixelMatcher)
-{
+{   
+#if 0
+    // checker brush
+    {
+        // TODO: optimize
+        const size_t half=8;
+        const size_t full=half*2;
+        uchar bits[full*full];
+        for (size_t x = 0; x < half; ++x) {
+            for (size_t y = 0; y < half; ++y) {
+                bits[y*full+x] = 0xFF;
+                bits[y*full+half+x] = 0;
+                bits[(y+half)*full+x] = 0;
+                bits[(y+half)*full+half+x] = 0xFF;
+            }
+        }
+        m_checkerPixMap = QPixmap::fromImage(QImage(bits, full, full, QImage::Format_Grayscale8));
+    }
+#endif
+
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
@@ -405,10 +424,17 @@ void PmMatchTab::drawMatchImage()
     }
 }
 
-void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
+void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor customColor)
 {
-    QColor bgColor = color, textColor = Qt::black;
-    const QString ss;
+    if (mode == PmMaskMode::AlphaMode) {
+        m_maskModeDisplay->setVisible(false);
+        return;
+    }  else {
+        m_maskModeDisplay->setVisible(true);
+    }
+
+    QColor color, textColor = Qt::black;
+    QString textLabel;
 
     switch(mode) {
     case PmMaskMode::GreenMode:
@@ -423,22 +449,25 @@ void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor color)
         color = QColor(0, 0, 0);
         textColor = Qt::white;
         break;
+    case PmMaskMode::CustomClrMode:
+        color = customColor;
+        textColor = QColor(255-customColor.red(), 255-customColor.green(), 255-customColor.blue());
+        break;
     default:
         break;
     }
-
-    m_maskModeDisplay->setText(color.name(QColor::HexArgb));
     m_maskModeDisplay->setStyleSheet(
         QString("background-color :%1; color: %2;")
             .arg(color.name(QColor::HexArgb))
-                .arg(textColor.name(QColor::HexArgb)));
+            .arg(textColor.name(QColor::HexArgb)));
+    m_maskModeDisplay->setText(color.name(QColor::HexArgb));
 }
 
 void PmMatchTab::configToUi(const PmMatchConfig &config)
 {
     blockSignals(true);
 
-    roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
+    roiRangesChanged(int(m_prevResults.baseWidth), int(m_prevResults.baseHeight), 0, 0);
 
     m_imgPathEdit->setText(config.matchImgFilename.data());
     m_maskModeCombo->setCurrentIndex(int(config.maskMode));
@@ -467,8 +496,8 @@ void PmMatchTab::onColorComboIndexChanged()
 {
     // send color mode to core? obs data API?
     PmMaskMode mode = PmMaskMode(m_maskModeCombo->currentIndex());
-    maskModeChanged(mode, QColor());
     onConfigUiChanged();
+    maskModeChanged(mode, m_core->matchConfig().customColor);
 }
 
 void PmMatchTab::onBrowseButtonReleased()
@@ -598,6 +627,7 @@ void PmMatchTab::onConfigUiChanged()
         = m_matchImgScaleCombo->currentData().toFloat();
 
     updateFilterDisplaySize(config, m_prevResults);
+    maskModeChanged(config.maskMode, config.customColor);
     emit sigNewUiConfig(config);
 }
 

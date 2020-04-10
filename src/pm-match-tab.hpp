@@ -61,7 +61,7 @@ protected:
     void updateFilterDisplaySize(
         const PmMatchConfig &config, const PmMatchResults &results);
 
-    void maskModeChanged(PmMaskMode mode, QColor color);
+    void maskModeChanged(PmMaskMode mode, QColor customColor);
     void roiRangesChanged(int baseWidth, int baseHeight, int imgWidth, int imgHeight);
     void configToUi(const PmMatchConfig &config);
 
