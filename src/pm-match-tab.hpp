@@ -35,35 +35,49 @@ signals:
     void sigRemoveMatchPreset(std::string name);
 
 private slots:
+    // UI element handlers
     void onBrowseButtonReleased();
-    void onColorComboIndexChanged();
-    void onImgSuccess(std::string filename);
-    void onImgFailed(std::string filename);
-    void onNewMatchResults(PmMatchResults results);
-    void onConfigUiChanged();
-    void onDestroy(QObject *obj);
-
-    void onPresetsChanged();
-    void onPresetStateChanged();
-
+    void onPickColorButtonReleased();
     void onPresetSelected();
     void onPresetSave();
     void onPresetSaveAs();
     void onConfigReset();
     void onPresetRemove();
 
-protected:
-    virtual void closeEvent(QCloseEvent *e) override;
+    // parse UI state into config
+    void onConfigUiChanged();
 
+    // core signal handlers
+    void onImgSuccess(std::string filename);
+    void onImgFailed(std::string filename);
+    void onPresetsChanged();
+    void onPresetStateChanged();
+    void onNewMatchResults(PmMatchResults results);
+
+    // shutdown safety
+    void onDestroy(QObject *obj); // todo: maybe not needed or useful
+
+protected:
+    // parse config into UI state (without triggering handlers)
+    void configToUi(const PmMatchConfig &config);
+
+    // preview related
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
     void drawEffect();
     void drawMatchImage();
     void updateFilterDisplaySize(
         const PmMatchConfig &config, const PmMatchResults &results);
 
-    void maskModeChanged(PmMaskMode mode, QColor customColor);
-    void roiRangesChanged(int baseWidth, int baseHeight, int imgWidth, int imgHeight);
-    void configToUi(const PmMatchConfig &config);
+    // UI assist
+    static QColor toQColor(uint32_t val);
+    uint32_t toUInt32(QColor val);
+    void maskModeChanged(PmMaskMode mode, uint32_t customColor);
+    void roiRangesChanged(
+        uint32_t baseWidth, uint32_t baseHeight,
+        uint32_t imgWidth, uint32_t imgHeight);
+
+    // todo: maybe not needed or useful
+    virtual void closeEvent(QCloseEvent *e) override;
 
 protected:
     static const char *k_unsavedPresetStr;
@@ -77,7 +91,9 @@ protected:
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;
     QComboBox *m_maskModeCombo;
+    QPushButton *m_pickColorButton;
     QLabel *m_maskModeDisplay;
+    uint32_t m_customColor;
     QSpinBox *m_posXBox, *m_posYBox;
     QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;

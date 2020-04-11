@@ -47,7 +47,7 @@ struct PmMatchConfig
     float perPixelErrThresh = 25.f;
     float totalMatchThresh = 90.f;
     PmMaskMode maskMode = PmMaskMode::GreenMode;
-    uint32_t customColor = 0xff00ff00;
+    uint32_t customColor = 0xffff0000;
     PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;
     float previewRegionScale = 1.f;

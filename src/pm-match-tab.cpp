@@ -20,6 +20,7 @@
 #include <QStackedWidget>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QColorDialog>
 #include <QThread> // sleep
 
 #include <obs-module.h>
@@ -125,12 +126,17 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_maskModeCombo->insertItem(
         int(PmMaskMode::CustomClrMode), obs_module_text("Custom"));
     connect(m_maskModeCombo, SIGNAL(currentIndexChanged(int)),
-        this, SLOT(onColorComboIndexChanged()));
+        this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     colorSubLayout->addWidget(m_maskModeCombo);
 
     m_maskModeDisplay = new QLabel(this);
     m_maskModeDisplay->setFrameStyle(QFrame::Sunken | QFrame::Panel);
     colorSubLayout->addWidget(m_maskModeDisplay);
+
+    m_pickColorButton = new QPushButton(obs_module_text("Pick"), this);
+    connect(m_pickColorButton, &QPushButton::released,
+            this, &PmMatchTab::onPickColorButtonReleased, Qt::QueuedConnection);
+    colorSubLayout->addWidget(m_pickColorButton);
 
     mainLayout->addRow(obs_module_text("Mask Mode: "), colorSubLayout);
 
@@ -312,7 +318,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     // finish init
     onNewMatchResults(m_core->results());
     configToUi(m_core->matchConfig());
-    onColorComboIndexChanged();
     onPresetsChanged();
     onPresetStateChanged();
     onConfigUiChanged();
@@ -424,8 +429,10 @@ void PmMatchTab::drawMatchImage()
     }
 }
 
-void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor customColor)
+void PmMatchTab::maskModeChanged(PmMaskMode mode, uint32_t customColor)
 {
+    m_pickColorButton->setVisible(mode == PmMaskMode::CustomClrMode);
+
     if (mode == PmMaskMode::AlphaMode) {
         m_maskModeDisplay->setVisible(false);
         return;
@@ -450,8 +457,10 @@ void PmMatchTab::maskModeChanged(PmMaskMode mode, QColor customColor)
         textColor = Qt::white;
         break;
     case PmMaskMode::CustomClrMode:
-        color = customColor;
-        textColor = QColor(255-customColor.red(), 255-customColor.green(), 255-customColor.blue());
+        color = toQColor(customColor);
+        textColor = toQColor(customColor);
+        textColor = QColor(
+            255-textColor.red(), 255-textColor.green(), 255-textColor.blue());
         break;
     default:
         break;
@@ -467,10 +476,9 @@ void PmMatchTab::configToUi(const PmMatchConfig &config)
 {
     blockSignals(true);
 
-    roiRangesChanged(int(m_prevResults.baseWidth), int(m_prevResults.baseHeight), 0, 0);
-
     m_imgPathEdit->setText(config.matchImgFilename.data());
     m_maskModeCombo->setCurrentIndex(int(config.maskMode));
+    m_customColor = config.customColor;
     m_posXBox->setValue(config.roiLeft);
     m_posYBox->setValue(config.roiBottom);
     m_perPixelErrorBox->setValue(double(config.perPixelErrThresh));
@@ -482,6 +490,10 @@ void PmMatchTab::configToUi(const PmMatchConfig &config)
         m_regionScaleCombo->findData(config.previewRegionScale));
     m_matchImgScaleCombo->setCurrentIndex(
         m_matchImgScaleCombo->findData(config.previewMatchImageScale));
+
+    roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
+    maskModeChanged(config.maskMode, m_customColor);
+
     blockSignals(false);
 }
 
@@ -492,12 +504,14 @@ void PmMatchTab::closeEvent(QCloseEvent *e)
     QWidget::closeEvent(e);
 }
 
-void PmMatchTab::onColorComboIndexChanged()
+void PmMatchTab::onPickColorButtonReleased()
 {
-    // send color mode to core? obs data API?
-    PmMaskMode mode = PmMaskMode(m_maskModeCombo->currentIndex());
-    onConfigUiChanged();
-    maskModeChanged(mode, m_core->matchConfig().customColor);
+    QColor startColor = toQColor(m_customColor);
+    uint32_t newColor = toUInt32(QColorDialog::getColor(startColor, this));
+    if (m_customColor != newColor) {
+        m_customColor = newColor;
+        onConfigUiChanged();
+    }
 }
 
 void PmMatchTab::onBrowseButtonReleased()
@@ -509,8 +523,7 @@ void PmMatchTab::onBrowseButtonReleased()
         = QFileInfo(m_core->matchImgFilename().data()).absoluteDir().path();
 
     QString path = QFileDialog::getOpenFileName(
-        this, obs_module_text("Open an image file"), curPath,
-        filter);
+        this, obs_module_text("Open an image file"), curPath, filter);
     if (!path.isEmpty()) {
         PmMatchConfig config = m_core->matchConfig();
         config.matchImgFilename = path.toUtf8().data();
@@ -567,11 +580,35 @@ void PmMatchTab::updateFilterDisplaySize(
     }
 }
 
-void PmMatchTab::roiRangesChanged(
-    int baseWidth, int baseHeight, int imgWidth, int imgHeight)
+QColor PmMatchTab::toQColor(uint32_t val)
 {
-    m_posXBox->setMaximum(baseWidth - imgWidth);
-    m_posYBox->setMaximum(baseHeight - imgHeight);
+    uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&val);
+    if (__BYTE_ORDER == __LITTLE_ENDIAN) {
+        return QColor(int(colorBytes[2]), int(colorBytes[1]),
+                      int(colorBytes[0]), int(colorBytes[3]));
+    } else {
+        return QColor(int(colorBytes[1]), int(colorBytes[2]),
+                      int(colorBytes[3]), int(colorBytes[0]));
+    }
+}
+
+uint32_t PmMatchTab::toUInt32(QColor val)
+{
+    if (__BYTE_ORDER == __LITTLE_ENDIAN) {
+        return uint32_t(val.alpha() << 24) | uint32_t(val.red() << 16)
+             | uint32_t(val.green() << 8)  | uint32_t(val.blue());
+    } else {
+        return uint32_t(val.blue() << 24) | uint32_t(val.green() << 16)
+             | uint32_t(val.red() << 8)   | uint32_t(val.alpha());
+    }
+}
+
+void PmMatchTab::roiRangesChanged(
+    uint32_t baseWidth, uint32_t baseHeight,
+    uint32_t imgWidth, uint32_t imgHeight)
+{
+    m_posXBox->setMaximum(int(baseWidth - imgWidth));
+    m_posYBox->setMaximum(int(baseHeight - imgHeight));
 }
 
 void PmMatchTab::onNewMatchResults(PmMatchResults results)
@@ -609,7 +646,7 @@ void PmMatchTab::onConfigUiChanged()
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
-    config.customColor = 0xffffffff;
+    config.customColor = m_customColor;
 
     int previewModeIdx = m_previewModeButtons->checkedId();
     m_previewScaleStack->setCurrentIndex(previewModeIdx);
@@ -637,7 +674,7 @@ void PmMatchTab::onDestroy(QObject *obj)
         QThread::sleep(1);
     }
     obs_display_remove_draw_callback(
-                m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
+        m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
     UNUSED_PARAMETER(obj);
 }
 

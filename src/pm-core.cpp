@@ -481,7 +481,8 @@ void PmCore::supplyConfigToFilter()
         break;
     case PmMaskMode::CustomClrMode:
         {
-            uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&m_matchConfig.customColor);
+            uint8_t *colorBytes = reinterpret_cast<uint8_t*>(
+                &m_matchConfig.customColor);
             if (__BYTE_ORDER == __LITTLE_ENDIAN) {
                 vec3_set(&maskColor,
                          float(colorBytes[2])/255.f,
