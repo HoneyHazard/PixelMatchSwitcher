@@ -216,7 +216,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
             gs_texture_destroy(filter->match_img_tex);
         filter->match_img_tex = gs_texture_create(
             filter->match_img_width, filter->match_img_height,
-            GS_RGBA, (uint8_t)-1,
+            GS_BGRA, (uint8_t)-1,
             (const uint8_t **)(&filter->match_img_data), 0);
         bfree(filter->match_img_data);
         filter->match_img_data = NULL;
