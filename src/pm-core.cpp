@@ -66,11 +66,6 @@ PmCore::PmCore()
     // parent this to the app
     //setParent(qApp);
 
-    // move to own thread
-    QThread *pmThread = new QThread(qApp);
-    pmThread->setObjectName("pixel match core thread");
-    moveToThread(pmThread);
-
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
         obs_frontend_add_tools_menu_qaction(
@@ -95,8 +90,13 @@ PmCore::PmCore()
     obs_leave_graphics();
 
     // fire up the engines
-    pmThread->start();
     periodicUpdateTimer->start(100);
+
+    // move to own thread
+    QThread *pmThread = new QThread(qApp);
+    pmThread->setObjectName("pixel match core thread");
+    moveToThread(pmThread);
+    pmThread->start();
 }
 
 PmCore::~PmCore()
