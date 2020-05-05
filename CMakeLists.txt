@@ -2,13 +2,33 @@ cmake_minimum_required(VERSION 3.5)
 
 project(pixel-match-switcher)
 
-set(CMAKE_PREFIX_PATH "${QTDIR}")
-#set(CMAKE_INCLUDE_CURRENT_DIR ON) ## do we need this?
-#list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external")
+if(WIN32)
+	if (QTDIR OR DEFINED ENV{QTDIR} OR DEFINED ENV{QTDIR32} OR DEFINED ENV{QTDIR64})
+		# Qt path set by user or env var
+	else()
+		set(QTDIR "" CACHE PATH "Path to Qt (e.g. C:\Qt\5.10.1\msvc2017_64)")
+		message(WARNING "QTDIR variable is missing.  Please set this variable to specify path to Qt (e.g. C:/Qt/5.7/msvc2015_64)")
+	endif()
+	if (DepsPath OR DEFINED ENV{DepsPath} OR DEFINED ENV{DepsPath32} OR DEFINED ENV{DepsPath64})
+		# Dependencies path set by user or env var
+	else()
+		set(DepsPath "" CACHE PATH "Path to compiled dependencies (e.g. D:/dependencies/win64)")
+		message(WARNING "DepsPath variable is missing.  Please set this variable to specify path to compiled dependencies (e.g. D:/dependencies/win64)")
+	endif()
+else()
+	set(CMAKE_PREFIX_PATH "${QTDIR}")
+endif()
+
 set(CMAKE_AUTOMOC ON)
 
 include(external/FindLibObs.cmake)
 include(external/ObsPluginHelpers.cmake)
+
+if(MSVC)
+	set(libobs_PLATFORM_DEPS
+	${libobs_PLATFORM_DEPS}
+	w32-pthreads)
+endif()
 
 find_package(LibObs REQUIRED)
 find_package(Qt5Core REQUIRED)
@@ -61,11 +81,17 @@ include_directories(
         ${Qt5Widgets_INCLUDES}
 )
 
+if(MSVC)
+include_directories(
+        "${W32_PTHREADS_INCLUDE_DIR}"
+)
+endif()
+
 if(UNIX)
 include_directories(       
         "${Qt5X11Extras_DIR}"
-        ${Qt5X11Extras_INCLUDE_DIRS}
-)# TODO conditional
+        "${Qt5X11Extras_INCLUDE_DIRS}"
+)# TODO conditional?
 endif()
 
 
@@ -75,6 +101,11 @@ target_link_libraries(pixel-match-switcher
 #        ${LIBOBS_GLAD_LIB}
         Qt5::Core
         Qt5::Widgets)
+
+if(MSVC)
+target_link_libraries(pixel-match-switcher 
+        "${W32_PTHREADS_LIB}")
+endif()
 
       
 #file(GLOB ASS_TRANSLATION_FILES
