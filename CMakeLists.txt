@@ -24,18 +24,9 @@ set(CMAKE_AUTOMOC ON)
 include(external/FindLibObs.cmake)
 include(external/ObsPluginHelpers.cmake)
 
-if(MSVC)
-	set(libobs_PLATFORM_DEPS
-	${libobs_PLATFORM_DEPS}
-	w32-pthreads)
-endif()
-
 find_package(LibObs REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
-if(UNIX)
-  find_package(Qt5X11Extras REQUIRED)
-endif()
 
 find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
@@ -81,30 +72,24 @@ include_directories(
         ${Qt5Widgets_INCLUDES}
 )
 
-if(MSVC)
-include_directories(
-        "${W32_PTHREADS_INCLUDE_DIR}"
-)
-endif()
-
-if(UNIX)
-include_directories(       
-        "${Qt5X11Extras_DIR}"
-        "${Qt5X11Extras_INCLUDE_DIRS}"
-)# TODO conditional?
-endif()
-
-
 target_link_libraries(pixel-match-switcher
         ${LIBOBS_LIB}
         ${LIBOBS_FRONTEND_API_LIB}
-#        ${LIBOBS_GLAD_LIB}
         Qt5::Core
         Qt5::Widgets)
 
 if(MSVC)
-target_link_libraries(pixel-match-switcher 
-        "${W32_PTHREADS_LIB}")
+set(libobs_PLATFORM_DEPS ${libobs_PLATFORM_DEPS} w32-pthreads)
+include_directories("${W32_PTHREADS_INCLUDE_DIR}")
+target_link_libraries(pixel-match-switcher "${W32_PTHREADS_LIB}")
+endif()
+
+if(UNIX)
+find_package(Qt5X11Extras REQUIRED)
+include_directories(       
+        "${Qt5X11Extras_DIR}"
+        "${Qt5X11Extras_INCLUDE_DIRS}"
+)# TODO conditional?
 endif()
 
       
@@ -114,15 +99,15 @@ endif()
 file(GLOB EFFECT_FILES
    data/*.effect)
 
-if(UNIX)
-       set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-old-style-cast")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-old-style-cast")
-endif()
-
 install(TARGETS pixel-match-switcher
 	LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
 install(FILES ${EFFECT_FILES}
 	DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher")
+
+if(UNIX)
+       set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-old-style-cast")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-old-style-cast")
+endif()
 
 #install_external_plugin_with_data(pixel-match-switcher "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/")
 
