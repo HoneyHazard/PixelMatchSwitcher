@@ -673,8 +673,6 @@ void PmMatchTab::onDestroy(QObject *obj)
     while(m_rendering) {
         QThread::sleep(1);
     }
-    obs_display_remove_draw_callback(
-        m_filterDisplay->GetDisplay(), PmMatchTab::drawPreview, this);
     UNUSED_PARAMETER(obj);
 }
 
