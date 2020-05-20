@@ -46,9 +46,6 @@ VertInOut VSDefault(VertInOut vert_in)
 float4 PSMatch(VertInOut vert_in) : TARGET
 {
     float2 uv = vert_in.uv;
-    //if (visualize) {
-    //    uv += float2(px_width, px_height)/2;
-    //}
     float u = uv.x, v = uv.y;
 
     float4 val = image.Sample(def_sampler, uv);
@@ -66,14 +63,15 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     if (mask_alpha) {
         cmp_on = (cmp_val.a > 0);
     } else {
-        cmp_on = (cmp_val.xyz != mask_color);
+        cmp_on = cmp_val.x != mask_color.x 
+              || cmp_val.y != mask_color.y 
+              || cmp_val.z != mask_color.z;
     }
 
     if (cmp_on) {
         atomicCounterIncrement(compare_counter);
     }
 
-    //bool match_on = cmp_on && val.r > 0.05 && val.g > 0.05 && val.b > 0.05;
     bool match_on
         = (cmp_on && match_ratio(val.xyz, cmp_val.xyz) <= per_pixel_err_thresh);
     if (match_on) {
@@ -81,17 +79,25 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     }
 
     if (visualize) {
+        //val.r = (cmp_test % 256) / 256;
+        //val.g = 0;
+        //val.b = 0;
+        //val.w = 1;
+        //return val;
+
         float border_width = px_width * 2.0, border_height = px_height * 2.0;
         if (show_border && vbound
           && (abs(u - roi_left) < border_width
            || abs(u - roi_right) < border_width)) {
             // show inverted border for the ROI region
-            val = float4(float3(1) - val.xyz, 1.0);
+            val.xyz = float3(1, 1, 1) - val.xyz;
+            val.w = 1;
         } else if (show_border && hbound
                  && (abs(v - roi_bottom) < border_height
                   || abs(v - roi_top) < border_height)) {
             // show inverted border for the ROI region
-            val = float4(float3(1) - val.xyz, 1.0);
+            val.xyz = float3(1, 1, 1) - val.xyz;
+            val.w = 1;
         } else if (cmp_on) {
             // show green or red hues, depending on a match/no match
             float intensity = 0.3 + (val.r + val.g + val.b) / 3.0 * 0.7;
