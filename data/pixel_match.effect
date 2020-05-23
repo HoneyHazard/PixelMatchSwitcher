@@ -79,11 +79,13 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     }
 
     if (visualize) {
-        //val.r = (cmp_test % 256) / 256;
-        //val.g = 0;
-        //val.b = 0;
-        //val.w = 1;
-        //return val;
+		//uint cmp_test = __uavBuffer.Consume();
+		uint cmp_test = __uavBuffer.IncrementCounter();
+        val.r = float(cmp_test) / 1000000;
+        val.g = 0;
+        val.b = 0;
+        val.w = 1;
+        return val;
 
         float border_width = px_width * 2.0, border_height = px_height * 2.0;
         if (show_border && vbound
