@@ -275,12 +275,12 @@ void PmCore::scanScenes()
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &fi = filters.back();
-        auto &scene = scenesInput.sources.array[i];
-        auto ws = OBSWeakSource(obs_source_get_weak_source(scene));
+        auto &sceneSrc = scenesInput.sources.array[i];
+        auto ws = OBSWeakSource(obs_source_get_weak_source(sceneSrc));
         scenes.insert(ws);
-        fi.setScene(scene);
+        fi.setScene(sceneSrc);
         obs_scene_enum_items(
-            fi.scene(),
+            obs_scene_from_source(sceneSrc),
             [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
                 auto &filters = *static_cast<vector<PmFilterRef>*>(p);
                 auto &fi = filters.back();
