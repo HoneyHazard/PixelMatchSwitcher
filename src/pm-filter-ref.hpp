@@ -9,12 +9,9 @@ class PmFilterRef
 {
 public:
     PmFilterRef() {}
-    //PmFilterRef(const PmFilterRef &other);
-    //~PmFilterRef() { reset(); }
 
     obs_scene* scene() const;
     obs_source_t* sceneSrc() const;
-    //obs_scene_item* sceneItem() const;
     obs_source_t* itemSrc() const;
     obs_source_t* filter() const;
     pm_filter_data *filterData() const;
@@ -38,12 +35,4 @@ protected:
     OBSWeakSource m_sceneSrc;
     OBSWeakSource m_itemSrc;
     OBSWeakSource m_filter;
-
-    //obs_scene *m_scene = nullptr;
-    //obs_source_t *m_sceneSrc = nullptr;
-
-    //obs_scene_item *m_sceneItem = nullptr;
-    //obs_source_t *m_itemSrc = nullptr;
-
-    //obs_source_t *m_filter = nullptr;
 };

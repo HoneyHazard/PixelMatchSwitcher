@@ -31,12 +31,7 @@ void PmFilterRef::unlockData() const
         pthread_mutex_unlock(&data->mutex);
 }
 
-//PmFilterRef::PmFilterRef(const PmFilterRef &other)
-//{
-//    m_sceneSrc = other.m_sceneSrc;
-//}
-
-inline obs_scene* PmFilterRef::scene() const 
+obs_scene* PmFilterRef::scene() const 
 { 
     return obs_scene_from_source(sceneSrc());
 }
