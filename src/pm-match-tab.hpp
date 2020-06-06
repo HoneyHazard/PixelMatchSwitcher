@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QPointer>
+#include <QMutex>
 
 #include "pm-structs.hpp"
 
@@ -48,7 +49,7 @@ private slots:
     void onConfigUiChanged();
 
     // core signal handlers
-    void onImgSuccess(std::string filename);
+    void onImgSuccess(std::string filename, QImage img);
     void onImgFailed(std::string filename);
     void onPresetsChanged();
     void onPresetStateChanged();
@@ -109,4 +110,7 @@ protected:
     QPointer<PmCore> m_core;
     PmMatchResults m_prevResults;
     bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
+    QMutex m_matchImgLock;
+    QImage m_matchImg;
+    gs_texture_t* m_matchImgTex = nullptr;
 };

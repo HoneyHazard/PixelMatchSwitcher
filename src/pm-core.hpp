@@ -53,10 +53,11 @@ public:
     PmScenes scenes() const;
     PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
+    const QImage& matchImage() { return m_matchImg; }
 
 signals:
     void sigFrameProcessed();
-    void sigImgSuccess(std::string filename);
+    void sigImgSuccess(std::string filename, QImage img);
     void sigImgFailed(std::string filename);
     void sigNewMatchResults(PmMatchResults);
     void sigScenesChanged(PmScenes);

@@ -31,6 +31,7 @@ const char * PmMatchTab::k_unsavedPresetStr
 PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
 , m_core(pixelMatcher)
+, m_matchImg(pixelMatcher->matchImage())
 {   
 #if 0
     // checker brush
@@ -328,21 +329,23 @@ PmMatchTab::~PmMatchTab()
     while(m_rendering) {
         QThread::sleep(1);
     }
-    //onDestroy(nullptr);
+    if (m_matchImgTex) {
+        gs_texture_destroy(m_matchImgTex);
+    }
 }
 
-void PmMatchTab:: drawPreview(void *data, uint32_t cx, uint32_t cy)
+void PmMatchTab::drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
     auto dialog = static_cast<PmMatchTab*>(data);
     auto core = dialog->m_core;
 
-    if (!core || !core->activeFilterRef().isValid()) return;
+    if (!core) return;
 
     dialog->m_rendering = true;
     auto config = core->matchConfig();
     if (config.previewMode == PmPreviewMode::MatchImage) {
         dialog->drawMatchImage();
-    } else {
+    } else if (core->activeFilterRef().isValid()) {
         dialog->drawEffect();
     }
     dialog->m_rendering = false;
@@ -411,6 +414,21 @@ void PmMatchTab::drawEffect()
 
 void PmMatchTab::drawMatchImage()
 {
+    {
+        QMutexLocker locker(&m_matchImgLock);
+        if (!m_matchImg.isNull()) {
+            if (m_matchImgTex) {
+                gs_texture_destroy(m_matchImgTex);
+            }
+            unsigned char *bits = m_matchImg.bits();
+            m_matchImgTex = gs_texture_create(
+                m_matchImg.width(), m_matchImg.height(),
+                GS_BGRA, (uint8_t)-1,
+                (const uint8_t**)(&bits), 0);
+            m_matchImg = QImage();
+        }
+    }
+
     auto config = m_core->matchConfig();
     auto filterRef = m_core->activeFilterRef();
     auto filterData = filterRef.filterData();
@@ -419,12 +437,12 @@ void PmMatchTab::drawMatchImage()
 
     gs_effect *effect = m_core->drawMatchImageEffect();
     gs_eparam_t *param = gs_effect_get_param_by_name(effect, "image");
-    gs_effect_set_texture(param, filterData->match_img_tex);
+    gs_effect_set_texture(param, m_matchImgTex);
 
     while (gs_effect_loop(effect, "Draw")) {
         gs_matrix_push();
         gs_matrix_scale3f(previewScale, previewScale, previewScale);
-        gs_draw_sprite(filterData->match_img_tex, 0, 0, 0);
+        gs_draw_sprite(m_matchImgTex, 0, 0, 0);
         gs_matrix_pop();
     }
 }
@@ -531,10 +549,13 @@ void PmMatchTab::onBrowseButtonReleased()
     }
 }
 
-void PmMatchTab::onImgSuccess(std::string filename)
+void PmMatchTab::onImgSuccess(std::string filename, QImage img)
 {
     m_imgPathEdit->setText(filename.data());
     m_imgPathEdit->setStyleSheet("");
+
+    QMutexLocker locker(&m_matchImgLock);
+    m_matchImg = img;
 }
 
 void PmMatchTab::onImgFailed(std::string filename)
@@ -542,6 +563,12 @@ void PmMatchTab::onImgFailed(std::string filename)
     m_imgPathEdit->setText(
         filename.size() ? QString("[FAILED] %1").arg(filename.data()) : "");
     m_imgPathEdit->setStyleSheet("color: red");
+
+    QMutexLocker locker(&m_matchImgLock);
+    if (m_matchImgTex) {
+        gs_texture_destroy(m_matchImgTex);
+        m_matchImgTex = nullptr;
+    }
 }
 
 void PmMatchTab::updateFilterDisplaySize(

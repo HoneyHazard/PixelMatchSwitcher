@@ -532,7 +532,7 @@ void PmCore::onNewMatchConfig(PmMatchConfig config)
                 emit sigImgFailed(filename);
                 m_matchImg = QImage();
             } else {
-                emit sigImgSuccess(filename);
+                emit sigImgSuccess(filename, m_matchImg);
             }
         }
         supplyImageToFilter();
