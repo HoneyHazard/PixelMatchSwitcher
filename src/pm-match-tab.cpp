@@ -583,24 +583,24 @@ void PmMatchTab::updateFilterDisplaySize(
 QColor PmMatchTab::toQColor(uint32_t val)
 {
     uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&val);
-    if (__BYTE_ORDER == __LITTLE_ENDIAN) {
-        return QColor(int(colorBytes[2]), int(colorBytes[1]),
-                      int(colorBytes[0]), int(colorBytes[3]));
-    } else {
-        return QColor(int(colorBytes[1]), int(colorBytes[2]),
-                      int(colorBytes[3]), int(colorBytes[0]));
-    }
+#if PM_LITTLE_ENDIAN
+    return QColor(int(colorBytes[2]), int(colorBytes[1]),
+                  int(colorBytes[0]), int(colorBytes[3]));
+#else
+    return QColor(int(colorBytes[1]), int(colorBytes[2]),
+                  int(colorBytes[3]), int(colorBytes[0]));
+#endif
 }
 
 uint32_t PmMatchTab::toUInt32(QColor val)
 {
-    if (__BYTE_ORDER == __LITTLE_ENDIAN) {
-        return uint32_t(val.alpha() << 24) | uint32_t(val.red() << 16)
-             | uint32_t(val.green() << 8)  | uint32_t(val.blue());
-    } else {
-        return uint32_t(val.blue() << 24) | uint32_t(val.green() << 16)
-             | uint32_t(val.red() << 8)   | uint32_t(val.alpha());
-    }
+#if PM_LITTLE_ENDIAN
+    return uint32_t(val.alpha() << 24) | uint32_t(val.red() << 16)
+         | uint32_t(val.green() << 8)  | uint32_t(val.blue());
+#else
+    return uint32_t(val.blue() << 24) | uint32_t(val.green() << 16)
+         | uint32_t(val.red() << 8)   | uint32_t(val.alpha());
+#endif
 }
 
 void PmMatchTab::roiRangesChanged(

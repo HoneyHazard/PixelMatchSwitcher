@@ -483,17 +483,17 @@ void PmCore::supplyConfigToFilter()
         {
             uint8_t *colorBytes = reinterpret_cast<uint8_t*>(
                 &m_matchConfig.customColor);
-            if (__BYTE_ORDER == __LITTLE_ENDIAN) {
-                vec3_set(&maskColor,
-                         float(colorBytes[2])/255.f,
-                         float(colorBytes[1])/255.f,
-                         float(colorBytes[0])/255.f);
-            } else {
-                vec3_set(&maskColor,
-                         float(colorBytes[1])/255.f,
-                         float(colorBytes[2])/255.f,
-                         float(colorBytes[3])/255.f);
-            }
+#if PM_LITTLE_ENDIAN
+            vec3_set(&maskColor,
+                        float(colorBytes[2])/255.f,
+                        float(colorBytes[1])/255.f,
+                        float(colorBytes[0])/255.f);
+#else
+            vec3_set(&maskColor,
+                        float(colorBytes[1])/255.f,
+                        float(colorBytes[2])/255.f,
+                        float(colorBytes[3])/255.f);
+#endif
         }
         break;
     default:

@@ -81,11 +81,7 @@ typedef QSet<OBSWeakSource> PmScenes;
 void pmRegisterMetaTypes();
 
 #ifdef _MSC_VER
-    #if REG_DWORD == REG_DWORD_LITTLE_ENDIAN
-        #define __BYTE_ORDER 1234
-        #define __LITTLE_ENDIAN 1234
-    #elif
-        #define __BYTE_ORDER 4321
-        #define __BIG_ENDIAN 4321
-    #endif
+    #define PM_LITTLE_ENDIAN (REG_DWORD == REG_DWORD_LITTLE_ENDIAN)
+#else
+    #define PM_LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
 #endif
