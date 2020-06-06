@@ -27,11 +27,12 @@
 
 const char * PmMatchTab::k_unsavedPresetStr
     = obs_module_text("<unsaved preset>");
+const char* PmMatchTab::k_failedImgStr
+    = obs_module_text("[FAILED]");
 
 PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
 : QWidget(parent)
 , m_core(pixelMatcher)
-, m_matchImg(pixelMatcher->matchImage())
 {   
 #if 0
     // checker brush
@@ -322,6 +323,18 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     onPresetsChanged();
     onPresetStateChanged();
     onConfigUiChanged();
+
+#if 1
+    std::string matchImgFilename = m_core->matchImgFilename();
+    const QImage& matchImg = m_core->matchImage();
+    if (matchImgFilename.size()) {
+        if (matchImg.isNull()) {
+            onImgFailed(matchImgFilename);
+        } else {
+            onImgSuccess(matchImgFilename, matchImg);
+        }
+    }
+#endif
 }
 
 PmMatchTab::~PmMatchTab()
@@ -560,13 +573,18 @@ void PmMatchTab::onImgSuccess(std::string filename, QImage img)
 
 void PmMatchTab::onImgFailed(std::string filename)
 {
-    m_imgPathEdit->setText(
-        filename.size() ? QString("[FAILED] %1").arg(filename.data()) : "");
+    QString imgStr;
+    if (filename.size()) {
+        imgStr = QString("%1 %2").arg(k_failedImgStr).arg(filename.data());
+    }
+    m_imgPathEdit->setText(imgStr);
     m_imgPathEdit->setStyleSheet("color: red");
 
     QMutexLocker locker(&m_matchImgLock);
     if (m_matchImgTex) {
+        obs_enter_graphics();
         gs_texture_destroy(m_matchImgTex);
+        obs_leave_graphics();
         m_matchImgTex = nullptr;
     }
 }
@@ -667,7 +685,14 @@ void PmMatchTab::onNewMatchResults(PmMatchResults results)
 void PmMatchTab::onConfigUiChanged()
 {
     PmMatchConfig config;
-    config.matchImgFilename = m_imgPathEdit->text().toUtf8().data();
+    
+    std::string filename = m_imgPathEdit->text().toUtf8().data();
+    size_t failedMarker = filename.find(k_failedImgStr);
+    if (failedMarker == 0) {
+        filename.erase(failedMarker, strlen(k_failedImgStr)+1);
+    }
+    
+    config.matchImgFilename = filename;
     config.roiLeft = m_posXBox->value();
     config.roiBottom = m_posYBox->value();
     config.perPixelErrThresh = float(m_perPixelErrorBox->value());

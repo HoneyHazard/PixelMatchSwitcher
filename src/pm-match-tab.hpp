@@ -82,6 +82,7 @@ protected:
 
 protected:
     static const char *k_unsavedPresetStr;
+    static const char* k_failedImgStr;
 
     QComboBox *m_presetCombo;
     QPushButton *m_presetSaveButton;

@@ -211,7 +211,9 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     pthread_mutex_lock(&filter->mutex);
 
-    if (filter->match_img_data) {
+    if (filter->match_img_data
+     && filter->match_img_width 
+     && filter->match_img_height) {
         if (filter->match_img_tex)
             gs_texture_destroy(filter->match_img_tex);
         filter->match_img_tex = gs_texture_create(
