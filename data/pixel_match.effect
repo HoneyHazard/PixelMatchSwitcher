@@ -58,7 +58,6 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     float2 sample_uv = (uv - float2(roi_left, roi_bottom))
         / float2(roi_right - roi_left, roi_top - roi_bottom);
     float4 cmp_val = match_img.Sample(def_sampler, sample_uv);
-    //bool cmp_on = cmp.r > 0.05 || cmp.g > 0.05 || cmp.b > 0.05;
     bool cmp_on;
     if (mask_alpha) {
         cmp_on = (cmp_val.a > 0);
@@ -79,14 +78,6 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     }
 
     if (visualize) {
-		//uint cmp_test = __uavBuffer.Consume();
-		//uint cmp_test = __uavBuffer.IncrementCounter();
-        //val.r = float(cmp_test) / 1000000;
-        //val.g = 0;
-        //val.b = 0;
-        //val.w = 1;
-        //return val;
-
         float border_width = px_width * 2.0, border_height = px_height * 2.0;
         if (show_border && vbound
           && (abs(u - roi_left) < border_width

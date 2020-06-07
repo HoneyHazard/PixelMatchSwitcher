@@ -485,14 +485,14 @@ void PmCore::supplyConfigToFilter()
                 &m_matchConfig.customColor);
 #if PM_LITTLE_ENDIAN
             vec3_set(&maskColor,
-                        float(colorBytes[2])/255.f,
-                        float(colorBytes[1])/255.f,
-                        float(colorBytes[0])/255.f);
+                     float(colorBytes[2])/255.f,
+                     float(colorBytes[1])/255.f,
+                     float(colorBytes[0])/255.f);
 #else
             vec3_set(&maskColor,
-                        float(colorBytes[1])/255.f,
-                        float(colorBytes[2])/255.f,
-                        float(colorBytes[3])/255.f);
+                     float(colorBytes[1])/255.f,
+                     float(colorBytes[2])/255.f,
+                     float(colorBytes[3])/255.f);
 #endif
         }
         break;

@@ -280,7 +280,6 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         filter->num_matched =
             gs_effect_get_atomic_uint_result(filter->result_match_counter);
     }
-    //obs_data_set_int(filter->settings, "num_matched", filter->num_matched);
 
 done:
     pthread_mutex_unlock(&filter->mutex);
