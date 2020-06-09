@@ -6,15 +6,20 @@ uint qHash(const OBSWeakSource &ws)
     return qHash(source);
 }
 
-bool PmMatchConfig::operator!=(const PmMatchConfig &other) const
+bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 {
-    // TODO: hacky! clean up.somehow.
-    if (this->matchImgFilename != other.matchImgFilename) {
-        return true;
-    } else {
-        return !!memcmp(&this->roiLeft, &other.roiLeft,
-                        sizeof(PmMatchConfig)-sizeof(std::string));
-    }
+    return matchImgFilename == other.matchImgFilename
+        && roiLeft == other.roiLeft
+        && roiBottom == other.roiBottom
+        && perPixelErrThresh == other.perPixelErrThresh
+        && totalMatchThresh == other.totalMatchThresh
+        && maskMode == other.maskMode
+        && customColor == other.customColor
+        && previewMode == other.previewMode
+        && previewVideoScale == other.previewVideoScale
+        && previewMatchImageScale == other.previewMatchImageScale
+        && matchScene == other.matchScene
+        && transition == other.transition;
 }
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
@@ -61,6 +66,12 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
         data, "preview_match_image_scale", double(previewMatchImageScale));
     previewMatchImageScale
         = float(obs_data_get_double(data, "preview_match_image_scale"));
+
+    obs_data_set_default_bool(data, "is_enabled", isEnabled);
+    isEnabled = obs_data_get_bool(data, "is_enabled");
+    
+    matchScene = obs_data_get_string(data, "match_scene");
+    transition = obs_data_get_string(data, "transition");
 }
 
 obs_data_t* PmMatchConfig::save(const std::string &presetName) const
@@ -83,9 +94,17 @@ obs_data_t* PmMatchConfig::save(const std::string &presetName) const
         ret, "preview_region_scale", double(previewRegionScale));
     obs_data_set_double(
         ret, "preview_match_image_scale", double(previewMatchImageScale));
+
+    obs_data_set_bool(ret, "is_enabled", isEnabled);
+    obs_data_set_string(ret, "match_scene", matchScene.data());
+        //obs_source_get_name(obs_weak_source_get_source(matchScene)));
+    obs_data_set_string(ret, "transition", transition.data());
+        //obs_source_get_name(obs_weak_source_get_source(transition)));
+
     return ret;
 }
 
+#if 0
 PmSwitchConfig::PmSwitchConfig(obs_data_t *data)
 {
     // TODO
@@ -113,3 +132,4 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmSwitchConfig>("PmSwitchConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
 }
+#endif

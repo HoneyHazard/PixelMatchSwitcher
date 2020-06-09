@@ -36,6 +36,8 @@ struct PmMatchResults
     bool isMatched = false;
 };
 
+typedef std::vector<PmMatchResults> PmMultiMatchResults;
+
 struct PmMatchConfig
 {
     PmMatchConfig() {}
@@ -53,14 +55,26 @@ struct PmMatchConfig
     float previewRegionScale = 1.f;
     float previewMatchImageScale = 1.f;
 
-    bool operator!= (const PmMatchConfig &other) const;
-    bool operator== (const PmMatchConfig &other) const
-        { return operator!=(other); }
+    bool isEnabled = true;
+    //OBSWeakSource matchScene;
+    //OBSWeakSource transition;
+    std::string matchScene;
+    std::string transition;
 
+    bool operator==(const PmMatchConfig&) const;
+    bool operator!=(const PmMatchConfig& other) const
+        { return !(*this == other); }
 };
 
-typedef std::unordered_map<std::string, PmMatchConfig> PmMatchPresets;
+class PmMultiMatchConfig : public std::vector<PmMatchConfig>
+{
+public:
+    OBSWeakSource noMatchScene;
+};
 
+typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;
+
+#if 0
 struct PmSwitchConfig
 {
     PmSwitchConfig() {}
@@ -71,9 +85,8 @@ struct PmSwitchConfig
     OBSWeakSource matchScene;
     OBSWeakSource noMatchScene;
     OBSWeakSource defaultTransition;
-    //QHash<QPair<OBSWeakSource, OBSWeakSource>, OBSWeakSource>
-    //    transitions;
 };
+#endif
 
 uint qHash(const OBSWeakSource &ws);
 typedef QSet<OBSWeakSource> PmScenes;
