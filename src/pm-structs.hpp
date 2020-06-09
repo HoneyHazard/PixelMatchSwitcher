@@ -42,7 +42,7 @@ struct PmMatchConfig
 {
     PmMatchConfig() {}
     PmMatchConfig(obs_data_t* data);
-    obs_data_t* save(const std::string &presetName) const;
+    obs_data_t* save() const;
 
     std::string matchImgFilename;
     int roiLeft = 0, roiBottom = 0;
@@ -68,7 +68,14 @@ struct PmMatchConfig
 
 class PmMultiMatchConfig : public std::vector<PmMatchConfig>
 {
-public:
+    PmMultiMatchConfig() {}
+    PmMultiMatchConfig(obs_data_t* data); // TODO
+    obs_data_t* save(const std::string& presetName); // TODO
+
+    bool operator==(const PmMatchConfig&) const; // TODO
+    bool operator!=(const PmMatchConfig& other) const 
+        { return !(*this == other); }
+
     OBSWeakSource noMatchScene;
 };
 

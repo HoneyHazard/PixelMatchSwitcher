@@ -95,7 +95,8 @@ protected:
     PmFilterRef m_activeFilter;
 
     mutable QMutex m_matchConfigMutex;
-    PmMatchConfig m_matchConfig;
+    PmMultiMatchConfig m_matchConfig;
+    
     std::string m_activeMatchPreset;
     PmMatchPresets m_matchPresets;
 
@@ -105,8 +106,8 @@ protected:
     mutable QMutex m_scenesMutex;
     PmScenes m_scenes;
 
-    mutable QMutex m_switchConfigMutex;
-    PmSwitchConfig m_switchConfig;
+    //mutable QMutex m_switchConfigMutex;
+    //PmSwitchConfig m_switchConfig;
 
     QImage m_matchImg;
     gs_effect *m_drawMatchImageEffect = nullptr;

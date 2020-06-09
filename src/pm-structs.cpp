@@ -74,10 +74,10 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     transition = obs_data_get_string(data, "transition");
 }
 
-obs_data_t* PmMatchConfig::save(const std::string &presetName) const
+obs_data_t* PmMatchConfig::save() const
 {
     obs_data_t *ret = obs_data_create();
-    obs_data_set_string(ret, "name", presetName.data());
+    //obs_data_set_string(ret, "name", presetName.data());
     obs_data_set_string(ret, "match_image_filename", matchImgFilename.data());
     obs_data_set_int(ret, "roi_left", roiLeft);
     obs_data_set_int(ret, "roi_bottom", roiBottom);
@@ -122,14 +122,18 @@ obs_data_t *PmSwitchConfig::save() const
         obs_source_get_name(obs_weak_source_get_source(defaultTransition)));
     return ret;
 }
+#endif
 
 void pmRegisterMetaTypes()
 {
     qRegisterMetaType<std::string>("std::string");
-    qRegisterMetaType<PmMatchResults>("PmMatchResults");
-    qRegisterMetaType<PmMatchResults>("PmMatchPresets");
-    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
-    qRegisterMetaType<PmSwitchConfig>("PmSwitchConfig");
+    qRegisterMetaType<PmMultiMatchResults>("PmMatchResults");
+    qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
+    qRegisterMetaType<PmMultiMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
 }
-#endif
+
+obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
+{
+    //obs_data_set_string(ret, "name", presetName.data());
+}
