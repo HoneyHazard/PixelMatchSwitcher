@@ -121,7 +121,7 @@ PmFilterRef PmCore::activeFilterRef() const
     return m_activeFilter;
 }
 
-PmMatchResults PmCore::results() const
+PmMultiMatchResults PmCore::results() const
 {
     QMutexLocker locker(&m_resultsMutex);
     return m_results;
@@ -139,22 +139,22 @@ bool PmCore::matchPresetExists(const std::string &name) const
     return m_matchPresets.find(name) != m_matchPresets.end();
 }
 
-PmMatchConfig PmCore::matchPresetByName(const std::string &name) const
+PmMultiMatchConfig PmCore::matchPresetByName(const std::string &name) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return m_matchPresets.at(name);
 }
 
-PmMatchConfig PmCore::matchConfig() const
+PmMultiMatchConfig PmCore::matchConfig() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return m_matchConfig;
 }
 
-std::string PmCore::matchImgFilename() const
+std::string PmCore::matchImgFilename(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    return m_matchConfig.matchImgFilename;
+    return m_matchConfig[matchIdx].matchImgFilename;
 }
 
 PmMatchPresets PmCore::matchPresets() const
@@ -169,7 +169,7 @@ bool PmCore::matchConfigDirty() const
     if (m_activeMatchPreset.empty()) {
         return true;
     } else {
-        const PmMatchConfig presetCfg = m_matchPresets.at(m_activeMatchPreset);
+        const PmMultiMatchConfig presetCfg = m_matchPresets[m_activeMatchPreset];
         return presetCfg != m_matchConfig;
     }
 }
@@ -190,7 +190,8 @@ void PmCore::onSelectActiveMatchPreset(std::string name)
 {
     QMutexLocker locker(&m_matchConfigMutex);
     m_activeMatchPreset = name;
-    PmMatchConfig config = name.size() ? m_matchPresets[name] : PmMatchConfig();
+    PmMultiMatchConfig config 
+        = name.size() ? m_matchPresets[name] : PmMultiMatchConfig();
     onNewMatchConfig(config);
     emit sigMatchPresetStateChanged();
 }
@@ -211,11 +212,13 @@ PmScenes PmCore::scenes() const
     return m_scenes;
 }
 
+#if 0
 PmSwitchConfig PmCore::switchConfig() const
 {
     QMutexLocker locker(&m_switchConfigMutex);
     return m_switchConfig;
 }
+#endif
 
 std::string PmCore::scenesInfo() const
 {
@@ -446,10 +449,7 @@ void PmCore::supplyImageToFilter()
 {
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
-        pthread_mutex_lock(&filterData->mutex);
-        if (filterData->match_img_data) {
-            bfree(filterData->match_img_data);
-        }
+
         size_t sz = size_t(m_matchImg.sizeInBytes());
         filterData->match_img_data = bmalloc(sz);
         memcpy(filterData->match_img_data, m_matchImg.bits(), sz);
@@ -466,40 +466,54 @@ void PmCore::supplyConfigToFilter()
     struct vec3 maskColor;
     bool maskAlpha = false;
 
-    switch(m_matchConfig.maskMode) {
-    case PmMaskMode::AlphaMode:
-        maskAlpha = true;
-        break;
-    case PmMaskMode::BlackMode:
-        vec3_set(&maskColor, 0.f, 0.f, 0.f);
-        break;
-    case PmMaskMode::GreenMode:
-        vec3_set(&maskColor, 0.f, 1.f, 0.f);
-        break;
-    case PmMaskMode::MagentaMode:
-        vec3_set(&maskColor, 1.f, 0.f, 1.f);
-        break;
-    case PmMaskMode::CustomClrMode:
-        {
-            uint8_t *colorBytes = reinterpret_cast<uint8_t*>(
-                &m_matchConfig.customColor);
-#if PM_LITTLE_ENDIAN
-            vec3_set(&maskColor,
-                     float(colorBytes[2])/255.f,
-                     float(colorBytes[1])/255.f,
-                     float(colorBytes[0])/255.f);
-#else
-            vec3_set(&maskColor,
-                     float(colorBytes[1])/255.f,
-                     float(colorBytes[2])/255.f,
-                     float(colorBytes[3])/255.f);
+    const auto& cfg = m_matchConfig;
+
+    auto filterData = m_activeFilter.filterData();
+    if (filterData) {
+        pthread_mutex_lock(&filterData->mutex);
+        pm_destroy_match_entries(filterData);
+        filterData->match_entries = (struct pm_match_entry_data*)
+            bmalloc(sizeof(struct pm_match_entry_data) * cfg.size());
+        for (size_t i = 0; i < cfg.size(); ++i) {
+            const auto& cfgEntry = cfg[i];
+            auto entryData = filterData->match_entries + i;
+
+#if 0
+            switch(m_matchConfig.maskMode) {
+            case PmMaskMode::AlphaMode:
+                maskAlpha = true;
+                break;
+            case PmMaskMode::BlackMode:
+                vec3_set(&maskColor, 0.f, 0.f, 0.f);
+                break;
+            case PmMaskMode::GreenMode:
+                vec3_set(&maskColor, 0.f, 1.f, 0.f);
+                break;
+            case PmMaskMode::MagentaMode:
+                vec3_set(&maskColor, 1.f, 0.f, 1.f);
+                break;
+            case PmMaskMode::CustomClrMode:
+                {
+                    uint8_t *colorBytes = reinterpret_cast<uint8_t*>(
+                        &m_matchConfig.customColor);
+        #if PM_LITTLE_ENDIAN
+                    vec3_set(&maskColor,
+                             float(colorBytes[2])/255.f,
+                             float(colorBytes[1])/255.f,
+                             float(colorBytes[0])/255.f);
+        #else
+                    vec3_set(&maskColor,
+                             float(colorBytes[1])/255.f,
+                             float(colorBytes[2])/255.f,
+                             float(colorBytes[3])/255.f);
+        #endif
+                }
+                break;
+            default:
+                blog(LOG_ERROR, "Unknown color mode: %i", m_matchConfig.maskMode);
+                break;
+            }
 #endif
-        }
-        break;
-    default:
-        blog(LOG_ERROR, "Unknown color mode: %i", m_matchConfig.maskMode);
-        break;
-    }
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
@@ -514,7 +528,7 @@ void PmCore::supplyConfigToFilter()
     }
 }
 
-void PmCore::onNewMatchConfig(PmMatchConfig config)
+void PmCore::onNewMatchConfig(PmMultiMatchConfig config)
 {
     QMutexLocker locker(&m_matchConfigMutex);
 

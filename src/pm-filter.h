@@ -7,13 +7,8 @@
 
 #define PIXEL_MATCH_FILTER_DISPLAY_NAME obs_module_text("Pixel Match Filter")
 
-typedef struct pm_match_entry
+typedef struct pm_match_entry_config
 {
-    // match image
-    void* match_img_data;
-    uint32_t match_img_width, match_img_height;
-    gs_texture_t* match_img_tex;
-
     // params
     int roi_left;
     int roi_bottom;
@@ -21,6 +16,16 @@ typedef struct pm_match_entry
     struct vec3 mask_color;
     float per_pixel_err_thresh;
     float total_match_thresh;
+};
+
+typedef struct pm_match_entry_data
+{
+    struct pm_match_entry_config cfg;
+
+    // match image data
+    void* match_img_data;
+    uint32_t match_img_width, match_img_height;
+    gs_texture_t* match_img_tex;
 
     // results
     uint32_t num_compared;
@@ -55,7 +60,7 @@ struct pm_filter_data
 
     // match data
     size_t num_match_entries;
-    struct pm_match_entry* match_entries;
+    struct pm_match_entry_data* match_entries;
 
     // dynamic data
     pthread_mutex_t mutex;
@@ -70,3 +75,5 @@ struct pm_filter_data
     // callbacks for fast reactions
     void (*on_frame_processed)(struct pm_filter_data *sender);
 };
+
+static void pm_destroy_match_entries(struct pm_filter_data* filter);

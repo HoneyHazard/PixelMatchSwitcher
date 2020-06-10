@@ -6,15 +6,31 @@ uint qHash(const OBSWeakSource &ws)
     return qHash(source);
 }
 
+bool operator== (const struct pm_match_entry_config& l, 
+                 const struct pm_match_entry_config& r)
+{
+    return l.roi_left == r.roi_left
+        && l.roi_bottom == r.roi_bottom
+        && l.per_pixel_err_thresh == r.per_pixel_err_thresh
+        && l.total_match_thresh == r.total_match_thresh
+        && l.mask_alpha == r.mask_alpha
+        && l.mask_color.x == r.mask_color.x
+        && l.mask_color.y == r.mask_color.y
+        && l.mask_color.z == r.mask_color.z;
+}
+
 bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 {
     return matchImgFilename == other.matchImgFilename
+#if 0
         && roiLeft == other.roiLeft
         && roiBottom == other.roiBottom
         && perPixelErrThresh == other.perPixelErrThresh
         && totalMatchThresh == other.totalMatchThresh
         && maskMode == other.maskMode
         && customColor == other.customColor
+#endif
+        && filterCfg == other.filterCfg
         && previewMode == other.previewMode
         && previewVideoScale == other.previewVideoScale
         && previewMatchImageScale == other.previewMatchImageScale
@@ -28,26 +44,27 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
         data, "match_image_filename", matchImgFilename.data());
     matchImgFilename = obs_data_get_string(data, "match_image_filename");
 
-    obs_data_set_default_int(data, "roi_left", roiLeft);
-    roiLeft = int(obs_data_get_int(data, "roi_left"));
+    obs_data_set_default_int(data, "roi_left", filterCfg.roi_left);
+    filterCfg.roi_left = int(obs_data_get_int(data, "roi_left"));
 
-    obs_data_set_default_int(data, "roi_bottom", roiBottom);
-    roiBottom = int(obs_data_get_int(data, "roi_bottom"));
+    obs_data_set_default_int(data, "roi_bottom", filterCfg.roi_bottom);
+    filterCfg.roi_bottom = int(obs_data_get_int(data, "roi_bottom"));
 
     obs_data_set_default_double(
-        data, "per_pixel_allowed_error", double(perPixelErrThresh));
-    perPixelErrThresh
+        data, "per_pixel_allowed_error", double(filterCfg.per_pixel_err_thresh));
+    filterCfg.per_pixel_err_thresh
         = float(obs_data_get_double(data, "per_pixel_allowed_error"));
 
     obs_data_set_default_double(
-        data, "total_match_threshold", double(totalMatchThresh));
-    totalMatchThresh =float(obs_data_get_double(data, "total_match_threshold"));
+        data, "total_match_threshold", double(filterCfg.total_match_thresh));
+    filterCfg.total_match_thresh 
+        = float(obs_data_get_double(data, "total_match_threshold"));
 
-    obs_data_set_default_int(data, "mask_mode", int(maskMode));
-    maskMode = PmMaskMode(obs_data_get_int(data, "mask_mode"));
+    obs_data_set_default_bool(data, "mask_alpha", filterCfg.mask_alpha);
+    filterCfg.mask_alpha = obs_data_get_bool(data, "mask_alpha");
 
-    obs_data_set_default_int(data, "custom_color", customColor);
-    customColor = uint32_t(obs_data_get_int(data, "custom_color"));
+    obs_data_set_default_vec3(data, "mask_color", &filterCfg.mask_color);
+    obs_data_get_vec3(data, "mask_color", &filterCfg.mask_color);
 
     obs_data_set_default_int(data, "preview_mode", int(previewMode));
     previewMode = PmPreviewMode(obs_data_get_int(data, "preview_mode"));
@@ -79,14 +96,14 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_t *ret = obs_data_create();
     //obs_data_set_string(ret, "name", presetName.data());
     obs_data_set_string(ret, "match_image_filename", matchImgFilename.data());
-    obs_data_set_int(ret, "roi_left", roiLeft);
-    obs_data_set_int(ret, "roi_bottom", roiBottom);
+    obs_data_set_int(ret, "roi_left", filterCfg.roi_left);
+    obs_data_set_int(ret, "roi_bottom", filterCfg.roi_bottom);
     obs_data_set_double(
-        ret, "per_pixel_allowed_error", double(perPixelErrThresh));
+        ret, "per_pixel_allowed_error", double(filterCfg.per_pixel_err_thresh));
     obs_data_set_double(
-        ret, "total_match_threshold", double(totalMatchThresh));
-    obs_data_set_int(ret, "mask_mode", int(maskMode));
-    obs_data_set_int(ret, "custom_color", customColor);
+        ret, "total_match_threshold", double(filterCfg.total_match_thresh));
+    obs_data_set_bool(ret, "mask_alpha", filterCfg.mask_alpha);
+    obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
     obs_data_set_int(ret, "preview_mode", int(previewMode));
     obs_data_set_double(
         ret, "preview_video_scale", double(previewVideoScale));
@@ -136,4 +153,18 @@ void pmRegisterMetaTypes()
 obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
 {
     //obs_data_set_string(ret, "name", presetName.data());
+}
+
+bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
+{
+    if (size() != other.size()) {
+        return false;
+    } else {
+        for (size_t i = 0; i < size(); ++i) {
+            if (at(i) != other.at(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

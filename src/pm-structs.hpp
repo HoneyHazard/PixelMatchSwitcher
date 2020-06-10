@@ -10,6 +10,8 @@
 #include <obs.h>
 #include <obs.hpp>
 
+#include "pm-filter.h"
+
 // TODO: organize and add comments
 
 enum class PmMaskMode : int {
@@ -45,11 +47,17 @@ struct PmMatchConfig
     obs_data_t* save() const;
 
     std::string matchImgFilename;
+
+    #if 0
     int roiLeft = 0, roiBottom = 0;
     float perPixelErrThresh = 25.f;
     float totalMatchThresh = 90.f;
     PmMaskMode maskMode = PmMaskMode::GreenMode;
     uint32_t customColor = 0xffffff00;
+    #endif
+
+    struct pm_match_entry_config filterCfg;
+
     PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;
     float previewRegionScale = 1.f;
@@ -68,15 +76,17 @@ struct PmMatchConfig
 
 class PmMultiMatchConfig : public std::vector<PmMatchConfig>
 {
+public:
     PmMultiMatchConfig() {}
     PmMultiMatchConfig(obs_data_t* data); // TODO
     obs_data_t* save(const std::string& presetName); // TODO
 
-    bool operator==(const PmMatchConfig&) const; // TODO
-    bool operator!=(const PmMatchConfig& other) const 
+    bool operator==(const PmMultiMatchConfig&) const; // TODO
+    bool operator!=(const PmMultiMatchConfig& other) const
         { return !(*this == other); }
 
-    OBSWeakSource noMatchScene;
+    //OBSWeakSource noMatchScene;
+    std::string noMatchScene;
 };
 
 typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;

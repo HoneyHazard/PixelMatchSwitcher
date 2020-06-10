@@ -42,16 +42,16 @@ public:
 
     std::string activeMatchPresetName() const;
     bool matchPresetExists(const std::string &name) const;
-    PmMatchConfig matchPresetByName(const std::string &name) const;
+    PmMultiMatchConfig matchPresetByName(const std::string &name) const;
     PmMatchPresets matchPresets() const;
     bool matchConfigDirty() const;
 
-    PmMatchConfig matchConfig() const;
-    std::string matchImgFilename() const;
+    PmMultiMatchConfig matchConfig() const;
+    std::string matchImgFilename(size_t matchIdx) const;
 
-    PmMatchResults results() const;
+    PmMultiMatchResults results() const;
     PmScenes scenes() const;
-    PmSwitchConfig switchConfig() const;
+    //PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
     const QImage& matchImage() { return m_matchImg; }
 
@@ -65,7 +65,7 @@ signals:
     void sigMatchPresetStateChanged();
 
 public slots:
-    void onNewSwitchConfig(PmSwitchConfig);
+    //void onNewSwitchConfig(PmSwitchConfig);
     void onNewMatchConfig(PmMatchConfig);
 
     void onSelectActiveMatchPreset(std::string name);
@@ -101,7 +101,7 @@ protected:
     PmMatchPresets m_matchPresets;
 
     mutable QMutex m_resultsMutex;
-    PmMatchResults m_results;
+    PmMultiMatchResults m_results;
 
     mutable QMutex m_scenesMutex;
     PmScenes m_scenes;

@@ -13,25 +13,12 @@ static void pixel_match_filter_destroy(void *data)
     struct pm_filter_data *filter = data;
 
     pthread_mutex_lock(&filter->mutex);
+    pm_destroy_match_entries(filter);
     obs_enter_graphics();
-    for (size_t i = 0; i < filter->num_match_entries; ++i) {
-        struct pm_match_entry* entry = filter->match_entries + i;
-        if (entry->match_img_tex)
-            gs_texture_destroy(entry->match_img_tex);
-    }
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
-    for (size_t i = 0; i < filter->num_match_entries; ++i) {
-        struct pm_match_entry* entry = filter->match_entries + i;
-        if (entry->match_img_data)
-            bfree(entry->match_img_data);
-    }
-    if (filter->match_entries)
-        bfree(filter->match_entries);
     pthread_mutex_unlock(&filter->mutex);
-
     pthread_mutex_destroy(&filter->mutex);
-
     bfree(filter);
 }
 
@@ -237,7 +224,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     for (size_t i = 0; i < filter->num_match_entries; ++i) {
         // TODO: conditional break??
 
-        struct pm_match_entry* entry = filter->match_entries + i;
+        struct pm_match_entry_data* entry = filter->match_entries + i;
         if (entry->match_img_data 
          && entry->match_img_width
          && entry->match_img_height) {
@@ -258,8 +245,10 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
             goto done;
         }
 
-        float roi_left_u = (float)(entry->roi_left) / (float)(filter->base_width);
-        float roi_bottom_v = (float)(entry->roi_bottom) / (float)(filter->base_height);
+        float roi_left_u 
+            = (float)(entry->cfg.roi_left) / (float)(filter->base_width);
+        float roi_bottom_v 
+            = (float)(entry->cfg.roi_bottom) / (float)(filter->base_height);
         float roi_right_u = roi_left_u
             + (float)(entry->match_img_width) / (float)(filter->base_width);
         float roi_top_v = roi_bottom_v
@@ -272,9 +261,9 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         gs_effect_set_float(filter->param_roi_right, roi_right_u);
         gs_effect_set_float(filter->param_roi_top, roi_top_v);
         gs_effect_set_float(filter->param_per_pixel_err_thresh,
-            entry->per_pixel_err_thresh);
-        gs_effect_set_bool(filter->param_mask_alpha, entry->mask_alpha);
-        gs_effect_set_vec3(filter->param_mask_color, &entry->mask_color);
+            entry->cfg.per_pixel_err_thresh);
+        gs_effect_set_bool(filter->param_mask_alpha, entry->cfg.mask_alpha);
+        gs_effect_set_vec3(filter->param_mask_color, &entry->cfg.mask_color);
         gs_effect_set_texture(filter->param_match_img, entry->match_img_tex);
 
         gs_effect_set_bool(filter->param_visualize,
@@ -337,6 +326,23 @@ struct obs_source_info pixel_match_filter = {
     .get_height = pixel_match_filter_height,
 };
 
+void pm_destroy_match_entries(struct pm_filter_data* filter)
+{
+    obs_enter_graphics();
+    for (size_t i = 0; i < filter->num_match_entries; ++i) {
+        struct pm_match_entry_data* entry = filter->match_entries + i;
+        if (entry->match_img_tex)
+            gs_texture_destroy(entry->match_img_tex);
+        if (entry->match_img_data)
+            bfree(entry->match_img_data);
+    }
+    obs_leave_graphics();
+    if (filter->match_entries);
+        bfree(filter->match_entries);
+    filter->num_match_entries = 0;
+    filter->match_entries = NULL;
+}
+
     #if 0
     // passthrough
     obs_source_skip_video_filter(filter->context);
@@ -387,3 +393,5 @@ struct obs_source_info pixel_match_filter = {
         }
     }
 #endif
+
+
