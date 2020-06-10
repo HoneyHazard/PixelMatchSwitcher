@@ -477,7 +477,10 @@ void PmCore::supplyConfigToFilter()
         for (size_t i = 0; i < cfg.size(); ++i) {
             const auto& cfgEntry = cfg[i];
             auto entryData = filterData->match_entries + i;
-
+            entryData->cfg = cfgEntry.filterCfg;
+        }
+        pthread_mutex_unlock(&filterData->mutex);
+    }
 
 #if 0
             switch(m_matchConfig.maskMode) {
@@ -514,7 +517,7 @@ void PmCore::supplyConfigToFilter()
                 blog(LOG_ERROR, "Unknown color mode: %i", m_matchConfig.maskMode);
                 break;
             }
-#endif
+
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
@@ -527,6 +530,7 @@ void PmCore::supplyConfigToFilter()
         filterData->mask_color = maskColor;
         pthread_mutex_unlock(&filterData->mutex);
     }
+#endif
 }
 
 void PmCore::onNewMatchConfig(PmMultiMatchConfig config)
