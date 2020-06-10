@@ -53,7 +53,7 @@ public:
     PmScenes scenes() const;
     //PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
-    const QImage& matchImage() { return m_matchImg; }
+    const QImage& matchImage(size_t matchIdx) { return m_matchImages[matchIdx]; }
 
 signals:
     void sigFrameProcessed();
@@ -66,7 +66,7 @@ signals:
 
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);
-    void onNewMatchConfig(PmMatchConfig);
+    void onNewMatchConfig(PmMultiMatchConfig);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
@@ -81,7 +81,7 @@ protected:
     static void switchScene(OBSWeakSource& scene, OBSWeakSource& transition);
     void scanScenes();
     void updateActiveFilter();
-    void supplyImageToFilter();
+    void supplyImagesToFilter();
     void supplyConfigToFilter();
 
     void pmSave(obs_data_t *data);
@@ -109,6 +109,6 @@ protected:
     //mutable QMutex m_switchConfigMutex;
     //PmSwitchConfig m_switchConfig;
 
-    QImage m_matchImg;
+    std::vector<QImage> m_matchImages;
     gs_effect *m_drawMatchImageEffect = nullptr;
 };

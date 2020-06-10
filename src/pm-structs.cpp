@@ -19,6 +19,11 @@ bool operator== (const struct pm_match_entry_config& l,
         && l.mask_color.z == r.mask_color.z;
 }
 
+PmMatchConfig::PmMatchConfig()
+{
+    memset(&filterCfg, 0, sizeof(filterCfg));
+}
+
 bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 {
     return matchImgFilename == other.matchImgFilename

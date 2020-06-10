@@ -169,7 +169,8 @@ bool PmCore::matchConfigDirty() const
     if (m_activeMatchPreset.empty()) {
         return true;
     } else {
-        const PmMultiMatchConfig presetCfg = m_matchPresets[m_activeMatchPreset];
+        const PmMultiMatchConfig presetCfg 
+            = m_matchPresets.at(m_activeMatchPreset);
         return presetCfg != m_matchConfig;
     }
 }
@@ -351,9 +352,8 @@ void PmCore::updateActiveFilter()
                 pthread_mutex_lock(&data->mutex);
                 data->on_frame_processed = on_frame_processed;
                 pthread_mutex_unlock(&data->mutex);
-                if (!m_matchImg.isNull())
-                    supplyImageToFilter();
                 supplyConfigToFilter();
+                supplyImagesToFilter();
             }
         }
     }
@@ -445,18 +445,24 @@ void PmCore::switchScene(OBSWeakSource &scene, OBSWeakSource &transition)
     obs_source_release(source);
 }
 
-void PmCore::supplyImageToFilter()
+void PmCore::supplyImagesToFilter()
 {
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
+        pthread_mutex_lock(&filterData->mutex);
+        for (size_t i = 0; i < m_matchImages.size(); ++i) {
+            const QImage& matchImg = m_matchImages[i];
+            if (matchImg.isNull()) continue;
 
-        size_t sz = size_t(m_matchImg.sizeInBytes());
-        filterData->match_img_data = bmalloc(sz);
-        memcpy(filterData->match_img_data, m_matchImg.bits(), sz);
+            auto entryData = filterData->match_entries + i;
 
-        filterData->match_img_width = uint32_t(m_matchImg.width());
-        filterData->match_img_height = uint32_t(m_matchImg.height());
+            size_t sz = size_t(matchImg.sizeInBytes());
+            entryData->match_img_data = bmalloc(sz);
+            memcpy(entryData->match_img_data, matchImg.bits(), sz);
 
+            entryData->match_img_width = uint32_t(matchImg.width());
+            entryData->match_img_height = uint32_t(matchImg.height());
+        }
         pthread_mutex_unlock(&filterData->mutex);
     }
 }
@@ -554,7 +560,7 @@ void PmCore::onNewMatchConfig(PmMultiMatchConfig config)
                 emit sigImgSuccess(filename, m_matchImg);
             }
         }
-        supplyImageToFilter();
+        supplyImagesToFilter();
     }
     if (m_matchConfig != config) {
         m_matchConfig = config;

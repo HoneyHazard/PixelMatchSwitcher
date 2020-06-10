@@ -42,7 +42,7 @@ typedef std::vector<PmMatchResults> PmMultiMatchResults;
 
 struct PmMatchConfig
 {
-    PmMatchConfig() {}
+    PmMatchConfig();
     PmMatchConfig(obs_data_t* data);
     obs_data_t* save() const;
 
