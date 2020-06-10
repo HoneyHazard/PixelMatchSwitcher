@@ -14,12 +14,20 @@ static void pixel_match_filter_destroy(void *data)
 
     pthread_mutex_lock(&filter->mutex);
     obs_enter_graphics();
-    if (filter->match_img_tex)
-        gs_texture_destroy(filter->match_img_tex);
+    for (size_t i = 0; i < filter->num_match_entries; ++i) {
+        struct pm_match_entry* entry = filter->match_entries + i;
+        if (entry->match_img_tex)
+            gs_texture_destroy(entry->match_img_tex);
+    }
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
-    if (filter->match_img_data)
-        bfree(filter->match_img_data);
+    for (size_t i = 0; i < filter->num_match_entries; ++i) {
+        struct pm_match_entry* entry = filter->match_entries + i;
+        if (entry->match_img_data)
+            bfree(entry->match_img_data);
+    }
+    if (filter->match_entries)
+        bfree(filter->match_entries);
     pthread_mutex_unlock(&filter->mutex);
 
     pthread_mutex_destroy(&filter->mutex);
@@ -37,7 +45,6 @@ static void *pixel_match_filter_create(
     filter->context = context;
     filter->settings = settings;
     filter->visualize = true;
-    filter->per_pixel_err_thresh = 0.1f;
 
 #if 0
     // recursive mutex
@@ -115,6 +122,7 @@ error:
     return NULL;
 }
 
+#if 0
 static void pixel_match_filter_update(void *data, obs_data_t *settings)
 {
     struct pm_filter_data *filter = data;
@@ -132,6 +140,7 @@ static void pixel_match_filter_update(void *data, obs_data_t *settings)
 
     UNUSED_PARAMETER(data);
 }
+#endif
 
 #if 0
 static bool pixel_match_prop_changed_callback(
@@ -211,18 +220,6 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     pthread_mutex_lock(&filter->mutex);
 
-    if (filter->match_img_data
-     && filter->match_img_width 
-     && filter->match_img_height) {
-        if (filter->match_img_tex)
-            gs_texture_destroy(filter->match_img_tex);
-        filter->match_img_tex = gs_texture_create(
-            filter->match_img_width, filter->match_img_height,
-            GS_BGRA, (uint8_t)-1,
-            (const uint8_t **)(&filter->match_img_data), 0);
-        bfree(filter->match_img_data);
-        filter->match_img_data = NULL;
-    }
 
     target = obs_filter_get_target(filter->context);
     parent = obs_filter_get_parent(filter->context);
@@ -237,48 +234,66 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
-    if (!obs_source_process_filter_begin(
+    for (size_t i = 0; i < filter->num_match_entries; ++i) {
+        // TODO: conditional break??
+
+        struct pm_match_entry* entry = filter->match_entries + i;
+        if (entry->match_img_data 
+         && entry->match_img_width
+         && entry->match_img_height) {
+            if (entry->match_img_tex)
+                gs_texture_destroy(entry->match_img_tex);
+            entry->match_img_tex = gs_texture_create(
+                entry->match_img_width, entry->match_img_height,
+                GS_BGRA, (uint8_t)-1,
+                (const uint8_t**)(&entry->match_img_data), 0);
+            bfree(entry->match_img_data);
+            entry->match_img_data = NULL;
+        }
+
+        if (!obs_source_process_filter_begin(
             filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
-        blog(LOG_ERROR,
-            "pm_filter_data: obs_source_process_filter_begin failed.");
-        goto done;
-    }
+            blog(LOG_ERROR,
+                "pm_filter_data: obs_source_process_filter_begin failed.");
+            goto done;
+        }
 
-    float roi_left_u = (float)(filter->roi_left) / (float)(filter->base_width);
-    float roi_bottom_v = (float)(filter->roi_bottom) / (float)(filter->base_height);
-    float roi_right_u = roi_left_u
-        + (float)(filter->match_img_width) / (float)(filter->base_width);
-    float roi_top_v = roi_bottom_v
-        + (float)(filter->match_img_height) / (float)(filter->base_height);
+        float roi_left_u = (float)(entry->roi_left) / (float)(filter->base_width);
+        float roi_bottom_v = (float)(entry->roi_bottom) / (float)(filter->base_height);
+        float roi_right_u = roi_left_u
+            + (float)(entry->match_img_width) / (float)(filter->base_width);
+        float roi_top_v = roi_bottom_v
+            + (float)(entry->match_img_height) / (float)(filter->base_height);
 
-    gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
-    gs_effect_set_atomic_uint(filter->param_match_counter, 0);
-    gs_effect_set_float(filter->param_roi_left, roi_left_u);
-    gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
-    gs_effect_set_float(filter->param_roi_right, roi_right_u);
-    gs_effect_set_float(filter->param_roi_top, roi_top_v);
-    gs_effect_set_float(filter->param_per_pixel_err_thresh,
-                        filter->per_pixel_err_thresh);
-    gs_effect_set_bool(filter->param_mask_alpha, filter->mask_alpha);
-    gs_effect_set_vec3(filter->param_mask_color, &filter->mask_color);
-    gs_effect_set_texture(filter->param_match_img, filter->match_img_tex);
+        gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
+        gs_effect_set_atomic_uint(filter->param_match_counter, 0);
+        gs_effect_set_float(filter->param_roi_left, roi_left_u);
+        gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
+        gs_effect_set_float(filter->param_roi_right, roi_right_u);
+        gs_effect_set_float(filter->param_roi_top, roi_top_v);
+        gs_effect_set_float(filter->param_per_pixel_err_thresh,
+            entry->per_pixel_err_thresh);
+        gs_effect_set_bool(filter->param_mask_alpha, entry->mask_alpha);
+        gs_effect_set_vec3(filter->param_mask_color, &entry->mask_color);
+        gs_effect_set_texture(filter->param_match_img, entry->match_img_tex);
 
-    gs_effect_set_bool(filter->param_visualize,
-        filter->visualize && filter->preview_mode);
-    gs_effect_set_bool(filter->param_show_border, filter->show_border);
-    gs_effect_set_float(filter->param_px_width,
-                        1.f / (float)(filter->base_width));
-    gs_effect_set_float(filter->param_px_height,
-                        1.f / (float)(filter->base_height));
+        gs_effect_set_bool(filter->param_visualize,
+            filter->visualize && filter->preview_mode);
+        gs_effect_set_bool(filter->param_show_border, filter->show_border);
+        gs_effect_set_float(filter->param_px_width,
+            1.f / (float)(filter->base_width));
+        gs_effect_set_float(filter->param_px_height,
+            1.f / (float)(filter->base_height));
 
-    obs_source_process_filter_end(filter->context, filter->effect,
-                                  filter->base_width, filter->base_height);
+        obs_source_process_filter_end(filter->context, filter->effect,
+            filter->base_width, filter->base_height);
 
-    if (!filter->preview_mode) {
-        filter->num_compared =
-            gs_effect_get_atomic_uint_result(filter->result_compare_counter);
-        filter->num_matched =
-            gs_effect_get_atomic_uint_result(filter->result_match_counter);
+        if (!filter->preview_mode) {
+            entry->num_compared =
+                gs_effect_get_atomic_uint_result(filter->result_compare_counter);
+            entry->num_matched =
+                gs_effect_get_atomic_uint_result(filter->result_match_counter);
+        }
     }
 
 done:
@@ -313,7 +328,7 @@ struct obs_source_info pixel_match_filter = {
     .get_name = pixel_match_filter_get_name,
     .create = pixel_match_filter_create,
     .destroy = pixel_match_filter_destroy,
-    .update = pixel_match_filter_update,
+    //.update = pixel_match_filter_update,
     .get_properties = pixel_match_filter_properties,
     .get_defaults = pixel_match_filter_defaults,
     //.video_tick = pixel_match_filter_tick,
@@ -333,7 +348,8 @@ struct obs_source_info pixel_match_filter = {
     }
 
     // frame capture
-    if (cx > 0 && cy > 0 && filter->frame_wanted && !filter->frame_available) {        uint32_t parent_flags = obs_source_get_output_flags(target);
+    if (cx > 0 && cy > 0) {        
+        uint32_t parent_flags = obs_source_get_output_flags(target);
         bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
         bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
 
