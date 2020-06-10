@@ -478,6 +478,7 @@ void PmCore::supplyConfigToFilter()
             const auto& cfgEntry = cfg[i];
             auto entryData = filterData->match_entries + i;
 
+
 #if 0
             switch(m_matchConfig.maskMode) {
             case PmMaskMode::AlphaMode:
