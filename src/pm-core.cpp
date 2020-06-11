@@ -445,23 +445,33 @@ void PmCore::switchScene(OBSWeakSource &scene, OBSWeakSource &transition)
     obs_source_release(source);
 }
 
+void PmCore::supplyImageToFilter(size_t matchIdx)
+{
+    const QImage& matchImg = m_matchImages[matchIdx];
+    if (matchImg.isNull()) return;
+
+    auto filterData = m_activeFilter.filterData();
+    if (filterData) {
+        pthread_mutex_lock(&filterData->mutex);
+        auto entryData = filterData->match_entries + matchIdx;
+
+        size_t sz = size_t(matchImg.sizeInBytes());
+        entryData->match_img_data = bmalloc(sz);
+        memcpy(entryData->match_img_data, matchImg.bits(), sz);
+
+        entryData->match_img_width = uint32_t(matchImg.width());
+        entryData->match_img_height = uint32_t(matchImg.height());
+        pthread_mutex_unlock(&filterData->mutex);
+    }
+}
+
 void PmCore::supplyImagesToFilter()
 {
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
         for (size_t i = 0; i < m_matchImages.size(); ++i) {
-            const QImage& matchImg = m_matchImages[i];
-            if (matchImg.isNull()) continue;
-
-            auto entryData = filterData->match_entries + i;
-
-            size_t sz = size_t(matchImg.sizeInBytes());
-            entryData->match_img_data = bmalloc(sz);
-            memcpy(entryData->match_img_data, matchImg.bits(), sz);
-
-            entryData->match_img_width = uint32_t(matchImg.width());
-            entryData->match_img_height = uint32_t(matchImg.height());
+            supplyImageToFilter(i);
         }
         pthread_mutex_unlock(&filterData->mutex);
     }
@@ -478,8 +488,10 @@ void PmCore::supplyConfigToFilter()
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
         pm_destroy_match_entries(filterData);
+        size_t sz = sizeof(struct pm_match_entry_data) * cfg.size();
         filterData->match_entries = (struct pm_match_entry_data*)
-            bmalloc(sizeof(struct pm_match_entry_data) * cfg.size());
+            bmalloc(sz);
+        memset(filterData->match_entries, 0, sz);
         for (size_t i = 0; i < cfg.size(); ++i) {
             const auto& cfgEntry = cfg[i];
             auto entryData = filterData->match_entries + i;
@@ -539,41 +551,50 @@ void PmCore::supplyConfigToFilter()
 #endif
 }
 
-void PmCore::onNewMatchConfig(PmMultiMatchConfig config)
+void PmCore::onNewMatchConfig(PmMultiMatchConfig newCfg)
 {
     QMutexLocker locker(&m_matchConfigMutex);
 
-    const char* filename = config.matchImgFilename.data();
-    if (filename != m_matchConfig.matchImgFilename) {
-        QImage imgIn(filename);
-        if (imgIn.isNull()) {
-            blog(LOG_WARNING, "Unable to open filename: %s", filename);
-            emit sigImgFailed(filename);
-            m_matchImg = QImage();
-        } else {
-            m_matchImg = imgIn.convertToFormat(QImage::Format_ARGB32);
-            if (m_matchImg.isNull()) {
-                blog(LOG_WARNING, "Image conversion failed: %s", filename);
-                emit sigImgFailed(filename);
-                m_matchImg = QImage();
+    if (m_matchConfig == newCfg) return;
+
+    auto oldCfg = m_matchConfig;
+    m_matchConfig = newCfg;
+    supplyConfigToFilter();
+
+    m_matchImages.resize(m_matchConfig.size());
+    for (size_t i = 0; i < m_matchConfig.size(); ++i) {
+        if (i >= m_matchConfig.size()
+         || m_matchConfig[i].matchImgFilename != oldCfg[i].matchImgFilename) {
+            const char* filename = m_matchConfig[i].matchImgFilename.data();
+            QImage& img = m_matchImages[i];
+            img = QImage(filename);
+            if (img.isNull()) {
+                blog(LOG_WARNING, "Unable to open filename: %s", filename);
+                emit sigImgFailed(i, filename);
+                img = QImage();
+                
             } else {
-                emit sigImgSuccess(filename, m_matchImg);
+                img = img.convertToFormat(QImage::Format_ARGB32);
+                if (img.isNull()) {
+                    blog(LOG_WARNING, "Image conversion failed: %s", filename);
+                    emit sigImgFailed(i, filename);
+                    img = QImage();
+                } else {
+                    emit sigImgSuccess(i, filename, img);
+                }
             }
         }
-        supplyImagesToFilter();
     }
-    if (m_matchConfig != config) {
-        m_matchConfig = config;
-        supplyConfigToFilter();
-        emit sigMatchPresetStateChanged();
-    }
+    supplyImagesToFilter();
 }
 
+#if 0
 void PmCore::onNewSwitchConfig(PmSwitchConfig sceneConfig)
 {
     QMutexLocker locker(&m_switchConfigMutex);
     m_switchConfig = sceneConfig;
 }
+#endif
 
 void PmCore::pmSave(obs_data_t *saveData)
 {
@@ -587,7 +608,7 @@ void PmCore::pmSave(obs_data_t *saveData)
         obs_data_array_t *matchPresetArray = obs_data_array_create();
         for (auto p: m_matchPresets) {
             std::string presetName = p.first;
-            PmMatchConfig presetCfg = p.second;
+            PmMultiMatchConfig presetCfg = p.second;
             obs_data_t *matchPresetObj = presetCfg.save(presetName);
             obs_data_array_push_back(matchPresetArray, matchPresetObj);
             obs_data_release(matchPresetObj);
@@ -600,13 +621,14 @@ void PmCore::pmSave(obs_data_t *saveData)
         if (m_activeMatchPreset.empty() || matchConfigDirty()) {
             activeCfgObj = m_matchConfig.save("");
         } else {
-            PmMatchConfig presetCfg = m_matchPresets[m_activeMatchPreset];
+            PmMultiMatchConfig presetCfg = m_matchPresets[m_activeMatchPreset];
             activeCfgObj = presetCfg.save(m_activeMatchPreset);
         }
         obs_data_set_obj(saveObj, "match_config", activeCfgObj);
         obs_data_release(activeCfgObj);
     }
 
+#if 0
     // switch configuration
     {
         QMutexLocker locker(&m_switchConfigMutex);
@@ -614,6 +636,7 @@ void PmCore::pmSave(obs_data_t *saveData)
         obs_data_set_obj(saveObj, "switch_config", switchCfgObj);
         obs_data_release(switchCfgObj);
     }
+#endif
 
     obs_data_set_obj(saveData, "pixel-match-switcher", saveObj);
 }
@@ -636,7 +659,7 @@ void PmCore::pmLoad(obs_data_t *data)
                 = obs_data_array_item(matchPresetArray, i);
             std::string presetName
                 = obs_data_get_string(matchPresetObj, "name");
-            m_matchPresets[presetName] = PmMatchConfig(matchPresetObj);
+            m_matchPresets[presetName] = PmMultiMatchConfig(matchPresetObj);
             obs_data_release(matchPresetObj);
         }
         obs_data_array_release(matchPresetArray);
@@ -648,12 +671,13 @@ void PmCore::pmLoad(obs_data_t *data)
         if (activePresetName.size()) {
             onSelectActiveMatchPreset(activePresetName);
         } else {
-            PmMatchConfig activeCfg(activeCfgObj);
+            PmMultiMatchConfig activeCfg(activeCfgObj);
             onNewMatchConfig(activeCfg);
         }
         obs_data_release(activeCfgObj);
     }
 
+#if 0
     // switch configuration
     {
         QMutexLocker locker(&m_switchConfigMutex);
@@ -661,6 +685,7 @@ void PmCore::pmLoad(obs_data_t *data)
         m_switchConfig = PmSwitchConfig(switchCfgObj);
         obs_data_release(switchCfgObj);
     }
+#endif
 
     obs_data_release(loadObj);
 }

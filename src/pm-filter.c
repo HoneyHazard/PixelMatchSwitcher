@@ -33,7 +33,7 @@ static void *pixel_match_filter_create(
     filter->settings = settings;
     filter->visualize = true;
 
-#if 0
+#if 1
     // recursive mutex
     pthread_mutexattr_t mutex_attr;
     pthread_mutexattr_init(&mutex_attr);
@@ -206,7 +206,6 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     obs_source_t *target, *parent;
 
     pthread_mutex_lock(&filter->mutex);
-
 
     target = obs_filter_get_target(filter->context);
     parent = obs_filter_get_parent(filter->context);
@@ -393,5 +392,3 @@ void pm_destroy_match_entries(struct pm_filter_data* filter)
         }
     }
 #endif
-
-

@@ -112,6 +112,5 @@ protected:
     PmMatchResults m_prevResults;
     bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
     QMutex m_matchImgLock;
-    QImage m_matchImg;
     gs_texture_t* m_matchImgTex = nullptr;
 };
