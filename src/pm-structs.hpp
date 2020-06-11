@@ -46,6 +46,7 @@ struct PmMatchConfig
     PmMatchConfig(obs_data_t* data);
     obs_data_t* save() const;
 
+    std::string label;
     std::string matchImgFilename;
 
     #if 0
@@ -78,8 +79,8 @@ class PmMultiMatchConfig : public std::vector<PmMatchConfig>
 {
 public:
     PmMultiMatchConfig() {}
-    PmMultiMatchConfig(obs_data_t* data); // TODO
-    obs_data_t* save(const std::string& presetName); // TODO
+    PmMultiMatchConfig(obs_data_t* data);
+    obs_data_t* save(const std::string& presetName);
 
     bool operator==(const PmMultiMatchConfig&) const; // TODO
     bool operator!=(const PmMultiMatchConfig& other) const

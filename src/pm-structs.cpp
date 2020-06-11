@@ -27,6 +27,7 @@ PmMatchConfig::PmMatchConfig()
 bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 {
     return matchImgFilename == other.matchImgFilename
+        && label == other.label
 #if 0
         && roiLeft == other.roiLeft
         && roiBottom == other.roiBottom
@@ -48,6 +49,9 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     obs_data_set_default_string(
         data, "match_image_filename", matchImgFilename.data());
     matchImgFilename = obs_data_get_string(data, "match_image_filename");
+
+    obs_data_set_default_string(data, "label", label.data());
+    label = obs_data_get_string(data, "label");
 
     obs_data_set_default_int(data, "roi_left", filterCfg.roi_left);
     filterCfg.roi_left = int(obs_data_get_int(data, "roi_left"));
@@ -99,8 +103,8 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 obs_data_t* PmMatchConfig::save() const
 {
     obs_data_t *ret = obs_data_create();
-    //obs_data_set_string(ret, "name", presetName.data());
     obs_data_set_string(ret, "match_image_filename", matchImgFilename.data());
+    obs_data_set_string(ret, "label", label.data());
     obs_data_set_int(ret, "roi_left", filterCfg.roi_left);
     obs_data_set_int(ret, "roi_bottom", filterCfg.roi_bottom);
     obs_data_set_double(
@@ -124,6 +128,54 @@ obs_data_t* PmMatchConfig::save() const
         //obs_source_get_name(obs_weak_source_get_source(transition)));
 
     return ret;
+}
+
+PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
+{
+    obs_data_array_t* matchEntriesArray
+        = obs_data_get_array(data, "entries");
+    size_t count = obs_data_array_count(matchEntriesArray);
+    for (size_t i = 0; i < count; ++i) {
+        obs_data_t* entryObj = obs_data_array_item(matchEntriesArray, i);
+        push_back(PmMatchConfig(entryObj));
+        obs_data_release(entryObj);
+    }
+    obs_data_array_release(matchEntriesArray);
+
+    noMatchScene = obs_data_get_string(data, "no_match_scene");
+}
+
+obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
+{
+    obs_data_t* ret = obs_data_create();
+    obs_data_set_string(ret, "name", presetName.data());
+    obs_data_set_int(ret, "num_entries", size());
+
+    obs_data_array_t* matchEntriesArray = obs_data_array_create();
+    for (const auto& entry : *this) {
+        obs_data_t* entryObj = entry.save();
+        obs_data_array_push_back(matchEntriesArray, entryObj);
+        obs_data_release(entryObj);
+    }
+    obs_data_set_array(ret, "entries", matchEntriesArray);
+    obs_data_array_release(matchEntriesArray);
+    
+    obs_data_set_string(ret, "no_match_scene", noMatchScene.data());
+}
+
+bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
+{
+    if (size() != other.size()) {
+        return false;
+    }
+    else {
+        for (size_t i = 0; i < size(); ++i) {
+            if (at(i) != other.at(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 #if 0
@@ -155,21 +207,4 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmScenes>("PmScenes");
 }
 
-obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
-{
-    //obs_data_set_string(ret, "name", presetName.data());
-}
 
-bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
-{
-    if (size() != other.size()) {
-        return false;
-    } else {
-        for (size_t i = 0; i < size(); ++i) {
-            if (at(i) != other.at(i)) {
-                return false;
-            }
-        }
-        return true;
-    }
-}

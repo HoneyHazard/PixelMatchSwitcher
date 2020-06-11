@@ -606,7 +606,7 @@ void PmCore::pmSave(obs_data_t *saveData)
 
         // match presets
         obs_data_array_t *matchPresetArray = obs_data_array_create();
-        for (auto p: m_matchPresets) {
+        for (const auto &p: m_matchPresets) {
             std::string presetName = p.first;
             PmMultiMatchConfig presetCfg = p.second;
             obs_data_t *matchPresetObj = presetCfg.save(presetName);
