@@ -384,6 +384,7 @@ void PmCore::onFrameProcessed()
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
+        QMutexLocker locker(&m_matchConfigMutex);
         pthread_mutex_lock(&filterData->mutex);
         newResults.baseWidth = filterData->base_width;
         newResults.baseHeight = filterData->base_height;
@@ -399,21 +400,28 @@ void PmCore::onFrameProcessed()
             newResult.percentageMatched
                 = float(newResult.numMatched) / float(newResult.numCompared) * 100.0f;
             newResult.isMatched
-                = newResult.percentageMatched >= m_matchConfig[i].filterCfg.total_match_thresh;
-
+                = newResult.percentageMatched >= m_matchConfig[i].totalMatchThresh;
         }
         pthread_mutex_unlock(&filterData->mutex);
     }
 
-    
     {
         QMutexLocker locker(&m_resultsMutex);
         m_results = newResults;
-    }
-    emit sigNewMatchResults(m_results);
+        emit sigNewMatchResults(m_results);
 
-    {
-        QMutexLocker locker(&m_switchConfigMutex);
+        QMutexLocker locker(&m_matchConfigMutex);
+        for (size_t i = 0; i < m_results.size(); ++i) {
+            if (i > m_matchConfig.size()) break;
+
+            const auto& cfgEntry = m_matchConfig[i];
+            const auto& resEntry = m_results[i];
+            if (cfgEntry.isEnabled && resEntry.isMatched) {
+                switchScene(cfgEntry.matchScene, cfgEntry.matchTransition);
+            }
+        }
+    }
+#if 0
         if (m_switchConfig.isEnabled
          && m_activeFilter.isValid() && !m_matchImg.isNull()) {
             QMutexLocker locker(&m_resultsMutex);
@@ -424,32 +432,48 @@ void PmCore::onFrameProcessed()
             }
         }
     }
+#endif
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:
 // https://github.com/WarmUpTill/SceneSwitcher/blob/05540b61a118f2190bb3fae574c48aea1b436ac7/src/advanced-scene-switcher.cpp#L1066
-void PmCore::switchScene(OBSWeakSource &scene, OBSWeakSource &transition)
+void PmCore::switchScene(
+    const std::string &targetSceneName, const std::string &transitionName)
 {
-    obs_source_t* source = obs_weak_source_get_source(scene);
-    obs_source_t* currentSource = obs_frontend_get_current_scene();
+    obs_source_t* currSceneSrc = obs_frontend_get_current_scene();
+    obs_source_t* targetSceneSrc = nullptr;
 
-    if (source && source != currentSource)
     {
-        obs_weak_source_t*  currentScene = obs_source_get_weak_source(currentSource);
-        obs_weak_source_release(currentScene);
-
-        if (transition) {
-            obs_source_t* nextTransition = obs_weak_source_get_source(transition);
-            //lock.unlock();
-            //transitionCv.wait(transitionLock, transitionActiveCheck);
-            //lock.lock();
-            obs_frontend_set_current_transition(nextTransition);
-            obs_source_release(nextTransition);
+        QMutexLocker locker(&m_scenesMutex);
+        for (auto scene : m_scenes) {
+            auto sceneSrc = obs_weak_source_get_source(scene);
+            if (targetSceneName == obs_source_get_name(sceneSrc)) {
+                targetSceneSrc = sceneSrc;
+                break;
+            }
         }
-        obs_frontend_set_current_scene(source);
+     }
+
+    if (targetSceneSrc && targetSceneSrc != currSceneSrc) {
+        obs_source_t* transitionSrc = nullptr;
+        if (!transitionName.empty()) {
+            struct obs_frontend_source_list transitionList;
+            obs_frontend_get_transitions(&transitionList);
+            for (size_t i = 0; i < transitionList.sources.num; i++) {
+                obs_source_t* ts = transitionList.sources.array[i];
+                if (transitionName == obs_source_get_name(ts)) {
+                    transitionSrc = ts;
+                    break;
+                }
+            }
+
+            obs_frontend_set_current_transition(transitionSrc);
+            //obs_source_release(transitionSrc);
+        }
+        obs_frontend_set_current_scene(targetSceneSrc);
     }
-    obs_source_release(currentSource);
-    obs_source_release(source);
+    //obs_source_release(currSceneSrc);
+    //obs_source_release(targetSceneSrc);
 }
 
 void PmCore::supplyImageToFilter(size_t matchIdx)

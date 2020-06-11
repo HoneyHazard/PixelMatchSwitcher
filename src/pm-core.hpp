@@ -59,7 +59,7 @@ signals:
     void sigFrameProcessed();
     void sigImgSuccess(size_t matchIdx, std::string filename, QImage img);
     void sigImgFailed(size_t matchIdx, std::string filename);
-    void sigNewMatchResults(PmMatchResults);
+    void sigNewMatchResults(PmMultiMatchResults);
     void sigScenesChanged(PmScenes);
     void sigMatchPresetsChanged();
     void sigMatchPresetStateChanged();
@@ -78,7 +78,9 @@ private slots:
     void onFrameProcessed();
 
 protected:
-    static void switchScene(OBSWeakSource& scene, OBSWeakSource& transition);
+    void switchScene(
+        //OBSWeakSource& scene, OBSWeakSource& transition);
+        const std::string& scene, const std::string &transition);
     void scanScenes();
     void updateActiveFilter();
     

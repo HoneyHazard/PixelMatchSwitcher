@@ -41,7 +41,7 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && previewVideoScale == other.previewVideoScale
         && previewMatchImageScale == other.previewMatchImageScale
         && matchScene == other.matchScene
-        && transition == other.transition;
+        && matchTransition == other.matchTransition;
 }
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
@@ -97,7 +97,7 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     isEnabled = obs_data_get_bool(data, "is_enabled");
     
     matchScene = obs_data_get_string(data, "match_scene");
-    transition = obs_data_get_string(data, "transition");
+    matchTransition = obs_data_get_string(data, "match_transition");
 }
 
 obs_data_t* PmMatchConfig::save() const
@@ -124,7 +124,7 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_bool(ret, "is_enabled", isEnabled);
     obs_data_set_string(ret, "match_scene", matchScene.data());
         //obs_source_get_name(obs_weak_source_get_source(matchScene)));
-    obs_data_set_string(ret, "transition", transition.data());
+    obs_data_set_string(ret, "match_transition", matchTransition.data());
         //obs_source_get_name(obs_weak_source_get_source(transition)));
 
     return ret;
@@ -143,6 +143,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     obs_data_array_release(matchEntriesArray);
 
     noMatchScene = obs_data_get_string(data, "no_match_scene");
+    noMatchTransition = obs_data_get_string(data, "no_match_transition");
 }
 
 obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
@@ -161,6 +162,7 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     obs_data_array_release(matchEntriesArray);
     
     obs_data_set_string(ret, "no_match_scene", noMatchScene.data());
+    obs_data_set_string(ret, "no_match_transition", noMatchTransition.data());
 }
 
 bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const

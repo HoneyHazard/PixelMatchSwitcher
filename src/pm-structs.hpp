@@ -72,11 +72,11 @@ struct PmMatchConfig
     //OBSWeakSource matchScene;
     //OBSWeakSource transition;
     std::string matchScene;
-    std::string transition;
+    std::string matchTransition;
 
     bool operator==(const PmMatchConfig&) const;
     bool operator!=(const PmMatchConfig& other) const
-        { return !(*this == other); }
+        { return !operator==(other); }
 };
 
 class PmMultiMatchConfig : public std::vector<PmMatchConfig>
@@ -86,12 +86,12 @@ public:
     PmMultiMatchConfig(obs_data_t* data);
     obs_data_t* save(const std::string& presetName);
 
-    bool operator==(const PmMultiMatchConfig&) const; // TODO
+    bool operator==(const PmMultiMatchConfig&) const;
     bool operator!=(const PmMultiMatchConfig& other) const
-        { return !(*this == other); }
+        { return !operator==(other); }
 
-    //OBSWeakSource noMatchScene;
     std::string noMatchScene;
+    std::string noMatchTransition;
 };
 
 typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;
