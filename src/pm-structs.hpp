@@ -30,7 +30,6 @@ enum class PmPreviewMode : int {
 
 struct PmMatchResults
 {
-    uint32_t baseWidth = 0, baseHeight = 0;
     uint32_t matchImgWidth = 0, matchImgHeight = 0;
     uint32_t numCompared = 0;
     uint32_t numMatched = 0;
@@ -38,7 +37,11 @@ struct PmMatchResults
     bool isMatched = false;
 };
 
-typedef std::vector<PmMatchResults> PmMultiMatchResults;
+class PmMultiMatchResults : public std::vector<PmMatchResults>
+{
+public:
+    uint32_t baseWidth = 0, baseHeight = 0;
+};
 
 struct PmMatchConfig
 {
@@ -58,6 +61,7 @@ struct PmMatchConfig
     #endif
 
     struct pm_match_entry_config filterCfg;
+    float totalMatchThresh;
 
     PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;

@@ -15,7 +15,6 @@ typedef struct pm_match_entry_config
     bool mask_alpha;
     struct vec3 mask_color;
     float per_pixel_err_thresh;
-    float total_match_thresh;
 };
 
 typedef struct pm_match_entry_data

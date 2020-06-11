@@ -380,25 +380,32 @@ void PmCore::onPeriodicUpdate()
 
 void PmCore::onFrameProcessed()
 {
-    PmMatchResults newResults;
+    PmMultiMatchResults newResults;
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
         newResults.baseWidth = filterData->base_width;
         newResults.baseHeight = filterData->base_height;
-        newResults.matchImgWidth = filterData->match_img_width;
-        newResults.matchImgHeight = filterData->match_img_height;
-        newResults.numCompared = filterData->num_compared;
-        newResults.numMatched = filterData->num_matched;
-        // TODO more results
+
+        newResults.resize(filterData->num_match_entries);
+        for (size_t i = 0; i < newResults.size(); ++i) {
+            auto& newResult = newResults[i];
+            const auto& filterEntry = filterData->match_entries + i;
+            newResult.matchImgWidth = filterEntry->match_img_width;
+            newResult.matchImgHeight = filterEntry->match_img_height;
+            newResult.numCompared = filterEntry->num_compared;
+            newResult.numMatched = filterEntry->num_matched;
+            newResult.percentageMatched
+                = float(newResult.numMatched) / float(newResult.numCompared) * 100.0f;
+            newResult.isMatched
+                = newResult.percentageMatched >= m_matchConfig[i].filterCfg.total_match_thresh;
+
+        }
         pthread_mutex_unlock(&filterData->mutex);
     }
 
-    newResults.percentageMatched
-        = float(newResults.numMatched) / float(newResults.numCompared) * 100.0f;
-    newResults.isMatched
-        = newResults.percentageMatched >= m_matchConfig.totalMatchThresh;
+    
     {
         QMutexLocker locker(&m_resultsMutex);
         m_results = newResults;

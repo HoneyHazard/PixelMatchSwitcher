@@ -140,6 +140,7 @@ static bool pixel_match_prop_changed_callback(
 }
 #endif
 
+#if 0
 static obs_properties_t *pixel_match_filter_properties(void *data)
 {
     //struct pm_filter_data *filter
@@ -183,6 +184,7 @@ static obs_properties_t *pixel_match_filter_properties(void *data)
 
     UNUSED_PARAMETER(data);
 }
+#endif
 
 static void pixel_match_filter_defaults(obs_data_t *settings)
 {
@@ -317,7 +319,7 @@ struct obs_source_info pixel_match_filter = {
     .create = pixel_match_filter_create,
     .destroy = pixel_match_filter_destroy,
     //.update = pixel_match_filter_update,
-    .get_properties = pixel_match_filter_properties,
+    //.get_properties = pixel_match_filter_properties,
     .get_defaults = pixel_match_filter_defaults,
     //.video_tick = pixel_match_filter_tick,
     .video_render = pixel_match_filter_render,

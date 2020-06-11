@@ -12,7 +12,6 @@ bool operator== (const struct pm_match_entry_config& l,
     return l.roi_left == r.roi_left
         && l.roi_bottom == r.roi_bottom
         && l.per_pixel_err_thresh == r.per_pixel_err_thresh
-        && l.total_match_thresh == r.total_match_thresh
         && l.mask_alpha == r.mask_alpha
         && l.mask_color.x == r.mask_color.x
         && l.mask_color.y == r.mask_color.y
@@ -28,6 +27,7 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 {
     return matchImgFilename == other.matchImgFilename
         && label == other.label
+        && totalMatchThresh == other.totalMatchThresh
 #if 0
         && roiLeft == other.roiLeft
         && roiBottom == other.roiBottom
@@ -65,8 +65,8 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
         = float(obs_data_get_double(data, "per_pixel_allowed_error"));
 
     obs_data_set_default_double(
-        data, "total_match_threshold", double(filterCfg.total_match_thresh));
-    filterCfg.total_match_thresh 
+        data, "total_match_threshold", double(totalMatchThresh));
+    totalMatchThresh 
         = float(obs_data_get_double(data, "total_match_threshold"));
 
     obs_data_set_default_bool(data, "mask_alpha", filterCfg.mask_alpha);
@@ -110,7 +110,7 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_double(
         ret, "per_pixel_allowed_error", double(filterCfg.per_pixel_err_thresh));
     obs_data_set_double(
-        ret, "total_match_threshold", double(filterCfg.total_match_thresh));
+        ret, "total_match_threshold", double(totalMatchThresh));
     obs_data_set_bool(ret, "mask_alpha", filterCfg.mask_alpha);
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
     obs_data_set_int(ret, "preview_mode", int(previewMode));
@@ -206,5 +206,4 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
 }
-
 
