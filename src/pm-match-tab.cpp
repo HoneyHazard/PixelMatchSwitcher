@@ -663,6 +663,7 @@ vec3 PmMatchTab::toVec3(QColor val)
     ret.x = val.red() / 255.f;
     ret.y = val.green() / 255.f;
     ret.z = val.blue() / 255.f;
+    return ret;
 }
 
 #if 0

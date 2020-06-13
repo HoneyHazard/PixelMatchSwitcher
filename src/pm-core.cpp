@@ -413,11 +413,11 @@ void PmCore::onFrameProcessed()
     }
 
     {
-        QMutexLocker locker(&m_resultsMutex);
+        QMutexLocker resLocker(&m_resultsMutex);
         m_results = newResults;
         emit sigNewMatchResults(m_results);
 
-        QMutexLocker locker(&m_matchConfigMutex);
+        QMutexLocker cfgLocker(&m_matchConfigMutex);
         for (size_t i = 0; i < m_results.size(); ++i) {
             if (i > m_matchConfig.size()) break;
 
@@ -517,9 +517,6 @@ void PmCore::supplyImagesToFilter()
 
 void PmCore::supplyConfigToFilter()
 {
-    struct vec3 maskColor;
-    bool maskAlpha = false;
-
     const auto& cfg = m_matchConfig;
 
     auto filterData = m_activeFilter.filterData();

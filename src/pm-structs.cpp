@@ -163,6 +163,7 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     
     obs_data_set_string(ret, "no_match_scene", noMatchScene.data());
     obs_data_set_string(ret, "no_match_transition", noMatchTransition.data());
+    return ret;
 }
 
 bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const

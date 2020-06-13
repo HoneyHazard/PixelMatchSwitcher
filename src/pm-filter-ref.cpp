@@ -111,13 +111,15 @@ uint32_t PmFilterRef::filterDataHeight() const
     return ret;
 }
 
-uint32_t PmFilterRef::numMatched() const
+uint32_t PmFilterRef::numMatched(size_t matchIndex) const
 {
     auto data = filterData();
     uint32_t ret = 0;
     if (data) {
         lockData();
-        ret = data->num_matched;
+        if (matchIndex < data->num_match_entries) {
+            ret = data->match_entries[matchIndex].num_matched;
+        }
         unlockData();
     }
     return ret;

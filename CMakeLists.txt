@@ -37,7 +37,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-filter-ref.hpp
         src/pm-core.hpp
         src/pm-match-tab.hpp
-        src/pm-switch-tab.hpp
+#        src/pm-switch-tab.hpp
         src/pm-dialog.hpp
         src/pm-structs.hpp
         src/pm-debug-tab.hpp
@@ -51,7 +51,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-filter-ref.cpp
         src/pm-core.cpp
         src/pm-match-tab.cpp
-        src/pm-switch-tab.cpp
+#        src/pm-switch-tab.cpp
         src/pm-debug-tab.cpp
         src/pm-dialog.cpp
         src/pm-structs.cpp

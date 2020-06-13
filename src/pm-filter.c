@@ -327,24 +327,7 @@ struct obs_source_info pixel_match_filter = {
     .get_height = pixel_match_filter_height,
 };
 
-void pm_destroy_match_entries(struct pm_filter_data* filter)
-{
-    obs_enter_graphics();
-    for (size_t i = 0; i < filter->num_match_entries; ++i) {
-        struct pm_match_entry_data* entry = filter->match_entries + i;
-        if (entry->match_img_tex)
-            gs_texture_destroy(entry->match_img_tex);
-        if (entry->match_img_data)
-            bfree(entry->match_img_data);
-    }
-    obs_leave_graphics();
-    if (filter->match_entries);
-        bfree(filter->match_entries);
-    filter->num_match_entries = 0;
-    filter->match_entries = NULL;
-}
-
-    #if 0
+#if 0
     // passthrough
     obs_source_skip_video_filter(filter->context);
 

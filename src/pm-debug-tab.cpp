@@ -134,7 +134,7 @@ void PmDebugTab::periodicUpdate()
         m_filterDataResDisplay->setText(oss.str().data());
 
         oss.str("");
-        oss << activeFilter.numMatched();
+        oss << activeFilter.numMatched(0);
         m_matchCountDisplay->setText(oss.str().data());
     } else {
         m_sourceResDisplay->setText("--");

@@ -22,7 +22,7 @@ public:
     uint32_t filterSrcHeight() const;
     uint32_t filterDataWidth() const;
     uint32_t filterDataHeight() const;
-    uint32_t numMatched() const;
+    uint32_t numMatched(size_t matchIndex) const;
 
     void reset();
     void setScene(obs_source_t* scene);
