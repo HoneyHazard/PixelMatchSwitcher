@@ -46,7 +46,8 @@ public:
     PmMatchPresets matchPresets() const;
     bool matchConfigDirty() const;
 
-    PmMultiMatchConfig matchConfig() const;
+    PmMultiMatchConfig multiMatchConfig() const;
+    PmMatchConfig matchConfig(size_t matchIdx) const;
     std::string matchImgFilename(size_t matchIdx) const;
 
     PmMultiMatchResults results() const;

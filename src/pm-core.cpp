@@ -145,10 +145,17 @@ PmMultiMatchConfig PmCore::matchPresetByName(const std::string &name) const
     return m_matchPresets.at(name);
 }
 
-PmMultiMatchConfig PmCore::matchConfig() const
+PmMultiMatchConfig PmCore::multiMatchConfig() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return m_matchConfig;
+}
+
+PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return matchIdx < m_matchConfig.size() ? m_matchConfig[matchIdx]
+                                           : PmMatchConfig();
 }
 
 std::string PmCore::matchImgFilename(size_t matchIdx) const

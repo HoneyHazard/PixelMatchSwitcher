@@ -61,6 +61,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     QHBoxLayout *presetLayout = new QHBoxLayout;
     presetLayout->setContentsMargins(0, 0, 0, 0);
 
+#if 0
     m_presetCombo = new QComboBox(this);
     m_presetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
     m_presetCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -87,7 +88,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     connect(m_presetRemoveButton, &QPushButton::released,
             this, &PmMatchTab::onPresetRemove, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetRemoveButton);
-
     mainLayout->addRow(obs_module_text("Preset: "), presetLayout);
 
     // divider line 1
@@ -95,6 +95,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     line1->setFrameShape(QFrame::HLine);
     line1->setFrameShadow(QFrame::Sunken);
     mainLayout->addRow(line1);
+#endif
 
     // image path display and browse button
     QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
@@ -242,6 +243,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_videoScaleCombo->addItem("75%", 0.75f);
     m_videoScaleCombo->addItem("50%", 0.5f);
     m_videoScaleCombo->addItem("25%", 0.25f);
+    m_videoScaleCombo->setCurrentIndex(0);
     connect(m_videoScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     m_previewScaleStack->insertWidget(
@@ -254,6 +256,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_regionScaleCombo->addItem("200%", 2.f);
     m_regionScaleCombo->addItem("500%", 5.f);
     m_regionScaleCombo->addItem("1000%", 10.f);
+    m_regionScaleCombo->setCurrentIndex(0);
     connect(m_regionScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     m_previewScaleStack->insertWidget(
@@ -266,6 +269,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     m_matchImgScaleCombo->addItem("200%", 2.f);
     m_matchImgScaleCombo->addItem("500%", 5.f);
     m_matchImgScaleCombo->addItem("1000%", 10.f);
+    m_matchImgScaleCombo->setCurrentIndex(0);
     connect(m_matchImgScaleCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
     m_previewScaleStack->insertWidget(
@@ -288,10 +292,6 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchTab::onDestroy, Qt::DirectConnection);
     mainLayout->addRow(m_filterDisplay);
 
-    // notification label
-    m_notifyLabel = new QLabel(this);
-    mainLayout->addRow(m_notifyLabel);
-
     setLayout(mainLayout);
 
     // core signals -> local slots
@@ -300,6 +300,7 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
     connect(m_core, &PmCore::sigImgFailed,
             this, &PmMatchTab::onImgFailed, Qt::QueuedConnection);
 
+#if 0
     connect(m_core, &PmCore::sigMatchPresetsChanged,
             this, &PmMatchTab::onPresetsChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigMatchPresetStateChanged,
@@ -316,22 +317,24 @@ PmMatchTab::PmMatchTab(PmCore *pixelMatcher, QWidget *parent)
             m_core, &PmCore::onSelectActiveMatchPreset, Qt::QueuedConnection);
     connect(this, &PmMatchTab::sigRemoveMatchPreset,
             m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
+#endif
+
 
     // finish init
     onNewMatchResults(m_core->results());
-    configToUi(m_core->matchConfig());
-    onPresetsChanged();
-    onPresetStateChanged();
+    configToUi(m_core->multiMatchConfig());
+    //onPresetsChanged();
+    //onPresetStateChanged();
     onConfigUiChanged();
 
 #if 1
-    std::string matchImgFilename = m_core->matchImgFilename();
-    const QImage& matchImg = m_core->matchImage();
+    std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
+    const QImage& matchImg = m_core->matchImage(m_matchIndex);
     if (matchImgFilename.size()) {
         if (matchImg.isNull()) {
-            onImgFailed(matchImgFilename);
+            onImgFailed(m_matchIndex, matchImgFilename);
         } else {
-            onImgSuccess(matchImgFilename, matchImg);
+            onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
         }
     }
 #endif
@@ -349,19 +352,19 @@ PmMatchTab::~PmMatchTab()
 
 void PmMatchTab::drawPreview(void *data, uint32_t cx, uint32_t cy)
 {
-    auto dialog = static_cast<PmMatchTab*>(data);
-    auto core = dialog->m_core;
+    auto widget = static_cast<PmMatchTab*>(data);
+    auto core = widget->m_core;
 
     if (!core) return;
 
-    dialog->m_rendering = true;
-    auto config = core->matchConfig();
+    widget->m_rendering = true;
+    auto config = core->matchConfig(widget->m_matchIndex);
     if (config.previewMode == PmPreviewMode::MatchImage) {
-        dialog->drawMatchImage();
+        widget->drawMatchImage();
     } else if (core->activeFilterRef().isValid()) {
-        dialog->drawEffect();
+        widget->drawEffect();
     }
-    dialog->m_rendering = false;
+    widget->m_rendering = false;
 
     UNUSED_PARAMETER(cx);
     UNUSED_PARAMETER(cy);
@@ -369,7 +372,6 @@ void PmMatchTab::drawPreview(void *data, uint32_t cx, uint32_t cy)
 
 void PmMatchTab::drawEffect()
 {
-    auto config = m_core->matchConfig();
     auto filterRef = m_core->activeFilterRef();
     auto renderSrc = filterRef.filter();
 
@@ -377,6 +379,10 @@ void PmMatchTab::drawEffect()
 
     float orthoLeft, orthoBottom, orthoRight, orthoTop;
     int vpLeft, vpBottom, vpWidth, vpHeight;
+
+    if (m_matchIndex >= m_prevResults.size()) return;
+    auto result = m_prevResults[m_matchIndex];
+    auto config = m_core->matchConfig(m_matchIndex);
 
     if (config.previewMode == PmPreviewMode::Video) {
         int cx = int(m_prevResults.baseWidth);
@@ -395,17 +401,17 @@ void PmMatchTab::drawEffect()
         vpHeight = scaledCy;
     } else if (config.previewMode == PmPreviewMode::Region) {
         const auto &results = m_prevResults;
-        orthoLeft = config.roiLeft;
-        orthoBottom = config.roiBottom;
-        orthoRight = config.roiLeft + int(results.matchImgWidth);
-        orthoTop = config.roiBottom + int(results.matchImgHeight);
+        orthoLeft = config.filterCfg.roi_left;
+        orthoBottom = config.filterCfg.roi_bottom;
+        orthoRight = config.filterCfg.roi_left + int(result.matchImgWidth);
+        orthoTop = config.filterCfg.roi_bottom + int(result.matchImgHeight);
 
         float scale = config.previewRegionScale;
         //float scale = config.previewVideoScale;
         vpLeft = 0.f;
         vpBottom = 0.0f;
-        vpWidth = int(results.matchImgWidth * scale);
-        vpHeight = int(results.matchImgHeight * scale);
+        vpWidth = int(result.matchImgWidth * scale);
+        vpHeight = int(result.matchImgHeight * scale);
     }
 
     gs_viewport_push();
@@ -442,7 +448,7 @@ void PmMatchTab::drawMatchImage()
         }
     }
 
-    auto config = m_core->matchConfig();
+    auto config = m_core->matchConfig(m_matchIndex);
     auto filterRef = m_core->activeFilterRef();
     auto filterData = filterRef.filterData();
 
@@ -460,7 +466,7 @@ void PmMatchTab::drawMatchImage()
     }
 }
 
-void PmMatchTab::maskModeChanged(PmMaskMode mode, uint32_t customColor)
+void PmMatchTab::maskModeChanged(PmMaskMode mode, vec3 customColor)
 {
     m_pickColorButton->setVisible(mode == PmMaskMode::CustomClrMode);
 
@@ -503,16 +509,20 @@ void PmMatchTab::maskModeChanged(PmMaskMode mode, uint32_t customColor)
     m_maskModeDisplay->setText(color.name(QColor::HexArgb));
 }
 
-void PmMatchTab::configToUi(const PmMatchConfig &config)
+void PmMatchTab::configToUi(const PmMultiMatchConfig &multiConfig)
 {
+    if (m_matchIndex >= multiConfig.size()) return;
+
     blockSignals(true);
+
+    const PmMatchConfig& config = multiConfig[m_matchIndex];
 
     m_imgPathEdit->setText(config.matchImgFilename.data());
     m_maskModeCombo->setCurrentIndex(int(config.maskMode));
-    m_customColor = config.customColor;
-    m_posXBox->setValue(config.roiLeft);
-    m_posYBox->setValue(config.roiBottom);
-    m_perPixelErrorBox->setValue(double(config.perPixelErrThresh));
+    m_customColor = config.filterCfg.mask_color;
+    m_posXBox->setValue(config.filterCfg.roi_left);
+    m_posYBox->setValue(config.filterCfg.roi_bottom);
+    m_perPixelErrorBox->setValue(double(config.filterCfg.per_pixel_err_thresh));
     m_totalMatchThreshBox->setValue(double(config.totalMatchThresh));
     m_previewModeButtons->button(int(config.previewMode))->setChecked(true);
     m_videoScaleCombo->setCurrentIndex(
@@ -538,8 +548,11 @@ void PmMatchTab::closeEvent(QCloseEvent *e)
 void PmMatchTab::onPickColorButtonReleased()
 {
     QColor startColor = toQColor(m_customColor);
-    uint32_t newColor = toUInt32(QColorDialog::getColor(startColor, this));
-    if (m_customColor != newColor) {
+    //uint32_t newColor = toUInt32(QColorDialog::getColor(startColor, this));
+    vec3 newColor = toVec3(QColorDialog::getColor(startColor, this));
+    if (m_customColor.x != newColor.x 
+     || m_customColor.y != newColor.y
+     || m_customColor.z != newColor.z) {
         m_customColor = newColor;
         onConfigUiChanged();
     }
@@ -547,23 +560,29 @@ void PmMatchTab::onPickColorButtonReleased()
 
 void PmMatchTab::onBrowseButtonReleased()
 {
+    auto multiConfig = m_core->multiMatchConfig();
+    if (m_matchIndex >= multiConfig.size()) return;
+    auto &config = multiConfig[m_matchIndex];
+
     static const QString filter
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
 
     QString curPath
-        = QFileInfo(m_core->matchImgFilename().data()).absoluteDir().path();
+        = QFileInfo(config.matchImgFilename.data()).absoluteDir().path();
 
     QString path = QFileDialog::getOpenFileName(
         this, obs_module_text("Open an image file"), curPath, filter);
     if (!path.isEmpty()) {
-        PmMatchConfig config = m_core->matchConfig();
         config.matchImgFilename = path.toUtf8().data();
-        emit sigNewUiConfig(config);
+        emit sigNewUiConfig(multiConfig);
     }
 }
 
-void PmMatchTab::onImgSuccess(std::string filename, QImage img)
-{
+void PmMatchTab::onImgSuccess(
+    size_t matchIndex, std::string filename, QImage img)
+{   
+    if (matchIndex != m_matchIndex) return;
+
     m_imgPathEdit->setText(filename.data());
     m_imgPathEdit->setStyleSheet("");
 
@@ -571,8 +590,10 @@ void PmMatchTab::onImgSuccess(std::string filename, QImage img)
     m_matchImg = img;
 }
 
-void PmMatchTab::onImgFailed(std::string filename)
+void PmMatchTab::onImgFailed(size_t matchIndex, std::string filename)
 {
+    if (matchIndex != m_matchIndex) return;
+
     QString imgStr;
     if (filename.size()) {
         imgStr = QString("%1 %2").arg(k_failedImgStr).arg(filename.data());
@@ -590,17 +611,23 @@ void PmMatchTab::onImgFailed(std::string filename)
 }
 
 void PmMatchTab::updateFilterDisplaySize(
-    const PmMatchConfig &config, const PmMatchResults &results)
+    const PmMultiMatchConfig &multiConfig, 
+    const PmMultiMatchResults &multiResults)
 {
+    if (m_matchIndex >= multiConfig.size() 
+     || m_matchIndex >= multiResults.size()) return;
+    auto config = multiConfig[m_matchIndex];
+    auto results = multiResults[m_matchIndex];
+
     int cx, cy;
     if (config.previewMode == PmPreviewMode::Video) {
         if (!m_core->activeFilterRef().isValid()) {
-            cx = 0;
+            cx = 0; 
             cy = 0;
         } else {
             float scale = config.previewVideoScale;
-            cx = int(results.baseWidth * scale);
-            cy = int(results.baseHeight * scale);
+            cx = int(multiResults.baseWidth * scale);
+            cy = int(multiResults.baseHeight * scale);
         }
     } else if (config.previewMode == PmPreviewMode::Region) {
         if (!m_core->activeFilterRef().isValid()) {
@@ -625,15 +652,32 @@ void PmMatchTab::updateFilterDisplaySize(
     }
 }
 
+QColor PmMatchTab::toQColor(vec3 val)
+{
+    return QColor(int(val.x * 255.f), int(val.y * 255.f), int(val.z * 255.f));
+}
+
+vec3 PmMatchTab::toVec3(QColor val)
+{
+    vec3 ret;
+    ret.x = val.red() / 255.f;
+    ret.y = val.green() / 255.f;
+    ret.z = val.blue() / 255.f;
+}
+
+#if 0
 QColor PmMatchTab::toQColor(uint32_t val)
 {
     uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&val);
+#if 0
 #if PM_LITTLE_ENDIAN
     return QColor(int(colorBytes[2]), int(colorBytes[1]),
                   int(colorBytes[0]), int(colorBytes[3]));
+
 #else
     return QColor(int(colorBytes[1]), int(colorBytes[2]),
                   int(colorBytes[3]), int(colorBytes[0]));
+#endif
 #endif
 }
 
@@ -647,6 +691,7 @@ uint32_t PmMatchTab::toUInt32(QColor val)
          | uint32_t(val.red() << 8)   | uint32_t(val.alpha());
 #endif
 }
+#endif
 
 void PmMatchTab::roiRangesChanged(
     uint32_t baseWidth, uint32_t baseHeight,
@@ -656,30 +701,37 @@ void PmMatchTab::roiRangesChanged(
     m_posYBox->setMaximum(int(baseHeight - imgHeight));
 }
 
-void PmMatchTab::onNewMatchResults(PmMatchResults results)
+void PmMatchTab::onNewMatchResults(PmMultiMatchResults multiResults)
 {
-    if (m_prevResults.baseWidth != results.baseWidth
-     || m_prevResults.matchImgWidth != results.matchImgWidth
-     || m_prevResults.baseHeight != results.baseHeight
-     || m_prevResults.matchImgHeight != results.matchImgHeight) {
-        roiRangesChanged(results.baseWidth, results.baseHeight,
-                         results.matchImgWidth, results.matchImgHeight);
+    if (m_matchIndex >= multiResults.size()) return;
+
+    const auto &result = multiResults[m_matchIndex];
+    if (m_matchIndex < m_prevResults.size()) {
+        const auto& prevResult = m_prevResults[m_matchIndex];
+
+        if (m_prevResults.baseWidth != multiResults.baseWidth
+         || m_prevResults.baseHeight != multiResults.baseHeight
+         || prevResult.matchImgWidth != result.matchImgWidth
+         || prevResult.matchImgHeight != result.matchImgHeight) {
+            roiRangesChanged(multiResults.baseWidth, multiResults.baseHeight,
+                result.matchImgWidth, result.matchImgHeight);
+        }
+
+        QString matchLabel = result.isMatched
+            ? obs_module_text("<font color=\"DarkGreen\">[MATCHED]</font>")
+            : obs_module_text("<font color=\"DarkRed\">[NO MATCH]</font>");
+
+        QString resultStr = QString(
+            obs_module_text("%1 %2 out of %3 pixels matched (%4 %)"))
+            .arg(matchLabel)
+            .arg(result.numMatched)
+            .arg(result.numCompared)
+            .arg(double(result.percentageMatched), 0, 'f', 1);
+        m_matchResultDisplay->setText(resultStr);
     }
 
-    QString matchLabel = results.isMatched
-        ? obs_module_text("<font color=\"DarkGreen\">[MATCHED]</font>")
-        : obs_module_text("<font color=\"DarkRed\">[NO MATCH]</font>");
-
-    QString resultStr = QString(
-        obs_module_text("%1 %2 out of %3 pixels matched (%4 %)"))
-            .arg(matchLabel)
-            .arg(results.numMatched)
-            .arg(results.numCompared)
-            .arg(double(results.percentageMatched), 0, 'f', 1);
-    m_matchResultDisplay->setText(resultStr);
-
-    updateFilterDisplaySize(m_core->matchConfig(), results);
-    m_prevResults = results;
+    updateFilterDisplaySize(m_core->multiMatchConfig(), multiResults);
+    m_prevResults = multiResults;
 }
 
 void PmMatchTab::onConfigUiChanged()
@@ -693,12 +745,13 @@ void PmMatchTab::onConfigUiChanged()
     }
     
     config.matchImgFilename = filename;
-    config.roiLeft = m_posXBox->value();
-    config.roiBottom = m_posYBox->value();
-    config.perPixelErrThresh = float(m_perPixelErrorBox->value());
+    config.filterCfg.roi_left = m_posXBox->value();
+    config.filterCfg.roi_bottom = m_posYBox->value();
+    config.filterCfg.per_pixel_err_thresh = float(m_perPixelErrorBox->value());
+    config.filterCfg.mask_alpha = (config.maskMode == PmMaskMode::AlphaMode);
+    config.filterCfg.mask_color = m_customColor;
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
-    config.customColor = m_customColor;
 
     int previewModeIdx = m_previewModeButtons->checkedId();
     m_previewScaleStack->setCurrentIndex(previewModeIdx);
@@ -715,9 +768,15 @@ void PmMatchTab::onConfigUiChanged()
     config.previewMatchImageScale
         = m_matchImgScaleCombo->currentData().toFloat();
 
-    updateFilterDisplaySize(config, m_prevResults);
-    maskModeChanged(config.maskMode, config.customColor);
-    emit sigNewUiConfig(config);
+    PmMultiMatchConfig multiConfig = m_core->multiMatchConfig();
+    if (m_matchIndex >= multiConfig.size()) {
+        multiConfig.resize(m_matchIndex + 1);
+    }
+    multiConfig[m_matchIndex] = config;
+
+    updateFilterDisplaySize(multiConfig, m_prevResults);
+    maskModeChanged(config.maskMode, config.filterCfg.mask_color);
+    emit sigNewUiConfig(multiConfig);
 }
 
 void PmMatchTab::onDestroy(QObject *obj)
@@ -728,6 +787,7 @@ void PmMatchTab::onDestroy(QObject *obj)
     UNUSED_PARAMETER(obj);
 }
 
+#if 0
 void PmMatchTab::onPresetsChanged()
 {
     PmMatchPresets presets = m_core->matchPresets();
@@ -827,3 +887,4 @@ void PmMatchTab::onPresetRemove()
         }
     }
 }
+#endif

@@ -63,6 +63,7 @@ struct PmMatchConfig
     struct pm_match_entry_config filterCfg;
     float totalMatchThresh;
 
+    PmMaskMode maskMode = PmMaskMode::GreenMode;
     PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;
     float previewRegionScale = 1.f;
