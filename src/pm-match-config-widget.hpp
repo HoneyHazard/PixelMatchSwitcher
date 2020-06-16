@@ -21,63 +21,47 @@ class QStackedWidget;
 /*!
  * \brief UI tab that shows match settings, UI preview and preview settings
  */
-class PmMatchTab : public QWidget
+class PmMatchConfigWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    PmMatchTab(PmCore *core, QWidget *parent);
-    ~PmMatchTab() override;
+    PmMatchConfigWidget(PmCore *core, QWidget *parent);
+    ~PmMatchConfigWidget() override;
 
-    void setMatchIndex(size_t idx) { m_matchIndex = idx; }
     size_t matchIndex() const { return m_matchIndex; }
 
 signals:
-    void sigNewUiConfig(PmMultiMatchConfig);
+    void sigNewMatchConfig(size_t matchIdx, PmMatchConfig cfg);
 
-#if 0
-    void sigSelectActiveMatchPreset(std::string name);
-    void sigSaveMatchPreset(std::string name);
-    void sigRemoveMatchPreset(std::string name);
-#endif
+protected slots:
+    // core interaction
+    void onNewMatchResults(size_t matchIdx, PmMatchResults results);
+    void onNewMatchConfig(size_t matchIdx, PmMatchConfig cfg);
+    void onSelectMatchIndex(size_t matchindex, PmMatchConfig cfg);
 
-private slots:
+    void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
+    void onImgFailed(size_t matchIndex, std::string filename);
+
     // UI element handlers
     void onBrowseButtonReleased();
     void onPickColorButtonReleased();
 
-#if 0
-    void onPresetSelected();
-    void onPresetSave();
-    void onPresetSaveAs();
-    void onConfigReset();
-    void onPresetRemove();
-#endif
-
     // parse UI state into config
     void onConfigUiChanged();
-
-    // core signal handlers
-    void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
-    void onImgFailed(size_t matchIndex, std::string filename);
-    //void onPresetsChanged();
-    //void onPresetStateChanged();
-    void onNewMatchResults(PmMultiMatchResults results);
 
     // shutdown safety
     void onDestroy(QObject *obj); // todo: maybe not needed or useful
 
 protected:
     // parse config into UI state (without triggering handlers)
-    void configToUi(const PmMultiMatchConfig &multiConfig);
 
     // preview related
     static void drawPreview(void *data, uint32_t cx, uint32_t cy);
     void drawEffect();
     void drawMatchImage();
     void updateFilterDisplaySize(
-        const PmMultiMatchConfig &multiConfig, 
-        const PmMultiMatchResults &multiResults);
+        const PmMatchConfig &config, const PmMatchResults &results);
 
     // UI assist
     static QColor toQColor(vec3 val);
@@ -97,14 +81,6 @@ protected:
 
     size_t m_matchIndex;
 
-#if 0
-    QComboBox *m_presetCombo;
-    QPushButton *m_presetSaveButton;
-    QPushButton *m_presetSaveAsButton;
-    QPushButton *m_presetResetButton;
-    QPushButton *m_presetRemoveButton;
-#endif
-
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;
     QComboBox *m_maskModeCombo;
@@ -123,9 +99,35 @@ protected:
     QComboBox *m_matchImgScaleCombo;
 
     QPointer<PmCore> m_core;
-    PmMultiMatchResults m_prevResults;
+    PmMatchResults m_prevResults;
     bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
     QMutex m_matchImgLock;
     QImage m_matchImg;
     gs_texture_t* m_matchImgTex = nullptr;
 };
+
+// core signal handlers
+//void onPresetsChanged();
+//void onPresetStateChanged();
+
+#if 0
+void sigSelectActiveMatchPreset(std::string name);
+void sigSaveMatchPreset(std::string name);
+void sigRemoveMatchPreset(std::string name);
+#endif
+
+#if 0
+void onPresetSelected();
+void onPresetSave();
+void onPresetSaveAs();
+void onConfigReset();
+void onPresetRemove();
+#endif
+
+#if 0
+QComboBox* m_presetCombo;
+QPushButton* m_presetSaveButton;
+QPushButton* m_presetSaveAsButton;
+QPushButton* m_presetResetButton;
+QPushButton* m_presetRemoveButton;
+#endif

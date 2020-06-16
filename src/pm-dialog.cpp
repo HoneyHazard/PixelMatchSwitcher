@@ -1,7 +1,8 @@
 #include "pm-dialog.hpp"
 #include "pm-core.hpp"
-#include "pm-match-tab.hpp"
+//#include "pm-match-tab.hpp"
 //#include "pm-switch-tab.hpp"
+#include "pm-match-config-widget.hpp"
 #include "pm-debug-tab.hpp"
 #include "pm-filter.h"
 
@@ -19,7 +20,7 @@ PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // widgets
-    PmMatchTab *matchWidget = new PmMatchTab(pixelMatcher, this);
+    PmMatchConfigWidget *matchWidget = new PmMatchConfigWidget(pixelMatcher, this);
 
     // main widget
     QWidget* mainWidget = new QWidget(this);

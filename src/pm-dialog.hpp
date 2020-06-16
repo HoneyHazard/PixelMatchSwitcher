@@ -16,7 +16,6 @@ public:
 
 signals:
     void sigOpenImage(QString filename);
-    void sigNewUiConfig(PmMatchConfig);
 
 protected:
     void closeEvent(QCloseEvent*) override;

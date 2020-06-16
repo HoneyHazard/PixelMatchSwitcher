@@ -49,8 +49,10 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
     std::string matchImgFilename(size_t matchIdx) const;
+    size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
 
-    PmMultiMatchResults results() const;
+    PmMultiMatchResults multiMatchResults() const;
+    PmMatchResults matchResults(size_t matchIdx) const;
     PmScenes scenes() const;
     //PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
@@ -58,16 +60,24 @@ public:
 
 signals:
     void sigFrameProcessed();
+    void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
+    void sigNewMatchConfig(size_t matchIndex, PmMatchConfig config);
+    void sigNewMultiMatchConfigSize(size_t sz);
+    void sigSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
+    void sigNoMatchSceneChanged(std::string sceneName, std::string transition);
+
+    // REDO!!!
     void sigImgSuccess(size_t matchIdx, std::string filename, QImage img);
     void sigImgFailed(size_t matchIdx, std::string filename);
-    void sigNewMatchResults(PmMultiMatchResults);
     void sigScenesChanged(PmScenes);
     void sigMatchPresetsChanged();
     void sigMatchPresetStateChanged();
 
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);
-    void onNewMatchConfig(PmMultiMatchConfig);
+    void onNewMultiMatchConfig(PmMultiMatchConfig cfg);
+    void onNewMatchConfig(size_t matchIndex, PmMatchConfig cfg);
+    void onSelectMatchIndex(size_t matchIndex);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
@@ -102,7 +112,8 @@ protected:
     PmFilterRef m_activeFilter;
 
     mutable QMutex m_matchConfigMutex;
-    PmMultiMatchConfig m_matchConfig;
+    PmMultiMatchConfig m_multiMatchConfig;
+    size_t m_selectedMatchIndex;
     
     std::string m_activeMatchPreset;
     PmMatchPresets m_matchPresets;

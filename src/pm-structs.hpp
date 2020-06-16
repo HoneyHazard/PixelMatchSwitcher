@@ -4,8 +4,9 @@
 #include <utility>
 #include <qmetatype.h>
 #include <unordered_map>
-#include <QSet>
-#include <QHash>
+#include <unordered_set>
+//#include <QSet>
+//#include <QHash>
 
 #include <obs.h>
 #include <obs.hpp>
@@ -35,13 +36,10 @@ struct PmMatchResults
     uint32_t numMatched = 0;
     float percentageMatched = 0;
     bool isMatched = false;
-};
-
-class PmMultiMatchResults : public std::vector<PmMatchResults>
-{
-public:
     uint32_t baseWidth = 0, baseHeight = 0;
 };
+
+typedef std::vector<PmMatchResults> PmMultiMatchResults;
 
 struct PmMatchConfig
 {
@@ -97,22 +95,9 @@ public:
 
 typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;
 
-#if 0
-struct PmSwitchConfig
-{
-    PmSwitchConfig() {}
-    PmSwitchConfig(obs_data_t *data);
-    obs_data_t* save() const;
-
-    bool isEnabled = false;
-    OBSWeakSource matchScene;
-    OBSWeakSource noMatchScene;
-    OBSWeakSource defaultTransition;
-};
-#endif
-
-uint qHash(const OBSWeakSource &ws);
-typedef QSet<OBSWeakSource> PmScenes;
+//uint qHash(const OBSWeakSource &ws);
+//typedef QSet<OBSWeakSource> PmScenes;
+typedef std::unordered_set<std::string> PmScenes;
 
 void pmRegisterMetaTypes();
 
@@ -120,4 +105,18 @@ void pmRegisterMetaTypes();
     #define PM_LITTLE_ENDIAN (REG_DWORD == REG_DWORD_LITTLE_ENDIAN)
 #else
     #define PM_LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
+#endif
+
+#if 0
+struct PmSwitchConfig
+{
+    PmSwitchConfig() {}
+    PmSwitchConfig(obs_data_t* data);
+    obs_data_t* save() const;
+
+    bool isEnabled = false;
+    OBSWeakSource matchScene;
+    OBSWeakSource noMatchScene;
+    OBSWeakSource defaultTransition;
+};
 #endif
