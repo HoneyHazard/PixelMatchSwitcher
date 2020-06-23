@@ -4,8 +4,8 @@
 #include <utility>
 #include <qmetatype.h>
 #include <unordered_map>
-#include <unordered_set>
-//#include <QSet>
+//#include <unordered_set>
+#include <QSet>
 //#include <QHash>
 
 #include <obs.h>
@@ -95,9 +95,9 @@ public:
 
 typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;
 
-//uint qHash(const OBSWeakSource &ws);
-//typedef QSet<OBSWeakSource> PmScenes;
-typedef std::unordered_set<std::string> PmScenes;
+uint qHash(const OBSWeakSource &ws);
+typedef QSet<OBSWeakSource> PmScenes;
+//typedef std::unordered_set<std::string> PmScenes;
 
 void pmRegisterMetaTypes();
 
