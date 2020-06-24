@@ -32,12 +32,12 @@ public:
     size_t matchIndex() const { return m_matchIndex; }
 
 signals:
-    void sigNewMatchConfig(size_t matchIdx, PmMatchConfig cfg);
+    void sigChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
 
 protected slots:
     // core interaction
     void onNewMatchResults(size_t matchIdx, PmMatchResults results);
-    void onNewMatchConfig(size_t matchIdx, PmMatchConfig cfg);
+    void onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
     void onSelectMatchIndex(size_t matchindex, PmMatchConfig cfg);
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);

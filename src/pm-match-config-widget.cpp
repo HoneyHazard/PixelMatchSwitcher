@@ -265,18 +265,18 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
             this, &PmMatchConfigWidget::onNewMatchResults, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewMatchConfig,
-            this, &PmMatchConfigWidget::onNewMatchConfig, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigChangedMatchConfig,
+            this, &PmMatchConfigWidget::onChangedMatchConfig, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigSelectMatchIndex,
             this, &PmMatchConfigWidget::onSelectMatchIndex, Qt::QueuedConnection);
 
     // local signals -> core
-    connect(this, &PmMatchConfigWidget::sigNewMatchConfig,
-            m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
+            m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
 
     // finish init
     size_t selIdx = m_core->selectedConfigIndex();
-    onNewMatchConfig(selIdx, m_core->matchConfig(selIdx));
+    onChangedMatchConfig(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     //onPresetsChanged();
     //onPresetStateChanged();
@@ -309,7 +309,7 @@ void PmMatchConfigWidget::onSelectMatchIndex(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    onNewMatchConfig(matchIndex, cfg);
+    onChangedMatchConfig(matchIndex, cfg);
 }
 
 void PmMatchConfigWidget::drawPreview(void *data, uint32_t cx, uint32_t cy)
@@ -470,7 +470,7 @@ void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
     m_maskModeDisplay->setText(color.name(QColor::HexArgb));
 }
 
-void PmMatchConfigWidget::onNewMatchConfig(size_t matchIdx, PmMatchConfig cfg)
+void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg)
 {
     if (matchIdx != m_matchIndex) return;
 
@@ -531,7 +531,7 @@ void PmMatchConfigWidget::onBrowseButtonReleased()
         this, obs_module_text("Open an image file"), curPath, filter);
     if (!path.isEmpty()) {
         config.matchImgFilename = path.toUtf8().data();
-        emit sigNewMatchConfig(m_matchIndex, config);
+        emit sigChangedMatchConfig(m_matchIndex, config);
     }
 }
 
@@ -724,7 +724,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
 
     updateFilterDisplaySize(config, m_prevResults);
     maskModeChanged(config.maskMode, config.filterCfg.mask_color);
-    emit sigNewMatchConfig(m_matchIndex, config);
+    emit sigChangedMatchConfig(m_matchIndex, config);
 }
 
 void PmMatchConfigWidget::onDestroy(QObject *obj)
@@ -781,7 +781,7 @@ connect(m_core, &PmCore::sigNewMatchResults,
 
 // local signals -> core slots
 connect(this, &PmMatchConfigWidget::sigNewUiConfig,
-    m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
+    m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
 connect(this, &PmMatchConfigWidget::sigSaveMatchPreset,
     m_core, &PmCore::onSaveMatchPreset, Qt::QueuedConnection);
 connect(this, &PmMatchConfigWidget::sigSelectActiveMatchPreset,

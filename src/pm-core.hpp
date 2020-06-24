@@ -61,7 +61,7 @@ public:
 signals:
     void sigFrameProcessed();
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
-    void sigNewMatchConfig(size_t matchIndex, PmMatchConfig config);
+    void sigChangedMatchConfig(size_t matchIndex, PmMatchConfig config);
     void sigNewMultiMatchConfigSize(size_t sz);
     void sigSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
     void sigNoMatchSceneChanged(std::string sceneName, std::string transition);
@@ -75,18 +75,20 @@ signals:
 
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);
-    void onNewMatchConfig(size_t matchIndex, PmMatchConfig cfg);   
+    void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);   
     void onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
-    void onSelectMatchIndex(size_t matchIndex);
+    void onRemoveMatchConfig(size_t matchIndex);
     void onMoveMatchConfigUp(size_t matchIndex);
     void onMoveMatchConfigDown(size_t matchIndex);
+    void onResetMatchConfigs();
+    void onSelectMatchIndex(size_t matchIndex);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
     void onRemoveMatchPreset(std::string name);
 
 protected slots:
-    void onNewMultiMatchConfig(PmMultiMatchConfig cfg);
+    //void onNewMultiMatchConfig(PmMultiMatchConfig cfg);
 
     void onMenuAction();
     void onPeriodicUpdate();
@@ -101,9 +103,9 @@ protected:
     
     void supplyImageToFilter(size_t matchIdx);
     void supplyImagesToFilter();
-    
-    
-    void supplyConfigToFilter();
+
+    void supplyConfigToFilter(size_t matchIdx);
+    void supplyConfigsToFilter();
 
     void pmSave(obs_data_t *data);
     void pmLoad(obs_data_t *data);

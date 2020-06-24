@@ -20,7 +20,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     auto multiConfig = m_core->multiMatchConfig();
     onNewMultiMatchConfigSize(multiConfig.size());
     for (size_t i = 0; i < multiConfig.size(); ++i) {
-        onNewMatchConfig(i, multiConfig[i]);
+        onChangedMatchConfig(i, multiConfig[i]);
     }
 
     auto multiResults = m_core->multiMatchResults();
@@ -39,8 +39,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onSelectMatchIndex, Qt::QueuedConnection);
 
     // connections: this -> core
-    connect(this, &PmMatchListWidget::sigNewMatchConfig,
-        m_core, &PmCore::onNewMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchListWidget::sigChangedMatchConfig,
+        m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigSelectMatchIndex,
         m_core, &PmCore::onSelectMatchIndex, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigMoveMatchConfigUp,
@@ -49,6 +49,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onMoveMatchConfigDown, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigInsertMatchConfig,
         m_core, &PmCore::onInsertMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchListWidget::sigRemoveMatchConfig,
+        m_core, &PmCore::onRemoveMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchListWidget::sigResetMatchConfigs,
+        m_core, &PmCore::onResetMatchConfigs, Qt::QueuedConnection);
 }
 
 void PmMatchListWidget::onScenesChanged(PmScenes scenes)
@@ -64,7 +68,7 @@ void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
 {
 }
 
-void PmMatchListWidget::onNewMatchConfig(size_t idx, PmMatchConfig cfg)
+void PmMatchListWidget::onChangedMatchConfig(size_t idx, PmMatchConfig cfg)
 {
 }
 

@@ -108,7 +108,7 @@ static void pm_supply_match_entry_gfx(
     entry->match_img_width = width;
     entry->match_img_height = height;
 
-    size_t sz = (size_t)(width * height * 3);
+    size_t sz = (size_t)width * (size_t)height * 3;
     entry->match_img_data = bmalloc(sz);
     memcpy(entry->match_img_data, bits, sz);
     pthread_mutex_unlock(&filter->mutex);
@@ -116,7 +116,7 @@ static void pm_supply_match_entry_gfx(
 
 static void pm_supply_match_entry_config(
     struct pm_filter_data* filter, size_t match_idx,
-    struct pm_match_entry_config* cfg)
+    const struct pm_match_entry_config* cfg)
 {
     if (match_idx >= filter->num_match_entries) return;
     pthread_mutex_lock(&filter->mutex);
