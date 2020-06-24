@@ -1,8 +1,12 @@
 #include "pm-match-list-widget.hpp"
 #include "pm-core.hpp"
 
-#include <QListWidget>
+#include <QTableWidget>
 #include <QVBoxLayout>
+
+#include <QCheckBox>
+#include <QLabel>
+#include <QComboBox>
 
 using namespace std;
 
@@ -10,7 +14,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
 {
-    m_listWidget = new QListWidget(this);
+    m_listWidget = new QTableWidget(this);
+    m_listWidget->setCellWidget(0, 0, new QCheckBox(this));
+    m_listWidget->setCellWidget(0, 1, new QLabel("test", this));
+    m_listWidget->setCellWidget(0, 2, new QComboBox(this));
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addWidget(m_listWidget);

@@ -5,7 +5,7 @@
 #include <QWidget>
 
 class PmCore;
-class QListWidget;
+class QTableWidget;
 
 class PmMatchListWidget : public QWidget
 {
@@ -33,5 +33,5 @@ protected slots:
 
 protected:
     PmCore* m_core;
-    QListWidget *m_listWidget;
+    QTableWidget *m_listWidget;
 };
