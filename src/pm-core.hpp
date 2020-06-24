@@ -75,15 +75,19 @@ signals:
 
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);
-    void onNewMultiMatchConfig(PmMultiMatchConfig cfg);
-    void onNewMatchConfig(size_t matchIndex, PmMatchConfig cfg);
+    void onNewMatchConfig(size_t matchIndex, PmMatchConfig cfg);   
+    void onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
     void onSelectMatchIndex(size_t matchIndex);
+    void onMoveMatchConfigUp(size_t matchIndex);
+    void onMoveMatchConfigDown(size_t matchIndex);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
     void onRemoveMatchPreset(std::string name);
 
-private slots:
+protected slots:
+    void onNewMultiMatchConfig(PmMultiMatchConfig cfg);
+
     void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed();

@@ -200,6 +200,10 @@ void PmCore::onSaveMatchPreset(std::string name)
     emit sigMatchPresetStateChanged();
 }
 
+void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
+{
+}
+
 void PmCore::onSelectMatchIndex(size_t matchIndex)
 {
     if (matchIndex >= m_multiMatchConfig.size()) {
@@ -212,6 +216,14 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
     
     m_selectedMatchIndex = matchIndex;
     emit sigSelectMatchIndex(matchIndex, m_multiMatchConfig[matchIndex]);
+}
+
+void PmCore::onMoveMatchConfigUp(size_t matchIndex)
+{
+}
+
+void PmCore::onMoveMatchConfigDown(size_t matchIndex)
+{
 }
 
 void PmCore::onSelectActiveMatchPreset(std::string name)

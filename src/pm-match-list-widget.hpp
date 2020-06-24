@@ -1,27 +1,35 @@
 #pragma once
 
-#include <QListWidget>
-
 #include "pm-structs.hpp"
 
-class PmCore;
+#include <QWidget>
 
-class PmListWidget : public QListWidget
+class PmCore;
+class QListWidget;
+
+class PmMatchListWidget : public QWidget
 {
+    Q_OBJECT
+
 public:
-    PmListWidget(PmCore* core, QWidget* parent);
+    PmMatchListWidget(PmCore* core, QWidget* parent);
 
 signals:
     void sigNewMatchConfig(size_t idx, PmMatchConfig cfg);
-    void sigNoMatchSceneChanged(std::string scene, std::string transition);
-    void sigSelectMatchIndex(size_t matchIndex);
+    
+    void sigSelectMatchIndex(size_t matchIndex);    
+    void sigMoveMatchConfigUp(size_t matchIndex);
+    void sigMoveMatchConfigDown(size_t matchIndex);
+    void sigInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
 
 protected slots:
+    void onScenesChanged(PmScenes);
     void onNewMatchResults(size_t idx, PmMatchResults results);
-
     void onNewMultiMatchConfigSize(size_t sz);
     void onNewMatchConfig(size_t idx, PmMatchConfig cfg);
-    void onNoMatchSceneChanged(std::string scene, std::string transition);
     void onSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
 
+protected:
+    PmCore* m_core;
+    QListWidget *m_listWidget;
 };

@@ -204,9 +204,9 @@ obs_data_t *PmSwitchConfig::save() const
 void pmRegisterMetaTypes()
 {
     qRegisterMetaType<std::string>("std::string");
-    qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
+    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
+    qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
-    qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
 }
 
