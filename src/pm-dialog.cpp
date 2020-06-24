@@ -2,6 +2,7 @@
 #include "pm-core.hpp"
 //#include "pm-match-tab.hpp"
 //#include "pm-switch-tab.hpp"
+#include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
 #include "pm-debug-tab.hpp"
 #include "pm-filter.h"
@@ -12,25 +13,29 @@
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 
-PmDialog::PmDialog(PmCore *pixelMatcher, QWidget *parent)
+PmDialog::PmDialog(PmCore *core, QWidget *parent)
 : QDialog(parent)
-, m_core(pixelMatcher)
+, m_core(core)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // widgets
-    PmMatchConfigWidget *matchWidget = new PmMatchConfigWidget(pixelMatcher, this);
+    PmMatchListWidget* matchListWidget 
+        = new PmMatchListWidget(core, this);
+    PmMatchConfigWidget *matchConfigWidget 
+        = new PmMatchConfigWidget(core, this);
 
     // main widget
     QWidget* mainWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(matchWidget);
+    mainLayout->addWidget(matchListWidget);
+    mainLayout->addWidget(matchConfigWidget);
     mainWidget->setLayout(mainLayout);
 
     // tab widget
     //PmSwitchTab *switchTab = new PmSwitchTab(pixelMatcher, this);
-    PmDebugTab* debugTab = new PmDebugTab(pixelMatcher, this);
+    PmDebugTab* debugTab = new PmDebugTab(core, this);
 
     QTabWidget *tabWidget = new QTabWidget(this);
     tabWidget->addTab(mainWidget, obs_module_text("Main"));

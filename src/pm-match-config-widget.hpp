@@ -79,7 +79,7 @@ protected:
     static const char *k_unsavedPresetStr;
     static const char* k_failedImgStr;
 
-    size_t m_matchIndex;
+    size_t m_matchIndex = 0;
 
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;

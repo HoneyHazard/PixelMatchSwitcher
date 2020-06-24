@@ -56,7 +56,7 @@ public:
     PmScenes scenes() const;
     //PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
-    const QImage& matchImage(size_t matchIdx) { return m_matchImages[matchIdx]; }
+    QImage matchImage(size_t matchIdx);
 
 signals:
     void sigFrameProcessed();

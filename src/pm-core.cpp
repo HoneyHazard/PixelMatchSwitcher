@@ -167,7 +167,10 @@ PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
 std::string PmCore::matchImgFilename(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    return m_multiMatchConfig[matchIdx].matchImgFilename;
+    if (matchIdx >= m_multiMatchConfig.size())
+        return "";
+    else 
+        return m_multiMatchConfig[matchIdx].matchImgFilename;
 }
 
 PmMatchPresets PmCore::matchPresets() const
@@ -363,6 +366,14 @@ PmScenes PmCore::scenes() const
 {
     QMutexLocker locker(&m_scenesMutex);
     return m_scenes;
+}
+
+QImage PmCore::matchImage(size_t matchIdx) 
+{ 
+    if (matchIdx >= m_matchImages.size())
+        return QImage();
+    else
+        return m_matchImages[matchIdx]; 
 }
 
 std::string PmCore::scenesInfo() const
