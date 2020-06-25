@@ -48,7 +48,8 @@ protected:
         ConfigName = 1, 
         SceneCombo = 2, 
         TransitionCombo = 3,
-        Result = 4
+        Result = 4,
+        NumRows = 5,
     };
 
     void constructRow(int idx);

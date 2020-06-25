@@ -25,7 +25,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setStyleSheet("QTableWidget::item { padding: 3px }");
-    m_tableWidget->setColumnCount(5);
+    m_tableWidget->setColumnCount((int)RowOrder::NumRows);
     m_tableWidget->setHorizontalHeaderLabels(QStringList() 
         << ""
         << obs_module_text("Match Config") 
@@ -119,8 +119,14 @@ void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
 {
     size_t oldSz = m_tableWidget->rowCount();
     m_tableWidget->setRowCount((int)sz + 1);
+    // widgets in the new rows are constructed, when necessary
     for (size_t i = oldSz-1; i < sz; ++i) {
         constructRow((int)i);
+    }
+    // last row below is empty (for insertion)
+    for (int c = 0; c < (int)RowOrder::NumRows; ++c) {
+        m_tableWidget->setCellWidget(sz, c, nullptr);
+        m_tableWidget->setItem(sz, c, nullptr);
     }
     if (oldSz == 0) {
         m_tableWidget->resizeColumnsToContents();

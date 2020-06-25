@@ -269,7 +269,7 @@ void PmCore::onRemoveMatchConfig(size_t matchIndex)
 
     if (matchIndex >= m_multiMatchConfig.size()) return;
 
-    size_t newSz = m_multiMatchConfig.size() + 1;
+    size_t newSz = m_multiMatchConfig.size() - 1;
     emit sigNewMultiMatchConfigSize(newSz);
     pm_filter_data* filterData = m_activeFilter.filterData();
     if (filterData) {
