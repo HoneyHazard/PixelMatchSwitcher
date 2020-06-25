@@ -31,7 +31,24 @@ protected slots:
     void onChangedMatchConfig(size_t idx, PmMatchConfig cfg);
     void onSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
 
+    void onRowSelected();
+
 protected:
+    enum class RowOrder : int { 
+        EnableBox = 0, 
+        ConfigName = 1, 
+        SceneCombo = 2, 
+        TransitionCombo = 3,
+        Result = 4
+    };
+
+    void constructRow(int idx);
+
+    void enableConfigToggled(size_t idx, bool enable);
+    void configRenamed(size_t idx, const QString& name);
+    void matchSceneSelected(size_t idx, const QString &scene);
+    void transitionSelected(size_t idx, const QString& transition);
+
     PmCore* m_core;
-    QTableWidget *m_listWidget;
+    QTableWidget *m_tableWidget;
 };
