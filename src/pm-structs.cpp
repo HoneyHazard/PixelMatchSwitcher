@@ -203,6 +203,7 @@ obs_data_t *PmSwitchConfig::save() const
 
 void pmRegisterMetaTypes()
 {
+    qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");

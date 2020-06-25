@@ -3,12 +3,15 @@
 
 #include <QTableWidget>
 #include <QHeaderView>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 
 #include <QCheckBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QPushButton>
+#include <QIcon>
 
 using namespace std;
 
@@ -16,7 +19,9 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
 {
+    // table widget
     m_tableWidget = new QTableWidget(this);
+    m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setStyleSheet("QTableWidget::item { padding: 3px }");
@@ -28,13 +33,25 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         << obs_module_text("Transition")
         << obs_module_text("Status"));
 
-    m_tableWidget->setRowCount(2);
-    constructRow(0);
-    constructRow(1);
 
-    m_tableWidget->resizeColumnsToContents();
+    // config editing buttons
+    m_cfgMoveUpBtn = new QPushButton(
+        QIcon::fromTheme("go-up"), obs_module_text("Up"), this);
+    m_cfgMoveDownBtn = new QPushButton(
+        QIcon::fromTheme("go-down"), obs_module_text("Down"), this);
+    m_cfgInsertBtn = new QPushButton(
+        QIcon::fromTheme("list-add"), obs_module_text("Insert"), this);
+    m_cfgRemoveBtn = new QPushButton(
+        QIcon::fromTheme("list-remove"), obs_module_text("Remove"), this);
+
+    QHBoxLayout* buttonsLayout = new QHBoxLayout;
+    buttonsLayout->addWidget(m_cfgMoveUpBtn);
+    buttonsLayout->addWidget(m_cfgMoveDownBtn);
+    buttonsLayout->addWidget(m_cfgInsertBtn);
+    buttonsLayout->addWidget(m_cfgRemoveBtn);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
     setLayout(mainLayout);
 
@@ -79,6 +96,14 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     // connections: local ui
     connect(m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
         this, &PmMatchListWidget::onRowSelected, Qt::QueuedConnection);
+    connect(m_cfgMoveUpBtn, &QPushButton::released,
+        this, &PmMatchListWidget::onConfigMoveUpReleased, Qt::QueuedConnection);
+    connect(m_cfgMoveDownBtn, &QPushButton::released,
+        this, &PmMatchListWidget::onConfigMoveDownReleased, Qt::QueuedConnection);
+    connect(m_cfgInsertBtn, &QPushButton::released,
+        this, &PmMatchListWidget::onConfigInsertReleased, Qt::QueuedConnection);
+    connect(m_cfgRemoveBtn, &QPushButton::released,
+        this, &PmMatchListWidget::onConfigRemoveReleased, Qt::QueuedConnection);
 }
 
 void PmMatchListWidget::onScenesChanged(PmScenes scenes)
@@ -92,6 +117,14 @@ void PmMatchListWidget::onNewMatchResults(size_t idx, PmMatchResults results)
 
 void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
 {
+    size_t oldSz = m_tableWidget->rowCount();
+    m_tableWidget->setRowCount((int)sz + 1);
+    for (size_t i = oldSz-1; i < sz; ++i) {
+        constructRow((int)i);
+    }
+    if (oldSz == 0) {
+        m_tableWidget->resizeColumnsToContents();
+    }
 }
 
 void PmMatchListWidget::onChangedMatchConfig(size_t idx, PmMatchConfig cfg)
@@ -100,12 +133,35 @@ void PmMatchListWidget::onChangedMatchConfig(size_t idx, PmMatchConfig cfg)
 
 void PmMatchListWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig config)
 {
+    m_tableWidget->selectRow((int)matchIndex);
 }
 
 void PmMatchListWidget::onRowSelected()
 {
-    int idx = m_tableWidget->currentIndex().row();
+    int idx = currentIndex();
     emit sigSelectMatchIndex(idx);
+}
+
+void PmMatchListWidget::onConfigInsertReleased()
+{
+    int idx = currentIndex();
+    PmMatchConfig newCfg = PmMatchConfig();
+    newCfg.label = obs_module_text("new config");
+    emit sigInsertMatchConfig(idx, newCfg);
+}
+
+void PmMatchListWidget::onConfigRemoveReleased()
+{
+    int idx = currentIndex();
+    emit sigRemoveMatchConfig(idx);
+}
+
+void PmMatchListWidget::onConfigMoveUpReleased()
+{
+}
+
+void PmMatchListWidget::onConfigMoveDownReleased()
+{
 }
 
 void PmMatchListWidget::constructRow(int idx)
@@ -119,18 +175,19 @@ void PmMatchListWidget::constructRow(int idx)
         [this, idx](bool checked) { enableConfigToggled(idx, checked); });
     m_tableWidget->setCellWidget(idx, (int)RowOrder::EnableBox, enableBox);
 
+    QString placeholderName = QString("placeholder %1").arg(idx);
 #if 0
     QLineEdit* nameEdit = new QLineEdit(parent);
     nameEdit->setEnabled(false);
     nameEdit->setStyleSheet(bgStyle);
-    nameEdit->setText();
+    nameEdit->setText(placeholderName);
     connect(nameEdit, &QLineEdit::textChanged,
         [this, idx](const QString& str) { configRenamed(idx, str); });
     m_tableWidget->setCellWidget(idx, (int)RowOrder::ConfigName, nameEdit);
+#else
+    m_tableWidget->setItem(
+        idx, (int)RowOrder::ConfigName, new QTableWidgetItem(placeholderName));
 #endif
-
-    QString name = QString("placeholder %1").arg(idx);
-    m_tableWidget->setItem(idx, (int)RowOrder::ConfigName, new QTableWidgetItem(name));
 
     QComboBox* sceneCombo = new QComboBox(parent);
     connect(sceneCombo, &QComboBox::currentTextChanged,
@@ -145,20 +202,25 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)RowOrder::TransitionCombo, transitionCombo);
 }
 
-void PmMatchListWidget::enableConfigToggled(size_t idx, bool enable)
+int PmMatchListWidget::currentIndex() const
+{
+    return m_tableWidget->currentIndex().row();
+}
+
+void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
 {
     m_tableWidget->selectRow(idx);
 }
 
-void PmMatchListWidget::configRenamed(size_t idx, const QString& name)
+void PmMatchListWidget::configRenamed(int idx, const QString& name)
 {
 }
 
-void PmMatchListWidget::matchSceneSelected(size_t idx, const QString& scene)
+void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
 {
 }
 
-void PmMatchListWidget::transitionSelected(size_t idx, const QString& transition)
+void PmMatchListWidget::transitionSelected(int idx, const QString& transition)
 {
 }
 

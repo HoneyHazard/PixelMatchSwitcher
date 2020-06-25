@@ -6,6 +6,7 @@
 
 class PmCore;
 class QTableWidget;
+class QPushButton;
 
 class PmMatchListWidget : public QWidget
 {
@@ -13,6 +14,8 @@ class PmMatchListWidget : public QWidget
 
 public:
     PmMatchListWidget(PmCore* core, QWidget* parent);
+
+    int currentIndex() const;
 
 signals:
     void sigChangedMatchConfig(size_t idx, PmMatchConfig cfg);
@@ -25,13 +28,19 @@ signals:
     void sigResetMatchConfigs();
 
 protected slots:
+    // core event handlers
     void onScenesChanged(PmScenes);
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onNewMultiMatchConfigSize(size_t sz);
     void onChangedMatchConfig(size_t idx, PmMatchConfig cfg);
     void onSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
 
+    // local UI handlers
     void onRowSelected();
+    void onConfigInsertReleased();
+    void onConfigRemoveReleased();
+    void onConfigMoveUpReleased();
+    void onConfigMoveDownReleased();
 
 protected:
     enum class RowOrder : int { 
@@ -44,11 +53,17 @@ protected:
 
     void constructRow(int idx);
 
-    void enableConfigToggled(size_t idx, bool enable);
-    void configRenamed(size_t idx, const QString& name);
-    void matchSceneSelected(size_t idx, const QString &scene);
-    void transitionSelected(size_t idx, const QString& transition);
+    void enableConfigToggled(int idx, bool enable);
+    void configRenamed(int idx, const QString& name);
+    void matchSceneSelected(int idx, const QString &scene);
+    void transitionSelected(int idx, const QString& transition);
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;
+
+    QPushButton* m_cfgMoveUpBtn;
+    QPushButton* m_cfgMoveDownBtn;
+    QPushButton* m_cfgInsertBtn;
+    QPushButton* m_cfgRemoveBtn;
+
 };
