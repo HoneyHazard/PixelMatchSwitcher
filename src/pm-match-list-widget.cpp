@@ -125,16 +125,40 @@ void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
     }
     // last row below is empty (for insertion)
     for (int c = 0; c < (int)RowOrder::NumRows; ++c) {
-        m_tableWidget->setCellWidget(sz, c, nullptr);
-        m_tableWidget->setItem(sz, c, nullptr);
+        m_tableWidget->setCellWidget((int)sz, c, nullptr);
+        m_tableWidget->setItem((int)sz, c, nullptr);
     }
     if (oldSz == 0) {
         m_tableWidget->resizeColumnsToContents();
     }
 }
 
-void PmMatchListWidget::onChangedMatchConfig(size_t idx, PmMatchConfig cfg)
+void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
 {
+    int idx = (int)index;
+
+    auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
+        idx, (int)RowOrder::EnableBox);
+    enableBox->blockSignals(true);
+    enableBox->setChecked(cfg.isEnabled);
+    enableBox->blockSignals(false);
+    
+    auto nameItem = m_tableWidget->item(idx, (int)RowOrder::ConfigName);
+    nameItem->setText(cfg.label.data());
+    
+    auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
+        idx, (int)RowOrder::SceneCombo);
+    sceneCombo->blockSignals(true);
+    int sceneIndex = sceneCombo->findText(cfg.matchScene.data());
+    sceneCombo->setCurrentIndex(sceneIndex);
+    sceneCombo->blockSignals(false);
+
+    auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
+        idx, (int)RowOrder::TransitionCombo);
+    transCombo->blockSignals(true);
+    int transIndex = transCombo->findText(cfg.matchTransition.data());
+    transCombo->setCurrentIndex(transIndex);
+    transCombo->blockSignals(false);
 }
 
 void PmMatchListWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig config)
