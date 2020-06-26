@@ -157,11 +157,17 @@ PmMultiMatchConfig PmCore::multiMatchConfig() const
     return m_multiMatchConfig;
 }
 
+size_t PmCore::multiMatchConfigSize() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_multiMatchConfig.size();
+}
+
 PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return matchIdx < m_multiMatchConfig.size() ? m_multiMatchConfig[matchIdx]
-                                           : PmMatchConfig();
+                                                : PmMatchConfig();
 }
 
 std::string PmCore::matchImgFilename(size_t matchIdx) const
@@ -329,16 +335,10 @@ void PmCore::onMoveMatchConfigDown(size_t matchIndex)
 
 void PmCore::onSelectMatchIndex(size_t matchIndex)
 {
-    if (matchIndex >= m_multiMatchConfig.size()) {
-        matchIndex = 0;
-    }
-
-    if (matchIndex == m_selectedMatchIndex) {
-        return;
-    }
+    if (matchIndex == m_selectedMatchIndex) return;
     
     m_selectedMatchIndex = matchIndex;
-    emit sigSelectMatchIndex(matchIndex, m_multiMatchConfig[matchIndex]);
+    emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));
 }
 
 void PmCore::onSelectActiveMatchPreset(std::string name)

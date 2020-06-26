@@ -82,6 +82,7 @@ protected:
     static const char* k_failedImgStr;
 
     size_t m_matchIndex = 0;
+    size_t m_multiConfigSz = 0;
 
     QLabel* m_configCaption;
     QLineEdit* m_labelEdit;

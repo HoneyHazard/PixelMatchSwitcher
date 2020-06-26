@@ -285,6 +285,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     // finish init
     size_t selIdx = m_core->selectedConfigIndex();
+    onNewMultiMatchConfigSize(m_core->multiMatchConfigSize());
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onConfigUiChanged();
@@ -320,11 +321,13 @@ void PmMatchConfigWidget::onSelectMatchIndex(
         QString(obs_module_text("Config #%1:")).arg(matchIndex+1));
 
     onChangedMatchConfig(matchIndex, cfg);
+    setEnabled(m_matchIndex < m_multiConfigSz);
 }
 
 void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
 {
-    setEnabled(sz != 0);
+    m_multiConfigSz = sz;
+    setEnabled(m_matchIndex < m_multiConfigSz);
 }
 
 void PmMatchConfigWidget::drawPreview(void *data, uint32_t cx, uint32_t cy)

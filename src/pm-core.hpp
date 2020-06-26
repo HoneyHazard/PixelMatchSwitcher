@@ -47,6 +47,7 @@ public:
     bool matchConfigDirty() const;
 
     PmMultiMatchConfig multiMatchConfig() const;
+    size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
     std::string matchImgFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
