@@ -62,20 +62,11 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     presetLayout->setContentsMargins(0, 0, 0, 0);
 
     // index and label
-    QHBoxLayout* labelSubLayout = new QHBoxLayout;
-    labelSubLayout->setContentsMargins(0, 0, 0, 0);
-
-    m_indexDisplay = new QLineEdit(this);
-    m_indexDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    m_indexDisplay->setReadOnly(true);
-    labelSubLayout->addWidget(m_indexDisplay, 1);
-
-    m_labelEdit = new QLineEdit(this);
-    labelSubLayout->addWidget(m_labelEdit, 99);
+    m_configCaption = new QLabel(this);
+    m_labelEdit = new QLineEdit(this);   
     connect(m_labelEdit, &QLineEdit::textEdited,
             this, &PmMatchConfigWidget::onConfigUiChanged, Qt::QueuedConnection);
-
-    mainLayout->addRow(obs_module_text("Config: "), labelSubLayout);
+    mainLayout->addRow(m_configCaption, m_labelEdit);
 
     // image path display and browse button
     QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
@@ -325,7 +316,9 @@ void PmMatchConfigWidget::onSelectMatchIndex(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    m_indexDisplay->setText(QString("[%1]").arg(matchIndex));
+    m_configCaption->setText(
+        QString(obs_module_text("Config #%1:")).arg(matchIndex+1));
+
     onChangedMatchConfig(matchIndex, cfg);
 }
 

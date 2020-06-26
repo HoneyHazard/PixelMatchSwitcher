@@ -83,7 +83,7 @@ protected:
 
     size_t m_matchIndex = 0;
 
-    QLineEdit* m_indexDisplay;
+    QLabel* m_configCaption;
     QLineEdit* m_labelEdit;
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;
