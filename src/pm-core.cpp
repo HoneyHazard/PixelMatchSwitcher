@@ -254,13 +254,11 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     }
 
     m_matchImages.insert(m_matchImages.begin() + matchIndex, QImage());
-
-    auto newMultiCfg = m_multiMatchConfig;
-    newMultiCfg.insert(newMultiCfg.begin() + matchIndex, cfg);
     m_multiMatchConfig.resize(newSz);
-    for (size_t i = matchIndex; i < newSz; ++i) {
-        onChangedMatchConfig(i, newMultiCfg[i]);
+    for (size_t i = matchIndex + 1; i < newSz; ++i) {
+        onChangedMatchConfig(i, m_multiMatchConfig[i-1]);
     }
+    onChangedMatchConfig(matchIndex, cfg);
 }
 
 void PmCore::onRemoveMatchConfig(size_t matchIndex)
@@ -277,11 +275,11 @@ void PmCore::onRemoveMatchConfig(size_t matchIndex)
     }
 
     m_matchImages.erase(m_matchImages.begin() + matchIndex);
-    auto newMultiCfg = m_multiMatchConfig;
-    newMultiCfg.erase(newMultiCfg.begin() + matchIndex);
+
     for (size_t i = matchIndex; i < newSz; ++i) {
-        onChangedMatchConfig(i, newMultiCfg[i]);
+        onChangedMatchConfig(i, m_multiMatchConfig[i + 1]);
     }
+    m_multiMatchConfig.resize(newSz);
 }
 
 void PmCore::onResetMatchConfigs()

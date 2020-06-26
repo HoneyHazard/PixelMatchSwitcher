@@ -72,6 +72,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onNewMatchResults, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMultiMatchConfigSize,
         this, &PmMatchListWidget::onNewMultiMatchConfigSize, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigChangedMatchConfig,
+        this, &PmMatchListWidget::onChangedMatchConfig, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
         this, &PmMatchListWidget::onNewMatchResults, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigSelectMatchIndex,
