@@ -122,7 +122,7 @@ void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
     size_t oldSz = m_tableWidget->rowCount();
     m_tableWidget->setRowCount((int)sz + 1);
     // widgets in the new rows are constructed, when necessary
-    for (size_t i = oldSz-1; i < sz; ++i) {
+    for (size_t i = oldSz ? oldSz-1 : 0; i < sz; ++i) {
         constructRow((int)i);
     }
     // last row below is empty (for insertion)
