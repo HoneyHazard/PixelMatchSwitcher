@@ -61,6 +61,22 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     QHBoxLayout *presetLayout = new QHBoxLayout;
     presetLayout->setContentsMargins(0, 0, 0, 0);
 
+    // index and label
+    QHBoxLayout* labelSubLayout = new QHBoxLayout;
+    labelSubLayout->setContentsMargins(0, 0, 0, 0);
+
+    m_indexDisplay = new QLineEdit(this);
+    m_indexDisplay->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    m_indexDisplay->setReadOnly(true);
+    labelSubLayout->addWidget(m_indexDisplay, 1);
+
+    m_labelEdit = new QLineEdit(this);
+    labelSubLayout->addWidget(m_labelEdit, 99);
+    connect(m_labelEdit, &QLineEdit::textEdited,
+            this, &PmMatchConfigWidget::onConfigUiChanged, Qt::QueuedConnection);
+
+    mainLayout->addRow(obs_module_text("Config: "), labelSubLayout);
+
     // image path display and browse button
     QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
     imgPathSubLayout->setContentsMargins(0, 0, 0, 0);
@@ -269,6 +285,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onChangedMatchConfig, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigSelectMatchIndex,
             this, &PmMatchConfigWidget::onSelectMatchIndex, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNewMultiMatchConfigSize,
+            this, &PmMatchConfigWidget::onNewMultiMatchConfigSize, Qt::QueuedConnection);
 
     // local signals -> core
     connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
@@ -276,10 +294,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     // finish init
     size_t selIdx = m_core->selectedConfigIndex();
-    onChangedMatchConfig(selIdx, m_core->matchConfig(selIdx));
+    onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
-    //onPresetsChanged();
-    //onPresetStateChanged();
     onConfigUiChanged();
 
 #if 1
@@ -309,7 +325,13 @@ void PmMatchConfigWidget::onSelectMatchIndex(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
+    m_indexDisplay->setText(QString("[%1]").arg(matchIndex));
     onChangedMatchConfig(matchIndex, cfg);
+}
+
+void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
+{
+    setEnabled(sz != 0);
 }
 
 void PmMatchConfigWidget::drawPreview(void *data, uint32_t cx, uint32_t cy)
@@ -476,6 +498,7 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 
     blockSignals(true);
 
+    m_labelEdit->setText(cfg.label.data());
     m_imgPathEdit->setText(cfg.matchImgFilename.data());
     m_maskModeCombo->setCurrentIndex(int(cfg.maskMode));
     m_customColor = cfg.filterCfg.mask_color;
@@ -684,14 +707,17 @@ void PmMatchConfigWidget::onNewMatchResults(
 
 void PmMatchConfigWidget::onConfigUiChanged()
 {
-    PmMatchConfig config;
+    PmMatchConfig config = m_core->matchConfig(m_matchIndex);
     
+    std::string label = m_labelEdit->text().toUtf8().data();
+
     std::string filename = m_imgPathEdit->text().toUtf8().data();
     size_t failedMarker = filename.find(k_failedImgStr);
     if (failedMarker == 0) {
         filename.erase(failedMarker, strlen(k_failedImgStr)+1);
     }
     
+    config.label = label;
     config.matchImgFilename = filename;
     config.filterCfg.roi_left = m_posXBox->value();
     config.filterCfg.roi_bottom = m_posYBox->value();
@@ -715,12 +741,6 @@ void PmMatchConfigWidget::onConfigUiChanged()
         = m_regionScaleCombo->currentData().toFloat();
     config.previewMatchImageScale
         = m_matchImgScaleCombo->currentData().toFloat();
-
-    PmMultiMatchConfig multiConfig = m_core->multiMatchConfig();
-    if (m_matchIndex >= multiConfig.size()) {
-        multiConfig.resize(m_matchIndex + 1);
-    }
-    multiConfig[m_matchIndex] = config;
 
     updateFilterDisplaySize(config, m_prevResults);
     maskModeChanged(config.maskMode, config.filterCfg.mask_color);

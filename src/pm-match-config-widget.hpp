@@ -39,6 +39,8 @@ protected slots:
     void onNewMatchResults(size_t matchIdx, PmMatchResults results);
     void onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
     void onSelectMatchIndex(size_t matchindex, PmMatchConfig cfg);
+    void onNewMultiMatchConfigSize(size_t sz);
+
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);
@@ -81,6 +83,8 @@ protected:
 
     size_t m_matchIndex = 0;
 
+    QLineEdit* m_indexDisplay;
+    QLineEdit* m_labelEdit;
     QLineEdit* m_imgPathEdit;
     OBSQTDisplay *m_filterDisplay;
     QComboBox *m_maskModeCombo;
