@@ -4,11 +4,13 @@
 //#include "pm-switch-tab.hpp"
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
+#include "pm-preview-widget.hpp"
 #include "pm-debug-tab.hpp"
 #include "pm-filter.h"
 
 #include <QVBoxLayout>
 #include <QTabWidget>
+#include <QSplitter>
 
 #include <obs-module.h>
 #include <obs-frontend-api.h>
@@ -20,31 +22,28 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
     setAttribute(Qt::WA_DeleteOnClose, true);
 
-    // widgets
-    PmMatchListWidget* matchListWidget 
-        = new PmMatchListWidget(core, this);
-    PmMatchConfigWidget *matchConfigWidget 
+    // UI modules
+    PmMatchListWidget* matchListWidget = new PmMatchListWidget(core, this);
+    PmMatchConfigWidget *matchConfigWidget  
         = new PmMatchConfigWidget(core, this);
-
-    // main widget
-    QWidget* mainWidget = new QWidget(this);
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(matchListWidget);
-    mainLayout->addWidget(matchConfigWidget);
-    mainWidget->setLayout(mainLayout);
-
-    // tab widget
-    //PmSwitchTab *switchTab = new PmSwitchTab(pixelMatcher, this);
+    PmPreviewWidget* previewWidget = new PmPreviewWidget(core, this);
     PmDebugTab* debugTab = new PmDebugTab(core, this);
 
+    // main tab (splitter)
+    QSplitter* mainTab = new QSplitter(Qt::Vertical, this);
+    mainTab->addWidget(matchListWidget);
+    mainTab->addWidget(matchConfigWidget);
+
+    // tab widget
     QTabWidget *tabWidget = new QTabWidget(this);
-    tabWidget->addTab(mainWidget, obs_module_text("Main"));
+    tabWidget->addTab(mainTab, obs_module_text("Main"));
     //tabWidget->addTab(switchTab, obs_module_text("Switching"));
     tabWidget->addTab(debugTab, obs_module_text("Debug"));
 
     // top level layout
-    QVBoxLayout *topLevelLayout = new QVBoxLayout;
+    QHBoxLayout *topLevelLayout = new QHBoxLayout;
     topLevelLayout->addWidget(tabWidget);
+    topLevelLayout->addWidget(previewWidget);
     setLayout(topLevelLayout);
 }
 

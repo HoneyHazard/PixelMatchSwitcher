@@ -2,9 +2,6 @@
 #include "pm-core.hpp"
 #include "pm-filter.h"
 
-#include <qt-display.hpp>
-#include <display-helpers.hpp>
-
 #include <QHBoxLayout>
 #include <QFormLayout>
 #include <QTabWidget>
@@ -15,13 +12,9 @@
 #include <QFileDialog>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
-#include <QRadioButton>
-#include <QButtonGroup>
-#include <QStackedWidget>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QColorDialog>
-#include <QThread> // sleep
 
 #include <obs-module.h>
 
@@ -165,103 +158,17 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     mainLayout->addRow(
         obs_module_text("Global Match Threshold: "), m_totalMatchThreshBox);
 
+    // divider line
+    QFrame* dividerLine = new QFrame();
+    dividerLine->setFrameShape(QFrame::HLine);
+    dividerLine->setFrameShadow(QFrame::Sunken);
+    mainLayout->addRow(dividerLine);
+
     // match result label
     m_matchResultDisplay = new QLabel("--", this);
     m_matchResultDisplay->setTextFormat(Qt::RichText);
     mainLayout->addRow(
         obs_module_text("Match Result: "), m_matchResultDisplay);
-
-    // preview mode
-    m_previewModeButtons = new QButtonGroup(this);
-    m_previewModeButtons->setExclusive(true);
-    connect(m_previewModeButtons,SIGNAL(buttonReleased(int)),
-            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
-
-    QHBoxLayout *previewModeLayout = new QHBoxLayout;
-    previewModeLayout->setContentsMargins(0, 0, 0, 0);
-
-    QRadioButton *videoModeRadio
-        = new QRadioButton(obs_module_text("Video"), this);
-    m_previewModeButtons->addButton(videoModeRadio, int(PmPreviewMode::Video));
-    previewModeLayout->addWidget(videoModeRadio);
-
-    QRadioButton *regionModeRadio
-        = new QRadioButton(obs_module_text("Region"), this);
-    m_previewModeButtons->addButton(regionModeRadio, int(PmPreviewMode::Region));
-    previewModeLayout->addWidget(regionModeRadio);
-
-    QRadioButton *matchImgRadio
-        = new QRadioButton(obs_module_text("Match Image"), this);
-    m_previewModeButtons->addButton(matchImgRadio, int(PmPreviewMode::MatchImage));
-    previewModeLayout->addWidget(matchImgRadio);
-
-    // divider line 2
-    QFrame *line2 = new QFrame();
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
-    mainLayout->addRow(line2);
-
-    mainLayout->addRow(
-        obs_module_text("Preview Mode: "), previewModeLayout);
-
-    // preview scales
-    m_previewScaleStack = new QStackedWidget(this);
-    m_previewScaleStack->setSizePolicy(
-        QSizePolicy::Minimum, QSizePolicy::Minimum);
-
-    m_videoScaleCombo = new QComboBox(this);
-    m_videoScaleCombo->addItem("100%", 1.f);
-    m_videoScaleCombo->addItem("75%", 0.75f);
-    m_videoScaleCombo->addItem("50%", 0.5f);
-    m_videoScaleCombo->addItem("25%", 0.25f);
-    m_videoScaleCombo->setCurrentIndex(0);
-    connect(m_videoScaleCombo, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
-    m_previewScaleStack->insertWidget(
-        int(PmPreviewMode::Video), m_videoScaleCombo);
-
-    m_regionScaleCombo = new QComboBox(this);
-    m_regionScaleCombo->addItem("50%", 0.5f);
-    m_regionScaleCombo->addItem("100%", 1.f);
-    m_regionScaleCombo->addItem("150%", 1.5f);
-    m_regionScaleCombo->addItem("200%", 2.f);
-    m_regionScaleCombo->addItem("500%", 5.f);
-    m_regionScaleCombo->addItem("1000%", 10.f);
-    m_regionScaleCombo->setCurrentIndex(0);
-    connect(m_regionScaleCombo, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
-    m_previewScaleStack->insertWidget(
-        int(PmPreviewMode::Region), m_regionScaleCombo);
-
-    m_matchImgScaleCombo = new QComboBox(this);
-    m_matchImgScaleCombo->addItem("50%", 0.5f);
-    m_matchImgScaleCombo->addItem("100%", 1.f);
-    m_matchImgScaleCombo->addItem("150%", 1.5f);
-    m_matchImgScaleCombo->addItem("200%", 2.f);
-    m_matchImgScaleCombo->addItem("500%", 5.f);
-    m_matchImgScaleCombo->addItem("1000%", 10.f);
-    m_matchImgScaleCombo->setCurrentIndex(0);
-    connect(m_matchImgScaleCombo, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
-    m_previewScaleStack->insertWidget(
-        int(PmPreviewMode::MatchImage), m_matchImgScaleCombo);
-
-    mainLayout->addRow(
-        obs_module_text("Preview Scale: "), m_previewScaleStack);
-
-    // image/match display area
-
-    m_filterDisplay = new OBSQTDisplay(this);
-    auto addDrawCallback = [this]() {
-        obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
-                          PmMatchConfigWidget::drawPreview,
-                          this);
-    };
-    connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
-            addDrawCallback);
-    connect(m_filterDisplay, &OBSQTDisplay::destroyed,
-            this, &PmMatchConfigWidget::onDestroy, Qt::DirectConnection);
-    mainLayout->addRow(m_filterDisplay);
 
     setLayout(mainLayout);
 
@@ -290,7 +197,6 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onConfigUiChanged();
 
-#if 1
     std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
     const QImage& matchImg = m_core->matchImage(m_matchIndex);
     if (matchImgFilename.size()) {
@@ -300,17 +206,10 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
         }
     }
-#endif
 }
 
 PmMatchConfigWidget::~PmMatchConfigWidget()
 {
-    while(m_rendering) {
-        QThread::sleep(1);
-    }
-    if (m_matchImgTex) {
-        gs_texture_destroy(m_matchImgTex);
-    }
 }
 
 void PmMatchConfigWidget::onSelectMatchIndex(
@@ -328,121 +227,6 @@ void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
 {
     m_multiConfigSz = sz;
     setEnabled(m_matchIndex < m_multiConfigSz);
-}
-
-void PmMatchConfigWidget::drawPreview(void *data, uint32_t cx, uint32_t cy)
-{
-    auto widget = static_cast<PmMatchConfigWidget*>(data);
-    auto core = widget->m_core;
-
-    if (!core) return;
-
-    widget->m_rendering = true;
-    auto config = core->matchConfig(widget->m_matchIndex);
-    if (config.previewMode == PmPreviewMode::MatchImage) {
-        widget->drawMatchImage();
-    } else if (core->activeFilterRef().isValid()) {
-        widget->drawEffect();
-    }
-    widget->m_rendering = false;
-
-    UNUSED_PARAMETER(cx);
-    UNUSED_PARAMETER(cy);
-}
-
-void PmMatchConfigWidget::drawEffect()
-{
-    auto filterRef = m_core->activeFilterRef();
-    auto renderSrc = filterRef.filter();
-
-    if (!renderSrc) return;
-
-    float orthoLeft, orthoBottom, orthoRight, orthoTop;
-    int vpLeft, vpBottom, vpWidth, vpHeight;
-
-    const auto &results = m_prevResults;
-    auto config = m_core->matchConfig(m_matchIndex);
-
-    if (config.previewMode == PmPreviewMode::Video) {
-        int cx = int(results.baseWidth);
-        int cy = int(results.baseHeight);
-        int scaledCx = int(cx * config.previewVideoScale);
-        int scaledCy = int(cy * config.previewVideoScale);
-
-        orthoLeft = 0.f;
-        orthoBottom = 0.f;
-        orthoRight = cx;
-        orthoTop = cy;
-
-        float scale;
-        GetScaleAndCenterPos(cx, cy, scaledCx, scaledCy, vpLeft, vpBottom, scale);
-        vpWidth = scaledCx;
-        vpHeight = scaledCy;
-    } else if (config.previewMode == PmPreviewMode::Region) {
-        const auto &results = m_prevResults;
-        orthoLeft = config.filterCfg.roi_left;
-        orthoBottom = config.filterCfg.roi_bottom;
-        orthoRight = config.filterCfg.roi_left + int(results.matchImgWidth);
-        orthoTop = config.filterCfg.roi_bottom + int(results.matchImgHeight);
-
-        float scale = config.previewRegionScale;
-        //float scale = config.previewVideoScale;
-        vpLeft = 0.f;
-        vpBottom = 0.0f;
-        vpWidth = int(results.matchImgWidth * scale);
-        vpHeight = int(results.matchImgHeight * scale);
-    }
-
-    gs_viewport_push();
-    gs_projection_push();
-    gs_ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, -100.0f, 100.0f);
-    gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
-
-    auto filterData = filterRef.filterData();
-    filterRef.lockData();
-    filterData->preview_mode = true;
-    filterData->show_border = (config.previewMode == PmPreviewMode::Video);
-    filterRef.unlockData();
-
-    obs_source_video_render(renderSrc);
-
-    gs_projection_pop();
-    gs_viewport_pop();
-}
-
-void PmMatchConfigWidget::drawMatchImage()
-{
-    {
-        QMutexLocker locker(&m_matchImgLock);
-        if (!m_matchImg.isNull()) {
-            if (m_matchImgTex) {
-                gs_texture_destroy(m_matchImgTex);
-            }
-            unsigned char *bits = m_matchImg.bits();
-            m_matchImgTex = gs_texture_create(
-                m_matchImg.width(), m_matchImg.height(),
-                GS_BGRA, (uint8_t)-1,
-                (const uint8_t**)(&bits), 0);
-            m_matchImg = QImage();
-        }
-    }
-
-    auto config = m_core->matchConfig(m_matchIndex);
-    auto filterRef = m_core->activeFilterRef();
-    auto filterData = filterRef.filterData();
-
-    float previewScale = config.previewMatchImageScale;
-
-    gs_effect *effect = m_core->drawMatchImageEffect();
-    gs_eparam_t *param = gs_effect_get_param_by_name(effect, "image");
-    gs_effect_set_texture(param, m_matchImgTex);
-
-    while (gs_effect_loop(effect, "Draw")) {
-        gs_matrix_push();
-        gs_matrix_scale3f(previewScale, previewScale, previewScale);
-        gs_draw_sprite(m_matchImgTex, 0, 0, 0);
-        gs_matrix_pop();
-    }
 }
 
 void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
@@ -502,25 +286,11 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
     m_posYBox->setValue(cfg.filterCfg.roi_bottom);
     m_perPixelErrorBox->setValue(double(cfg.filterCfg.per_pixel_err_thresh));
     m_totalMatchThreshBox->setValue(double(cfg.totalMatchThresh));
-    m_previewModeButtons->button(int(cfg.previewMode))->setChecked(true);
-    m_videoScaleCombo->setCurrentIndex(
-        m_videoScaleCombo->findData(cfg.previewVideoScale));
-    m_regionScaleCombo->setCurrentIndex(
-        m_regionScaleCombo->findData(cfg.previewRegionScale));
-    m_matchImgScaleCombo->setCurrentIndex(
-        m_matchImgScaleCombo->findData(cfg.previewMatchImageScale));
 
     roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
     maskModeChanged(cfg.maskMode, m_customColor);
 
     blockSignals(false);
-}
-
-void PmMatchConfigWidget::closeEvent(QCloseEvent *e)
-{
-    obs_display_remove_draw_callback(
-        m_filterDisplay->GetDisplay(), PmMatchConfigWidget::drawPreview, this);
-    QWidget::closeEvent(e);
 }
 
 void PmMatchConfigWidget::onPickColorButtonReleased()
@@ -561,9 +331,6 @@ void PmMatchConfigWidget::onImgSuccess(
 
     m_imgPathEdit->setText(filename.data());
     m_imgPathEdit->setStyleSheet("");
-
-    QMutexLocker locker(&m_matchImgLock);
-    m_matchImg = img;
 }
 
 void PmMatchConfigWidget::onImgFailed(size_t matchIndex, std::string filename)
@@ -576,50 +343,6 @@ void PmMatchConfigWidget::onImgFailed(size_t matchIndex, std::string filename)
     }
     m_imgPathEdit->setText(imgStr);
     m_imgPathEdit->setStyleSheet("color: red");
-
-    QMutexLocker locker(&m_matchImgLock);
-    if (m_matchImgTex) {
-        obs_enter_graphics();
-        gs_texture_destroy(m_matchImgTex);
-        obs_leave_graphics();
-        m_matchImgTex = nullptr;
-    }
-}
-
-void PmMatchConfigWidget::updateFilterDisplaySize(
-    const PmMatchConfig &config, const PmMatchResults &results)
-{
-    int cx, cy;
-    if (config.previewMode == PmPreviewMode::Video) {
-        if (!m_core->activeFilterRef().isValid()) {
-            cx = 0; 
-            cy = 0;
-        } else {
-            float scale = config.previewVideoScale;
-            cx = int(results.baseWidth * scale);
-            cy = int(results.baseHeight * scale);
-        }
-    } else if (config.previewMode == PmPreviewMode::Region) {
-        if (!m_core->activeFilterRef().isValid()) {
-            cx = 0;
-            cy = 0;
-        } else {
-            float scale = config.previewRegionScale;
-            cx = int(results.matchImgWidth * scale);
-            cy = int(results.matchImgHeight * scale);
-        }
-    } else { // PmPreviewMode::MatchImage
-        float scale = config.previewMatchImageScale;
-        cx = int(results.matchImgWidth * scale);
-        cy = int(results.matchImgHeight * scale);
-    }
-
-    if (m_filterDisplay->width() != cx) {
-        m_filterDisplay->setFixedWidth(cx);
-    }
-    if (m_filterDisplay->height() != cy) {
-        m_filterDisplay->setFixedHeight(cy);
-    }
 }
 
 QColor PmMatchConfigWidget::toQColor(vec3 val)
@@ -697,7 +420,6 @@ void PmMatchConfigWidget::onNewMatchResults(
         .arg(double(results.percentageMatched), 0, 'f', 1);
     m_matchResultDisplay->setText(resultStr);
 
-    updateFilterDisplaySize(m_core->matchConfig(matchIdx), results);
     m_prevResults = results;
 }
 
@@ -723,32 +445,8 @@ void PmMatchConfigWidget::onConfigUiChanged()
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
 
-    int previewModeIdx = m_previewModeButtons->checkedId();
-    m_previewScaleStack->setCurrentIndex(previewModeIdx);
-    auto scaleCombo = m_previewScaleStack->widget(previewModeIdx);
-    if (scaleCombo) {
-        m_previewScaleStack->setFixedSize(scaleCombo->sizeHint());
-    }
-
-    config.previewMode = PmPreviewMode(previewModeIdx);
-    config.previewVideoScale
-        = m_videoScaleCombo->currentData().toFloat();
-    config.previewRegionScale
-        = m_regionScaleCombo->currentData().toFloat();
-    config.previewMatchImageScale
-        = m_matchImgScaleCombo->currentData().toFloat();
-
-    updateFilterDisplaySize(config, m_prevResults);
-    maskModeChanged(config.maskMode, config.filterCfg.mask_color);
+     maskModeChanged(config.maskMode, config.filterCfg.mask_color);
     emit sigChangedMatchConfig(m_matchIndex, config);
-}
-
-void PmMatchConfigWidget::onDestroy(QObject *obj)
-{
-    while(m_rendering) {
-        QThread::sleep(1);
-    }
-    UNUSED_PARAMETER(obj);
 }
 
 #if 0

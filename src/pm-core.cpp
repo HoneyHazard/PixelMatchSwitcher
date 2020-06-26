@@ -335,7 +335,7 @@ void PmCore::onMoveMatchConfigDown(size_t matchIndex)
 
 void PmCore::onSelectMatchIndex(size_t matchIndex)
 {
-    if (matchIndex == m_selectedMatchIndex) return;
+    //if (matchIndex == m_selectedMatchIndex) return;
     
     m_selectedMatchIndex = matchIndex;
     emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));

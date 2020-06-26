@@ -24,7 +24,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
-    m_tableWidget->setStyleSheet("QTableWidget::item { padding: 3px }");
     m_tableWidget->setColumnCount((int)RowOrder::NumRows);
     m_tableWidget->setHorizontalHeaderLabels(QStringList() 
         << ""
@@ -32,6 +31,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         << obs_module_text("Match Scene")
         << obs_module_text("Transition")
         << obs_module_text("Status"));
+    m_tableWidget->setStyleSheet(
+        "QTableWidget::item { padding: 3px };"
+        "QTableWidget::item:selected:!active { selection-background-color: #3399ff }"
+    );
 
 
     // config editing buttons
@@ -171,7 +174,12 @@ void PmMatchListWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig conf
 void PmMatchListWidget::onRowSelected()
 {
     int idx = currentIndex();
-    emit sigSelectMatchIndex(idx);
+    if (idx == -1) {
+        int prevIdx = (int)m_core->selectedConfigIndex();
+        onSelectMatchIndex(prevIdx, m_core->matchConfig(prevIdx));
+    } else {
+        emit sigSelectMatchIndex(idx);
+    }
 }
 
 void PmMatchListWidget::onConfigInsertReleased()

@@ -40,6 +40,7 @@ set(pixel-match-switcher_HEADERS
 #        src/pm-switch-tab.hpp
         src/pm-match-config-widget.hpp
         src/pm-match-list-widget.hpp
+		src/pm-preview-widget.hpp
         src/pm-dialog.hpp
         src/pm-structs.hpp
         src/pm-debug-tab.hpp
@@ -56,6 +57,7 @@ set(pixel-match-switcher_SOURCES
 #        src/pm-switch-tab.cpp
         src/pm-match-config-widget.cpp
         src/pm-match-list-widget.cpp
+		src/pm-preview-widget.cpp
         src/pm-debug-tab.cpp
         src/pm-dialog.cpp
         src/pm-structs.cpp
