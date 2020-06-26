@@ -105,6 +105,8 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
         this, &PmPreviewWidget::onDestroy, Qt::DirectConnection);
     mainLayout->addRow(m_filterDisplay);
 
+    setLayout(mainLayout);
+
     // core event handlers
     connect(m_core, &PmCore::sigSelectMatchIndex,
             this, &PmPreviewWidget::onSelectMatchIndex, Qt::QueuedConnection);
@@ -157,15 +159,24 @@ void PmPreviewWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg)
 {
     if (matchIdx != m_matchIndex) return;
 
-    blockSignals(true);
+    m_previewModeButtons->blockSignals(true);
     m_previewModeButtons->button(int(cfg.previewMode))->setChecked(true);
+    m_previewModeButtons->blockSignals(false);
+
+    m_videoScaleCombo->blockSignals(true);
     m_videoScaleCombo->setCurrentIndex(
         m_videoScaleCombo->findData(cfg.previewVideoScale));
+    m_videoScaleCombo->blockSignals(false);
+
+    m_regionScaleCombo->blockSignals(true);
     m_regionScaleCombo->setCurrentIndex(
         m_regionScaleCombo->findData(cfg.previewRegionScale));
+    m_regionScaleCombo->blockSignals(false);
+
+    m_matchImgScaleCombo->blockSignals(true);
     m_matchImgScaleCombo->setCurrentIndex(
         m_matchImgScaleCombo->findData(cfg.previewMatchImageScale));
-    blockSignals(false);
+    m_matchImgScaleCombo->blockSignals(false);
 }
 
 void PmPreviewWidget::onNewMatchResults(size_t matchIdx, PmMatchResults results)
@@ -215,6 +226,8 @@ void PmPreviewWidget::onConfigUiChanged()
     config.previewMatchImageScale
         = m_matchImgScaleCombo->currentData().toFloat();
 
+    emit sigChangedMatchConfig(m_matchIndex, config);
+
     updateFilterDisplaySize(config, m_core->matchResults(m_matchIndex));
 }
 
@@ -232,7 +245,6 @@ void PmPreviewWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
     onChangedMatchConfig(matchIndex, cfg);
 
 }
-
 
 void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
 {

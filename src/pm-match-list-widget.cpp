@@ -33,7 +33,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         << obs_module_text("Status"));
     m_tableWidget->setStyleSheet(
         "QTableWidget::item { padding: 3px };"
-        "QTableWidget::item:selected:!active { selection-background-color: #3399ff }"
+        //"QTableWidget::item:selected:!active { selection-background-color: #3399ff }"
     );
 
 

@@ -276,16 +276,35 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 {
     if (matchIdx != m_matchIndex) return;
 
-    blockSignals(true);
-
+    m_labelEdit->blockSignals(true);
     m_labelEdit->setText(cfg.label.data());
+    m_labelEdit->blockSignals(false);
+
+    m_imgPathEdit->blockSignals(true);
     m_imgPathEdit->setText(cfg.matchImgFilename.data());
+    m_imgPathEdit->blockSignals(false);
+
+    m_maskModeCombo->blockSignals(true);
     m_maskModeCombo->setCurrentIndex(int(cfg.maskMode));
+    m_maskModeCombo->blockSignals(false);
+
     m_customColor = cfg.filterCfg.mask_color;
+
+    m_posXBox->blockSignals(true);
     m_posXBox->setValue(cfg.filterCfg.roi_left);
+    m_posXBox->blockSignals(false);
+
+    m_posYBox->blockSignals(true);;
     m_posYBox->setValue(cfg.filterCfg.roi_bottom);
+    m_posYBox->blockSignals(false);
+
+    m_perPixelErrorBox->blockSignals(true);
     m_perPixelErrorBox->setValue(double(cfg.filterCfg.per_pixel_err_thresh));
+    m_perPixelErrorBox->blockSignals(false);
+
+    m_totalMatchThreshBox->blockSignals(true);
     m_totalMatchThreshBox->setValue(double(cfg.totalMatchThresh));
+    m_totalMatchThreshBox->blockSignals(false);
 
     roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
     maskModeChanged(cfg.maskMode, m_customColor);
@@ -445,7 +464,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
 
-     maskModeChanged(config.maskMode, config.filterCfg.mask_color);
+    maskModeChanged(config.maskMode, config.filterCfg.mask_color);
     emit sigChangedMatchConfig(m_matchIndex, config);
 }
 
