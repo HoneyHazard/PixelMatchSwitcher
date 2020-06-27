@@ -728,29 +728,6 @@ void PmCore::supplyConfigToFilter(size_t matchIdx)
 }
 #endif
 
-#if 0
-void PmCore::onNewMultiMatchConfig(PmMultiMatchConfig cfg)
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    if (m_multiMatchConfig.size() != cfg.size()) {
-        m_multiMatchConfig.resize(cfg.size());
-        m_matchImages.resize(cfg.size());
-        emit sigNewMultiMatchConfigSize(cfg.size());
-    }
-    for (size_t i = 0; i < cfg.size(); ++i) {
-        onChangedMatchConfig(i, cfg[i]);
-    }
-}
-#endif
-
-#if 0
-void PmCore::onNewSwitchConfig(PmSwitchConfig sceneConfig)
-{
-    QMutexLocker locker(&m_switchConfigMutex);
-    m_switchConfig = sceneConfig;
-}
-#endif
-
 void PmCore::pmSave(obs_data_t *saveData)
 {
     obs_data_t *saveObj = obs_data_create();
