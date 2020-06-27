@@ -130,16 +130,6 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onConfigUiChanged();
-
-    std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
-    const QImage& matchImg = m_core->matchImage(m_matchIndex);
-    if (matchImgFilename.size()) {
-        if (matchImg.isNull()) {
-            onImgFailed(m_matchIndex, matchImgFilename);
-        } else {
-            onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
-        }
-    }
 }
 
 PmPreviewWidget::~PmPreviewWidget()
@@ -248,6 +238,22 @@ void PmPreviewWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
     m_matchIndex = matchIndex;
     onChangedMatchConfig(matchIndex, cfg);
 
+    if (m_matchImgTex) {
+        obs_enter_graphics();
+        gs_texture_destroy(m_matchImgTex);
+        obs_leave_graphics();
+        m_matchImgTex = nullptr;
+    }
+
+    std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
+    const QImage& matchImg = m_core->matchImage(m_matchIndex);
+    if (matchImgFilename.size()) {
+        if (matchImg.isNull()) {
+            onImgFailed(m_matchIndex, matchImgFilename);
+        } else {
+            onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
+        }
+    }
 }
 
 void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)

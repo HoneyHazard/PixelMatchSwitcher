@@ -196,16 +196,6 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onConfigUiChanged();
-
-    std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
-    const QImage& matchImg = m_core->matchImage(m_matchIndex);
-    if (matchImgFilename.size()) {
-        if (matchImg.isNull()) {
-            onImgFailed(m_matchIndex, matchImgFilename);
-        } else {
-            onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
-        }
-    }
 }
 
 PmMatchConfigWidget::~PmMatchConfigWidget()
@@ -221,6 +211,16 @@ void PmMatchConfigWidget::onSelectMatchIndex(
 
     onChangedMatchConfig(matchIndex, cfg);
     setEnabled(m_matchIndex < m_multiConfigSz);
+
+    std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
+    const QImage& matchImg = m_core->matchImage(m_matchIndex);
+    if (matchImgFilename.size()) {
+        if (matchImg.isNull()) {
+            onImgFailed(m_matchIndex, matchImgFilename);
+        } else {
+            onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
+        }
+    }
 }
 
 void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)

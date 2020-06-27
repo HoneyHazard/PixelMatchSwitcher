@@ -45,6 +45,7 @@ protected:
     void drawMatchImage();
     void updateFilterDisplaySize(
         const PmMatchConfig& config, const PmMatchResults& results);
+    void unsetTexture();
 
     // todo: maybe not needed or useful
     virtual void closeEvent(QCloseEvent* e) override;
