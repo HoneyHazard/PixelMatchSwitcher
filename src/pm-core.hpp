@@ -120,7 +120,7 @@ protected:
 
     mutable QMutex m_matchConfigMutex;
     PmMultiMatchConfig m_multiMatchConfig;
-    size_t m_selectedMatchIndex;
+    size_t m_selectedMatchIndex = 0;
     
     std::string m_activeMatchPreset;
     PmMatchPresets m_matchPresets;

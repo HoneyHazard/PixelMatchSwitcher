@@ -115,7 +115,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     matchLocSubLayout->addWidget(posXLabel);
     m_posXBox = new QSpinBox(this);
     m_posXBox->setSuffix(" px");
-    m_posXBox->setMinimum(0);
+    m_posXBox->setRange(0, std::numeric_limits<int>::max());
     m_posXBox->setSingleStep(1);
     connect(m_posXBox, SIGNAL(valueChanged(int)),
             this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
@@ -126,7 +126,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     matchLocSubLayout->addWidget(posYLabel);
     m_posYBox = new QSpinBox(this);
     m_posYBox->setSuffix(" px");
-    m_posYBox->setMinimum(0);
+    m_posYBox->setRange(0, std::numeric_limits<int>::max());
     m_posYBox->setSingleStep(1);
     connect(m_posYBox, SIGNAL(valueChanged(int)),
         this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
@@ -410,6 +410,8 @@ void PmMatchConfigWidget::roiRangesChanged(
     uint32_t baseWidth, uint32_t baseHeight,
     uint32_t imgWidth, uint32_t imgHeight)
 {
+    if (baseWidth == 0 || baseHeight == 0)
+        return;
     m_posXBox->setMaximum(int(baseWidth - imgWidth));
     m_posYBox->setMaximum(int(baseHeight - imgHeight));
 }
