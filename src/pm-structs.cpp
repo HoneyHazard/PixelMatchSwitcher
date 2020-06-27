@@ -40,6 +40,7 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && filterCfg == other.filterCfg
         && previewMode == other.previewMode
         && previewVideoScale == other.previewVideoScale
+        && previewRegionScale == other.previewRegionScale
         && previewMatchImageScale == other.previewMatchImageScale
         && matchScene == other.matchScene
         && matchTransition == other.matchTransition;

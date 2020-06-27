@@ -121,6 +121,10 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
     connect(m_core, &PmCore::sigSelectMatchIndex,
             this, &PmPreviewWidget::onSelectMatchIndex, Qt::QueuedConnection);
 
+    // events sent to core
+    connect(this, &PmPreviewWidget::sigChangedMatchConfig,
+            m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
+
     // finish init
     size_t selIdx = m_core->selectedConfigIndex();
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
