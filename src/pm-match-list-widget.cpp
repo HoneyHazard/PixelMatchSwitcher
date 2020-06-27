@@ -145,7 +145,7 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::EnableBox);
     enableBox->blockSignals(true);
-    enableBox->setChecked(cfg.isEnabled);
+    enableBox->setChecked(cfg.filterCfg.is_enabled);
     enableBox->blockSignals(false);
     
     auto nameItem = m_tableWidget->item(idx, (int)RowOrder::ConfigName);

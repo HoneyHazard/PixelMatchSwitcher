@@ -21,6 +21,7 @@ bool operator== (const struct pm_match_entry_config& l,
 PmMatchConfig::PmMatchConfig()
 {
     memset(&filterCfg, 0, sizeof(filterCfg));
+    filterCfg.is_enabled = true;
 }
 
 bool PmMatchConfig::operator==(const PmMatchConfig &other) const
@@ -93,8 +94,8 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     previewMatchImageScale
         = float(obs_data_get_double(data, "preview_match_image_scale"));
 
-    obs_data_set_default_bool(data, "is_enabled", isEnabled);
-    isEnabled = obs_data_get_bool(data, "is_enabled");
+    obs_data_set_default_bool(data, "is_enabled", filterCfg.is_enabled);
+    filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
     
     matchScene = obs_data_get_string(data, "match_scene");
     matchTransition = obs_data_get_string(data, "match_transition");
@@ -121,7 +122,7 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_double(
         ret, "preview_match_image_scale", double(previewMatchImageScale));
 
-    obs_data_set_bool(ret, "is_enabled", isEnabled);
+    obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
     obs_data_set_string(ret, "match_scene", matchScene.data());
         //obs_source_get_name(obs_weak_source_get_source(matchScene)));
     obs_data_set_string(ret, "match_transition", matchTransition.data());

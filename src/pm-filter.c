@@ -222,10 +222,12 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
-    for (size_t i = 0; i < filter->num_match_entries; ++i) {
-        // TODO: conditional break??
-
+    for (size_t i = 0; i < filter->num_match_entries; ++i) {       
         struct pm_match_entry_data* entry = filter->match_entries + i;
+
+        if (filter->preview_mode && i != filter->selected_match_index)
+             continue;
+
         if (entry->match_img_data 
          && entry->match_img_width
          && entry->match_img_height) {

@@ -10,6 +10,7 @@
 struct pm_match_entry_config
 {
     // params
+    bool is_enabled;
     int roi_left;
     int roi_bottom;
     bool mask_alpha;
@@ -65,6 +66,7 @@ struct pm_filter_data
     pthread_mutex_t mutex;
     bool preview_mode;
     bool show_border;
+    size_t selected_match_index;
     uint32_t base_width;
     uint32_t base_height;
 

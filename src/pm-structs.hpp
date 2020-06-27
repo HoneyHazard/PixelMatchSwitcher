@@ -67,7 +67,6 @@ struct PmMatchConfig
     float previewRegionScale = 1.f;
     float previewMatchImageScale = 1.f;
 
-    bool isEnabled = true;
     //OBSWeakSource matchScene;
     //OBSWeakSource transition;
     std::string matchScene;

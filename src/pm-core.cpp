@@ -338,6 +338,12 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
     //if (matchIndex == m_selectedMatchIndex) return;
     
     m_selectedMatchIndex = matchIndex;
+    auto filterData = m_activeFilter.filterData();
+    if (filterData) {
+        pthread_mutex_lock(&filterData->mutex);
+        filterData->selected_match_index = matchIndex;
+        pthread_mutex_unlock(&filterData->mutex);
+    }
     emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));
 }
 
@@ -573,7 +579,7 @@ void PmCore::onFrameProcessed()
 
             const auto& cfgEntry = m_multiMatchConfig[i];
             const auto& resEntry = m_results[i];
-            if (cfgEntry.isEnabled && resEntry.isMatched) {
+            if (cfgEntry.filterCfg.is_enabled && resEntry.isMatched) {
                 switchScene(cfgEntry.matchScene, cfgEntry.matchTransition);
             }
         }
