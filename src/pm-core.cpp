@@ -506,16 +506,17 @@ void PmCore::updateActiveFilter()
         m_activeFilter.reset();
     }
     for (const auto &fi: m_filters) {
-        if (fi.isActive()) {
+        pm_filter_data* data;
+        if (fi.isActive() && (data = fi.filterData())) {
             m_activeFilter = fi;
-            auto data = m_activeFilter.filterData();
-            if (data) {
-                pthread_mutex_lock(&data->mutex);
-                data->on_frame_processed = on_frame_processed;
-                pthread_mutex_unlock(&data->mutex);
-                supplyConfigsToFilter();
-                supplyImagesToFilter();
+            pthread_mutex_lock(&data->mutex);
+            data->on_frame_processed = on_frame_processed;
+            pm_resize_match_entries(data, m_multiMatchConfig.size());
+            for (size_t i = 0; i < m_multiMatchConfig.size(); ++i) {
+                supplyConfigToFilter(i);
+                supplyImageToFilter(i);
             }
+            pthread_mutex_unlock(&data->mutex);
         }
     }
 }
@@ -663,18 +664,6 @@ void PmCore::supplyImageToFilter(size_t matchIdx)
     }
 }
 
-void PmCore::supplyImagesToFilter()
-{
-    auto filterData = m_activeFilter.filterData();
-    if (filterData) {
-        pthread_mutex_lock(&filterData->mutex);
-        for (size_t i = 0; i < m_matchImages.size(); ++i) {
-            supplyImageToFilter(i);
-        }
-        pthread_mutex_unlock(&filterData->mutex);
-    }
-}
-
 void PmCore::supplyConfigToFilter(size_t matchIdx)
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -687,26 +676,6 @@ void PmCore::supplyConfigToFilter(size_t matchIdx)
         pm_supply_match_entry_config(filterData, matchIdx, &cfg);
     }
 }
-
-void PmCore::supplyConfigsToFilter()
-{
-    const auto& cfg = m_multiMatchConfig;
-
-    auto filterData = m_activeFilter.filterData();
-    if (filterData) {
-        pthread_mutex_lock(&filterData->mutex);
-        pm_destroy_match_entries(filterData);
-        size_t sz = sizeof(struct pm_match_entry_data) * cfg.size();
-        filterData->match_entries = (struct pm_match_entry_data*)
-            bmalloc(sz);
-        memset(filterData->match_entries, 0, sz);
-        for (size_t i = 0; i < cfg.size(); ++i) {
-            const auto& cfgEntry = cfg[i];
-            auto entryData = filterData->match_entries + i;
-            entryData->cfg = cfgEntry.filterCfg;
-        }
-        pthread_mutex_unlock(&filterData->mutex);
-    }
 
 #if 0
             switch(m_matchConfig.maskMode) {
@@ -756,8 +725,8 @@ void PmCore::supplyConfigsToFilter()
         filterData->mask_color = maskColor;
         pthread_mutex_unlock(&filterData->mutex);
     }
-#endif
 }
+#endif
 
 #if 0
 void PmCore::onNewMultiMatchConfig(PmMultiMatchConfig cfg)

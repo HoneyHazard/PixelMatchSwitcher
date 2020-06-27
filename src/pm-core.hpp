@@ -103,10 +103,10 @@ protected:
     void updateActiveFilter();
     
     void supplyImageToFilter(size_t matchIdx);
-    void supplyImagesToFilter();
+    //void supplyImagesToFilter();
 
     void supplyConfigToFilter(size_t matchIdx);
-    void supplyConfigsToFilter();
+    //void supplyConfigsToFilter();
 
     void pmSave(obs_data_t *data);
     void pmLoad(obs_data_t *data);
