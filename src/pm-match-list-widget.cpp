@@ -118,10 +118,6 @@ void PmMatchListWidget::onScenesChanged(PmScenes scenes)
 
 }
 
-void PmMatchListWidget::onNewMatchResults(size_t idx, PmMatchResults results)
-{
-}
-
 void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
 {
     size_t oldSz = m_tableWidget->rowCount();
@@ -166,6 +162,18 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     int transIndex = transCombo->findText(cfg.matchTransition.data());
     transCombo->setCurrentIndex(transIndex);
     transCombo->blockSignals(false);
+}
+
+void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
+{
+    int idx = (int)index;
+
+    auto resultLabel = (QLabel*)m_tableWidget->cellWidget(
+        idx, (int)RowOrder::Result);
+    QString text = QString("<font color=\"%1\">%2%</font>")
+        .arg(results.isMatched ? "Green" : "DarkRed")
+        .arg(double(results.percentageMatched), 0, 'f', 1);
+    resultLabel->setText(text);
 }
 
 void PmMatchListWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig config)
@@ -242,6 +250,13 @@ void PmMatchListWidget::constructRow(int idx)
         [this, idx](const QString& str) { transitionSelected(idx, str); });
     m_tableWidget->setCellWidget(
         idx, (int)RowOrder::TransitionCombo, transitionCombo);
+
+    QLabel* resultLabel = new QLabel("--", parent);
+    //resultLabel->setStyleSheet(bgStyle);
+    resultLabel->setTextFormat(Qt::RichText);
+    resultLabel->setAlignment(Qt::AlignCenter);
+    m_tableWidget->setCellWidget(
+        idx, (int)RowOrder::Result, resultLabel);
 }
 
 int PmMatchListWidget::currentIndex() const
