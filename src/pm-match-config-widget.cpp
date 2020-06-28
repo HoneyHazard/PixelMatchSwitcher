@@ -195,7 +195,6 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onNewMultiMatchConfigSize(m_core->multiMatchConfigSize());
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
-    onConfigUiChanged();
 }
 
 PmMatchConfigWidget::~PmMatchConfigWidget()
@@ -221,6 +220,8 @@ void PmMatchConfigWidget::onSelectMatchIndex(
             onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
         }
     }
+
+    onConfigUiChanged();
 }
 
 void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
@@ -228,6 +229,7 @@ void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
     m_multiConfigSz = sz;
     setEnabled(m_matchIndex < m_multiConfigSz);
 }
+
 
 void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
 {
