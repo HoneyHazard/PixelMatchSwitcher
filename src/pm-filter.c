@@ -264,7 +264,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         gs_effect_set_float(filter->param_roi_right, roi_right_u);
         gs_effect_set_float(filter->param_roi_top, roi_top_v);
         gs_effect_set_float(filter->param_per_pixel_err_thresh,
-            entry->cfg.per_pixel_err_thresh);
+            entry->cfg.per_pixel_err_thresh / 100.f);
         gs_effect_set_bool(filter->param_mask_alpha, entry->cfg.mask_alpha);
         gs_effect_set_vec3(filter->param_mask_color, &entry->cfg.mask_color);
         gs_effect_set_texture(filter->param_match_img, entry->match_img_tex);
