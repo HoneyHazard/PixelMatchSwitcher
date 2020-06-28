@@ -461,10 +461,27 @@ void PmMatchConfigWidget::onConfigUiChanged()
     config.filterCfg.roi_left = m_posXBox->value();
     config.filterCfg.roi_bottom = m_posYBox->value();
     config.filterCfg.per_pixel_err_thresh = float(m_perPixelErrorBox->value());
-    config.filterCfg.mask_alpha = (config.maskMode == PmMaskMode::AlphaMode);
-    config.filterCfg.mask_color = m_customColor;
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
+
+    config.filterCfg.mask_alpha = (config.maskMode == PmMaskMode::AlphaMode);
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
+    //config.filterCfg.mask_color = m_customColor;
+    float r = 0.f, g = 0.f, b = 0.f;
+    switch (config.maskMode) {
+    case PmMaskMode::AlphaMode:
+    case PmMaskMode::BlackMode:
+        config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
+        break;
+    case PmMaskMode::GreenMode:
+        config.filterCfg.mask_color = { 0.f, 1.f, 0.f };
+        break;
+    case PmMaskMode::MagentaMode:
+        config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
+        break;
+    case PmMaskMode::CustomClrMode:
+        config.filterCfg.mask_color = m_customColor;
+        break;
+    }
 
     maskModeChanged(config.maskMode, config.filterCfg.mask_color);
     emit sigChangedMatchConfig(m_matchIndex, config);
