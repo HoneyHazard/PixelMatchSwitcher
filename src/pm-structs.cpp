@@ -71,6 +71,9 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     totalMatchThresh 
         = float(obs_data_get_double(data, "total_match_threshold"));
 
+    obs_data_set_default_int(data, "mask_mode", (int)maskMode);
+    maskMode = PmMaskMode(obs_data_get_int(data, "mask_mode"));
+
     obs_data_set_default_bool(data, "mask_alpha", filterCfg.mask_alpha);
     filterCfg.mask_alpha = obs_data_get_bool(data, "mask_alpha");
 
@@ -113,6 +116,7 @@ obs_data_t* PmMatchConfig::save() const
         ret, "per_pixel_allowed_error", double(filterCfg.per_pixel_err_thresh));
     obs_data_set_double(
         ret, "total_match_threshold", double(totalMatchThresh));
+    obs_data_set_int(ret, "mask_mode", (int)maskMode);
     obs_data_set_bool(ret, "mask_alpha", filterCfg.mask_alpha);
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
     obs_data_set_int(ret, "preview_mode", int(previewMode));

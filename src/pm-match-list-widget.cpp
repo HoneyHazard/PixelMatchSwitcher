@@ -30,7 +30,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         << obs_module_text("Match Config") 
         << obs_module_text("Match Scene")
         << obs_module_text("Transition")
-        << obs_module_text("Status"));
+        << obs_module_text("Result"));
     m_tableWidget->setStyleSheet(
         "QTableWidget::item { padding: 3px };"
         //"QTableWidget::item:selected:!active { selection-background-color: #3399ff }"
@@ -64,6 +64,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     for (size_t i = 0; i < multiConfig.size(); ++i) {
         onChangedMatchConfig(i, multiConfig[i]);
     }
+    size_t selIdx = m_core->selectedConfigIndex();
+    onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {
