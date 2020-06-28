@@ -476,7 +476,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
         config.filterCfg.mask_color = { 0.f, 1.f, 0.f };
         break;
     case PmMaskMode::MagentaMode:
-        config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
+        config.filterCfg.mask_color = { 1.f, 0.f, 1.f };
         break;
     case PmMaskMode::CustomClrMode:
         config.filterCfg.mask_color = m_customColor;
