@@ -50,8 +50,7 @@ void on_frame_processed(struct pm_filter_data *filter)
 {
     auto core = PmCore::m_instance;
     if (core) {
-        QMutexLocker locker(&core->m_filtersMutex);
-        const auto &fr = core->m_activeFilter;
+        auto fr = core->activeFilterRef();
         if (fr.filterData() == filter) {
             emit core->sigFrameProcessed();
         }
@@ -251,17 +250,23 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
 void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
 {
     size_t oldSz = multiMatchConfigSize();
-
     if (matchIndex > oldSz) matchIndex = oldSz;
-
     size_t newSz = oldSz + 1;
+    
+    // notify other modules
     emit sigNewMultiMatchConfigSize(newSz);
-    pm_filter_data* filterData = m_activeFilter.filterData();
+    
+    // reconfigure the filter
+    auto fr = activeFilterRef();
+    pm_filter_data* filterData = fr.filterData();
     if (filterData) {
         pm_resize_match_entries(filterData, newSz);
     }
 
+    // reconfigure images
     m_matchImages.insert(m_matchImages.begin() + matchIndex, QImage());
+    
+    // finish updating state and notifying
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig.resize(newSz);
@@ -276,18 +281,23 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
 void PmCore::onRemoveMatchConfig(size_t matchIndex)
 {
     size_t oldSz = multiMatchConfigSize();
-
     if (matchIndex >= oldSz) return;
-
     size_t newSz = oldSz - 1;
+
+    // notify other modules
     emit sigNewMultiMatchConfigSize(newSz);
-    pm_filter_data* filterData = m_activeFilter.filterData();
+
+    // reconfigure the filter
+    auto fr = activeFilterRef();
+    pm_filter_data* filterData = fr.filterData();
     if (filterData) {
         pm_resize_match_entries(filterData, newSz);
     }
 
+    // reconfigure images
     m_matchImages.erase(m_matchImages.begin() + matchIndex);
 
+    // finish updating state and notifying
     for (size_t i = matchIndex; i < newSz; ++i) {
         onChangedMatchConfig(i, matchConfig(i + 1));
     }
@@ -300,11 +310,17 @@ void PmCore::onRemoveMatchConfig(size_t matchIndex)
 
 void PmCore::onResetMatchConfigs()
 {
+    // notify other modules
     emit sigNewMultiMatchConfigSize(0);
-    pm_filter_data* filterData = m_activeFilter.filterData();
+
+    // reconfigure the filter
+    auto fr = activeFilterRef();
+    pm_filter_data* filterData = fr.filterData();
     if (filterData) {
         pm_resize_match_entries(filterData, 0);
     }
+
+    // finish updating state and notifying
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig.clear();
@@ -342,12 +358,15 @@ void PmCore::onMoveMatchConfigDown(size_t matchIndex)
 void PmCore::onSelectMatchIndex(size_t matchIndex)
 {   
     m_selectedMatchIndex = matchIndex;
-    auto filterData = m_activeFilter.filterData();
+
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
         filterData->selected_match_index = matchIndex;
         pthread_mutex_unlock(&filterData->mutex);
     }
+    
     emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));
 }
 
@@ -565,7 +584,9 @@ void PmCore::onFrameProcessed()
 {
     PmMultiMatchResults newResults;
 
-    auto filterData = m_activeFilter.filterData();
+    // fetch new results
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
 
@@ -587,6 +608,7 @@ void PmCore::onFrameProcessed()
         pthread_mutex_unlock(&filterData->mutex);
     }
 
+    // store new results
     {
         QMutexLocker resLocker(&m_resultsMutex);
         m_results = newResults;
@@ -666,7 +688,8 @@ void PmCore::supplyImageToFilter(size_t matchIdx)
 {
     const QImage& matchImg = m_matchImages[matchIdx];
 
-    auto filterData = m_activeFilter.filterData();
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
     if (filterData) {
         pthread_mutex_lock(&filterData->mutex);
         auto entryData = filterData->match_entries + matchIdx;
@@ -691,7 +714,8 @@ void PmCore::supplyConfigToFilter(size_t matchIdx)
 
     auto cfg = matchConfig(matchIdx).filterCfg;
 
-    auto filterData = m_activeFilter.filterData();
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
     if (filterData) {
         pm_supply_match_entry_config(filterData, matchIdx, &cfg);
     }
