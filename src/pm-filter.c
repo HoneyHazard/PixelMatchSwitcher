@@ -12,8 +12,9 @@ static void pixel_match_filter_destroy(void *data)
 {
     struct pm_filter_data *filter = data;
 
+    pm_resize_match_entries(filter, 0);
+
     pthread_mutex_lock(&filter->mutex);
-    pm_destroy_match_entries(filter);
     obs_enter_graphics();
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();

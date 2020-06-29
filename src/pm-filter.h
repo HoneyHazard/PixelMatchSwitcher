@@ -77,51 +77,57 @@ struct pm_filter_data
     void (*on_frame_processed)(struct pm_filter_data *sender);
 };
 
-static void pm_destroy_match_entry_gfx(
-    struct pm_filter_data* filter, size_t match_idx)
+static void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data)
 {
-    if (match_idx >= filter->num_match_entries) return;
 
-    pthread_mutex_lock(&filter->mutex);
-    struct pm_match_entry_data* entry = filter->match_entries + match_idx;
-    if (entry->match_img_tex) {
+    if (tex) {
         obs_enter_graphics();
-        gs_texture_destroy(entry->match_img_tex);
+        gs_texture_destroy(tex);
         obs_leave_graphics();
-        entry->match_img_tex = NULL;
     }
-    if (entry->match_img_data) {
-        bfree(entry->match_img_data);
-        entry->match_img_data = NULL;
+    if (img_data) {
+        bfree(img_data);
     }
-    pthread_mutex_unlock(&filter->mutex);
 }
 
 static void pm_supply_match_entry_gfx(
     struct pm_filter_data* filter, size_t match_idx,
     unsigned char* bits, uint32_t width, uint32_t height)
 {
-    if (match_idx >= filter->num_match_entries) return;
-
-    pm_destroy_match_entry_gfx(filter, match_idx);
-
     pthread_mutex_lock(&filter->mutex);
+
+    if (match_idx >= filter->num_match_entries) {
+        pthread_mutex_unlock(&filter->mutex);
+        return;
+    }
+
+    struct gs_texture* old_tex;
+    void* old_img_data;
     struct pm_match_entry_data* entry = filter->match_entries + match_idx;
+    old_tex = entry->match_img_tex;
+    old_img_data = entry->match_img_data;
+
     entry->match_img_width = width;
     entry->match_img_height = height;
-
     size_t sz = (size_t)width * (size_t)height * 3;
     entry->match_img_data = bmalloc(sz);
     memcpy(entry->match_img_data, bits, sz);
+
     pthread_mutex_unlock(&filter->mutex);
+
+    pm_destroy_match_gfx(old_tex, old_img_data);
 }
 
 static void pm_supply_match_entry_config(
     struct pm_filter_data* filter, size_t match_idx,
     const struct pm_match_entry_config* cfg)
 {
-    if (match_idx >= filter->num_match_entries) return;
     pthread_mutex_lock(&filter->mutex);
+    if (match_idx >= filter->num_match_entries) {
+        pthread_mutex_unlock(&filter->mutex);
+        return;
+    }
+
     struct pm_match_entry_data* entry = filter->match_entries + match_idx;
     memcpy(&entry->cfg, cfg, sizeof(struct pm_match_entry_config));
     pthread_mutex_unlock(&filter->mutex);
@@ -130,54 +136,38 @@ static void pm_supply_match_entry_config(
 static void pm_resize_match_entries(
     struct pm_filter_data* filter, size_t new_size)
 {
-    if (new_size == filter->num_match_entries) return;
-
     pthread_mutex_lock(&filter->mutex);
+    if (new_size == filter->num_match_entries) {
+        pthread_mutex_unlock(&filter->mutex);
+        return;
+    }
+
+    size_t old_size = filter->num_match_entries;
     struct pm_match_entry_data* old_entries = filter->match_entries;
-    size_t old_num_entries = filter->num_match_entries;
-
-    struct pm_match_entry_data* new_entries;
-
     if (new_size > 0) {
-        new_entries = (struct pm_match_entry_data*)bmalloc(
+        filter->match_entries = (struct pm_match_entry_data*)bmalloc(
             sizeof(struct pm_match_entry_data) * new_size);
         for (size_t i = 0; i < new_size; ++i) {
-            if (i < old_num_entries) {
-                memcpy((void*)(new_entries + i),
+            if (i < old_size) {
+                memcpy((void*)(filter->match_entries + i),
                        (void*)(old_entries + i),
                        sizeof(struct pm_match_entry_data));
             } else {
-                memset((void*)(new_entries + i),
+                memset((void*)(filter->match_entries + i),
                        0, sizeof(struct pm_match_entry_data));
             }
         }
     } else {
-        new_entries = NULL;
+        filter->match_entries = NULL;
     }
-
-    for (size_t i = new_size; i < filter->num_match_entries; i++)
-        pm_destroy_match_entry_gfx(filter, i);
-    if (old_entries)
-        bfree(old_entries);
-
-    filter->match_entries = new_entries;
     filter->num_match_entries = new_size;
     pthread_mutex_unlock(&filter->mutex);
+
+    for (size_t i = new_size; i < old_size; i++) {
+        struct pm_match_entry_data* old_entry = old_entries + i;
+        pm_destroy_match_gfx(old_entry->match_img_tex, old_entry->match_img_data);
+    }
+    if (old_entries)
+        bfree(old_entries);
 }
 
-static void pm_destroy_match_entries(struct pm_filter_data* filter)
-{
-    obs_enter_graphics();
-    for (size_t i = 0; i < filter->num_match_entries; ++i) {
-        struct pm_match_entry_data* entry = filter->match_entries + i;
-        if (entry->match_img_tex)
-            gs_texture_destroy(entry->match_img_tex);
-        if (entry->match_img_data)
-            bfree(entry->match_img_data);
-    }
-    obs_leave_graphics();
-    if (filter->match_entries)
-        bfree(filter->match_entries);
-    filter->num_match_entries = 0;
-    filter->match_entries = NULL;
-}
