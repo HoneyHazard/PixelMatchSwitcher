@@ -217,3 +217,14 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmScenes>("PmScenes");
 }
 
+QSet<QString> PmScenes::sceneNames() const
+{
+    QSet<QString> ret;
+    for (const auto weakSrc : *this) {
+        auto src = obs_weak_source_get_source(weakSrc);
+        if (src) {
+            ret.insert(obs_source_get_name(src));
+        }
+    }
+    return ret;
+}

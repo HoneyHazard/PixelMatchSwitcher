@@ -16,7 +16,7 @@
 #include <QTimer>
 #include <QThread>
 #include <QTextStream>
-#include <QSpinBox>
+#include <QSet>
 
 PmCore* PmCore::m_instance = nullptr;
 
@@ -480,6 +480,19 @@ void PmCore::scanScenes()
         if (m_scenes != scenes) {
             m_scenes = scenes;
             emit sigScenesChanged(scenes);
+            {
+                QMutexLocker matchLocker(&m_matchConfigMutex);
+                auto sceneNames = m_scenes.sceneNames();
+                for (size_t i = 0; i < m_multiMatchConfig.size(); ++i) {
+                    const auto &cfg = m_multiMatchConfig[i];
+                    if (cfg.matchScene.size()
+                     && !sceneNames.contains(cfg.matchScene.data())) {
+                        auto cfgCpy = cfg;
+                        cfgCpy.matchScene.clear();
+                        onChangedMatchConfig(i, cfgCpy);
+                    }
+                }
+            }
         }
     }
 }
@@ -635,7 +648,7 @@ void PmCore::switchScene(
             obs_frontend_set_current_transition(transitionSrc);
             //obs_source_release(transitionSrc);
         }
-        obs_frontend_set_current_scene(targetSceneSrc);
+        //obs_frontend_set_current_scene(targetSceneSrc);
     }
     //obs_source_release(currSceneSrc);
     //obs_source_release(targetSceneSrc);

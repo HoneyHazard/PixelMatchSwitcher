@@ -97,7 +97,8 @@ typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;
 uint qHash(const OBSWeakSource &ws);
 class PmScenes : public QSet<OBSWeakSource>
 {
-    std::vector<std::string> sceneNames() const;
+public:
+    QSet<QString> sceneNames() const;
 };
 //typedef std::unordered_set<std::string> PmScenes;
 

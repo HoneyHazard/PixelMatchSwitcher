@@ -3,10 +3,12 @@
 #include "pm-structs.hpp"
 
 #include <QWidget>
+#include <QSet>
 
 class PmCore;
 class QTableWidget;
 class QPushButton;
+class QComboBox;
 
 class PmMatchListWidget : public QWidget
 {
@@ -53,13 +55,16 @@ protected:
         NumRows = 5,
     };
 
+    static const std::string k_dontSwitchStr;
+
     void constructRow(int idx);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
+    void updateSceneChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
     //void configRenamed(int idx, const QString& name);
     void matchSceneSelected(int idx, const QString &scene);
-    void transitionSelected(int idx, const QString& transition);
+    void transitionSelected(int idx, const QString &transition);
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;
@@ -69,4 +74,6 @@ protected:
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
     QPushButton* m_cfgClearBtn;
+
+    QSet<QString> m_sceneNames;
 };
