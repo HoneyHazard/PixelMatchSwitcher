@@ -511,6 +511,7 @@ void PmCore::updateActiveFilter()
             m_activeFilter = fi;
             pthread_mutex_lock(&data->mutex);
             data->on_frame_processed = on_frame_processed;
+            data->selected_match_index = m_selectedMatchIndex;
             pm_resize_match_entries(data, m_multiMatchConfig.size());
             for (size_t i = 0; i < m_multiMatchConfig.size(); ++i) {
                 supplyConfigToFilter(i);
