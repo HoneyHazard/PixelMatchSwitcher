@@ -46,12 +46,14 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         QIcon::fromTheme("list-add"), obs_module_text("Insert"), this);
     m_cfgRemoveBtn = new QPushButton(
         QIcon::fromTheme("list-remove"), obs_module_text("Remove"), this);
+    m_cfgClearBtn = new QPushButton(obs_module_text("Clear All"), this);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->addWidget(m_cfgMoveUpBtn);
     buttonsLayout->addWidget(m_cfgMoveDownBtn);
     buttonsLayout->addWidget(m_cfgInsertBtn);
     buttonsLayout->addWidget(m_cfgRemoveBtn);
+    buttonsLayout->addWidget(m_cfgClearBtn);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(buttonsLayout);
@@ -111,11 +113,12 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onConfigInsertReleased, Qt::QueuedConnection);
     connect(m_cfgRemoveBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigRemoveReleased, Qt::QueuedConnection);
+    connect(m_cfgClearBtn, &QPushButton::released,
+        this, &PmMatchListWidget::onConfigClearReleased, Qt::QueuedConnection);
 }
 
 void PmMatchListWidget::onScenesChanged(PmScenes scenes)
 {
-
 }
 
 void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
@@ -134,6 +137,9 @@ void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
     if (oldSz == 0) {
         m_tableWidget->resizeColumnsToContents();
     }
+
+    // enable/disable control buttons
+    updateAvailableButtons((size_t)currentIndex(), sz);
 }
 
 void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
@@ -179,6 +185,8 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
 void PmMatchListWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig config)
 {
     m_tableWidget->selectRow((int)matchIndex);
+
+    updateAvailableButtons(matchIndex, m_core->multiMatchConfigSize());
 }
 
 void PmMatchListWidget::onRowSelected()
@@ -208,10 +216,19 @@ void PmMatchListWidget::onConfigRemoveReleased()
 
 void PmMatchListWidget::onConfigMoveUpReleased()
 {
+    int idx = currentIndex();
+    emit sigMoveMatchConfigUp(idx);
 }
 
 void PmMatchListWidget::onConfigMoveDownReleased()
 {
+    int idx = currentIndex();
+    emit sigMoveMatchConfigDown(idx);
+}
+
+void PmMatchListWidget::onConfigClearReleased()
+{
+    emit sigResetMatchConfigs();
 }
 
 void PmMatchListWidget::constructRow(int idx)
@@ -259,6 +276,15 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)RowOrder::Result, resultLabel);
 }
 
+void PmMatchListWidget::updateAvailableButtons(
+    size_t currIdx, size_t numConfigs)
+{
+    m_cfgMoveUpBtn->setEnabled(currIdx > 0 && currIdx < numConfigs);
+    m_cfgMoveDownBtn->setEnabled(numConfigs > 0 && currIdx < numConfigs - 1);
+    m_cfgRemoveBtn->setEnabled(currIdx < numConfigs);
+    m_cfgClearBtn->setEnabled(numConfigs > 0);
+}
+
 int PmMatchListWidget::currentIndex() const
 {
     return m_tableWidget->currentIndex().row();
@@ -269,9 +295,11 @@ void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
     m_tableWidget->selectRow(idx);
 }
 
+#if 0
 void PmMatchListWidget::configRenamed(int idx, const QString& name)
 {
 }
+#endif
 
 void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
 {

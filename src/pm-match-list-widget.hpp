@@ -41,6 +41,7 @@ protected slots:
     void onConfigRemoveReleased();
     void onConfigMoveUpReleased();
     void onConfigMoveDownReleased();
+    void onConfigClearReleased();
 
 protected:
     enum class RowOrder : int { 
@@ -53,9 +54,10 @@ protected:
     };
 
     void constructRow(int idx);
+    void updateAvailableButtons(size_t currIdx, size_t numConfigs);
 
     void enableConfigToggled(int idx, bool enable);
-    void configRenamed(int idx, const QString& name);
+    //void configRenamed(int idx, const QString& name);
     void matchSceneSelected(int idx, const QString &scene);
     void transitionSelected(int idx, const QString& transition);
 
@@ -66,5 +68,5 @@ protected:
     QPushButton* m_cfgMoveDownBtn;
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
-
+    QPushButton* m_cfgClearBtn;
 };
