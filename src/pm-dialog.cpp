@@ -31,6 +31,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 
     // main tab (splitter)
     QSplitter* mainTab = new QSplitter(Qt::Vertical, this);
+    mainTab->setStyleSheet("QSplitter::handle{background: black; height: 2px}");
     mainTab->addWidget(matchListWidget);
     mainTab->addWidget(matchConfigWidget);
 
