@@ -22,6 +22,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     // table widget
     m_tableWidget = new QTableWidget(this);
     m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setColumnCount((int)RowOrder::NumRows);
@@ -176,9 +177,17 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
 
     auto resultLabel = (QLabel*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::Result);
-    QString text = QString("<font color=\"%1\">%2%</font>")
-        .arg(results.isMatched ? "Green" : "Red")
-        .arg(double(results.percentageMatched), 0, 'f', 1);
+
+    float percentage = results.percentageMatched;
+
+    QString text;     
+    if (percentage == percentage) { // not NaN
+        text = QString("<font color=\"%1\">%2%</font>")
+            .arg(results.isMatched ? "Green" : "Red")
+            .arg(double(percentage), 0, 'f', 1);
+    } else {
+        text = obs_module_text("N/A");
+    }
     resultLabel->setText(text);
 }
 
