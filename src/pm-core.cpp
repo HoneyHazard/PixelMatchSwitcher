@@ -560,7 +560,6 @@ void PmCore::onFrameProcessed()
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
-        QMutexLocker locker(&m_matchConfigMutex);
         pthread_mutex_lock(&filterData->mutex);
 
         newResults.resize(filterData->num_match_entries);
@@ -576,7 +575,7 @@ void PmCore::onFrameProcessed()
             newResult.percentageMatched
                 = float(newResult.numMatched) / float(newResult.numCompared) * 100.0f;
             newResult.isMatched
-                = newResult.percentageMatched >= m_multiMatchConfig[i].totalMatchThresh;
+                = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
         }
         pthread_mutex_unlock(&filterData->mutex);
     }
@@ -584,21 +583,23 @@ void PmCore::onFrameProcessed()
     {
         QMutexLocker resLocker(&m_resultsMutex);
         m_results = newResults;
-        for (size_t i = 0; i < newResults.size(); ++i) {
-            emit sigNewMatchResults(i, newResults[i]);
-        }
+    }
+    
+    for (size_t i = 0; i < newResults.size(); ++i) {
+         emit sigNewMatchResults(i, newResults[i]);
+    }
 
-        QMutexLocker cfgLocker(&m_matchConfigMutex);
-        for (size_t i = 0; i < m_results.size(); ++i) {
-            if (i > m_multiMatchConfig.size()) break;
-
-            const auto& cfgEntry = m_multiMatchConfig[i];
-            const auto& resEntry = m_results[i];
-            if (cfgEntry.filterCfg.is_enabled && resEntry.isMatched) {
-                switchScene(cfgEntry.matchScene, cfgEntry.matchTransition);
+    for (size_t i = 0; i < m_results.size(); ++i) {
+        const auto& resEntry = newResults[i];
+        if (resEntry.isMatched) {
+            auto cfg = matchConfig(i);
+            if (cfg.filterCfg.is_enabled && cfg.matchScene.size()) {
+                switchScene(cfg.matchScene, cfg.matchTransition);
+                break;
             }
         }
     }
+
 #if 0
         if (m_switchConfig.isEnabled
          && m_activeFilter.isValid() && !m_matchImg.isNull()) {
@@ -648,7 +649,7 @@ void PmCore::switchScene(
             obs_frontend_set_current_transition(transitionSrc);
             //obs_source_release(transitionSrc);
         }
-        //obs_frontend_set_current_scene(targetSceneSrc);
+        obs_frontend_set_current_scene(targetSceneSrc);
     }
     //obs_source_release(currSceneSrc);
     //obs_source_release(targetSceneSrc);
