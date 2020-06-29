@@ -39,18 +39,26 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         "QTableWidget::item { padding: 3px };"
         //"QTableWidget::item:selected:!active { selection-background-color: #3399ff }"
     );
-    m_tableWidget->setFocus();
 
     // config editing buttons
     m_cfgMoveUpBtn = new QPushButton(
         QIcon::fromTheme("go-up"), obs_module_text("Up"), this);
+    m_cfgMoveUpBtn->setFocusPolicy(Qt::NoFocus);
+
     m_cfgMoveDownBtn = new QPushButton(
         QIcon::fromTheme("go-down"), obs_module_text("Down"), this);
+    m_cfgMoveDownBtn->setFocusPolicy(Qt::NoFocus);
+
     m_cfgInsertBtn = new QPushButton(
         QIcon::fromTheme("list-add"), obs_module_text("Insert"), this);
+    m_cfgInsertBtn->setFocusPolicy(Qt::NoFocus);
+
     m_cfgRemoveBtn = new QPushButton(
         QIcon::fromTheme("list-remove"), obs_module_text("Remove"), this);
+    m_cfgRemoveBtn->setFocusPolicy(Qt::NoFocus);
+
     m_cfgClearBtn = new QPushButton(obs_module_text("Clear All"), this);
+    m_cfgClearBtn->setFocusPolicy(Qt::NoFocus);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->addWidget(m_cfgMoveUpBtn);

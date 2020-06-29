@@ -71,6 +71,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     QPushButton *browseImgPathBtn = new QPushButton(
         obs_module_text("Browse"), this);
+    browseImgPathBtn->setFocusPolicy(Qt::NoFocus);
     connect(browseImgPathBtn, &QPushButton::released,
             this, &PmMatchConfigWidget::onBrowseButtonReleased);
     imgPathSubLayout->addWidget(browseImgPathBtn);
