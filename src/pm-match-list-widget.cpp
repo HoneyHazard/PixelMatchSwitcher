@@ -177,7 +177,7 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
     auto resultLabel = (QLabel*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::Result);
     QString text = QString("<font color=\"%1\">%2%</font>")
-        .arg(results.isMatched ? "Green" : "DarkRed")
+        .arg(results.isMatched ? "Green" : "Red")
         .arg(double(results.percentageMatched), 0, 'f', 1);
     resultLabel->setText(text);
 }
@@ -269,7 +269,7 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)RowOrder::TransitionCombo, transitionCombo);
 
     QLabel* resultLabel = new QLabel("--", parent);
-    //resultLabel->setStyleSheet(bgStyle);
+    //resultLabel->setStyleSheet("background-color: rgba(0,0,0,1)");
     resultLabel->setTextFormat(Qt::RichText);
     resultLabel->setAlignment(Qt::AlignCenter);
     m_tableWidget->setCellWidget(

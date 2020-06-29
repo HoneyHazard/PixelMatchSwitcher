@@ -643,7 +643,6 @@ void PmCore::switchScene(
 void PmCore::supplyImageToFilter(size_t matchIdx)
 {
     const QImage& matchImg = m_matchImages[matchIdx];
-    if (matchImg.isNull()) return;
 
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
