@@ -212,19 +212,30 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
 {
     size_t sz = multiMatchConfigSize();
 
-    if (matchIdx >= sz) return;
+    if (matchIdx >= sz) return; // invalid index?
 
     auto oldCfg = matchConfig(matchIdx);
-    if (oldCfg == newCfg) return;
+    
+    if (oldCfg == newCfg) return; // config hasn't changed?
 
+    // notify other modules
     emit sigChangedMatchConfig(matchIdx, newCfg);
 
+    // reconfigure the filter
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
+    if (filterData) {
+        pm_supply_match_entry_config(
+            fr.filterData(), matchIdx, &newCfg.filterCfg);
+    }
+
+    // store the new config
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig[matchIdx] = newCfg;
-    }
-    supplyConfigToFilter(matchIdx);
-
+    }    
+   
+    // update image
     if (newCfg.matchImgFilename != oldCfg.matchImgFilename) {
         const char* filename = newCfg.matchImgFilename.data();
         QImage& img = m_matchImages[matchIdx];
@@ -243,7 +254,7 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
                 emit sigImgSuccess(matchIdx, filename, img);
             }
         }
-        supplyImageToFilter(matchIdx);
+        supplyImageToFilter(filterData, matchIdx);
     }
 }
 
@@ -553,8 +564,9 @@ void PmCore::updateActiveFilter()
             data->selected_match_index = m_selectedMatchIndex;
             pm_resize_match_entries(data, cfgSize);
             for (size_t i = 0; i < cfgSize; ++i) {
-                supplyConfigToFilter(i);
-                supplyImageToFilter(i);
+                auto cfg = matchConfig(i).filterCfg;
+                pm_supply_match_entry_config(data, i, &cfg);
+                supplyImageToFilter(data, i);
             }
             pthread_mutex_unlock(&data->mutex);
         }
@@ -684,15 +696,13 @@ void PmCore::switchScene(
     //obs_source_release(targetSceneSrc);
 }
 
-void PmCore::supplyImageToFilter(size_t matchIdx)
+void PmCore::supplyImageToFilter(struct pm_filter_data* data, size_t matchIdx)
 {
     const QImage& matchImg = m_matchImages[matchIdx];
 
-    auto fr = activeFilterRef();
-    auto filterData = fr.filterData();
-    if (filterData) {
-        pthread_mutex_lock(&filterData->mutex);
-        auto entryData = filterData->match_entries + matchIdx;
+    if (data) {
+        pthread_mutex_lock(&data->mutex);
+        auto entryData = data->match_entries + matchIdx;
 
         size_t sz = size_t(matchImg.sizeInBytes());
         if (sz) {
@@ -704,20 +714,7 @@ void PmCore::supplyImageToFilter(size_t matchIdx)
 
         entryData->match_img_width = uint32_t(matchImg.width());
         entryData->match_img_height = uint32_t(matchImg.height());
-        pthread_mutex_unlock(&filterData->mutex);
-    }
-}
-
-void PmCore::supplyConfigToFilter(size_t matchIdx)
-{
-    if (matchIdx >= multiMatchConfigSize()) return;
-
-    auto cfg = matchConfig(matchIdx).filterCfg;
-
-    auto fr = activeFilterRef();
-    auto filterData = fr.filterData();
-    if (filterData) {
-        pm_supply_match_entry_config(filterData, matchIdx, &cfg);
+        pthread_mutex_unlock(&data->mutex);
     }
 }
 

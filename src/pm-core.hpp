@@ -102,11 +102,7 @@ protected:
     void scanScenes();
     void updateActiveFilter();
     
-    void supplyImageToFilter(size_t matchIdx);
-    //void supplyImagesToFilter();
-
-    void supplyConfigToFilter(size_t matchIdx);
-    //void supplyConfigsToFilter();
+    void supplyImageToFilter(struct pm_filter_data *data, size_t matchIdx);
 
     void pmSave(obs_data_t *data);
     void pmLoad(obs_data_t *data);
