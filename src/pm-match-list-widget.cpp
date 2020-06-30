@@ -67,9 +67,33 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     buttonsLayout->addWidget(m_cfgRemoveBtn);
     buttonsLayout->addWidget(m_cfgClearBtn);
 
+    // no-match configuration UI
+    QLabel* noMatchSceneLabel = new QLabel(
+        obs_module_text("No-match Scene: "), this);
+
+    m_noMatchSceneCombo = new QComboBox(this);
+    m_noMatchSceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
+
+    QLabel* noMatchTransitionLabel = new QLabel(
+        obs_module_text("No-match Transition: "), this);
+
+    m_noMatchTransitionCombo = new QComboBox(this);
+
+    QFrame* spacer = new QFrame();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+    QHBoxLayout* noMatchLayout = new QHBoxLayout();
+    noMatchLayout->addWidget(noMatchSceneLabel);
+    noMatchLayout->addWidget(m_noMatchSceneCombo);
+    noMatchLayout->addWidget(spacer);
+    noMatchLayout->addWidget(noMatchTransitionLabel);
+    noMatchLayout->addWidget(m_noMatchTransitionCombo);
+
+    // top-level layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
+    mainLayout->addLayout(noMatchLayout);
     setLayout(mainLayout);
 
     // init state

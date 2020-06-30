@@ -75,5 +75,8 @@ protected:
     QPushButton* m_cfgRemoveBtn;
     QPushButton* m_cfgClearBtn;
 
+    QComboBox* m_noMatchSceneCombo;
+    QComboBox* m_noMatchTransitionCombo;
+
     QSet<QString> m_sceneNames;
 };
