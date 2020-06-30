@@ -1,7 +1,5 @@
 #include "pm-dialog.hpp"
 #include "pm-core.hpp"
-//#include "pm-match-tab.hpp"
-//#include "pm-switch-tab.hpp"
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
 #include "pm-preview-widget.hpp"
