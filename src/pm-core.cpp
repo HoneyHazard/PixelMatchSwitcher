@@ -362,7 +362,7 @@ void PmCore::onResetMatchConfigs()
     // finish updating state and notifying
     {
         QMutexLocker locker(&m_matchConfigMutex);
-        m_multiMatchConfig.clear();
+        m_multiMatchConfig = PmMultiMatchConfig();
     }
     m_matchImages.clear();
     onSelectMatchIndex(0);
@@ -850,6 +850,8 @@ void PmCore::pmLoad(obs_data_t *data)
             for (size_t i = 0; i < activeCfg.size(); ++i) {
                 onInsertMatchConfig(i, activeCfg[i]);
             }
+            onNoMatchSceneChanged(activeCfg.noMatchScene);
+            onNoMatchTransitionChanged(activeCfg.noMatchTransition);
         }
         obs_data_release(activeCfgObj);
     }

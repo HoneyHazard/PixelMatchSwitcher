@@ -194,7 +194,8 @@ bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
                 return false;
             }
         }
-        return true;
+        return noMatchScene == other.noMatchScene
+            && noMatchTransition == other.noMatchTransition;
     }
 }
 
