@@ -41,11 +41,18 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     //tabWidget->addTab(switchTab, obs_module_text("Switching"));
     tabWidget->addTab(debugTab, obs_module_text("Debug"));
 
-    // top level layout
+    // top level splitter layout
+    QSplitter* topLevelSplitter = new QSplitter(Qt::Horizontal, this);
+    topLevelSplitter->setStyleSheet(
+        "QSplitter::handle{background: black; height: 2px}");
+    topLevelSplitter->addWidget(tabWidget);
+    topLevelSplitter->addWidget(previewWidget);
+
     QHBoxLayout *topLevelLayout = new QHBoxLayout;
-    topLevelLayout->addWidget(tabWidget);
-    topLevelLayout->addWidget(previewWidget);
+    topLevelLayout->addWidget(topLevelSplitter);
     setLayout(topLevelLayout);
+
+
 }
 
 void PmDialog::closeEvent(QCloseEvent*)
