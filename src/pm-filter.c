@@ -223,6 +223,22 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
+    if (filter->num_match_entries == 0 
+     || filter->preview_mode 
+     && filter->selected_match_index >= filter->num_match_entries) {
+        // no match entries to display; just do passthrough
+        gs_effect_t* default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+        if (!obs_source_process_filter_begin(
+            filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+            blog(LOG_ERROR,
+                "pm_filter_data: obs_source_process_filter_begin failed.");
+            goto done;
+        }
+        obs_source_process_filter_end(filter->context, default_effect,
+            filter->base_width, filter->base_height);
+        goto done;
+    }
+
     for (size_t i = 0; i < filter->num_match_entries; ++i) {       
         struct pm_match_entry_data* entry = filter->match_entries + i;
 
