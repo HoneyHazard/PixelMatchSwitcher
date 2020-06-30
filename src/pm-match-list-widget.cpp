@@ -224,6 +224,7 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     
     auto nameItem = m_tableWidget->item(idx, (int)RowOrder::ConfigName);
     nameItem->setText(cfg.label.data());
+    nameItem->setToolTip(cfg.label.data());
     
     auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::SceneCombo);
@@ -233,12 +234,14 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     } else {
         sceneCombo->setCurrentText(k_dontSwitchStr);
     }
+    sceneCombo->setToolTip(sceneCombo->currentText());
     sceneCombo->blockSignals(false);
 
     auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::TransitionCombo);
     transCombo->blockSignals(true);
     transCombo->setCurrentText(cfg.matchTransition.data());
+    transCombo->setToolTip(transCombo->currentText());
     transCombo->blockSignals(false);
 }
 
@@ -250,6 +253,7 @@ void PmMatchListWidget::onNoMatchSceneChanged(std::string sceneName)
     } else {
         m_noMatchSceneCombo->setCurrentText(k_dontSwitchStr);
     }
+    m_noMatchSceneCombo->setToolTip(m_noMatchSceneCombo->currentText());
     m_noMatchSceneCombo->blockSignals(false);
 }
 
@@ -257,6 +261,8 @@ void PmMatchListWidget::onNoMatchTransitionChanged(std::string transName)
 {
     m_noMatchTransitionCombo->blockSignals(true);
     m_noMatchTransitionCombo->setCurrentText(transName.data());
+    m_noMatchTransitionCombo->setToolTip(
+        m_noMatchTransitionCombo->currentText());
     m_noMatchTransitionCombo->blockSignals(false);
 }
 
@@ -269,6 +275,7 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
 
     float percentage = results.percentageMatched;
 
+    
     QString text;     
     if (percentage == percentage) { // not NaN
         text = QString("<font color=\"%1\">%2%</font>")
@@ -278,6 +285,7 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
         text = obs_module_text("N/A");
     }
     resultLabel->setText(text);
+    resultLabel->setToolTip(text);
 }
 
 void PmMatchListWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig config)
@@ -410,6 +418,7 @@ void PmMatchListWidget::updateSceneChoices(
     }
     combo->addItem(k_dontSwitchStr);
     combo->setCurrentText(currText);
+    combo->setToolTip(combo->currentText());
     combo->blockSignals(false);
 }
 
@@ -423,6 +432,7 @@ void PmMatchListWidget::updateTransitionChoices(QComboBox* combo)
         combo->addItem(val.data());
     }
     combo->setCurrentText(currText);
+    combo->setToolTip(combo->currentText());
     combo->blockSignals(false);
 }
 
