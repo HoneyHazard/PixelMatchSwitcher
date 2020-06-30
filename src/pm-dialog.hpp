@@ -14,9 +14,6 @@ class PmDialog : public QDialog
 public:
     PmDialog(PmCore *pixelMatcher, QWidget *parent);
 
-signals:
-    void sigOpenImage(QString filename);
-
 protected:
     void closeEvent(QCloseEvent*) override;
 
