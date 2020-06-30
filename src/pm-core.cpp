@@ -59,6 +59,22 @@ void on_frame_processed(struct pm_filter_data *filter)
 
 //------------------------------------
 
+QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
+{
+    QHash<std::string, OBSWeakSource> ret;
+    struct obs_frontend_source_list transitionList = { 0 };
+    obs_frontend_get_transitions(&transitionList);
+    size_t num = transitionList.sources.num;
+    for (size_t i = 0; i < num; i++) {
+        obs_source_t* src = transitionList.sources.array[i];
+        auto weakSrc = obs_source_get_weak_source(src);
+        auto name = obs_source_get_name(src);
+        ret.insert(name, weakSrc);
+    }
+    obs_frontend_source_list_free(&transitionList);
+    return ret;
+}
+
 PmCore::PmCore()
 : m_matchConfigMutex(QMutex::Recursive)
 {
@@ -402,6 +418,15 @@ void PmCore::onNoMatchSceneChanged(std::string sceneName)
     }
 }
 
+void PmCore::onNoMatchTransitionChanged(std::string transName)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    if (m_multiMatchConfig.noMatchTransition != transName) {
+        m_multiMatchConfig.noMatchTransition = transName;
+        emit sigNoMatchTransitionChanged(transName);
+    }
+}
+
 void PmCore::onSelectActiveMatchPreset(std::string name)
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -609,6 +634,10 @@ void PmCore::onMenuAction()
 
 void PmCore::onPeriodicUpdate()
 {
+    if (m_availableTransitions.empty()) {
+        m_availableTransitions = getAvailableTransitions();
+    }
+
     scanScenes();
     updateActiveFilter();
 }
@@ -703,19 +732,14 @@ void PmCore::switchScene(
     if (targetSceneSrc && targetSceneSrc != currSceneSrc) {
         obs_source_t* transitionSrc = nullptr;
         if (!transitionName.empty()) {
-            struct obs_frontend_source_list transitionList;
-            obs_frontend_get_transitions(&transitionList);
-            for (size_t i = 0; i < transitionList.sources.num; i++) {
-                obs_source_t* ts = transitionList.sources.array[i];
-                if (transitionName == obs_source_get_name(ts)) {
-                    transitionSrc = ts;
-                    break;
-                }
+            auto find = m_availableTransitions.find(transitionName);
+            if (find != m_availableTransitions.end()) {
+                auto weakTransSrc = *find;
+                transitionSrc = obs_weak_source_get_source(weakTransSrc);
             }
-
-            obs_frontend_set_current_transition(transitionSrc);
             //obs_source_release(transitionSrc);
         }
+        obs_frontend_set_current_transition(transitionSrc);
         obs_frontend_set_current_scene(targetSceneSrc);
     }
     //obs_source_release(currSceneSrc);

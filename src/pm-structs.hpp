@@ -70,7 +70,7 @@ struct PmMatchConfig
     //OBSWeakSource matchScene;
     //OBSWeakSource transition;
     std::string matchScene;
-    std::string matchTransition;
+    std::string matchTransition = "Cut";
 
     bool operator==(const PmMatchConfig&) const;
     bool operator!=(const PmMatchConfig& other) const
@@ -89,12 +89,11 @@ public:
         { return !operator==(other); }
 
     std::string noMatchScene;
-    std::string noMatchTransition;
+    std::string noMatchTransition = "Cut";
 };
 
 typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;
 
-uint qHash(const OBSWeakSource &ws);
 class PmScenes : public QSet<OBSWeakSource>
 {
 public:
@@ -103,6 +102,9 @@ public:
 //typedef std::unordered_set<std::string> PmScenes;
 
 void pmRegisterMetaTypes();
+
+uint qHash(const OBSWeakSource& ws);
+uint qHash(const std::string& str);
 
 #ifdef _MSC_VER
     #define PM_LITTLE_ENDIAN (REG_DWORD == REG_DWORD_LITTLE_ENDIAN)

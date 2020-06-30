@@ -29,6 +29,7 @@ signals:
     void sigRemoveMatchConfig(size_t matchIndex);
     void sigResetMatchConfigs();
     void sigNoMatchSceneChanged(std::string noMatchScene);
+    void sigNoMatchTransitionChanged(std::string transName);
 
 protected slots:
     // core event handlers
@@ -37,6 +38,7 @@ protected slots:
     void onNewMultiMatchConfigSize(size_t sz);
     void onChangedMatchConfig(size_t idx, PmMatchConfig cfg);
     void onNoMatchSceneChanged(std::string sceneName);
+    void onNoMatchTransitionChanged(std::string transName);
     void onSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers
@@ -47,6 +49,7 @@ protected slots:
     void onConfigMoveDownReleased();
     void onConfigClearReleased();
     void onNoMatchSceneSelected(QString str);
+    void onNoMatchTransitionSelected(QString str);
 
 protected:
     enum class RowOrder : int { 
@@ -63,11 +66,12 @@ protected:
     void constructRow(int idx);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
     void updateSceneChoices(QComboBox* combo);
+    void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
     //void configRenamed(int idx, const QString& name);
     void matchSceneSelected(int idx, const QString &scene);
-    void transitionSelected(int idx, const QString &transition);
+    void matchTransitionSelected(int idx, const QString& transName);
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;

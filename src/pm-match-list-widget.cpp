@@ -72,12 +72,13 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         obs_module_text("No-match Scene: "), this);
 
     m_noMatchSceneCombo = new QComboBox(this);
-    m_noMatchSceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
+    //m_noMatchSceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
 
     QLabel* noMatchTransitionLabel = new QLabel(
         obs_module_text("No-match Transition: "), this);
 
     m_noMatchTransitionCombo = new QComboBox(this);
+    updateTransitionChoices(m_noMatchTransitionCombo);
 
     QFrame* spacer = new QFrame();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -97,8 +98,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     setLayout(mainLayout);
 
     // init state
+
     auto multiConfig = m_core->multiMatchConfig();
-    onNewMultiMatchConfigSize(multiConfig.size());
+    size_t cfgSz = multiConfig.size();
+    onNewMultiMatchConfigSize(cfgSz);
 
     onScenesChanged(m_core->scenes());
 
@@ -106,9 +109,11 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         onChangedMatchConfig(i, multiConfig[i]);
     }
     size_t selIdx = m_core->selectedConfigIndex();
-    onSelectMatchIndex(selIdx, multiConfig[selIdx]);
+    onSelectMatchIndex(
+        selIdx, selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
 
     onNoMatchSceneChanged(multiConfig.noMatchScene);
+    onNoMatchTransitionChanged(multiConfig.noMatchTransition);
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {
@@ -130,6 +135,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onScenesChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNoMatchSceneChanged,
         this, &PmMatchListWidget::onNoMatchSceneChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNoMatchTransitionChanged,
+        this, &PmMatchListWidget::onNoMatchTransitionChanged);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigChangedMatchConfig,
@@ -148,6 +155,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onResetMatchConfigs, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigNoMatchSceneChanged,
         m_core, &PmCore::onNoMatchSceneChanged, Qt::QueuedConnection);
+    connect(this, &PmMatchListWidget::sigNoMatchTransitionChanged,
+        m_core, &PmCore::onNoMatchTransitionChanged, Qt::QueuedConnection);
 
     // connections: local ui
     connect(m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
@@ -164,6 +173,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onConfigClearReleased, Qt::QueuedConnection);
     connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
         this, &PmMatchListWidget::onNoMatchSceneSelected, Qt::QueuedConnection);
+    connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
+        this, &PmMatchListWidget::onNoMatchTransitionSelected, Qt::QueuedConnection);
 }
 
 void PmMatchListWidget::onScenesChanged(PmScenes scenes)
@@ -227,8 +238,6 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::TransitionCombo);
     transCombo->blockSignals(true);
-    //int transIndex = transCombo->findText(cfg.matchTransition.data());
-    //transCombo->setCurrentIndex(transIndex);
     transCombo->setCurrentText(cfg.matchTransition.data());
     transCombo->blockSignals(false);
 }
@@ -242,6 +251,13 @@ void PmMatchListWidget::onNoMatchSceneChanged(std::string sceneName)
         m_noMatchSceneCombo->setCurrentText(k_dontSwitchStr);
     }
     m_noMatchSceneCombo->blockSignals(false);
+}
+
+void PmMatchListWidget::onNoMatchTransitionChanged(std::string transName)
+{
+    m_noMatchTransitionCombo->blockSignals(true);
+    m_noMatchTransitionCombo->setCurrentText(transName.data());
+    m_noMatchTransitionCombo->blockSignals(false);
 }
 
 void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
@@ -320,6 +336,11 @@ void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
     emit sigNoMatchSceneChanged(noMatchScene);
 }
 
+void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
+{
+    emit sigNoMatchTransitionChanged(str.toUtf8().data());
+}
+
 void PmMatchListWidget::constructRow(int idx)
 {
     static const char* bgStyle = "background-color: rgba(0,0,0,0)";
@@ -355,8 +376,9 @@ void PmMatchListWidget::constructRow(int idx)
 
     QComboBox* transitionCombo = new QComboBox(parent);
     transitionCombo->setStyleSheet(bgStyle);
+    updateTransitionChoices(transitionCombo);
     connect(transitionCombo, &QComboBox::currentTextChanged,
-        [this, idx](const QString& str) { transitionSelected(idx, str); });
+        [this, idx](const QString& str) { matchTransitionSelected(idx, str); });
     m_tableWidget->setCellWidget(
         idx, (int)RowOrder::TransitionCombo, transitionCombo);
 
@@ -391,6 +413,19 @@ void PmMatchListWidget::updateSceneChoices(
     combo->blockSignals(false);
 }
 
+void PmMatchListWidget::updateTransitionChoices(QComboBox* combo)
+{
+    combo->blockSignals(true);
+    auto currText = combo->currentText();
+    combo->clear();
+    auto availableTransitions = m_core->availableTransitions();
+    for (const auto& val : availableTransitions) {
+        combo->addItem(val.data());
+    }
+    combo->setCurrentText(currText);
+    combo->blockSignals(false);
+}
+
 int PmMatchListWidget::currentIndex() const
 {
     return m_tableWidget->currentIndex().row();
@@ -398,14 +433,12 @@ int PmMatchListWidget::currentIndex() const
 
 void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
 {
+    PmMatchConfig cfg = m_core->matchConfig(idx);
+    cfg.filterCfg.is_enabled = enable;
+    emit sigChangedMatchConfig(idx, cfg);
+
     m_tableWidget->selectRow(idx);
 }
-
-#if 0
-void PmMatchListWidget::configRenamed(int idx, const QString& name)
-{
-}
-#endif
 
 void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
 {
@@ -414,7 +447,11 @@ void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
     emit sigChangedMatchConfig(idx, cfg);
 }
 
-void PmMatchListWidget::transitionSelected(int idx, const QString& transition)
+void PmMatchListWidget::matchTransitionSelected(int idx, const QString& name)
 {
+    PmMatchConfig cfg = m_core->matchConfig(idx);
+    cfg.matchTransition = name.toUtf8().data();
+    emit sigChangedMatchConfig(idx, cfg);
 }
+
 

@@ -6,10 +6,16 @@ uint qHash(const OBSWeakSource &ws)
     return qHash(source);
 }
 
+uint qHash(const std::string& str)
+{
+    return (uint)std::hash<std::string>()(str);
+}
+
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
 {
-    return l.roi_left == r.roi_left
+    return l.is_enabled == r.is_enabled
+        && l.roi_left == r.roi_left
         && l.roi_bottom == r.roi_bottom
         && l.per_pixel_err_thresh == r.per_pixel_err_thresh
         && l.mask_alpha == r.mask_alpha
@@ -102,6 +108,8 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
     
     matchScene = obs_data_get_string(data, "match_scene");
+
+    obs_data_set_default_string(data, "match_transition", matchTransition.data());
     matchTransition = obs_data_get_string(data, "match_transition");
 }
 
@@ -149,6 +157,9 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     obs_data_array_release(matchEntriesArray);
 
     noMatchScene = obs_data_get_string(data, "no_match_scene");
+
+    obs_data_set_default_string(
+        data, "no_match_transition", noMatchTransition.data());
     noMatchTransition = obs_data_get_string(data, "no_match_transition");
 }
 

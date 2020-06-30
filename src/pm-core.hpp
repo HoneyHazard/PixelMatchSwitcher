@@ -57,6 +57,8 @@ public:
     PmMultiMatchResults multiMatchResults() const;
     PmMatchResults matchResults(size_t matchIdx) const;
     PmScenes scenes() const;
+    QList<std::string> availableTransitions() const 
+        { return m_availableTransitions.keys(); }
     //PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
     QImage matchImage(size_t matchIdx);
@@ -68,6 +70,7 @@ signals:
     void sigNewMultiMatchConfigSize(size_t sz);
     void sigSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
     void sigNoMatchSceneChanged(std::string sceneName);
+    void sigNoMatchTransitionChanged(std::string transName);
 
     // REDO!!!
     void sigImgSuccess(size_t matchIdx, std::string filename, QImage img);
@@ -86,6 +89,7 @@ public slots:
     void onResetMatchConfigs();
     void onSelectMatchIndex(size_t matchIndex);
     void onNoMatchSceneChanged(std::string sceneName);
+    void onNoMatchTransitionChanged(std::string transName);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
@@ -99,8 +103,9 @@ protected slots:
     void onFrameProcessed();
 
 protected:
+    static QHash<std::string, OBSWeakSource> getAvailableTransitions();
+
     void switchScene(
-        //OBSWeakSource& scene, OBSWeakSource& transition);
         const std::string& scene, const std::string &transition);
     void scanScenes();
     void updateActiveFilter();
@@ -130,8 +135,7 @@ protected:
     mutable QMutex m_scenesMutex;
     PmScenes m_scenes;
 
-    //mutable QMutex m_switchConfigMutex;
-    //PmSwitchConfig m_switchConfig;
+    QHash<std::string, OBSWeakSource> m_availableTransitions;
 
     std::vector<QImage> m_matchImages;
     gs_effect *m_drawMatchImageEffect = nullptr;

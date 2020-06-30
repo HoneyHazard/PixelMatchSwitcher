@@ -210,16 +210,21 @@ void PmMatchConfigWidget::onSelectMatchIndex(
         QString(obs_module_text("Config #%1:")).arg(matchIndex+1));
 
     onChangedMatchConfig(matchIndex, cfg);
-    setEnabled(m_matchIndex < m_multiConfigSz);
+    bool enabled = m_matchIndex < m_multiConfigSz;
+    setEnabled(enabled);
 
-    std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
-    const QImage& matchImg = m_core->matchImage(m_matchIndex);
-    if (matchImgFilename.size()) {
-        if (matchImg.isNull()) {
-            onImgFailed(m_matchIndex, matchImgFilename);
-        } else {
-            onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
+    if (enabled) {
+        std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
+        const QImage& matchImg = m_core->matchImage(m_matchIndex);
+        if (matchImgFilename.size()) {
+            if (matchImg.isNull()) {
+                onImgFailed(m_matchIndex, matchImgFilename);
+            } else {
+                onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
+            }
         }
+    } else {
+        m_matchResultDisplay->setText(obs_module_text("N/A"));
     }
 
     onConfigUiChanged();
