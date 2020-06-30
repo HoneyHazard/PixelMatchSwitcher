@@ -49,6 +49,8 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
+    std::string noMatchScene() const;
+    std::string noMatchTransition() const;
     std::string matchImgFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
 
@@ -65,7 +67,7 @@ signals:
     void sigChangedMatchConfig(size_t matchIndex, PmMatchConfig config);
     void sigNewMultiMatchConfigSize(size_t sz);
     void sigSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
-    void sigNoMatchSceneChanged(std::string sceneName, std::string transition);
+    void sigNoMatchSceneChanged(std::string sceneName);
 
     // REDO!!!
     void sigImgSuccess(size_t matchIdx, std::string filename, QImage img);
@@ -83,6 +85,7 @@ public slots:
     void onMoveMatchConfigDown(size_t matchIndex);
     void onResetMatchConfigs();
     void onSelectMatchIndex(size_t matchIndex);
+    void onNoMatchSceneChanged(std::string sceneName);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);

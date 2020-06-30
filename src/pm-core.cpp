@@ -169,6 +169,18 @@ PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
                                                 : PmMatchConfig();
 }
 
+std::string PmCore::noMatchScene() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_multiMatchConfig.noMatchScene;
+}
+
+std::string PmCore::noMatchTransition() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_multiMatchConfig.noMatchTransition;
+}
+
 std::string PmCore::matchImgFilename(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -379,6 +391,15 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
     }
     
     emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));
+}
+
+void PmCore::onNoMatchSceneChanged(std::string sceneName)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    if (m_multiMatchConfig.noMatchScene != sceneName) {
+        m_multiMatchConfig.noMatchScene = sceneName;
+        emit sigNoMatchSceneChanged(sceneName);
+    }
 }
 
 void PmCore::onSelectActiveMatchPreset(std::string name)
@@ -636,9 +657,14 @@ void PmCore::onFrameProcessed()
             auto cfg = matchConfig(i);
             if (cfg.filterCfg.is_enabled && cfg.matchScene.size()) {
                 switchScene(cfg.matchScene, cfg.matchTransition);
-                break;
+                return;
             }
         }
+    }
+    
+    std::string nms = noMatchScene();
+    if (nms.size()) {
+        switchScene(nms, noMatchTransition());
     }
 
 #if 0

@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const string PmMatchListWidget::k_dontSwitchStr 
+const QString PmMatchListWidget::k_dontSwitchStr 
     = obs_module_text("<don't switch>");
 
 PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
@@ -106,7 +106,9 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         onChangedMatchConfig(i, multiConfig[i]);
     }
     size_t selIdx = m_core->selectedConfigIndex();
-    onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
+    onSelectMatchIndex(selIdx, multiConfig[selIdx]);
+
+    onNoMatchSceneChanged(multiConfig.noMatchScene);
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {
@@ -126,6 +128,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onSelectMatchIndex, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigScenesChanged,
         this, &PmMatchListWidget::onScenesChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNoMatchSceneChanged,
+        this, &PmMatchListWidget::onNoMatchSceneChanged, Qt::QueuedConnection);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigChangedMatchConfig,
@@ -142,6 +146,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onRemoveMatchConfig, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigResetMatchConfigs,
         m_core, &PmCore::onResetMatchConfigs, Qt::QueuedConnection);
+    connect(this, &PmMatchListWidget::sigNoMatchSceneChanged,
+        m_core, &PmCore::onNoMatchSceneChanged, Qt::QueuedConnection);
 
     // connections: local ui
     connect(m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
@@ -156,6 +162,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onConfigRemoveReleased, Qt::QueuedConnection);
     connect(m_cfgClearBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigClearReleased, Qt::QueuedConnection);
+    connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
+        this, &PmMatchListWidget::onNoMatchSceneSelected, Qt::QueuedConnection);
 }
 
 void PmMatchListWidget::onScenesChanged(PmScenes scenes)
@@ -168,6 +176,8 @@ void PmMatchListWidget::onScenesChanged(PmScenes scenes)
             i, (int)RowOrder::SceneCombo);
         updateSceneChoices(sceneBox);
     }
+
+    updateSceneChoices(m_noMatchSceneCombo);
 }
 
 void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
@@ -207,9 +217,11 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::SceneCombo);
     sceneCombo->blockSignals(true);
-    const string& newText
-        = cfg.matchScene.size() ? cfg.matchScene : k_dontSwitchStr;
-    sceneCombo->setCurrentText(newText.data());
+    if (cfg.matchScene.size()) {
+        sceneCombo->setCurrentText(cfg.matchScene.data());
+    } else {
+        sceneCombo->setCurrentText(k_dontSwitchStr);
+    }
     sceneCombo->blockSignals(false);
 
     auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
@@ -219,6 +231,17 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     //transCombo->setCurrentIndex(transIndex);
     transCombo->setCurrentText(cfg.matchTransition.data());
     transCombo->blockSignals(false);
+}
+
+void PmMatchListWidget::onNoMatchSceneChanged(std::string sceneName)
+{
+    m_noMatchSceneCombo->blockSignals(true);
+    if (sceneName.size()) {
+        m_noMatchSceneCombo->setCurrentText(sceneName.data());
+    } else {
+        m_noMatchSceneCombo->setCurrentText(k_dontSwitchStr);
+    }
+    m_noMatchSceneCombo->blockSignals(false);
 }
 
 void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
@@ -290,6 +313,13 @@ void PmMatchListWidget::onConfigClearReleased()
     emit sigResetMatchConfigs();
 }
 
+void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
+{
+    std::string noMatchScene = 
+        (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
+    emit sigNoMatchSceneChanged(noMatchScene);
+}
+
 void PmMatchListWidget::constructRow(int idx)
 {
     static const char* bgStyle = "background-color: rgba(0,0,0,0)";
@@ -356,7 +386,7 @@ void PmMatchListWidget::updateSceneChoices(
     for (const auto& val : m_sceneNames) {
         combo->addItem(val);
     }
-    combo->addItem(k_dontSwitchStr.data());
+    combo->addItem(k_dontSwitchStr);
     combo->setCurrentText(currText);
     combo->blockSignals(false);
 }
@@ -380,7 +410,7 @@ void PmMatchListWidget::configRenamed(int idx, const QString& name)
 void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
 {
     PmMatchConfig cfg = m_core->matchConfig(idx);
-    cfg.matchScene = scene.toUtf8().data();
+    cfg.matchScene = (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
     emit sigChangedMatchConfig(idx, cfg);
 }
 

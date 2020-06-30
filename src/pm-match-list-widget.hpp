@@ -28,6 +28,7 @@ signals:
     void sigInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
     void sigRemoveMatchConfig(size_t matchIndex);
     void sigResetMatchConfigs();
+    void sigNoMatchSceneChanged(std::string noMatchScene);
 
 protected slots:
     // core event handlers
@@ -35,6 +36,7 @@ protected slots:
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onNewMultiMatchConfigSize(size_t sz);
     void onChangedMatchConfig(size_t idx, PmMatchConfig cfg);
+    void onNoMatchSceneChanged(std::string sceneName);
     void onSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers
@@ -44,6 +46,7 @@ protected slots:
     void onConfigMoveUpReleased();
     void onConfigMoveDownReleased();
     void onConfigClearReleased();
+    void onNoMatchSceneSelected(QString str);
 
 protected:
     enum class RowOrder : int { 
@@ -55,7 +58,7 @@ protected:
         NumRows = 5,
     };
 
-    static const std::string k_dontSwitchStr;
+    static const QString k_dontSwitchStr;
 
     void constructRow(int idx);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
