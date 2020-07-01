@@ -50,16 +50,8 @@ struct PmMatchConfig
     std::string label;
     std::string matchImgFilename;
 
-    #if 0
-    int roiLeft = 0, roiBottom = 0;
-    float perPixelErrThresh = 25.f;
-    float totalMatchThresh = 90.f;
-    PmMaskMode maskMode = PmMaskMode::GreenMode;
-    uint32_t customColor = 0xffffff00;
-    #endif
-
     struct pm_match_entry_config filterCfg;
-    float totalMatchThresh;
+    float totalMatchThresh = 90.f;
 
     PmMaskMode maskMode = PmMaskMode::GreenMode;
     PmPreviewMode previewMode = PmPreviewMode::Video;

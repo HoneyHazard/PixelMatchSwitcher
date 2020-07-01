@@ -36,7 +36,6 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // tab widget
     QTabWidget *tabWidget = new QTabWidget(this);
     tabWidget->addTab(mainTab, obs_module_text("Main"));
-    //tabWidget->addTab(switchTab, obs_module_text("Switching"));
     tabWidget->addTab(debugTab, obs_module_text("Debug"));
 
     // top level splitter layout
