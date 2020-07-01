@@ -821,8 +821,6 @@ void PmCore::pmLoad(obs_data_t *data)
 
     // match configuration and presets
     {
-        QMutexLocker locker(&m_matchConfigMutex);
-
         // match presets
         m_matchPresets.clear();
         obs_data_array_t *matchPresetArray
