@@ -61,7 +61,7 @@ public:
         { return m_availableTransitions.keys(); }
     //PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
-    QImage matchImage(size_t matchIdx);
+    QImage matchImage(size_t matchIdx) const;
 
 signals:
     void sigFrameProcessed();
@@ -110,7 +110,8 @@ protected:
     void scanScenes();
     void updateActiveFilter();
     
-    void supplyImageToFilter(struct pm_filter_data *data, size_t matchIdx);
+    void supplyImageToFilter(
+        struct pm_filter_data *data, size_t matchIdx, const QImage &image);
 
     void pmSave(obs_data_t *data);
     void pmLoad(obs_data_t *data);
@@ -137,6 +138,7 @@ protected:
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;
 
+    mutable QMutex m_matchImagesMutex;
     std::vector<QImage> m_matchImages;
     gs_effect *m_drawMatchImageEffect = nullptr;
 };
