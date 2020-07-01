@@ -323,7 +323,6 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
         onChangedMatchConfig(i, m_multiMatchConfig[i-1]);
     }
     onChangedMatchConfig(matchIndex, cfg);
-    onSelectMatchIndex(matchIndex);
 }
 
 void PmCore::onRemoveMatchConfig(size_t matchIndex)
