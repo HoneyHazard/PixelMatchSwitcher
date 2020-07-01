@@ -89,7 +89,7 @@ PmCore::PmCore()
             Qt::DirectConnection);
 
     // periodic update timer: process in the UI thread
-    QTimer *periodicUpdateTimer = new QTimer(this);
+    QTimer *periodicUpdateTimer = new QTimer(qApp);
     connect(periodicUpdateTimer, &QTimer::timeout,
             this, &PmCore::onPeriodicUpdate, Qt::QueuedConnection);
 
