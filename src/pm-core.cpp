@@ -78,9 +78,6 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
 PmCore::PmCore()
 : m_matchConfigMutex(QMutex::Recursive)
 {
-    // parent this to the app
-    //setParent(qApp);
-
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
         obs_frontend_add_tools_menu_qaction(
