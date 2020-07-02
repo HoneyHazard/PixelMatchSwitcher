@@ -161,7 +161,9 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
 
     obs_data_set_default_string(
         data, "no_match_transition", noMatchTransition.data());
-    noMatchTransition = obs_data_get_string(data, "no_match_transition");
+    std::string str = obs_data_get_string(data, "no_match_transition");
+    if (str.size())
+        noMatchTransition = str;
 }
 
 obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)

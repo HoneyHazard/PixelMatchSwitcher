@@ -86,7 +86,8 @@ PmCore::PmCore()
             Qt::DirectConnection);
 
     // periodic update timer: process in the UI thread
-    QTimer *periodicUpdateTimer = new QTimer(qApp);
+    //QTimer *periodicUpdateTimer = new QTimer(qApp);
+    QTimer* periodicUpdateTimer = new QTimer(qApp);
     connect(periodicUpdateTimer, &QTimer::timeout,
             this, &PmCore::onPeriodicUpdate, Qt::QueuedConnection);
 
@@ -432,6 +433,9 @@ void PmCore::onNoMatchSceneChanged(std::string sceneName)
 void PmCore::onNoMatchTransitionChanged(std::string transName)
 {
     QMutexLocker locker(&m_matchConfigMutex);
+    if (transName.empty()) {
+        transName = "Cut";
+    }
     if (m_multiMatchConfig.noMatchTransition != transName) {
         m_multiMatchConfig.noMatchTransition = transName;
         emit sigNoMatchTransitionChanged(transName);
@@ -745,14 +749,21 @@ void PmCore::switchScene(
         obs_source_t* transitionSrc = nullptr;
         if (!transitionName.empty()) {
             auto find = m_availableTransitions.find(transitionName);
+            if (find == m_availableTransitions.end()) {
+                find = m_availableTransitions.find("Cut");
+            }
             if (find != m_availableTransitions.end()) {
                 auto weakTransSrc = *find;
                 transitionSrc = obs_weak_source_get_source(weakTransSrc);
             }
             //obs_source_release(transitionSrc);
         }
-        obs_frontend_set_current_transition(transitionSrc);
-        obs_frontend_set_current_scene(targetSceneSrc);
+        if (transitionSrc) {
+            obs_frontend_set_current_transition(transitionSrc);
+        }
+        if (targetSceneSrc) {
+            obs_frontend_set_current_scene(targetSceneSrc);
+        }
     }
     //obs_source_release(currSceneSrc);
     //obs_source_release(targetSceneSrc);
