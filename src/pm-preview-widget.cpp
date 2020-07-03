@@ -126,9 +126,9 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onPreviewConfigChanged, Qt::QueuedConnection);
 
     // finish init
+    onPreviewConfigChanged(m_core->previewConfig());
     size_t selIdx = m_core->selectedConfigIndex();
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
-    onPreviewConfigChanged(m_core->previewConfig());
 
     onConfigUiChanged();
 }
@@ -155,8 +155,14 @@ void PmPreviewWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
     m_previewCfg = cfg;
     updateFilterDisplaySize();
 
+    int previewModeIdx = int(cfg.previewMode);
+
+    m_previewScaleStack->blockSignals(true);
+    m_previewScaleStack->setCurrentIndex(previewModeIdx);
+    m_previewScaleStack->blockSignals(false);
+
     m_previewModeButtons->blockSignals(true);
-    m_previewModeButtons->button(int(cfg.previewMode))->setChecked(true);
+    m_previewModeButtons->button(previewModeIdx)->setChecked(true);
     m_previewModeButtons->blockSignals(false);
 
     m_videoScaleCombo->blockSignals(true);
@@ -191,7 +197,9 @@ void PmPreviewWidget::onImgSuccess(
 
     m_matchImgWidth = img.width();
     m_matchImgHeight = img.height();
+
     updateFilterDisplaySize();
+    enableRegionViews(true);
 
     QMutexLocker locker(&m_matchImgLock);
     m_matchImg = img;
@@ -200,6 +208,8 @@ void PmPreviewWidget::onImgSuccess(
 void PmPreviewWidget::onImgFailed(size_t matchIndex, std::string filename)
 {
     if (matchIndex != m_matchIndex) return;
+
+    enableRegionViews(false);
 
     QMutexLocker locker(&m_matchImgLock);
     if (m_matchImgTex) {
@@ -422,5 +432,22 @@ void PmPreviewWidget::updateFilterDisplaySize()
     }
     if (m_filterDisplay->height() != cy) {
         m_filterDisplay->setFixedHeight(cy);
+    }
+}
+
+void PmPreviewWidget::enableRegionViews(bool enable)
+{
+    auto regButton = m_previewModeButtons->button((int)PmPreviewMode::Region);
+    regButton->setEnabled(enable);
+    auto imgButton = m_previewModeButtons->button((int)PmPreviewMode::MatchImage);
+    imgButton->setEnabled(enable);
+
+    m_regionScaleCombo->setEnabled(enable);
+    m_matchImgScaleCombo->setEnabled(enable);
+
+    if (!enable && m_previewCfg.previewMode != PmPreviewMode::Video) {
+        auto cfg = m_core->previewConfig();
+        cfg.previewMode = PmPreviewMode::Video;
+        emit sigPreviewConfigChanged(cfg);
     }
 }

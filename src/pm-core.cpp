@@ -456,7 +456,7 @@ void PmCore::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
     QMutexLocker locker(&m_previewConfigMutex);
 
-    if(m_previewConfig == cfg) return;
+    if (m_previewConfig == cfg) return;
 
     m_previewConfig = cfg;
     emit sigPreviewConfigChanged(cfg);

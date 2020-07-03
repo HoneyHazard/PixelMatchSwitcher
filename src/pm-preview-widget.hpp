@@ -47,6 +47,7 @@ protected:
     void drawEffect();
     void drawMatchImage();
     void updateFilterDisplaySize();
+    void enableRegionViews(bool enable);
 
     // todo: maybe not needed or useful
     virtual void closeEvent(QCloseEvent* e) override;
@@ -65,7 +66,6 @@ protected:
     PmMatchConfig m_matchConfig;
     int m_roiLeft = 0, m_roiBottom = 0;
     int m_matchImgWidth = 0, m_matchImgHeight = 0;
-
 
     bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
     QMutex m_matchImgLock;
