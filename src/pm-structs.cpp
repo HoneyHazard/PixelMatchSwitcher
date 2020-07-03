@@ -41,9 +41,9 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && roiBottom == other.roiBottom
         && perPixelErrThresh == other.perPixelErrThresh
         && totalMatchThresh == other.totalMatchThresh
-        && maskMode == other.maskMode
         && customColor == other.customColor
 #endif
+        && maskMode == other.maskMode
         && filterCfg == other.filterCfg
         && previewMode == other.previewMode
         && previewVideoScale == other.previewVideoScale

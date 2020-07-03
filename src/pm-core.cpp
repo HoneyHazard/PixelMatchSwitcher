@@ -254,6 +254,7 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     }    
    
     // update images
+    bool imageChanged = false;
     QImage img;
     {
         if (newCfg.matchImgFilename != oldCfg.matchImgFilename) {
@@ -276,6 +277,7 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
             {
                 QMutexLocker locker(&m_matchImagesMutex);
                 m_matchImages[matchIdx] = img;
+                imageChanged = true;
             }
         }
     }
@@ -286,7 +288,9 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     if (filterData) {
         pm_supply_match_entry_config(
             fr.filterData(), matchIdx, &newCfg.filterCfg);
-        supplyImageToFilter(filterData, matchIdx, img);
+        if (imageChanged) {
+            supplyImageToFilter(filterData, matchIdx, img);
+        }
     }
 }
 
