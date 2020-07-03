@@ -269,7 +269,9 @@ void PmPreviewWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
 {
     if (matchIndex != m_matchIndex) return;
 
-    m_matchConfig = cfg;
+    m_roiLeft = cfg.filterCfg.roi_left;
+    m_roiBottom = cfg.filterCfg.roi_bottom;
+
     updateFilterDisplaySize();
 }
 
