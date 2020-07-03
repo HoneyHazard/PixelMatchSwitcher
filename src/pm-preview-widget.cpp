@@ -375,24 +375,27 @@ void PmPreviewWidget::drawMatchImage()
 void PmPreviewWidget::updateFilterDisplaySize(
     const PmMatchConfig& config, const PmMatchResults& results)
 {
+    auto filterRef = m_core->activeFilterRef();
+    auto filterData = filterRef.filterData();
+
     int cx, cy;
     if (config.previewMode == PmPreviewMode::Video) {
-        if (!m_core->activeFilterRef().isValid()) {
+        if (filterData) {
+            float scale = config.previewVideoScale;
+            cx = int(filterData->base_width * scale);
+            cy = int(filterData->base_height * scale);
+        } else {
             cx = 0;
             cy = 0;
-        } else {
-            float scale = config.previewVideoScale;
-            cx = int(results.baseWidth * scale);
-            cy = int(results.baseHeight * scale);
         }
     } else if (config.previewMode == PmPreviewMode::Region) {
-        if (!m_core->activeFilterRef().isValid()) {
-            cx = 0;
-            cy = 0;
-        } else {
+        if (filterData) {
             float scale = config.previewRegionScale;
             cx = int(results.matchImgWidth * scale);
             cy = int(results.matchImgHeight * scale);
+        } else {
+            cx = 0;
+            cy = 0;
         }
     } else { // PmPreviewMode::MatchImage
         float scale = config.previewMatchImageScale;
