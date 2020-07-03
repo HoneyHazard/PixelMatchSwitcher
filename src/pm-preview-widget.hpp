@@ -22,13 +22,16 @@ public:
     ~PmPreviewWidget();
 
 signals:
-    void sigChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
+    void sigPreviewConfigChanged(PmPreviewConfig cfg);
 
 protected slots:
     // reaction to core events
+    void onPreviewConfigChanged(PmPreviewConfig cfg);
+
     void onSelectMatchIndex(size_t matchindex, PmMatchConfig cfg);
-    void onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
-    void onNewMatchResults(size_t idx, PmMatchResults results);
+    void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);
+
+    //void onNewMatchResults(size_t idx, PmMatchResults results);
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);
 
@@ -43,9 +46,7 @@ protected:
     static void drawPreview(void* data, uint32_t cx, uint32_t cy);
     void drawEffect();
     void drawMatchImage();
-    void updateFilterDisplaySize(
-        const PmMatchConfig& config, const PmMatchResults& results);
-    void unsetTexture();
+    void updateFilterDisplaySize();
 
     // todo: maybe not needed or useful
     virtual void closeEvent(QCloseEvent* e) override;
@@ -58,7 +59,14 @@ protected:
     OBSQTDisplay* m_filterDisplay;
 
     QPointer<PmCore> m_core;
+    
     size_t m_matchIndex = 0;
+    PmPreviewConfig m_previewCfg;
+    PmMatchConfig m_matchConfig;
+    int m_roiLeft = 0, m_roiBottom = 0;
+    int m_matchImgWidth = 0, m_matchImgHeight = 0;
+
+
     bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
     QMutex m_matchImgLock;
     QImage m_matchImg;

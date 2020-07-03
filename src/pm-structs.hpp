@@ -54,10 +54,6 @@ struct PmMatchConfig
     float totalMatchThresh = 90.f;
 
     PmMaskMode maskMode = PmMaskMode::GreenMode;
-    PmPreviewMode previewMode = PmPreviewMode::Video;
-    float previewVideoScale = 0.5f;
-    float previewRegionScale = 1.f;
-    float previewMatchImageScale = 1.f;
 
     //OBSWeakSource matchScene;
     //OBSWeakSource transition;
@@ -91,7 +87,23 @@ class PmScenes : public QSet<OBSWeakSource>
 public:
     QSet<QString> sceneNames() const;
 };
-//typedef std::unordered_set<std::string> PmScenes;
+
+struct PmPreviewConfig
+{
+    PmPreviewConfig() {};
+    PmPreviewConfig(obs_data_t* data);
+    obs_data_t* save() const;
+
+    bool operator==(const PmPreviewConfig&) const;
+    bool operator!=(const PmPreviewConfig& other) const
+        { return !operator==(other); }
+
+    PmPreviewMode previewMode = PmPreviewMode::Video;
+    float previewVideoScale = 0.5f;
+    float previewRegionScale = 1.f;
+    float previewMatchImageScale = 1.f;
+};
+
 
 void pmRegisterMetaTypes();
 

@@ -36,19 +36,8 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
     return matchImgFilename == other.matchImgFilename
         && label == other.label
         && totalMatchThresh == other.totalMatchThresh
-#if 0
-        && roiLeft == other.roiLeft
-        && roiBottom == other.roiBottom
-        && perPixelErrThresh == other.perPixelErrThresh
-        && totalMatchThresh == other.totalMatchThresh
-        && customColor == other.customColor
-#endif
         && maskMode == other.maskMode
         && filterCfg == other.filterCfg
-        && previewMode == other.previewMode
-        && previewVideoScale == other.previewVideoScale
-        && previewRegionScale == other.previewRegionScale
-        && previewMatchImageScale == other.previewMatchImageScale
         && matchScene == other.matchScene
         && matchTransition == other.matchTransition;
 }
@@ -87,24 +76,6 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     obs_data_set_default_vec3(data, "mask_color", &filterCfg.mask_color);
     obs_data_get_vec3(data, "mask_color", &filterCfg.mask_color);
 
-    obs_data_set_default_int(data, "preview_mode", int(previewMode));
-    previewMode = PmPreviewMode(obs_data_get_int(data, "preview_mode"));
-
-    obs_data_set_default_double(
-        data, "preview_video_scale", double(previewVideoScale));
-    previewVideoScale
-        = float(obs_data_get_double(data, "preview_video_scale"));
-
-    obs_data_set_default_double(
-        data, "preview_region_scale", double(previewRegionScale));
-    previewRegionScale
-        = float(obs_data_get_double(data, "preview_region_scale"));
-
-    obs_data_set_default_double(
-        data, "preview_match_image_scale", double(previewMatchImageScale));
-    previewMatchImageScale
-        = float(obs_data_get_double(data, "preview_match_image_scale"));
-
     obs_data_set_default_bool(data, "is_enabled", filterCfg.is_enabled);
     filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
     
@@ -128,13 +99,6 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_int(ret, "mask_mode", (int)maskMode);
     obs_data_set_bool(ret, "mask_alpha", filterCfg.mask_alpha);
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
-    obs_data_set_int(ret, "preview_mode", int(previewMode));
-    obs_data_set_double(
-        ret, "preview_video_scale", double(previewVideoScale));
-    obs_data_set_double(
-        ret, "preview_region_scale", double(previewRegionScale));
-    obs_data_set_double(
-        ret, "preview_match_image_scale", double(previewMatchImageScale));
 
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
     obs_data_set_string(ret, "match_scene", matchScene.data());
@@ -222,16 +186,6 @@ obs_data_t *PmSwitchConfig::save() const
 }
 #endif
 
-void pmRegisterMetaTypes()
-{
-    qRegisterMetaType<size_t>("size_t");
-    qRegisterMetaType<std::string>("std::string");
-    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
-    qRegisterMetaType<PmMatchResults>("PmMatchResults");
-    qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
-    qRegisterMetaType<PmScenes>("PmScenes");
-}
-
 QSet<QString> PmScenes::sceneNames() const
 {
     QSet<QString> ret;
@@ -242,4 +196,62 @@ QSet<QString> PmScenes::sceneNames() const
         }
     }
     return ret;
+}
+
+PmPreviewConfig::PmPreviewConfig(obs_data_t* data)
+{
+    obs_data_set_default_int(data, "preview_mode", int(previewMode));
+    previewMode = PmPreviewMode(obs_data_get_int(data, "preview_mode"));
+
+    obs_data_set_default_double(
+        data, "preview_video_scale", double(previewVideoScale));
+    float val = float(obs_data_get_double(data, "preview_video_scale"));
+    if (val > 0.f) 
+        previewVideoScale = val;
+        
+    obs_data_set_default_double(
+        data, "preview_region_scale", double(previewRegionScale));
+    val = float(obs_data_get_double(data, "preview_region_scale"));
+    if (val > 0.f)
+        previewRegionScale = val;
+
+    obs_data_set_default_double(
+        data, "preview_match_image_scale", double(previewMatchImageScale));
+    val = float(obs_data_get_double(data, "preview_match_image_scale"));
+    if (val > 0.f)
+        previewMatchImageScale = val;
+}
+
+obs_data_t* PmPreviewConfig::save() const
+{
+    obs_data_t* ret = obs_data_create();
+
+    obs_data_set_int(ret, "preview_mode", int(previewMode));
+    obs_data_set_double(
+        ret, "preview_video_scale", double(previewVideoScale));
+    obs_data_set_double(
+        ret, "preview_region_scale", double(previewRegionScale));
+    obs_data_set_double(
+        ret, "preview_match_image_scale", double(previewMatchImageScale));
+
+    return ret;
+}
+
+bool PmPreviewConfig::operator==(const PmPreviewConfig& other) const
+{
+    return previewMode == other.previewMode
+        && previewVideoScale == other.previewVideoScale
+        && previewRegionScale == other.previewRegionScale
+        && previewMatchImageScale == other.previewMatchImageScale;
+}
+
+void pmRegisterMetaTypes()
+{
+    qRegisterMetaType<size_t>("size_t");
+    qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
+    qRegisterMetaType<PmMatchResults>("PmMatchResults");
+    qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
+    qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
+    qRegisterMetaType<PmScenes>("PmScenes");
 }

@@ -54,6 +54,8 @@ public:
     std::string matchImgFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
 
+    PmPreviewConfig previewConfig() const;
+
     PmMultiMatchResults multiMatchResults() const;
     PmMatchResults matchResults(size_t matchIdx) const;
     PmScenes scenes() const;
@@ -71,8 +73,8 @@ signals:
     void sigSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
     void sigNoMatchSceneChanged(std::string sceneName);
     void sigNoMatchTransitionChanged(std::string transName);
+    void sigPreviewConfigChanged(PmPreviewConfig cfg);
 
-    // REDO!!!
     void sigImgSuccess(size_t matchIdx, std::string filename, QImage img);
     void sigImgFailed(size_t matchIdx, std::string filename);
     void sigScenesChanged(PmScenes);
@@ -90,6 +92,7 @@ public slots:
     void onSelectMatchIndex(size_t matchIndex);
     void onNoMatchSceneChanged(std::string sceneName);
     void onNoMatchTransitionChanged(std::string transName);
+    void onPreviewConfigChanged(PmPreviewConfig cfg);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
@@ -132,6 +135,9 @@ protected:
 
     mutable QMutex m_resultsMutex;
     PmMultiMatchResults m_results;
+
+    mutable QMutex m_previewConfigMutex;
+    PmPreviewConfig m_previewConfig;
 
     mutable QMutex m_scenesMutex;
     PmScenes m_scenes;

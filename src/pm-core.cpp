@@ -134,6 +134,12 @@ PmFilterRef PmCore::activeFilterRef() const
     return m_activeFilter;
 }
 
+PmPreviewConfig PmCore::previewConfig() const
+{
+    QMutexLocker locker(&m_previewConfigMutex);
+    return m_previewConfig;
+}
+
 PmMultiMatchResults PmCore::multiMatchResults() const
 {
     QMutexLocker locker(&m_resultsMutex);
@@ -199,7 +205,7 @@ std::string PmCore::matchImgFilename(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     if (matchIdx >= m_multiMatchConfig.size())
-        return "";
+        return std::string();
     else 
         return m_multiMatchConfig[matchIdx].matchImgFilename;
 }
@@ -444,6 +450,16 @@ void PmCore::onNoMatchTransitionChanged(std::string transName)
         m_multiMatchConfig.noMatchTransition = transName;
         emit sigNoMatchTransitionChanged(transName);
     }
+}
+
+void PmCore::onPreviewConfigChanged(PmPreviewConfig cfg)
+{
+    QMutexLocker locker(&m_previewConfigMutex);
+
+    if(m_previewConfig == cfg) return;
+
+    m_previewConfig = cfg;
+    emit sigPreviewConfigChanged(cfg);
 }
 
 void PmCore::onSelectActiveMatchPreset(std::string name)
@@ -826,15 +842,13 @@ void PmCore::pmSave(obs_data_t *saveData)
         obs_data_release(activeCfgObj);
     }
 
-#if 0
-    // switch configuration
+    // preview config
     {
-        QMutexLocker locker(&m_switchConfigMutex);
-        obs_data_t *switchCfgObj = m_switchConfig.save();
-        obs_data_set_obj(saveObj, "switch_config", switchCfgObj);
-        obs_data_release(switchCfgObj);
+        QMutexLocker locker(&m_previewConfigMutex);
+        obs_data_t* previewCfgObj = m_previewConfig.save();
+        obs_data_set_obj(saveObj, "preview_config", previewCfgObj);
+        obs_data_release(previewCfgObj);
     }
-#endif
 
     obs_data_set_obj(saveData, "pixel-match-switcher", saveObj);
 }
@@ -880,15 +894,14 @@ void PmCore::pmLoad(obs_data_t *data)
         obs_data_release(activeCfgObj);
     }
 
-#if 0
-    // switch configuration
+    // preview configuration
     {
-        QMutexLocker locker(&m_switchConfigMutex);
-        obs_data_t *switchCfgObj = obs_data_get_obj(loadObj, "switch_config");
-        m_switchConfig = PmSwitchConfig(switchCfgObj);
-        obs_data_release(switchCfgObj);
+        obs_data_t* previewCfgObj = obs_data_get_obj(loadObj, "preview_config");
+        PmPreviewConfig previewCfg(previewCfgObj);
+        onPreviewConfigChanged(previewCfg);
+        obs_data_release(previewCfgObj);
     }
-#endif
+    
 
     obs_data_release(loadObj);
 }

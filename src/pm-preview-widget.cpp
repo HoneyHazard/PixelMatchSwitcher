@@ -110,25 +110,26 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
     // core event handlers
     connect(m_core, &PmCore::sigSelectMatchIndex,
             this, &PmPreviewWidget::onSelectMatchIndex, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigChangedMatchConfig,
+        this, &PmPreviewWidget::onChangedMatchConfig, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgSuccess,
             this, &PmPreviewWidget::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
             this, &PmPreviewWidget::onImgFailed, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewMatchResults,
-            this, &PmPreviewWidget::onNewMatchResults, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigChangedMatchConfig,
-            this, &PmPreviewWidget::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigPreviewConfigChanged,
+            this, &PmPreviewWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigSelectMatchIndex,
             this, &PmPreviewWidget::onSelectMatchIndex, Qt::QueuedConnection);
 
     // events sent to core
-    connect(this, &PmPreviewWidget::sigChangedMatchConfig,
-            m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmPreviewWidget::sigPreviewConfigChanged,
+            m_core, &PmCore::onPreviewConfigChanged, Qt::QueuedConnection);
 
     // finish init
     size_t selIdx = m_core->selectedConfigIndex();
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
-    onNewMatchResults(selIdx, m_core->matchResults(selIdx));
+    onPreviewConfigChanged(m_core->previewConfig());
+
     onConfigUiChanged();
 }
 
@@ -149,9 +150,10 @@ void PmPreviewWidget::closeEvent(QCloseEvent* e)
     QWidget::closeEvent(e);
 }
 
-void PmPreviewWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg)
+void PmPreviewWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
-    if (matchIdx != m_matchIndex) return;
+    m_previewCfg = cfg;
+    updateFilterDisplaySize();
 
     m_previewModeButtons->blockSignals(true);
     m_previewModeButtons->button(int(cfg.previewMode))->setChecked(true);
@@ -173,16 +175,23 @@ void PmPreviewWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg)
     m_matchImgScaleCombo->blockSignals(false);
 }
 
+#if 0
 void PmPreviewWidget::onNewMatchResults(size_t matchIdx, PmMatchResults results)
 {
     if (matchIdx != m_matchIndex) return;
 
     updateFilterDisplaySize(m_core->matchConfig(matchIdx), results);
 }
+#endif
 
-void PmPreviewWidget::onImgSuccess(size_t matchIndex, std::string filename, QImage img)
+void PmPreviewWidget::onImgSuccess(
+    size_t matchIndex, std::string filename, QImage img)
 {
     if (matchIndex != m_matchIndex) return;
+
+    m_matchImgWidth = img.width();
+    m_matchImgHeight = img.height();
+    updateFilterDisplaySize();
 
     QMutexLocker locker(&m_matchImgLock);
     m_matchImg = img;
@@ -203,7 +212,7 @@ void PmPreviewWidget::onImgFailed(size_t matchIndex, std::string filename)
 
 void PmPreviewWidget::onConfigUiChanged()
 {
-    PmMatchConfig config = m_core->matchConfig(m_matchIndex);
+    PmPreviewConfig config = m_core->previewConfig();
 
     int previewModeIdx = m_previewModeButtons->checkedId();
     m_previewScaleStack->setCurrentIndex(previewModeIdx);
@@ -220,9 +229,11 @@ void PmPreviewWidget::onConfigUiChanged()
     config.previewMatchImageScale
         = m_matchImgScaleCombo->currentData().toFloat();
 
-    emit sigChangedMatchConfig(m_matchIndex, config);
+    emit sigPreviewConfigChanged(config);
 
-    updateFilterDisplaySize(config, m_core->matchResults(m_matchIndex));
+    //updateFilterDisplaySize(
+    //    config, m_core->matchResults(m_matchIndex));
+
 }
 
 void PmPreviewWidget::onDestroy(QObject* obj)
@@ -246,14 +257,20 @@ void PmPreviewWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
     }
 
     std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
-    const QImage& matchImg = m_core->matchImage(m_matchIndex);
-    if (matchImgFilename.size()) {
-        if (matchImg.isNull()) {
-            onImgFailed(m_matchIndex, matchImgFilename);
-        } else {
-            onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
-        }
+    QImage matchImg = m_core->matchImage(m_matchIndex);
+    if (matchImg.isNull()) {
+        onImgFailed(m_matchIndex, matchImgFilename);
+    } else {
+        onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
     }
+}
+
+void PmPreviewWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
+{
+    if (matchIndex != m_matchIndex) return;
+
+    m_matchConfig = cfg;
+    updateFilterDisplaySize();
 }
 
 void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
@@ -264,8 +281,7 @@ void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
     if (!core) return;
 
     widget->m_rendering = true;
-    auto config = core->matchConfig(widget->m_matchIndex);
-    if (config.previewMode == PmPreviewMode::MatchImage) {
+    if (widget->m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
         widget->drawMatchImage();
     } else if (core->activeFilterRef().isValid()) {
         widget->drawEffect();
@@ -287,16 +303,16 @@ void PmPreviewWidget::drawEffect()
     float orthoLeft, orthoBottom, orthoRight, orthoTop;
     int vpLeft, vpBottom, vpWidth, vpHeight;
 
-    auto results = m_core->matchResults(m_matchIndex);
-    auto config = m_core->matchConfig(m_matchIndex);
+    //auto results = m_core->matchResults(m_matchIndex);
+    //auto config = m_core->matchConfig(m_matchIndex);
 
-    if (config.previewMode == PmPreviewMode::Video) {
+    if (m_previewCfg.previewMode == PmPreviewMode::Video) {
         filterRef.lockData();
         int cx = int(filterData->base_width);
         int cy = int(filterData->base_height);
         filterRef.unlockData();
-        int scaledCx = int(cx * config.previewVideoScale);
-        int scaledCy = int(cy * config.previewVideoScale);
+        int scaledCx = int(cx * m_previewCfg.previewVideoScale);
+        int scaledCy = int(cy * m_previewCfg.previewVideoScale);
 
         orthoLeft = 0.f;
         orthoBottom = 0.f;
@@ -308,16 +324,16 @@ void PmPreviewWidget::drawEffect()
         vpWidth = scaledCx;
         vpHeight = scaledCy;
     } else { // if (config.previewMode == PmPreviewMode::Region) {
-        orthoLeft = config.filterCfg.roi_left;
-        orthoBottom = config.filterCfg.roi_bottom;
-        orthoRight = config.filterCfg.roi_left + int(results.matchImgWidth);
-        orthoTop = config.filterCfg.roi_bottom + int(results.matchImgHeight);
+        orthoLeft = m_roiLeft;
+        orthoBottom = m_roiBottom;
+        orthoRight = m_roiLeft + m_matchImgWidth;
+        orthoTop = m_roiBottom + m_matchImgHeight;
 
-        float scale = config.previewRegionScale;
+        float scale = m_previewCfg.previewRegionScale;
         vpLeft = 0.f;
         vpBottom = 0.0f;
-        vpWidth = int(results.matchImgWidth * scale);
-        vpHeight = int(results.matchImgHeight * scale);
+        vpWidth = int(m_matchImgWidth * scale);
+        vpHeight = int(m_matchImgHeight * scale);
     }
 
     gs_viewport_push();
@@ -327,7 +343,7 @@ void PmPreviewWidget::drawEffect()
 
     filterRef.lockData();
     filterData->preview_mode = true;
-    filterData->show_border = (config.previewMode == PmPreviewMode::Video);
+    filterData->show_border = (m_previewCfg.previewMode == PmPreviewMode::Video);
     filterRef.unlockData();
 
     obs_source_video_render(renderSrc);
@@ -346,18 +362,14 @@ void PmPreviewWidget::drawMatchImage()
             }
             unsigned char* bits = m_matchImg.bits();
             m_matchImgTex = gs_texture_create(
-                m_matchImg.width(), m_matchImg.height(),
+                m_matchImgWidth, m_matchImgHeight,
                 GS_BGRA, (uint8_t)-1,
                 (const uint8_t**)(&bits), 0);
             m_matchImg = QImage();
         }
     }
 
-    auto config = m_core->matchConfig(m_matchIndex);
-    auto filterRef = m_core->activeFilterRef();
-    auto filterData = filterRef.filterData();
-
-    float previewScale = config.previewMatchImageScale;
+    float previewScale = m_previewCfg.previewMatchImageScale;
 
     gs_effect* effect = m_core->drawMatchImageEffect();
     gs_eparam_t* param = gs_effect_get_param_by_name(effect, "image");
@@ -372,35 +384,35 @@ void PmPreviewWidget::drawMatchImage()
 }
 
 
-void PmPreviewWidget::updateFilterDisplaySize(
-    const PmMatchConfig& config, const PmMatchResults& results)
+void PmPreviewWidget::updateFilterDisplaySize()
+    //const PmMatchConfig& config, const PmMatchResults& results)
 {
     auto filterRef = m_core->activeFilterRef();
     auto filterData = filterRef.filterData();
 
     int cx, cy;
-    if (config.previewMode == PmPreviewMode::Video) {
+    if (m_previewCfg.previewMode == PmPreviewMode::Video) {
         if (filterData) {
-            float scale = config.previewVideoScale;
+            float scale = m_previewCfg.previewVideoScale;
             cx = int(filterData->base_width * scale);
             cy = int(filterData->base_height * scale);
         } else {
             cx = 0;
             cy = 0;
         }
-    } else if (config.previewMode == PmPreviewMode::Region) {
+    } else if (m_previewCfg.previewMode == PmPreviewMode::Region) {
         if (filterData) {
-            float scale = config.previewRegionScale;
-            cx = int(results.matchImgWidth * scale);
-            cy = int(results.matchImgHeight * scale);
+            float scale = m_previewCfg.previewRegionScale;
+            cx = int(m_matchImgWidth * scale);
+            cy = int(m_matchImgHeight * scale);
         } else {
             cx = 0;
             cy = 0;
         }
     } else { // PmPreviewMode::MatchImage
-        float scale = config.previewMatchImageScale;
-        cx = int(results.matchImgWidth * scale);
-        cy = int(results.matchImgHeight * scale);
+        float scale = m_previewCfg.previewMatchImageScale;
+        cx = int(m_matchImgWidth * scale);
+        cy = int(m_matchImgHeight * scale);
     }
 
     if (m_filterDisplay->width() != cx) {
