@@ -66,6 +66,8 @@ protected:
     };
 
     static const QString k_dontSwitchStr;
+    static const QString k_transpBgStyle;
+    static const QString k_semiTranspBgStyle;
 
     void constructRow(int idx);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
@@ -90,4 +92,5 @@ protected:
     QComboBox* m_noMatchTransitionCombo;
 
     QSet<std::string> m_sceneNames;
+    int m_prevMatchIndex = 0;
 };

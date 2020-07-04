@@ -17,6 +17,10 @@ using namespace std;
 
 const QString PmMatchListWidget::k_dontSwitchStr 
     = obs_module_text("<don't switch>");
+const QString PmMatchListWidget::k_transpBgStyle
+    = "background-color: rgba(0, 0, 0, 0)";
+const QString PmMatchListWidget::k_semiTranspBgStyle
+    = "background-color: rgba(0, 0, 0, 0.6)";
 
 PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
@@ -288,11 +292,29 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
     resultLabel->setToolTip(text);
 }
 
-void PmMatchListWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig config)
+void PmMatchListWidget::onSelectMatchIndex(
+    size_t matchIndex, PmMatchConfig config)
 {
+    size_t mmSz = m_core->multiMatchConfigSize();
+    if (m_prevMatchIndex < mmSz) {
+        QLabel* prevLabel = (QLabel*)m_tableWidget->cellWidget(
+            m_prevMatchIndex, int(RowOrder::Result));
+        if (prevLabel) {
+            prevLabel->setStyleSheet(k_transpBgStyle);
+        }
+    }
+    if (matchIndex < mmSz) {
+        QLabel* resLabel = (QLabel*)m_tableWidget->cellWidget(
+            matchIndex, int(RowOrder::Result));
+        if (resLabel) {
+            resLabel->setStyleSheet(k_semiTranspBgStyle);
+        }
+    }
+    m_prevMatchIndex = matchIndex;
+
     m_tableWidget->selectRow((int)matchIndex);
 
-    updateAvailableButtons(matchIndex, m_core->multiMatchConfigSize());
+    updateAvailableButtons(matchIndex, mmSz);
 }
 
 void PmMatchListWidget::onRowSelected()
@@ -352,11 +374,10 @@ void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
 
 void PmMatchListWidget::constructRow(int idx)
 {
-    static const char* bgStyle = "background-color: rgba(0,0,0,0)";
     QWidget* parent = m_tableWidget;
 
     QCheckBox* enableBox = new QCheckBox(parent);
-    enableBox->setStyleSheet(bgStyle);
+    enableBox->setStyleSheet(k_transpBgStyle);
     connect(enableBox, &QCheckBox::toggled,
         [this, idx](bool checked) { enableConfigToggled(idx, checked); });
     m_tableWidget->setCellWidget(idx, (int)RowOrder::EnableBox, enableBox);
@@ -377,14 +398,14 @@ void PmMatchListWidget::constructRow(int idx)
 
     QComboBox* sceneCombo = new QComboBox(parent);
     sceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
-    sceneCombo->setStyleSheet(bgStyle);
+    sceneCombo->setStyleSheet(k_transpBgStyle);
     updateSceneChoices(sceneCombo);
     connect(sceneCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchSceneSelected(idx, str); });
     m_tableWidget->setCellWidget(idx, (int)RowOrder::SceneCombo, sceneCombo);
 
     QComboBox* transitionCombo = new QComboBox(parent);
-    transitionCombo->setStyleSheet(bgStyle);
+    transitionCombo->setStyleSheet(k_transpBgStyle);
     updateTransitionChoices(transitionCombo);
     connect(transitionCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchTransitionSelected(idx, str); });
@@ -392,7 +413,7 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)RowOrder::TransitionCombo, transitionCombo);
 
     QLabel* resultLabel = new QLabel("--", parent);
-    //resultLabel->setStyleSheet("background-color: rgba(0,0,0,1)");
+    resultLabel->setStyleSheet(k_transpBgStyle);
     resultLabel->setTextFormat(Qt::RichText);
     resultLabel->setAlignment(Qt::AlignCenter);
     m_tableWidget->setCellWidget(
