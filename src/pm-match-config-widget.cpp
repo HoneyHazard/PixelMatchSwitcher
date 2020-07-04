@@ -18,8 +18,7 @@
 
 #include <obs-module.h>
 
-const char * PmMatchConfigWidget::k_unsavedPresetStr
-    = obs_module_text("<unsaved preset>");
+
 const char* PmMatchConfigWidget::k_failedImgStr
     = obs_module_text("[FAILED]");
 
@@ -49,10 +48,6 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
-
-    // preset controls
-    QHBoxLayout *presetLayout = new QHBoxLayout;
-    presetLayout->setContentsMargins(0, 0, 0, 0);
 
     // index and label
     m_configCaption = new QLabel(this);
@@ -386,34 +381,6 @@ vec3 PmMatchConfigWidget::toVec3(QColor val)
     return ret;
 }
 
-#if 0
-QColor PmMatchConfigWidget::toQColor(uint32_t val)
-{
-    uint8_t *colorBytes = reinterpret_cast<uint8_t*>(&val);
-#if 0
-#if PM_LITTLE_ENDIAN
-    return QColor(int(colorBytes[2]), int(colorBytes[1]),
-                  int(colorBytes[0]), int(colorBytes[3]));
-
-#else
-    return QColor(int(colorBytes[1]), int(colorBytes[2]),
-                  int(colorBytes[3]), int(colorBytes[0]));
-#endif
-#endif
-}
-
-uint32_t PmMatchConfigWidget::toUInt32(QColor val)
-{
-#if PM_LITTLE_ENDIAN
-    return uint32_t(val.alpha() << 24) | uint32_t(val.red() << 16)
-         | uint32_t(val.green() << 8)  | uint32_t(val.blue());
-#else
-    return uint32_t(val.blue() << 24) | uint32_t(val.green() << 16)
-         | uint32_t(val.red() << 8)   | uint32_t(val.alpha());
-#endif
-}
-#endif
-
 void PmMatchConfigWidget::roiRangesChanged(
     uint32_t baseWidth, uint32_t baseHeight,
     uint32_t imgWidth, uint32_t imgHeight)
@@ -496,158 +463,29 @@ void PmMatchConfigWidget::onConfigUiChanged()
 }
 
 #if 0
-m_presetCombo = new QComboBox(this);
-m_presetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
-m_presetCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-connect(m_presetCombo, SIGNAL(currentIndexChanged(int)),
-    this, SLOT(onPresetSelected()));
-presetLayout->addWidget(m_presetCombo);
-
-m_presetSaveButton = new QPushButton(obs_module_text("Save"), this);
-connect(m_presetSaveButton, &QPushButton::released,
-    this, &PmMatchConfigWidget::onPresetSave, Qt::QueuedConnection);
-presetLayout->addWidget(m_presetSaveButton);
-
-m_presetSaveAsButton = new QPushButton(obs_module_text("Save As"), this);
-connect(m_presetSaveAsButton, &QPushButton::released,
-    this, &PmMatchConfigWidget::onPresetSaveAs, Qt::QueuedConnection);
-presetLayout->addWidget(m_presetSaveAsButton);
-
-m_presetResetButton = new QPushButton(obs_module_text("Reset"), this);
-connect(m_presetResetButton, &QPushButton::released,
-    this, &PmMatchConfigWidget::onConfigReset, Qt::QueuedConnection);
-presetLayout->addWidget(m_presetResetButton);
-
-m_presetRemoveButton = new  QPushButton(obs_module_text("Remove"), this);
-connect(m_presetRemoveButton, &QPushButton::released,
-    this, &PmMatchConfigWidget::onPresetRemove, Qt::QueuedConnection);
-presetLayout->addWidget(m_presetRemoveButton);
-mainLayout->addRow(obs_module_text("Preset: "), presetLayout);
-
-// divider line 1
-QFrame* line1 = new QFrame();
-line1->setFrameShape(QFrame::HLine);
-line1->setFrameShadow(QFrame::Sunken);
-mainLayout->addRow(line1);
-#endif
-
+QColor PmMatchConfigWidget::toQColor(uint32_t val)
+{
+    uint8_t* colorBytes = reinterpret_cast<uint8_t*>(&val);
 #if 0
-connect(m_core, &PmCore::sigMatchPresetsChanged,
-    this, &PmMatchConfigWidget::onPresetsChanged, Qt::QueuedConnection);
-connect(m_core, &PmCore::sigMatchPresetStateChanged,
-    this, &PmMatchConfigWidget::onPresetStateChanged, Qt::QueuedConnection);
-connect(m_core, &PmCore::sigNewMatchResults,
-    this, &PmMatchConfigWidget::onNewMatchResults, Qt::QueuedConnection);
+#if PM_LITTLE_ENDIAN
+    return QColor(int(colorBytes[2]), int(colorBytes[1]),
+        int(colorBytes[0]), int(colorBytes[3]));
 
-// local signals -> core slots
-connect(this, &PmMatchConfigWidget::sigNewUiConfig,
-    m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
-connect(this, &PmMatchConfigWidget::sigSaveMatchPreset,
-    m_core, &PmCore::onSaveMatchPreset, Qt::QueuedConnection);
-connect(this, &PmMatchConfigWidget::sigSelectActiveMatchPreset,
-    m_core, &PmCore::onSelectActiveMatchPreset, Qt::QueuedConnection);
-connect(this, &PmMatchConfigWidget::sigRemoveMatchPreset,
-    m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
+#else
+    return QColor(int(colorBytes[1]), int(colorBytes[2]),
+        int(colorBytes[3]), int(colorBytes[0]));
 #endif
-
-#if 0
-void PmMatchConfigWidget::onPresetsChanged()
-{
-    PmMatchPresets presets = m_core->matchPresets();
-    m_presetCombo->blockSignals(true);
-    m_presetCombo->clear();
-    for (auto pair: presets) {
-        m_presetCombo->addItem(pair.first.data());
-    }
-    m_presetCombo->blockSignals(false);
+#endif
 }
 
-void PmMatchConfigWidget::onPresetStateChanged()
+uint32_t PmMatchConfigWidget::toUInt32(QColor val)
 {
-    std::string activePreset = m_core->activeMatchPresetName();
-    bool dirty = m_core->matchConfigDirty();
-
-    m_presetCombo->blockSignals(true);
-    int findPlaceholder = m_presetCombo->findText(k_unsavedPresetStr);
-    if (activePreset.empty()) {
-        if (findPlaceholder == -1) {
-            m_presetCombo->addItem(k_unsavedPresetStr);
-        }
-        m_presetCombo->setCurrentText(k_unsavedPresetStr);
-    } else {
-        if (findPlaceholder != -1) {
-            m_presetCombo->removeItem(findPlaceholder);
-        }
-        m_presetCombo->setCurrentText(activePreset.data());
-    }
-    m_presetCombo->blockSignals(false);
-
-    m_presetRemoveButton->setEnabled(!activePreset.empty());
-    m_presetSaveButton->setEnabled(dirty);
-}
-
-void PmMatchConfigWidget::onPresetSelected()
-{
-    std::string selPreset = m_presetCombo->currentText().toUtf8().data();
-    PmMatchConfig presetConfig = m_core->matchPresetByName(selPreset);
-    emit sigSelectActiveMatchPreset(selPreset);
-    configToUi(presetConfig);
-    updateFilterDisplaySize(presetConfig, m_prevResults);
-}
-
-void PmMatchConfigWidget::onPresetSave()
-{
-    std::string presetName = m_core->activeMatchPresetName();
-    if (presetName.empty()) {
-        onPresetSaveAs();
-    } else {
-        emit sigSaveMatchPreset(presetName);
-    }
-}
-
-void PmMatchConfigWidget::onPresetSaveAs()
-{
-    bool ok;
-    QString presetNameQstr = QInputDialog::getText(
-        this, obs_module_text("Save Preset"), obs_module_text("Enter Name: "),
-        QLineEdit::Normal, QString(), &ok);
-
-    std::string presetName = presetNameQstr.toUtf8().data();
-
-    if (!ok || presetName.empty()) return;
-
-    if (m_core->activeMatchPresetName() != presetName
-     && m_core->matchPresetExists(presetName)) {
-        int ret = QMessageBox::warning(this, "Preset Exists",
-            QString("Overwrite preset \"%1\"?").arg(presetNameQstr),
-            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
-
-        if (ret != QMessageBox::Yes) return;
-    }
-
-    emit sigSaveMatchPreset(presetName);
-}
-
-void PmMatchConfigWidget::onConfigReset()
-{
-    PmMatchConfig config; // defaults
-    configToUi(config);
-    updateFilterDisplaySize(config, m_prevResults);
-    emit sigNewUiConfig(config);
-    emit sigSelectActiveMatchPreset("");
-}
-
-void PmMatchConfigWidget::onPresetRemove()
-{
-    auto presets = m_core->matchPresets();
-    std::string oldPreset = m_core->activeMatchPresetName();
-    emit sigRemoveMatchPreset(oldPreset);
-    for (auto p: presets) {
-        if (p.first != oldPreset) {
-            configToUi(p.second);
-            emit sigSelectActiveMatchPreset(p.first);
-            break;
-        }
-    }
+#if PM_LITTLE_ENDIAN
+    return uint32_t(val.alpha() << 24) | uint32_t(val.red() << 16)
+        | uint32_t(val.green() << 8) | uint32_t(val.blue());
+#else
+    return uint32_t(val.blue() << 24) | uint32_t(val.green() << 16)
+        | uint32_t(val.red() << 8) | uint32_t(val.alpha());
+#endif
 }
 #endif

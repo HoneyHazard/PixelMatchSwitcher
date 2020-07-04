@@ -58,7 +58,6 @@ protected:
         uint32_t imgWidth, uint32_t imgHeight);
 
 protected:
-    static const char *k_unsavedPresetStr;
     static const char* k_failedImgStr;
 
     size_t m_matchIndex = 0;
@@ -79,29 +78,3 @@ protected:
     QPointer<PmCore> m_core;
     PmMatchResults m_prevResults;
 };
-
-// core signal handlers
-//void onPresetsChanged();
-//void onPresetStateChanged();
-
-#if 0
-void sigSelectActiveMatchPreset(std::string name);
-void sigSaveMatchPreset(std::string name);
-void sigRemoveMatchPreset(std::string name);
-#endif
-
-#if 0
-void onPresetSelected();
-void onPresetSave();
-void onPresetSaveAs();
-void onConfigReset();
-void onPresetRemove();
-#endif
-
-#if 0
-QComboBox* m_presetCombo;
-QPushButton* m_presetSaveButton;
-QPushButton* m_presetSaveAsButton;
-QPushButton* m_presetResetButton;
-QPushButton* m_presetRemoveButton;
-#endif

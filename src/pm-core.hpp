@@ -78,8 +78,8 @@ signals:
     void sigImgSuccess(size_t matchIdx, std::string filename, QImage img);
     void sigImgFailed(size_t matchIdx, std::string filename);
     void sigScenesChanged(PmScenes);
-    void sigMatchPresetsChanged();
-    void sigMatchPresetStateChanged();
+    void sigAvailablePresetsChanged();
+    void sigActivePresetChanged();
 
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);
@@ -112,6 +112,7 @@ protected:
         const std::string& scene, const std::string &transition);
     void scanScenes();
     void updateActiveFilter();
+    void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
     
     void supplyImageToFilter(
         struct pm_filter_data *data, size_t matchIdx, const QImage &image);

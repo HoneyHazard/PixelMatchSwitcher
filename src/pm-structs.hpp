@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <utility>
 #include <qmetatype.h>
-#include <unordered_map>
+//#include <unordered_map>
 //#include <unordered_set>
+#include <QMap>
 #include <QSet>
 //#include <QHash>
 
@@ -80,7 +81,7 @@ public:
     std::string noMatchTransition = "Cut";
 };
 
-typedef std::unordered_map<std::string, PmMultiMatchConfig> PmMatchPresets;
+typedef QMap<std::string, PmMultiMatchConfig> PmMatchPresets;
 
 class PmScenes : public QSet<OBSWeakSource>
 {
@@ -114,18 +115,4 @@ uint qHash(const std::string& str);
     #define PM_LITTLE_ENDIAN (REG_DWORD == REG_DWORD_LITTLE_ENDIAN)
 #else
     #define PM_LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
-#endif
-
-#if 0
-struct PmSwitchConfig
-{
-    PmSwitchConfig() {}
-    PmSwitchConfig(obs_data_t* data);
-    obs_data_t* save() const;
-
-    bool isEnabled = false;
-    OBSWeakSource matchScene;
-    OBSWeakSource noMatchScene;
-    OBSWeakSource defaultTransition;
-};
 #endif

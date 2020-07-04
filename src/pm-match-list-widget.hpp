@@ -10,6 +10,10 @@ class QTableWidget;
 class QPushButton;
 class QComboBox;
 
+/**
+ * @brief Shows a list of match configuration entries and allows changing
+ *        some of their parameters
+  */
 class PmMatchListWidget : public QWidget
 {
     Q_OBJECT

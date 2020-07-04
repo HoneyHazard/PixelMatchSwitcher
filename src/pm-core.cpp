@@ -152,24 +152,6 @@ PmMatchResults PmCore::matchResults(size_t matchIdx) const
     return matchIdx < m_results.size() ? m_results[matchIdx] : PmMatchResults();
 }
 
-std::string PmCore::activeMatchPresetName() const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    return m_activeMatchPreset;
-}
-
-bool PmCore::matchPresetExists(const std::string &name) const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    return m_matchPresets.find(name) != m_matchPresets.end();
-}
-
-PmMultiMatchConfig PmCore::matchPresetByName(const std::string &name) const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    return m_matchPresets.at(name);
-}
-
 PmMultiMatchConfig PmCore::multiMatchConfig() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -208,36 +190,6 @@ std::string PmCore::matchImgFilename(size_t matchIdx) const
         return std::string();
     else 
         return m_multiMatchConfig[matchIdx].matchImgFilename;
-}
-
-PmMatchPresets PmCore::matchPresets() const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    return m_matchPresets;
-}
-
-bool PmCore::matchConfigDirty() const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    if (m_activeMatchPreset.empty()) {
-        return true;
-    } else {
-        const PmMultiMatchConfig presetCfg 
-            = m_matchPresets.at(m_activeMatchPreset);
-        return presetCfg != m_multiMatchConfig;
-    }
-}
-
-void PmCore::onSaveMatchPreset(std::string name)
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    bool isNew = !matchPresetExists(name);
-    m_matchPresets[name] = m_multiMatchConfig;
-    if (isNew) {
-        emit sigMatchPresetsChanged();
-    }
-    m_activeMatchPreset = name;
-    emit sigMatchPresetStateChanged();
 }
 
 void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
@@ -462,25 +414,83 @@ void PmCore::onPreviewConfigChanged(PmPreviewConfig cfg)
     emit sigPreviewConfigChanged(cfg);
 }
 
+std::string PmCore::activeMatchPresetName() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_activeMatchPreset;
+}
+
+bool PmCore::matchPresetExists(const std::string& name) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets.find(name) != m_matchPresets.end();
+}
+
+PmMultiMatchConfig PmCore::matchPresetByName(const std::string& name) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets.value(name, PmMultiMatchConfig());
+}
+
+PmMatchPresets PmCore::matchPresets() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets;
+}
+
+bool PmCore::matchConfigDirty() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    if (m_activeMatchPreset.empty()) {
+        return true;
+    } else {
+        const PmMultiMatchConfig& presetCfg 
+            = m_matchPresets[m_activeMatchPreset];
+        return presetCfg != m_multiMatchConfig;
+    }
+}
+
+void PmCore::onSaveMatchPreset(std::string name)
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    bool isNew = !matchPresetExists(name);
+    m_matchPresets[name] = m_multiMatchConfig;
+    if (isNew) {
+        emit sigAvailablePresetsChanged();
+    }
+    onSelectActiveMatchPreset(name);
+}
+
+
 void PmCore::onSelectActiveMatchPreset(std::string name)
 {
     QMutexLocker locker(&m_matchConfigMutex);
     if (m_activeMatchPreset == name) return;
     
-    PmMultiMatchConfig multiConfig 
-        = name.size() ? m_matchPresets[name] : PmMultiMatchConfig();      
-    
-    emit sigMatchPresetStateChanged();
+    m_activeMatchPreset = name;
+    emit sigActivePresetChanged();
+
+    PmMultiMatchConfig multiConfig
+        = name.size() ? m_matchPresets[name] : PmMultiMatchConfig();
+    activateMultiMatchConfig(multiConfig);
 }
 
 void PmCore::onRemoveMatchPreset(std::string name)
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    m_matchPresets.erase(name);
-    emit sigMatchPresetsChanged();
+
+    if (m_matchPresets.empty()) return;
+
+    PmMatchPresets newPresets = m_matchPresets;
+    newPresets.remove(name);
     if (m_activeMatchPreset == name) {
-        onSelectActiveMatchPreset("");
+        std::string selOther 
+            = newPresets.size() ? newPresets.keys().first() : "";
+        onSelectActiveMatchPreset(selOther);
     }
+
+    m_matchPresets = newPresets;
+    emit sigAvailablePresetsChanged();
 }
 
 PmScenes PmCore::scenes() const
@@ -655,6 +665,17 @@ void PmCore::updateActiveFilter()
     }
 }
 
+void PmCore::activateMultiMatchConfig(const PmMultiMatchConfig& mCfg)
+{
+    onResetMatchConfigs();
+    for (size_t i = 0; i < mCfg.size(); ++i) {
+        onInsertMatchConfig(i, mCfg[i]);
+    }
+    onNoMatchSceneChanged(mCfg.noMatchScene);
+    onNoMatchTransitionChanged(mCfg.noMatchTransition);
+    onSelectMatchIndex(0);
+}
+
 void PmCore::onMenuAction()
 {
     // main UI dialog
@@ -820,10 +841,9 @@ void PmCore::pmSave(obs_data_t *saveData)
 
         // match presets
         obs_data_array_t *matchPresetArray = obs_data_array_create();
-        for (const auto &p: m_matchPresets) {
-            std::string presetName = p.first;
-            PmMultiMatchConfig presetCfg = p.second;
-            obs_data_t *matchPresetObj = presetCfg.save(presetName);
+        for (const auto &name: m_matchPresets.keys()) {
+            PmMultiMatchConfig presetCfg = m_matchPresets[name];
+            obs_data_t *matchPresetObj = presetCfg.save(name);
             obs_data_array_push_back(matchPresetArray, matchPresetObj);
             obs_data_release(matchPresetObj);
         }
@@ -884,12 +904,7 @@ void PmCore::pmLoad(obs_data_t *data)
             onSelectActiveMatchPreset(activePresetName);
         } else {
             PmMultiMatchConfig activeCfg(activeCfgObj);
-            onResetMatchConfigs();
-            for (size_t i = 0; i < activeCfg.size(); ++i) {
-                onInsertMatchConfig(i, activeCfg[i]);
-            }
-            onNoMatchSceneChanged(activeCfg.noMatchScene);
-            onNoMatchTransitionChanged(activeCfg.noMatchTransition);
+            activateMultiMatchConfig(activeCfgObj);
         }
         obs_data_release(activeCfgObj);
     }
