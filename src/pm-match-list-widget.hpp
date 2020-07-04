@@ -89,5 +89,5 @@ protected:
     QComboBox* m_noMatchSceneCombo;
     QComboBox* m_noMatchTransitionCombo;
 
-    QSet<QString> m_sceneNames;
+    QSet<std::string> m_sceneNames;
 };

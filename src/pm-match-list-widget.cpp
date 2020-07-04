@@ -415,7 +415,7 @@ void PmMatchListWidget::updateSceneChoices(
     auto currText = combo->currentText();
     combo->clear();
     for (const auto& val : m_sceneNames) {
-        combo->addItem(val);
+        combo->addItem(val.data());
     }
     combo->addItem(k_dontSwitchStr);
     combo->setCurrentText(currText);

@@ -83,10 +83,13 @@ public:
 
 typedef QMap<std::string, PmMultiMatchConfig> PmMatchPresets;
 
-class PmScenes : public QSet<OBSWeakSource>
+class PmScenes : public QMap<OBSWeakSource, std::string>
 {
 public:
-    QSet<QString> sceneNames() const;
+    PmScenes() {}
+    PmScenes(const PmScenes& other);
+
+    QSet<std::string> sceneNames() const;
 };
 
 struct PmPreviewConfig

@@ -561,7 +561,7 @@ void PmCore::scanScenes()
     obs_frontend_source_list scenesInput = {};
     obs_frontend_get_scenes(&scenesInput);
 
-    PmScenes scenes;
+    PmScenes newScenes;
     vector<PmFilterRef> filters;
     filters.push_back(PmFilterRef());
 
@@ -569,7 +569,8 @@ void PmCore::scanScenes()
         auto &fi = filters.back();
         auto &sceneSrc = scenesInput.sources.array[i];
         auto ws = OBSWeakSource(obs_source_get_weak_source(sceneSrc));
-        scenes.insert(ws);
+        auto sceneName = obs_source_get_name(sceneSrc);
+        newScenes.insert(ws, sceneName);
         fi.setScene(sceneSrc);
         obs_scene_enum_items(
             obs_scene_from_source(sceneSrc),
@@ -602,26 +603,49 @@ void PmCore::scanScenes()
         m_filters = filters;
     }
 
+
     bool scenesChanged = false;
+    QSet<std::string> oldNames;
     {
         QMutexLocker locker(&m_scenesMutex);
-        if (m_scenes != scenes) {
-            m_scenes = scenes;
-            emit sigScenesChanged(scenes);
+        if (m_scenes != newScenes) {
+            emit sigScenesChanged(newScenes);
+            oldNames = m_scenes.sceneNames();
             scenesChanged = true;
         }
     }
 
     if (scenesChanged) {
         size_t cfgSize = multiMatchConfigSize();
-        auto sceneNames = scenes.sceneNames();
+        auto newNames = newScenes.sceneNames();
         for (size_t i = 0; i < cfgSize; ++i) {
             auto cfgCpy = matchConfig(i);
-            if (cfgCpy.matchScene.size()
-             && !sceneNames.contains(cfgCpy.matchScene.data())) {
-                cfgCpy.matchScene.clear();
+            auto& matchSceneName = cfgCpy.matchScene;
+            if (matchSceneName.size() && !newNames.contains(matchSceneName)) {
+                if (oldNames.contains(matchSceneName)) {
+                    auto ws = m_scenes.key(matchSceneName);
+                    matchSceneName = newScenes[ws];
+                } else {
+                    matchSceneName.clear();
+                }
                 onChangedMatchConfig(i, cfgCpy);
             }
+        }
+        {
+            std::string noMatchScene = m_multiMatchConfig.noMatchScene;
+            if (noMatchScene.size() && !newNames.contains(noMatchScene)) {
+                if (oldNames.contains(noMatchScene)) {
+                    auto ws = m_scenes.key(noMatchScene);
+                    noMatchScene = newScenes[ws];
+                } else {
+                    noMatchScene.clear();
+                }
+                onNoMatchSceneChanged(noMatchScene);
+            }
+        }
+        {
+            QMutexLocker locker(&m_scenesMutex);
+            m_scenes = newScenes;
         }
     }
 }
@@ -778,10 +802,9 @@ void PmCore::switchScene(
 
     {
         QMutexLocker locker(&m_scenesMutex);
-        for (auto scene : m_scenes) {
-            auto sceneSrc = obs_weak_source_get_source(scene);
-            if (targetSceneName == obs_source_get_name(sceneSrc)) {
-                targetSceneSrc = sceneSrc;
+        for (auto sceneWs : m_scenes.keys()) {
+            if (targetSceneName == m_scenes[sceneWs]) {
+                targetSceneSrc = obs_weak_source_get_source(sceneWs);
                 break;
             }
         }

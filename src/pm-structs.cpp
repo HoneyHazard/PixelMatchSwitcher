@@ -166,34 +166,11 @@ bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
     }
 }
 
-#if 0
-PmSwitchConfig::PmSwitchConfig(obs_data_t *data)
+QSet<std::string> PmScenes::sceneNames() const
 {
-    // TODO
-}
-
-obs_data_t *PmSwitchConfig::save() const
-{
-    obs_data_t *ret = obs_data_create();
-    obs_data_set_bool(ret, "enabled", isEnabled);
-    obs_data_set_string(ret, "match_scene",
-        obs_source_get_name(obs_weak_source_get_source(matchScene)));
-    obs_data_set_string(ret, "no_match_scene",
-        obs_source_get_name(obs_weak_source_get_source(noMatchScene)));
-    obs_data_set_string(ret, "transition",
-        obs_source_get_name(obs_weak_source_get_source(defaultTransition)));
-    return ret;
-}
-#endif
-
-QSet<QString> PmScenes::sceneNames() const
-{
-    QSet<QString> ret;
-    for (const auto weakSrc : *this) {
-        auto src = obs_weak_source_get_source(weakSrc);
-        if (src) {
-            ret.insert(obs_source_get_name(src));
-        }
+    QSet<std::string> ret;
+    for (const auto &name : values()) {
+        ret.insert(name);
     }
     return ret;
 }
@@ -254,4 +231,9 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
+}
+
+PmScenes::PmScenes(const PmScenes& other)
+: QMap<OBSWeakSource, std::string>(other)
+{
 }
