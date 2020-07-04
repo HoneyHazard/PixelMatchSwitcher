@@ -2,8 +2,6 @@
 
 #include <QWidget>
 
-#include "pm-structs.hpp"
-
 class QComboBox;
 class QPushButton;
 
@@ -32,6 +30,7 @@ protected slots:
     // core events  handlers
     void onAvailablePresetsChanged();
     void onActivePresetChanged();
+    void onDirtyStateChanged();
 
 protected:
     static const char* k_unsavedPresetStr;

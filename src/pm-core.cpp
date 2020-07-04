@@ -458,6 +458,7 @@ void PmCore::onSaveMatchPreset(std::string name)
     if (isNew) {
         emit sigAvailablePresetsChanged();
     }
+    emit sigSavedPreset();
     onSelectActiveMatchPreset(name);
 }
 

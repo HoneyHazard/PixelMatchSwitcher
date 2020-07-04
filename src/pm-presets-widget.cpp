@@ -55,12 +55,15 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onAvailablePresetsChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigActivePresetChanged,
         this, &PmPresetsWidget::onActivePresetChanged, Qt::QueuedConnection);
-    //connect(m_core, &PmCore::sigNewMatchResults,
-    //    this, &PmPresetsWidget::onNewMatchResults, Qt::QueuedConnection);
+    
+    connect(m_core, &PmCore::sigChangedMatchConfig,
+        this, &PmPresetsWidget::onDirtyStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNewMultiMatchConfigSize,
+        this, &PmPresetsWidget::onDirtyStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigSavedPreset,
+        this, &PmPresetsWidget::onDirtyStateChanged, Qt::QueuedConnection);
 
     // local signals -> core slots
-    //connect(this, &PmPresetsWidget::sigNewUiConfig,
-    //    m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
     connect(this, &PmPresetsWidget::sigSaveMatchPreset,
         m_core, &PmCore::onSaveMatchPreset, Qt::QueuedConnection);
     connect(this, &PmPresetsWidget::sigSelectActiveMatchPreset,
@@ -71,6 +74,7 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     // finish init
     onAvailablePresetsChanged();
     onActivePresetChanged();
+    onDirtyStateChanged();
 }
 
 void PmPresetsWidget::onAvailablePresetsChanged()
@@ -87,7 +91,6 @@ void PmPresetsWidget::onAvailablePresetsChanged()
 void PmPresetsWidget::onActivePresetChanged()
 {
     std::string activePreset = m_core->activeMatchPresetName();
-    bool dirty = m_core->matchConfigDirty();
 
     m_presetCombo->blockSignals(true);
     int findPlaceholder = m_presetCombo->findText(k_unsavedPresetStr);
@@ -105,6 +108,11 @@ void PmPresetsWidget::onActivePresetChanged()
     m_presetCombo->blockSignals(false);
 
     m_presetRemoveButton->setEnabled(!activePreset.empty());
+}
+
+void PmPresetsWidget::onDirtyStateChanged()
+{
+    bool dirty = m_core->matchConfigDirty();
     m_presetSaveButton->setEnabled(dirty);
 }
 
