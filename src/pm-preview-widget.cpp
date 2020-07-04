@@ -181,15 +181,6 @@ void PmPreviewWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
     m_matchImgScaleCombo->blockSignals(false);
 }
 
-#if 0
-void PmPreviewWidget::onNewMatchResults(size_t matchIdx, PmMatchResults results)
-{
-    if (matchIdx != m_matchIndex) return;
-
-    updateFilterDisplaySize(m_core->matchConfig(matchIdx), results);
-}
-#endif
-
 void PmPreviewWidget::onImgSuccess(
     size_t matchIndex, std::string filename, QImage img)
 {
