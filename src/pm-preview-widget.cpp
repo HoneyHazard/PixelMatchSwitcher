@@ -429,8 +429,10 @@ void PmPreviewWidget::updateFilterDisplaySize()
 void PmPreviewWidget::enableRegionViews(bool enable)
 {
     auto regButton = m_previewModeButtons->button((int)PmPreviewMode::Region);
+    regButton->setVisible(enable);
     regButton->setEnabled(enable);
     auto imgButton = m_previewModeButtons->button((int)PmPreviewMode::MatchImage);
+    imgButton->setVisible(enable);
     imgButton->setEnabled(enable);
 
     m_regionScaleCombo->setEnabled(enable);
