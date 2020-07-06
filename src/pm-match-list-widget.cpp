@@ -301,12 +301,12 @@ void PmMatchListWidget::onSelectMatchIndex(
     }
     if (matchIndex < mmSz) {
         QLabel* resLabel = (QLabel*)m_tableWidget->cellWidget(
-            matchIndex, int(RowOrder::Result));
+            int(matchIndex), int(RowOrder::Result));
         if (resLabel) {
             resLabel->setStyleSheet(k_semiTranspBgStyle);
         }
     }
-    m_prevMatchIndex = matchIndex;
+    m_prevMatchIndex = int(matchIndex);
 
     m_tableWidget->selectRow((int)matchIndex);
 
