@@ -39,10 +39,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         << obs_module_text("Match Scene")
         << obs_module_text("Transition")
         << obs_module_text("Result"));
-    m_tableWidget->setStyleSheet(
-        "QTableWidget::item { padding: 3px };"
-        //"QTableWidget::item:selected:!active { selection-background-color: #3399ff }"
-    );
 
     // config editing buttons
     m_cfgMoveUpBtn = new QPushButton(
@@ -418,6 +414,9 @@ void PmMatchListWidget::constructRow(int idx)
     resultLabel->setAlignment(Qt::AlignCenter);
     m_tableWidget->setCellWidget(
         idx, (int)RowOrder::Result, resultLabel);
+
+    // do this every time a row is added; otherwise new rows dont look correct
+    m_tableWidget->setStyleSheet("QTableWidget::item { padding: 3px };");
 }
 
 void PmMatchListWidget::updateAvailableButtons(
