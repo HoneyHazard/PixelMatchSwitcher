@@ -30,7 +30,7 @@ protected slots:
     // core events  handlers
     void onAvailablePresetsChanged();
     void onActivePresetChanged();
-    void onDirtyStateChanged();
+    void onActivePresetDirtyStateChanged();
 
 protected:
     static const char* k_unsavedPresetStr;

@@ -55,13 +55,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onAvailablePresetsChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigActivePresetChanged,
         this, &PmPresetsWidget::onActivePresetChanged, Qt::QueuedConnection);
-    
-    connect(m_core, &PmCore::sigChangedMatchConfig,
-        this, &PmPresetsWidget::onDirtyStateChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewMultiMatchConfigSize,
-        this, &PmPresetsWidget::onDirtyStateChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigSavedPreset,
-        this, &PmPresetsWidget::onDirtyStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigActivePresetDirtyChanged,
+        this, &PmPresetsWidget::onActivePresetDirtyStateChanged, Qt::QueuedConnection);
 
     // local signals -> core slots
     connect(this, &PmPresetsWidget::sigSaveMatchPreset,
@@ -74,7 +69,7 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     // finish init
     onAvailablePresetsChanged();
     onActivePresetChanged();
-    onDirtyStateChanged();
+    onActivePresetDirtyStateChanged();
 }
 
 void PmPresetsWidget::onAvailablePresetsChanged()
@@ -110,7 +105,7 @@ void PmPresetsWidget::onActivePresetChanged()
     m_presetRemoveButton->setEnabled(!activePreset.empty());
 }
 
-void PmPresetsWidget::onDirtyStateChanged()
+void PmPresetsWidget::onActivePresetDirtyStateChanged()
 {
     bool dirty = m_core->matchConfigDirty();
     m_presetSaveButton->setEnabled(dirty);

@@ -209,6 +209,7 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig[matchIdx] = newCfg;
+        emit sigActivePresetDirtyChanged();
     }    
    
     // update images
@@ -278,6 +279,7 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig.resize(newSz);
+        emit sigActivePresetDirtyChanged();
     }
     for (size_t i = matchIndex + 1; i < newSz; ++i) {
         onChangedMatchConfig(i, m_multiMatchConfig[i-1]);
@@ -389,6 +391,7 @@ void PmCore::onNoMatchSceneChanged(std::string sceneName)
     if (m_multiMatchConfig.noMatchScene != sceneName) {
         m_multiMatchConfig.noMatchScene = sceneName;
         emit sigNoMatchSceneChanged(sceneName);
+        emit sigActivePresetDirtyChanged();
     }
 }
 
@@ -401,6 +404,7 @@ void PmCore::onNoMatchTransitionChanged(std::string transName)
     if (m_multiMatchConfig.noMatchTransition != transName) {
         m_multiMatchConfig.noMatchTransition = transName;
         emit sigNoMatchTransitionChanged(transName);
+        emit sigActivePresetDirtyChanged();
     }
 }
 
@@ -458,7 +462,7 @@ void PmCore::onSaveMatchPreset(std::string name)
     if (isNew) {
         emit sigAvailablePresetsChanged();
     }
-    emit sigSavedPreset();
+    emit sigActivePresetDirtyChanged();
     onSelectActiveMatchPreset(name);
 }
 

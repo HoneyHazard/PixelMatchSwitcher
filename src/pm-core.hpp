@@ -80,7 +80,7 @@ signals:
     void sigScenesChanged(PmScenes);
     void sigAvailablePresetsChanged();
     void sigActivePresetChanged();
-    void sigSavedPreset();
+    void sigActivePresetDirtyChanged();
 
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);
