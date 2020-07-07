@@ -82,6 +82,9 @@ signals:
     void sigActivePresetChanged();
     void sigActivePresetDirtyChanged();
 
+    void sigRunningEnabledChanged(bool enable);
+    void sigSwitchingEnabledChanged(bool enable);
+
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);
     void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);   
@@ -98,6 +101,9 @@ public slots:
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
     void onRemoveMatchPreset(std::string name);
+
+    void onRunningEnabledChanged(bool enable);
+    void onSwitchingEnabledChanged(bool enable);
 
 protected slots:
     //void onNewMultiMatchConfig(PmMultiMatchConfig cfg);

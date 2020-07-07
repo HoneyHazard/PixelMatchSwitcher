@@ -130,7 +130,8 @@ PmCore::~PmCore()
 
 void PmCore::activate()
 {
-    activateMultiMatchConfig(m_multiMatchConfig);
+    auto cfgCpy = multiMatchConfig();
+    activateMultiMatchConfig(cfgCpy);
 
     // fire up the engines
     m_periodicUpdateTimer->start(100);
@@ -553,6 +554,26 @@ void PmCore::onRemoveMatchPreset(std::string name)
 
     m_matchPresets = newPresets;
     emit sigAvailablePresetsChanged();
+}
+
+void PmCore::onRunningEnabledChanged(bool enable)
+{
+    if (m_runningEnabled != enable) {
+        if (enable) {
+            activate();
+        } else {
+            deactivate();
+        }
+        sigRunningEnabledChanged(enable);
+    }
+}
+
+void PmCore::onSwitchingEnabledChanged(bool enable)
+{
+    if (m_switchingEnabled != enable) {
+        m_switchingEnabled = enable;
+        emit sigSwitchingEnabledChanged(enable);
+    }
 }
 
 PmScenes PmCore::scenes() const
