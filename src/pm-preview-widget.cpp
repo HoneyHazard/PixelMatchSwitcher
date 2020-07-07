@@ -286,7 +286,7 @@ void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
     widget->m_rendering = true;
     if (widget->m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
         widget->drawMatchImage();
-    } else if (core->activeFilterRef().isValid()) {
+    } else {
         widget->drawEffect();
     }
     widget->m_rendering = false;
@@ -301,7 +301,7 @@ void PmPreviewWidget::drawEffect()
     auto renderSrc = filterRef.filter();
     auto filterData = filterRef.filterData();
 
-    if (!renderSrc) return;
+    if (!renderSrc || !filterRef.isValid()) return;
 
     float orthoLeft, orthoBottom, orthoRight, orthoTop;
     int vpLeft, vpBottom, vpWidth, vpHeight;

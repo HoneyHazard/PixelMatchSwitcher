@@ -307,8 +307,11 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 done:
     pthread_mutex_unlock(&filter->mutex);
 
-    if (!filter->preview_mode && filter->on_frame_processed)
-        filter->on_frame_processed(filter);
+    if (!filter->preview_mode 
+     && filter->num_match_entries > 0
+     && filter->on_frame_processed) {
+        filter->on_frame_processed();
+    }
     filter->preview_mode = false;
     filter->show_border = false;
 

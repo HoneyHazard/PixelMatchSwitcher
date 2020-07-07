@@ -28,7 +28,7 @@ class PmCore : public QObject
     // interactions with OBS C components
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
-    friend void on_frame_processed(struct pm_filter_data* filter);
+    friend void on_frame_processed();
     friend void pm_save_load_callback(
         obs_data_t *save_data, bool saving, void *corePtr);
 

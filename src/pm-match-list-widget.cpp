@@ -277,7 +277,7 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
 
     
     QString text;     
-    if (percentage == percentage) { // not NaN
+    if (percentage == percentage && results.numCompared > 0) { // valid
         text = QString("<font color=\"%1\">%2%</font>")
             .arg(results.isMatched ? "Green" : "Red")
             .arg(double(percentage), 0, 'f', 1);

@@ -45,14 +45,11 @@ void free_pixel_match_switcher()
     PmCore::m_instance = nullptr;
 }
 
-void on_frame_processed(struct pm_filter_data *filter)
+void on_frame_processed()
 {
     auto core = PmCore::m_instance;
     if (core) {
-        auto fr = core->activeFilterRef();
-        if (fr.filterData() == filter) {
-            emit core->sigFrameProcessed();
-        }
+        emit core->sigFrameProcessed();
     }
 }
 
@@ -106,6 +103,9 @@ PmCore::PmCore()
 
     if (m_runningEnabled) {
         activate();
+    } else {
+        // only start the timer for the sake of fetching transitions
+        m_periodicUpdateTimer->start();
     }
 }
 
@@ -144,19 +144,21 @@ void PmCore::deactivate()
     m_runningEnabled = false;
     m_periodicUpdateTimer->stop();
 
+    PmFilterRef oldAfr;
     {
         QMutexLocker locker(&m_filtersMutex);
-        if (m_activeFilter.isValid()) {
-            auto data = m_activeFilter.filterData();
-            if (data) {
-                m_activeFilter.lockData();
-                data->on_frame_processed = nullptr;
-                pm_resize_match_entries(data, 0);
-                m_activeFilter.unlockData();
-            }
-        }
+        oldAfr = m_activeFilter;
         m_activeFilter.reset();
         m_filters.clear();
+    }
+    if (oldAfr.isValid()) {
+        auto data = oldAfr.filterData();
+        if (data) {
+            oldAfr.lockData();
+            pm_resize_match_entries(data, 0);
+            data->on_frame_processed = nullptr;
+            oldAfr.unlockData();
+        }
     }
     {
         QMutexLocker locker(&m_matchImagesMutex);
@@ -166,6 +168,9 @@ void PmCore::deactivate()
     }
     {
         QMutexLocker locker(&m_resultsMutex);
+        for (size_t i = 0; i < m_results.size(); ++i) {
+            emit sigNewMatchResults(i, PmMatchResults());
+        }
         m_results.clear();
     }
 
@@ -739,32 +744,45 @@ void PmCore::scanScenes()
 
 void PmCore::updateActiveFilter()
 {
-    QMutexLocker locker(&m_filtersMutex);
-    if (m_activeFilter.isValid()) {
-        bool found = false;
-        for (const auto &fi: m_filters) {
-            if (fi.filter() == m_activeFilter.filter() && fi.isActive()) {
-                found = true;
+    PmFilterRef oldFilt, newFilt;
+    {
+        QMutexLocker locker(&m_filtersMutex);
+        if (m_activeFilter.isValid()) {
+            bool found = false;
+            for (const auto& fi : m_filters) {
+                if (fi.filter() == m_activeFilter.filter() && fi.isActive()) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) return;
+
+            oldFilt = m_activeFilter;
+            m_activeFilter.reset();
+        }
+        for (const auto& fi : m_filters) {
+            pm_filter_data* data;
+            if (fi.isActive()) {
+                newFilt = m_activeFilter = fi;
                 break;
             }
         }
-        if (found) return;
+    }
 
-        auto data = m_activeFilter.filterData();
+    if (oldFilt.isValid()) {
+        auto data = oldFilt.filterData();
         if (data) {
-            m_activeFilter.lockData();
+            oldFilt.lockData();
             data->on_frame_processed = nullptr;
             pm_resize_match_entries(data, 0);
-            m_activeFilter.unlockData();
+            oldFilt.unlockData();
         }
-        m_activeFilter.reset();
     }
-    for (const auto &fi: m_filters) {
-        pm_filter_data* data;
-        if (fi.isActive() && (data = fi.filterData())) {
-            m_activeFilter = fi;
-            size_t cfgSize = multiMatchConfigSize();
-            m_activeFilter.lockData();
+    if (newFilt.isValid()) {
+        size_t cfgSize = multiMatchConfigSize();
+        auto data = newFilt.filterData();
+        if (data) {
+            newFilt.lockData();
             data->on_frame_processed = on_frame_processed;
             data->selected_match_index = m_selectedMatchIndex;
             pm_resize_match_entries(data, cfgSize);
@@ -773,7 +791,7 @@ void PmCore::updateActiveFilter()
                 pm_supply_match_entry_config(data, i, &cfg);
                 supplyImageToFilter(data, i, matchImage(i));
             }
-            m_activeFilter.unlockData();
+            newFilt.unlockData();
         }
     }
 }
@@ -806,10 +824,15 @@ void PmCore::onPeriodicUpdate()
 {
     if (m_availableTransitions.empty()) {
         m_availableTransitions = getAvailableTransitions();
+        if (!m_runningEnabled) {
+            m_periodicUpdateTimer->stop();
+        }
     }
 
-    scanScenes();
-    updateActiveFilter();
+    if (m_runningEnabled) {
+        scanScenes();
+        updateActiveFilter();
+    }
 }
 
 void PmCore::onFrameProcessed()

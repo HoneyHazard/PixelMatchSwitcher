@@ -74,7 +74,7 @@ struct pm_filter_data
     bool visualize;
 
     // callbacks for fast reactions
-    void (*on_frame_processed)(struct pm_filter_data *sender);
+    void (*on_frame_processed)();
 };
 
 static void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data)
