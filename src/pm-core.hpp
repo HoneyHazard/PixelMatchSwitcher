@@ -122,6 +122,7 @@ protected:
     void pmLoad(obs_data_t *data);
 
     static PmCore *m_instance;
+    QPointer<QThread> m_thread;
     QPointer<PmDialog> m_dialog;
 
     mutable QMutex m_filtersMutex;

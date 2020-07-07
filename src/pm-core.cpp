@@ -41,7 +41,7 @@ void init_pixel_match_switcher()
 
 void free_pixel_match_switcher()
 {
-    PmCore::m_instance->deleteLater();
+    delete PmCore::m_instance;
     PmCore::m_instance = nullptr;
 }
 
@@ -105,17 +105,23 @@ PmCore::PmCore()
     periodicUpdateTimer->start(100);
 
     // move to own thread
-    QThread *pmThread = new QThread(qApp);
-    pmThread->setObjectName("pixel match core thread");
-    moveToThread(pmThread);
-    pmThread->start();
+    m_thread = new QThread(this);
+    m_thread->setObjectName("pixel match core thread");
+    moveToThread(m_thread);
+    m_thread->start();
 }
 
 PmCore::~PmCore()
 {
+    m_thread->exit();
+    while (m_thread->isRunning()) {
+        QThread::msleep(1);
+    }
+
     if (m_dialog) {
         m_dialog->deleteLater();
     }
+
     if (m_drawMatchImageEffect) {
         gs_effect_destroy(m_drawMatchImageEffect);
     }
