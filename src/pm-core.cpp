@@ -103,8 +103,6 @@ PmCore::PmCore()
     // move to own thread
     m_thread = new QThread(this);
     m_thread->setObjectName("pixel match core thread");
-    moveToThread(m_thread);
-    m_thread->start();
 
     if (m_runningEnabled) {
         activate();
@@ -130,16 +128,20 @@ PmCore::~PmCore()
 
 void PmCore::activate()
 {
+    m_runningEnabled = true;
+
     auto cfgCpy = multiMatchConfig();
     activateMultiMatchConfig(cfgCpy);
 
     // fire up the engines
     m_periodicUpdateTimer->start(100);
-    m_runningEnabled = true;
+    m_thread->start();
+    moveToThread(m_thread);
 }
 
 void PmCore::deactivate()
 {
+    m_runningEnabled = false;
     m_periodicUpdateTimer->stop();
 
     {
@@ -166,7 +168,9 @@ void PmCore::deactivate()
         QMutexLocker locker(&m_resultsMutex);
         m_results.clear();
     }
-    m_runningEnabled = false;
+
+    moveToThread(QApplication::instance()->thread());
+    m_thread->exit();
 }
 
 
