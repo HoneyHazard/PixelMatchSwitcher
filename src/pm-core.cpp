@@ -8,7 +8,6 @@
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 #include <obs-data.h>
-//#include <obs-scene.h>
 
 #include <QAction>
 #include <QMainWindow>
@@ -601,6 +600,7 @@ void PmCore::scanScenes()
         );
     }
     filters.pop_back();
+    obs_frontend_source_list_free(&scenesInput);
 
     {
         QMutexLocker locker(&m_filtersMutex);
