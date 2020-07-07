@@ -85,9 +85,8 @@ PmCore::PmCore()
             Qt::DirectConnection);
 
     // periodic update timer: process in the UI thread
-    //QTimer *periodicUpdateTimer = new QTimer(qApp);
-    QTimer* periodicUpdateTimer = new QTimer(qApp);
-    connect(periodicUpdateTimer, &QTimer::timeout,
+    m_periodicUpdateTimer = new QTimer(qApp);
+    connect(m_periodicUpdateTimer, &QTimer::timeout,
             this, &PmCore::onPeriodicUpdate, Qt::QueuedConnection);
 
     // fast reaction signal/slot: process in the core's thread
@@ -101,15 +100,17 @@ PmCore::PmCore()
         = gs_effect_create_from_file(effect_path, nullptr);
     obs_leave_graphics();
 
-    // fire up the engines
-    periodicUpdateTimer->start(100);
-
     // move to own thread
     m_thread = new QThread(this);
     m_thread->setObjectName("pixel match core thread");
     moveToThread(m_thread);
     m_thread->start();
+
+    if (m_runningEnabled) {
+        activate();
+    }
 }
+
 
 PmCore::~PmCore()
 {
@@ -126,6 +127,47 @@ PmCore::~PmCore()
         gs_effect_destroy(m_drawMatchImageEffect);
     }
 }
+
+void PmCore::activate()
+{
+    activateMultiMatchConfig(m_multiMatchConfig);
+
+    // fire up the engines
+    m_periodicUpdateTimer->start(100);
+    m_runningEnabled = true;
+}
+
+void PmCore::deactivate()
+{
+    m_periodicUpdateTimer->stop();
+
+    {
+        QMutexLocker locker(&m_filtersMutex);
+        if (m_activeFilter.isValid()) {
+            auto data = m_activeFilter.filterData();
+            if (data) {
+                m_activeFilter.lockData();
+                data->on_frame_processed = nullptr;
+                pm_resize_match_entries(data, 0);
+                m_activeFilter.unlockData();
+            }
+        }
+        m_activeFilter.reset();
+        m_filters.clear();
+    }
+    {
+        QMutexLocker locker(&m_matchImagesMutex);
+        for (size_t i = 0; i < m_matchImages.size(); ++i) {
+            m_matchImages[i] = QImage();
+        }
+    }
+    {
+        QMutexLocker locker(&m_resultsMutex);
+        m_results.clear();
+    }
+    m_runningEnabled = false;
+}
+
 
 std::vector<PmFilterRef> PmCore::filters() const
 {
@@ -220,7 +262,7 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     // update images
     bool imageChanged = false;
     QImage img;
-    {
+    if (m_runningEnabled) {
         if (newCfg.matchImgFilename != oldCfg.matchImgFilename) {
             const char* filename = newCfg.matchImgFilename.data();
             img = QImage(filename);
@@ -270,12 +312,14 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     emit sigNewMultiMatchConfigSize(newSz);
     
     // reconfigure the filter
-    auto fr = activeFilterRef();
-    pm_filter_data* filterData = fr.filterData();
-    if (filterData) {
-        fr.lockData();
-        pm_resize_match_entries(filterData, newSz);
-        fr.unlockData();
+    if (m_runningEnabled) {
+        auto fr = activeFilterRef();
+        pm_filter_data* filterData = fr.filterData();
+        if (filterData) {
+            fr.lockData();
+            pm_resize_match_entries(filterData, newSz);
+            fr.unlockData();
+        }
     }
 
     // reconfigure images
@@ -685,6 +729,7 @@ void PmCore::updateActiveFilter()
         if (data) {
             m_activeFilter.lockData();
             data->on_frame_processed = nullptr;
+            pm_resize_match_entries(data, 0);
             m_activeFilter.unlockData();
         }
         m_activeFilter.reset();
@@ -779,34 +824,23 @@ void PmCore::onFrameProcessed()
          emit sigNewMatchResults(i, newResults[i]);
     }
 
-    for (size_t i = 0; i < m_results.size(); ++i) {
-        const auto& resEntry = newResults[i];
-        if (resEntry.isMatched) {
-            auto cfg = matchConfig(i);
-            if (cfg.filterCfg.is_enabled && cfg.matchScene.size()) {
-                switchScene(cfg.matchScene, cfg.matchTransition);
-                return;
+    if (m_switchingEnabled) {
+        for (size_t i = 0; i < m_results.size(); ++i) {
+            const auto& resEntry = newResults[i];
+            if (resEntry.isMatched) {
+                auto cfg = matchConfig(i);
+                if (cfg.filterCfg.is_enabled && cfg.matchScene.size()) {
+                    switchScene(cfg.matchScene, cfg.matchTransition);
+                    return;
+                }
             }
         }
-    }
-    
-    std::string nms = noMatchScene();
-    if (nms.size()) {
-        switchScene(nms, noMatchTransition());
-    }
 
-#if 0
-        if (m_switchConfig.isEnabled
-         && m_activeFilter.isValid() && !m_matchImg.isNull()) {
-            QMutexLocker locker(&m_resultsMutex);
-            if (m_results.isMatched) {
-                switchScene(m_switchConfig.matchScene, m_switchConfig.defaultTransition);
-            } else {
-                switchScene(m_switchConfig.noMatchScene, m_switchConfig.defaultTransition);
-            }
+        std::string nms = noMatchScene();
+        if (nms.size()) {
+            switchScene(nms, noMatchTransition());
         }
     }
-#endif
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:
@@ -874,6 +908,12 @@ void PmCore::pmSave(obs_data_t *saveData)
 {
     obs_data_t *saveObj = obs_data_create();
 
+    // master toggles
+    {
+        obs_data_set_bool(saveObj, "running_enabled", m_runningEnabled);
+        obs_data_set_bool(saveObj, "switching_enabled", m_switchingEnabled);
+    }
+
     // match configuration and presets
     {
         QMutexLocker locker(&m_matchConfigMutex);
@@ -918,6 +958,15 @@ void PmCore::pmLoad(obs_data_t *data)
 
     m_selectedMatchIndex = 0;
 
+    // master toggles
+    {
+        obs_data_set_default_bool(data, "running_enabled", false);
+        m_runningEnabled = obs_data_get_bool(data, "running_enabled");
+
+        obs_data_set_default_bool(data, "switching_enabled", true);
+        m_switchingEnabled = obs_data_get_bool(data, "switching_enabled");
+    }
+
     // match configuration and presets
     {
         // match presets
@@ -937,13 +986,13 @@ void PmCore::pmLoad(obs_data_t *data)
 
         // active match config/preset
         obs_data_t *activeCfgObj = obs_data_get_obj(loadObj, "match_config");
-        std::string activePresetName
+        std::string activePresetName 
             = obs_data_get_string(activeCfgObj, "name");
         if (activePresetName.size()) {
             onSelectActiveMatchPreset(activePresetName);
         } else {
             PmMultiMatchConfig activeCfg(activeCfgObj);
-            activateMultiMatchConfig(activeCfgObj);
+            activateMultiMatchConfig(activeCfg);
         }
         obs_data_release(activeCfgObj);
     }
@@ -956,6 +1005,5 @@ void PmCore::pmLoad(obs_data_t *data)
         obs_data_release(previewCfgObj);
     }
     
-
     obs_data_release(loadObj);
 }

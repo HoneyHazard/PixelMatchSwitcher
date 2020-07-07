@@ -109,6 +109,9 @@ protected slots:
 protected:
     static QHash<std::string, OBSWeakSource> getAvailableTransitions();
 
+    void activate();
+    void deactivate();
+
     void switchScene(
         const std::string& scene, const std::string &transition);
     void scanScenes();
@@ -124,10 +127,16 @@ protected:
     static PmCore *m_instance;
     QPointer<QThread> m_thread;
     QPointer<PmDialog> m_dialog;
+    QPointer<QTimer> m_periodicUpdateTimer;
 
     mutable QMutex m_filtersMutex;
     std::vector<PmFilterRef> m_filters;
     PmFilterRef m_activeFilter;
+
+    mutable QMutex m_scenesMutex;
+    PmScenes m_scenes;
+
+    QHash<std::string, OBSWeakSource> m_availableTransitions;
 
     mutable QMutex m_matchConfigMutex;
     PmMultiMatchConfig m_multiMatchConfig;
@@ -142,10 +151,8 @@ protected:
     mutable QMutex m_previewConfigMutex;
     PmPreviewConfig m_previewConfig;
 
-    mutable QMutex m_scenesMutex;
-    PmScenes m_scenes;
-
-    QHash<std::string, OBSWeakSource> m_availableTransitions;
+    bool m_runningEnabled = false;
+    bool m_switchingEnabled = true;
 
     mutable QMutex m_matchImagesMutex;
     std::vector<QImage> m_matchImages;
