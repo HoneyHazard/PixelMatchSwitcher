@@ -250,11 +250,13 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
     if (filterData) {
+        fr.lockData();
         pm_supply_match_entry_config(
             fr.filterData(), matchIdx, &newCfg.filterCfg);
         if (imageChanged) {
             supplyImageToFilter(filterData, matchIdx, img);
         }
+        fr.unlockData();
     }
 }
 
@@ -271,7 +273,9 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     auto fr = activeFilterRef();
     pm_filter_data* filterData = fr.filterData();
     if (filterData) {
+        fr.lockData();
         pm_resize_match_entries(filterData, newSz);
+        fr.unlockData();
     }
 
     // reconfigure images
@@ -305,7 +309,9 @@ void PmCore::onRemoveMatchConfig(size_t matchIndex)
     auto fr = activeFilterRef();
     pm_filter_data* filterData = fr.filterData();
     if (filterData) {
+        fr.lockData();
         pm_resize_match_entries(filterData, newSz);
+        fr.unlockData();
     }
 
     // reconfigure images
@@ -334,7 +340,9 @@ void PmCore::onResetMatchConfigs()
     auto fr = activeFilterRef();
     pm_filter_data* filterData = fr.filterData();
     if (filterData) {
+        fr.lockData();
         pm_resize_match_entries(filterData, 0);
+        fr.unlockData();
     }
 
     // finish updating state and notifying
@@ -382,9 +390,9 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
     if (filterData) {
-        pthread_mutex_lock(&filterData->mutex);
+        fr.lockData();
         filterData->selected_match_index = matchIndex;
-        pthread_mutex_unlock(&filterData->mutex);
+        fr.unlockData();
     }
     
     emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));
@@ -675,9 +683,9 @@ void PmCore::updateActiveFilter()
 
         auto data = m_activeFilter.filterData();
         if (data) {
-                pthread_mutex_lock(&data->mutex);
-                data->on_frame_processed = nullptr;
-                pthread_mutex_unlock(&data->mutex);
+            m_activeFilter.lockData();
+            data->on_frame_processed = nullptr;
+            m_activeFilter.unlockData();
         }
         m_activeFilter.reset();
     }
@@ -686,7 +694,7 @@ void PmCore::updateActiveFilter()
         if (fi.isActive() && (data = fi.filterData())) {
             m_activeFilter = fi;
             size_t cfgSize = multiMatchConfigSize();
-            pthread_mutex_lock(&data->mutex);
+            m_activeFilter.lockData();
             data->on_frame_processed = on_frame_processed;
             data->selected_match_index = m_selectedMatchIndex;
             pm_resize_match_entries(data, cfgSize);
@@ -695,7 +703,7 @@ void PmCore::updateActiveFilter()
                 pm_supply_match_entry_config(data, i, &cfg);
                 supplyImageToFilter(data, i, matchImage(i));
             }
-            pthread_mutex_unlock(&data->mutex);
+            m_activeFilter.unlockData();
         }
     }
 }
@@ -742,8 +750,7 @@ void PmCore::onFrameProcessed()
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
     if (filterData) {
-        pthread_mutex_lock(&filterData->mutex);
-
+        fr.lockData();
         newResults.resize(filterData->num_match_entries);
         for (size_t i = 0; i < newResults.size(); ++i) {
             auto& newResult = newResults[i];
@@ -759,7 +766,7 @@ void PmCore::onFrameProcessed()
             newResult.isMatched
                 = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
         }
-        pthread_mutex_unlock(&filterData->mutex);
+        fr.unlockData();
     }
 
     // store new results
@@ -848,7 +855,6 @@ void PmCore::supplyImageToFilter(
     struct pm_filter_data* data, size_t matchIdx, const QImage &image)
 {
     if (data) {
-        pthread_mutex_lock(&data->mutex);
         auto entryData = data->match_entries + matchIdx;
 
         size_t sz = size_t(image.sizeInBytes());
@@ -861,7 +867,6 @@ void PmCore::supplyImageToFilter(
 
         entryData->match_img_width = uint32_t(image.width());
         entryData->match_img_height = uint32_t(image.height());
-        pthread_mutex_unlock(&data->mutex);
     }
 }
 
@@ -954,62 +959,3 @@ void PmCore::pmLoad(obs_data_t *data)
 
     obs_data_release(loadObj);
 }
-
-#if 0
-PmSwitchConfig PmCore::switchConfig() const
-{
-    QMutexLocker locker(&m_switchConfigMutex);
-    return m_switchConfig;
-}
-#endif
-
-#if 0
-switch (m_matchConfig.maskMode) {
-case PmMaskMode::AlphaMode:
-    maskAlpha = true;
-    break;
-case PmMaskMode::BlackMode:
-    vec3_set(&maskColor, 0.f, 0.f, 0.f);
-    break;
-case PmMaskMode::GreenMode:
-    vec3_set(&maskColor, 0.f, 1.f, 0.f);
-    break;
-case PmMaskMode::MagentaMode:
-    vec3_set(&maskColor, 1.f, 0.f, 1.f);
-    break;
-case PmMaskMode::CustomClrMode:
-{
-    uint8_t* colorBytes = reinterpret_cast<uint8_t*>(
-        &m_matchConfig.customColor);
-#if PM_LITTLE_ENDIAN
-    vec3_set(&maskColor,
-        float(colorBytes[2]) / 255.f,
-        float(colorBytes[1]) / 255.f,
-        float(colorBytes[0]) / 255.f);
-#else
-    vec3_set(&maskColor,
-        float(colorBytes[1]) / 255.f,
-        float(colorBytes[2]) / 255.f,
-        float(colorBytes[3]) / 255.f);
-#endif
-}
-break;
-default:
-    blog(LOG_ERROR, "Unknown color mode: %i", m_matchConfig.maskMode);
-    break;
-}
-
-
-auto filterData = m_activeFilter.filterData();
-if (filterData) {
-    pthread_mutex_lock(&filterData->mutex);
-    filterData->roi_left = m_matchConfig.roiLeft;
-    filterData->roi_bottom = m_matchConfig.roiBottom;
-    filterData->per_pixel_err_thresh = m_matchConfig.perPixelErrThresh / 100.f;
-    filterData->total_match_thresh = m_matchConfig.totalMatchThresh;
-    filterData->mask_alpha = maskAlpha;
-    filterData->mask_color = maskColor;
-    pthread_mutex_unlock(&filterData->mutex);
-}
-}
-#endif

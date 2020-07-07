@@ -90,6 +90,7 @@ static void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data)
     }
 }
 
+#if 0
 static void pm_supply_match_entry_gfx(
     struct pm_filter_data* filter, size_t match_idx,
     unsigned char* bits, uint32_t width, uint32_t height)
@@ -117,28 +118,24 @@ static void pm_supply_match_entry_gfx(
 
     pm_destroy_match_gfx(old_tex, old_img_data);
 }
+#endif
 
 static void pm_supply_match_entry_config(
     struct pm_filter_data* filter, size_t match_idx,
     const struct pm_match_entry_config* cfg)
 {
-    pthread_mutex_lock(&filter->mutex);
     if (match_idx >= filter->num_match_entries) {
-        pthread_mutex_unlock(&filter->mutex);
         return;
     }
 
     struct pm_match_entry_data* entry = filter->match_entries + match_idx;
     memcpy(&entry->cfg, cfg, sizeof(struct pm_match_entry_config));
-    pthread_mutex_unlock(&filter->mutex);
 }
 
 static void pm_resize_match_entries(
     struct pm_filter_data* filter, size_t new_size)
 {
-    pthread_mutex_lock(&filter->mutex);
     if (new_size == filter->num_match_entries) {
-        pthread_mutex_unlock(&filter->mutex);
         return;
     }
 
@@ -161,7 +158,6 @@ static void pm_resize_match_entries(
         filter->match_entries = NULL;
     }
     filter->num_match_entries = new_size;
-    pthread_mutex_unlock(&filter->mutex);
 
     for (size_t i = new_size; i < old_size; i++) {
         struct pm_match_entry_data* old_entry = old_entries + i;
