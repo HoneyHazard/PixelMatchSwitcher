@@ -1,10 +1,12 @@
 #include "pm-presets-widget.hpp"
 #include "pm-core.hpp"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QPushButton>
 #include <QLabel>
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QMessageBox>
 #include <QInputDialog>
 
@@ -15,6 +17,22 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
 {
+    // global toggles
+    QHBoxLayout* togglesLayout = new QHBoxLayout;
+
+    m_runningCheckbox = new QCheckBox(
+        obs_module_text("Enable Pixel Match Switcher"), this);
+    connect(m_runningCheckbox, &QCheckBox::toggled,
+        this, &PmPresetsWidget::sigRunningEnabledChanged, Qt::QueuedConnection);
+
+    m_switchingCheckbox = new QCheckBox(
+        obs_module_text("Enable Switching"), this);
+    connect(m_switchingCheckbox, &QCheckBox::toggled,
+        this, &PmPresetsWidget::sigSwitchingEnabledChanged, Qt::QueuedConnection);
+
+    togglesLayout->addWidget(m_runningCheckbox);
+    togglesLayout->addWidget(m_switchingCheckbox);
+
     // preset controls
     QHBoxLayout* presetLayout = new QHBoxLayout;
 
@@ -48,7 +66,11 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onPresetRemove, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetRemoveButton);
     
-    setLayout(presetLayout);
+    // top level layout
+    QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addLayout(togglesLayout);
+    mainLayout->addLayout(presetLayout);
+    setLayout(mainLayout);
 
     // core event handlers
     connect(m_core, &PmCore::sigAvailablePresetsChanged,
@@ -57,6 +79,10 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onActivePresetChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigActivePresetDirtyChanged,
         this, &PmPresetsWidget::onActivePresetDirtyStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigRunningEnabledChanged,
+        this, &PmPresetsWidget::onRunningEnabledChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigSwitchingEnabledChanged,
+        this, &PmPresetsWidget::onSwitchingEnabledChanged, Qt::QueuedConnection);
 
     // local signals -> core slots
     connect(this, &PmPresetsWidget::sigSaveMatchPreset,
@@ -65,6 +91,10 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onSelectActiveMatchPreset, Qt::QueuedConnection);
     connect(this, &PmPresetsWidget::sigRemoveMatchPreset,
         m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
+    connect(this, &PmPresetsWidget::sigRunningEnabledChanged,
+        m_core, &PmCore::onRunningEnabledChanged, Qt::QueuedConnection);
+    connect(this, &PmPresetsWidget::sigSwitchingEnabledChanged,
+        m_core, &PmCore::onSwitchingEnabledChanged, Qt::QueuedConnection);
 
     // finish init
     onAvailablePresetsChanged();
@@ -109,6 +139,20 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
 {
     bool dirty = m_core->matchConfigDirty();
     m_presetSaveButton->setEnabled(dirty);
+}
+
+void PmPresetsWidget::onRunningEnabledChanged(bool enable)
+{
+    m_runningCheckbox->blockSignals(true);
+    m_runningCheckbox->setChecked(enable);
+    m_runningCheckbox->blockSignals(false);
+}
+
+void PmPresetsWidget::onSwitchingEnabledChanged(bool enable)
+{
+    m_switchingCheckbox->blockSignals(true);
+    m_switchingCheckbox->setChecked(enable);
+    m_switchingCheckbox->blockSignals(false);
 }
 
 void PmPresetsWidget::onPresetSelected()
