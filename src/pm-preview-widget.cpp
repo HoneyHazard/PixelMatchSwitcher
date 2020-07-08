@@ -120,6 +120,8 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
             this, &PmPreviewWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigSelectMatchIndex,
             this, &PmPreviewWidget::onSelectMatchIndex, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNewActiveFilter,
+            this, &PmPreviewWidget::onNewActiveFilter, Qt::QueuedConnection);
 
     // events sent to core
     connect(this, &PmPreviewWidget::sigPreviewConfigChanged,
@@ -179,6 +181,12 @@ void PmPreviewWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
     m_matchImgScaleCombo->setCurrentIndex(
         m_matchImgScaleCombo->findData(cfg.previewMatchImageScale));
     m_matchImgScaleCombo->blockSignals(false);
+}
+
+void PmPreviewWidget::onNewActiveFilter(PmFilterRef ref)
+{
+    //QMutexLocker locker(&m_filterMutex);
+    m_activeFilter = ref;
 }
 
 void PmPreviewWidget::onImgSuccess(
@@ -297,7 +305,7 @@ void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
 
 void PmPreviewWidget::drawEffect()
 {
-    auto filterRef = m_core->activeFilterRef();
+    PmFilterRef &filterRef = m_activeFilter;
     auto renderSrc = filterRef.filter();
     auto filterData = filterRef.filterData();
 

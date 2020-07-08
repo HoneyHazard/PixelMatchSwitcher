@@ -150,6 +150,7 @@ void PmCore::deactivate()
         oldAfr = m_activeFilter;
         m_activeFilter.reset();
         m_filters.clear();
+        emit sigNewActiveFilter(m_activeFilter);
     }
     if (oldAfr.isValid()) {
         auto data = oldAfr.filterData();
@@ -761,12 +762,12 @@ void PmCore::updateActiveFilter()
             m_activeFilter.reset();
         }
         for (const auto& fi : m_filters) {
-            pm_filter_data* data;
             if (fi.isActive()) {
                 newFilt = m_activeFilter = fi;
                 break;
             }
         }
+        emit sigNewActiveFilter(m_activeFilter);
     }
 
     if (oldFilt.isValid()) {
@@ -824,14 +825,13 @@ void PmCore::onPeriodicUpdate()
 {
     if (m_availableTransitions.empty()) {
         m_availableTransitions = getAvailableTransitions();
-        if (!m_runningEnabled) {
-            m_periodicUpdateTimer->stop();
-        }
     }
-
+    scanScenes();
+    
     if (m_runningEnabled) {
-        scanScenes();
         updateActiveFilter();
+    } else if (m_availableTransitions.size()) {
+        m_periodicUpdateTimer->stop();
     }
 }
 

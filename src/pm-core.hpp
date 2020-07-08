@@ -84,6 +84,7 @@ signals:
 
     void sigRunningEnabledChanged(bool enable);
     void sigSwitchingEnabledChanged(bool enable);
+    void sigNewActiveFilter(PmFilterRef newAf);
 
 public slots:
     //void onNewSwitchConfig(PmSwitchConfig);

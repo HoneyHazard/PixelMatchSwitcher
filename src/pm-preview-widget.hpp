@@ -5,6 +5,7 @@
 #include <QPointer>
 
 #include "pm-structs.hpp"
+#include "pm-filter-ref.hpp"
 
 class OBSQTDisplay;
 
@@ -31,7 +32,7 @@ protected slots:
     void onSelectMatchIndex(size_t matchindex, PmMatchConfig cfg);
     void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);
 
-    //void onNewMatchResults(size_t idx, PmMatchResults results);
+    void onNewActiveFilter(PmFilterRef ref);
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);
 
@@ -66,6 +67,9 @@ protected:
     PmMatchConfig m_matchConfig;
     int m_roiLeft = 0, m_roiBottom = 0;
     int m_matchImgWidth = 0, m_matchImgHeight = 0;
+
+    //QMutex m_filterMutex;
+    PmFilterRef m_activeFilter;
 
     bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
     QMutex m_matchImgLock;

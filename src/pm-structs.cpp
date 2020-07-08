@@ -1,4 +1,5 @@
 #include "pm-structs.hpp"
+#include "pm-filter-ref.hpp"
 
 uint qHash(const OBSWeakSource &ws)
 {
@@ -231,6 +232,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
+    qRegisterMetaType<PmFilterRef>("PmFilterRef");
 }
 
 PmScenes::PmScenes(const PmScenes& other)
