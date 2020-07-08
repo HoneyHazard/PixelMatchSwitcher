@@ -155,8 +155,8 @@ void PmCore::deactivate()
     if (oldAfr.isValid()) {
         auto data = oldAfr.filterData();
         if (data) {
-            oldAfr.lockData();
             pm_resize_match_entries(data, 0);
+            oldAfr.lockData();
             data->on_frame_processed = nullptr;
             oldAfr.unlockData();
         }
@@ -303,13 +303,11 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
     if (filterData) {
-        fr.lockData();
         pm_supply_match_entry_config(
-            fr.filterData(), matchIdx, &newCfg.filterCfg);
+            filterData, matchIdx, &newCfg.filterCfg);
         if (imageChanged) {
             supplyImageToFilter(filterData, matchIdx, img);
         }
-        fr.unlockData();
     }
 }
 
@@ -325,11 +323,9 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     // reconfigure the filter
     if (m_runningEnabled) {
         auto fr = activeFilterRef();
-        pm_filter_data* filterData = fr.filterData();
+        auto filterData = fr.filterData();
         if (filterData) {
-            fr.lockData();
             pm_resize_match_entries(filterData, newSz);
-            fr.unlockData();
         }
     }
 
@@ -362,11 +358,9 @@ void PmCore::onRemoveMatchConfig(size_t matchIndex)
 
     // reconfigure the filter
     auto fr = activeFilterRef();
-    pm_filter_data* filterData = fr.filterData();
+    auto filterData = fr.filterData();
     if (filterData) {
-        fr.lockData();
         pm_resize_match_entries(filterData, newSz);
-        fr.unlockData();
     }
 
     // reconfigure images
@@ -393,11 +387,9 @@ void PmCore::onResetMatchConfigs()
 
     // reconfigure the filter
     auto fr = activeFilterRef();
-    pm_filter_data* filterData = fr.filterData();
+    auto filterData = fr.filterData();
     if (filterData) {
-        fr.lockData();
         pm_resize_match_entries(filterData, 0);
-        fr.unlockData();
     }
 
     // finish updating state and notifying
@@ -775,8 +767,8 @@ void PmCore::updateActiveFilter()
         if (data) {
             oldFilt.lockData();
             data->on_frame_processed = nullptr;
-            pm_resize_match_entries(data, 0);
             oldFilt.unlockData();
+            pm_resize_match_entries(data, 0);
         }
     }
     if (newFilt.isValid()) {
@@ -786,13 +778,13 @@ void PmCore::updateActiveFilter()
             newFilt.lockData();
             data->on_frame_processed = on_frame_processed;
             data->selected_match_index = m_selectedMatchIndex;
+            newFilt.unlockData();
             pm_resize_match_entries(data, cfgSize);
             for (size_t i = 0; i < cfgSize; ++i) {
                 auto cfg = matchConfig(i).filterCfg;
                 pm_supply_match_entry_config(data, i, &cfg);
                 supplyImageToFilter(data, i, matchImage(i));
             }
-            newFilt.unlockData();
         }
     }
 }
@@ -937,6 +929,7 @@ void PmCore::supplyImageToFilter(
     struct pm_filter_data* data, size_t matchIdx, const QImage &image)
 {
     if (data) {
+        pthread_mutex_lock(&data->mutex);
         auto entryData = data->match_entries + matchIdx;
 
         size_t sz = size_t(image.sizeInBytes());
@@ -949,6 +942,7 @@ void PmCore::supplyImageToFilter(
 
         entryData->match_img_width = uint32_t(image.width());
         entryData->match_img_height = uint32_t(image.height());
+        pthread_mutex_unlock(&data->mutex);
     }
 }
 

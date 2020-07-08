@@ -90,52 +90,27 @@ static void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data)
     }
 }
 
-#if 0
-static void pm_supply_match_entry_gfx(
+static void pm_supply_match_entry_config(
     struct pm_filter_data* filter, size_t match_idx,
-    unsigned char* bits, uint32_t width, uint32_t height)
+    const struct pm_match_entry_config* cfg)
 {
     pthread_mutex_lock(&filter->mutex);
-
     if (match_idx >= filter->num_match_entries) {
         pthread_mutex_unlock(&filter->mutex);
         return;
     }
 
-    struct gs_texture* old_tex;
-    void* old_img_data;
-    struct pm_match_entry_data* entry = filter->match_entries + match_idx;
-    old_tex = entry->match_img_tex;
-    old_img_data = entry->match_img_data;
-
-    entry->match_img_width = width;
-    entry->match_img_height = height;
-    size_t sz = (size_t)width * (size_t)height * 3;
-    entry->match_img_data = bmalloc(sz);
-    memcpy(entry->match_img_data, bits, sz);
-
-    pthread_mutex_unlock(&filter->mutex);
-
-    pm_destroy_match_gfx(old_tex, old_img_data);
-}
-#endif
-
-static void pm_supply_match_entry_config(
-    struct pm_filter_data* filter, size_t match_idx,
-    const struct pm_match_entry_config* cfg)
-{
-    if (match_idx >= filter->num_match_entries) {
-        return;
-    }
-
     struct pm_match_entry_data* entry = filter->match_entries + match_idx;
     memcpy(&entry->cfg, cfg, sizeof(struct pm_match_entry_config));
+    pthread_mutex_unlock(&filter->mutex);
 }
 
 static void pm_resize_match_entries(
     struct pm_filter_data* filter, size_t new_size)
 {
+    pthread_mutex_lock(&filter->mutex);
     if (new_size == filter->num_match_entries) {
+        pthread_mutex_unlock(&filter->mutex);
         return;
     }
 
@@ -158,6 +133,7 @@ static void pm_resize_match_entries(
         filter->match_entries = NULL;
     }
     filter->num_match_entries = new_size;
+    pthread_mutex_unlock(&filter->mutex);
 
     for (size_t i = new_size; i < old_size; i++) {
         struct pm_match_entry_data* old_entry = old_entries + i;
