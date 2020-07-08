@@ -61,7 +61,6 @@ public:
     PmScenes scenes() const;
     QList<std::string> availableTransitions() const 
         { return m_availableTransitions.keys(); }
-    //PmSwitchConfig switchConfig() const;
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
     QImage matchImage(size_t matchIdx) const;
 
@@ -87,7 +86,6 @@ signals:
     void sigNewActiveFilter(PmFilterRef newAf);
 
 public slots:
-    //void onNewSwitchConfig(PmSwitchConfig);
     void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);   
     void onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
     void onRemoveMatchConfig(size_t matchIndex);
@@ -107,8 +105,6 @@ public slots:
     void onSwitchingEnabledChanged(bool enable);
 
 protected slots:
-    //void onNewMultiMatchConfig(PmMultiMatchConfig cfg);
-
     void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed();
