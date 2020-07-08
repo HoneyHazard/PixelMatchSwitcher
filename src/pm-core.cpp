@@ -1002,11 +1002,11 @@ void PmCore::pmLoad(obs_data_t *data)
 
     // master toggles
     {
-        obs_data_set_default_bool(data, "running_enabled", false);
-        m_runningEnabled = obs_data_get_bool(data, "running_enabled");
+        obs_data_set_default_bool(loadObj, "running_enabled", false);
+        m_runningEnabled = obs_data_get_bool(loadObj, "running_enabled");
 
-        obs_data_set_default_bool(data, "switching_enabled", true);
-        m_switchingEnabled = obs_data_get_bool(data, "switching_enabled");
+        obs_data_set_default_bool(loadObj, "switching_enabled", true);
+        m_switchingEnabled = obs_data_get_bool(loadObj, "switching_enabled");
     }
 
     // match configuration and presets

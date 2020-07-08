@@ -64,6 +64,9 @@ public:
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
     QImage matchImage(size_t matchIdx) const;
 
+    bool runningEnabled() const { return m_runningEnabled; }
+    bool switchingEnabled() const { return m_switchingEnabled; }
+
 signals:
     void sigFrameProcessed();
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);

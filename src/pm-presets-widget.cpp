@@ -100,6 +100,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     onAvailablePresetsChanged();
     onActivePresetChanged();
     onActivePresetDirtyStateChanged();
+    onRunningEnabledChanged(m_core->runningEnabled());
+    onSwitchingEnabledChanged(m_core->switchingEnabled());
 }
 
 void PmPresetsWidget::onAvailablePresetsChanged()

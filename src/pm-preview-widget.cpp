@@ -128,6 +128,7 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onPreviewConfigChanged, Qt::QueuedConnection);
 
     // finish init
+    onNewActiveFilter(m_core->activeFilterRef());
     onPreviewConfigChanged(m_core->previewConfig());
     size_t selIdx = m_core->selectedConfigIndex();
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
