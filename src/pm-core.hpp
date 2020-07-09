@@ -52,6 +52,7 @@ public:
     std::string noMatchScene() const;
     std::string noMatchTransition() const;
     std::string matchImgFilename(size_t matchIdx) const;
+    bool hasFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
 
     PmPreviewConfig previewConfig() const;
@@ -63,6 +64,7 @@ public:
         { return m_availableTransitions.keys(); }
     gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
     QImage matchImage(size_t matchIdx) const;
+    bool matchImageLoaded(size_t matchIdx) const;
 
     bool runningEnabled() const { return m_runningEnabled; }
     bool switchingEnabled() const { return m_switchingEnabled; }

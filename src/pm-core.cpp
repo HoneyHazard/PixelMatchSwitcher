@@ -250,6 +250,15 @@ std::string PmCore::matchImgFilename(size_t matchIdx) const
         return m_multiMatchConfig[matchIdx].matchImgFilename;
 }
 
+bool PmCore::hasFilename(size_t matchIdx) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    if (matchIdx >= m_multiMatchConfig.size())
+        return false;
+    else
+        return m_multiMatchConfig[matchIdx].matchImgFilename.size() > 0;
+}
+
 void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
 {
     size_t sz = multiMatchConfigSize();
@@ -591,6 +600,16 @@ QImage PmCore::matchImage(size_t matchIdx) const
         return QImage();
     else
         return m_matchImages[matchIdx]; 
+}
+
+bool PmCore::matchImageLoaded(size_t matchIdx) const
+{
+    QMutexLocker locker(&m_matchImagesMutex);
+
+    if (matchIdx >= m_matchImages.size())
+        return false;
+    else 
+        return !m_matchImages[matchIdx].isNull();
 }
 
 std::string PmCore::scenesInfo() const
