@@ -385,6 +385,7 @@ void PmCore::onRemoveMatchConfig(size_t matchIndex)
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig.resize(newSz);
+        emit sigActivePresetDirtyChanged();
     }
     onSelectMatchIndex(matchIndex);
 }
@@ -405,6 +406,7 @@ void PmCore::onResetMatchConfigs()
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig = PmMultiMatchConfig();
+        emit sigActivePresetDirtyChanged();
     }
     {
         QMutexLocker locker(&m_matchImagesMutex);
