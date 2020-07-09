@@ -37,6 +37,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-filter-ref.hpp
         src/pm-core.hpp
         src/pm-match-config-widget.hpp
+		src/pm-match-results-widget.hpp
         src/pm-match-list-widget.hpp
 		src/pm-preview-widget.hpp
 		src/pm-presets-widget.hpp
@@ -54,6 +55,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-filter-ref.cpp
         src/pm-core.cpp
         src/pm-match-config-widget.cpp
+		src/pm-match-results-widget.cpp
         src/pm-match-list-widget.cpp
 		src/pm-preview-widget.cpp
 		src/pm-presets-widget.cpp
