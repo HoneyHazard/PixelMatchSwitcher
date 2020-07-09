@@ -13,12 +13,17 @@ public:
     PmTogglesWidget(PmCore* core, QWidget* parent);
 
 signals:
+    // signals sent to core
     void sigRunningEnabledChanged(bool enable);
     void sigSwitchingEnabledChanged(bool enable);
 
 protected slots:
+    // core event handlers
     void onRunningEnabledChanged(bool enable);
     void onSwitchingEnabledChanged(bool enable);
+    
+    // local UI event handlers
+    void onShowDebug();
 
 protected:
     PmCore* m_core;

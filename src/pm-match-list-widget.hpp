@@ -2,7 +2,7 @@
 
 #include "pm-structs.hpp"
 
-#include <QWidget>
+#include <QGroupBox>
 #include <QSet>
 
 class PmCore;
@@ -14,7 +14,7 @@ class QComboBox;
  * @brief Shows a list of match configuration entries and allows changing
  *        some of their parameters
   */
-class PmMatchListWidget : public QWidget
+class PmMatchListWidget : public QGroupBox
 {
     Q_OBJECT
 

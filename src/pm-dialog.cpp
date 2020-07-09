@@ -5,7 +5,6 @@
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
 #include "pm-preview-widget.hpp"
-#include "pm-debug-tab.hpp"
 #include "pm-filter.h"
 
 #include <QVBoxLayout>
@@ -34,15 +33,20 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmMatchConfigWidget *matchConfigWidget  
         = new PmMatchConfigWidget(core, this);
     PmPreviewWidget* previewWidget = new PmPreviewWidget(core, this);
-    PmDebugTab* debugTab = new PmDebugTab(core, this);
 
     // main tab splitter
+    QVBoxLayout* leftLayout = new QVBoxLayout;
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->addWidget(togglesWidget);
+    leftLayout->addWidget(presetsWidget);
+    leftLayout->addWidget(matchListWidget);
+    leftLayout->addWidget(matchConfigWidget);
+    QWidget* leftWidget = new QWidget(this);
+    leftWidget->setLayout(leftLayout);
+
+#if 0
     QSplitter* splitter = new QSplitter(Qt::Vertical, this);
     splitter->setStyleSheet(splitterStyle);
-    splitter->addWidget(togglesWidget);
-    splitter->addWidget(presetsWidget);
-    splitter->addWidget(matchListWidget);
-    splitter->addWidget(matchConfigWidget);
     for (int i = 0; i < splitter->count(); ++i) {
         splitter->setCollapsible(i, false);
     }
@@ -50,12 +54,13 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // tab widget
     QTabWidget *tabWidget = new QTabWidget(this);
     tabWidget->addTab(splitter, obs_module_text("Main"));
-    tabWidget->addTab(debugTab, obs_module_text("Debug"));
+#endif
 
     // top level splitter layout
     QSplitter* topLevelSplitter = new QSplitter(Qt::Horizontal, this);
     topLevelSplitter->setStyleSheet(splitterStyle);
-    topLevelSplitter->addWidget(tabWidget);
+    //topLevelSplitter->addWidget(tabWidget);
+    topLevelSplitter->addWidget(leftWidget);
     topLevelSplitter->addWidget(previewWidget);
 
     QHBoxLayout *topLevelLayout = new QHBoxLayout;

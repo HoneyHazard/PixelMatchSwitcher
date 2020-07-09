@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QWidget>
+#include <QDialog>
 
 
 class QLabel;
 class QTextEdit;
 class PmCore;
 
-class PmDebugTab : public QWidget
+class PmDebugTab : public QDialog
 {
     Q_OBJECT
 

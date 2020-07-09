@@ -23,7 +23,7 @@ const QString PmMatchListWidget::k_semiTranspBgStyle
     = "background-color: rgba(0, 0, 0, 0.6)";
 
 PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
-: QWidget(parent)
+: QGroupBox(obs_module_text("Active Configuration"), parent)
 , m_core(core)
 {
     // table widget
@@ -98,7 +98,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     setLayout(mainLayout);
 
     // init state
-
     auto multiConfig = m_core->multiMatchConfig();
     size_t cfgSz = multiConfig.size();
     onNewMultiMatchConfigSize(cfgSz);

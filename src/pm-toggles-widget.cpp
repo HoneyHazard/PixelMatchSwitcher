@@ -1,18 +1,19 @@
 #include "pm-toggles-widget.hpp"
+#include "pm-debug-tab.hpp"
 #include "pm-core.hpp"
 
 #include <QCheckBox>
+#include <QPushButton>
 #include <QHBoxLayout>
+#include <QMainWindow>
 
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 
 PmTogglesWidget::PmTogglesWidget(PmCore* core, QWidget* parent)
 : QGroupBox(obs_module_text("Toggle Plugin Activity"), parent)
 , m_core(core)
 {
-    // global toggles
-    QHBoxLayout* togglesLayout = new QHBoxLayout;
-
     m_runningCheckbox = new QCheckBox(
         obs_module_text("Enable Matching"), this);
     connect(m_runningCheckbox, &QCheckBox::toggled,
@@ -23,9 +24,17 @@ PmTogglesWidget::PmTogglesWidget(PmCore* core, QWidget* parent)
     connect(m_switchingCheckbox, &QCheckBox::toggled,
         this, &PmTogglesWidget::sigSwitchingEnabledChanged, Qt::QueuedConnection);
 
-    togglesLayout->addWidget(m_runningCheckbox);
-    togglesLayout->addWidget(m_switchingCheckbox);
-    setLayout(togglesLayout);
+    QPushButton* showDebugButton = new QPushButton(
+        obs_module_text("Debug"), this);
+    showDebugButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
+    connect(showDebugButton, &QPushButton::released,
+        this, &PmTogglesWidget::onShowDebug, Qt::QueuedConnection);
+
+    QHBoxLayout* mainLayout = new QHBoxLayout;
+    mainLayout->addWidget(m_runningCheckbox);
+    mainLayout->addWidget(m_switchingCheckbox);
+    mainLayout->addWidget(showDebugButton);
+    setLayout(mainLayout);
 
     // core event handlers
     connect(m_core, &PmCore::sigRunningEnabledChanged,
@@ -58,4 +67,13 @@ void PmTogglesWidget::onSwitchingEnabledChanged(bool enable)
     m_switchingCheckbox->blockSignals(true);
     m_switchingCheckbox->setChecked(enable);
     m_switchingCheckbox->blockSignals(false);
+}
+
+void PmTogglesWidget::onShowDebug()
+{
+    auto mainWindow
+        = static_cast<QMainWindow*>(obs_frontend_get_main_window());
+    PmDebugTab* debugTab = new PmDebugTab(m_core, mainWindow);
+    setAttribute(Qt::WA_DeleteOnClose, true);
+    debugTab->show();
 }

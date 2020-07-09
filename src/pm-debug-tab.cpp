@@ -13,9 +13,10 @@
 
 PmDebugTab::PmDebugTab(
     PmCore *pixelMatcher, QWidget *parent)
-: QWidget(parent)
+: QDialog(parent)
 , m_core(pixelMatcher)
 {
+    setWindowTitle(obs_module_text("Pixel Match Switcher: Debug"));
     QGridLayout *layout = new QGridLayout;
     int row = 0;
 
