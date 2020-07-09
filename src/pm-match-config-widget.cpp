@@ -208,17 +208,16 @@ void PmMatchConfigWidget::onSelectMatchIndex(
     bool existingSelected = matchIndex < m_multiConfigSz;
     setEnabled(existingSelected);
 
-    if (existingSelected && m_core->runningEnabled()) {
-        if (m_core->hasFilename(matchIndex)) {
-            std::string matchImgFilename = m_core->matchImgFilename(matchIndex);
-            if (m_core->matchImageLoaded(matchIndex)) {
-                onImgFailed(matchIndex, matchImgFilename);
-            } else {
-                onImgSuccess(matchIndex, matchImgFilename, 
-                             m_core->matchImage(matchIndex));
-            }
+    if (m_core->hasFilename(matchIndex) && m_core->runningEnabled()) {
+        std::string matchImgFilename = m_core->matchImgFilename(matchIndex);
+        if (m_core->matchImageLoaded(matchIndex)) {
+            onImgSuccess(matchIndex, matchImgFilename,
+                m_core->matchImage(matchIndex));
+        } else {
+            onImgFailed(matchIndex, matchImgFilename);
         }
     } else {
+        m_imgPathEdit->setStyleSheet("");
         m_matchResultDisplay->setText(obs_module_text("N/A"));
     }
 
