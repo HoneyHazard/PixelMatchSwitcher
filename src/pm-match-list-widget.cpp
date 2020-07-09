@@ -34,7 +34,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setColumnCount((int)RowOrder::NumRows);
     m_tableWidget->setHorizontalHeaderLabels(QStringList() 
-        << ""
+        << obs_module_text("Sw. On")
         << obs_module_text("Match Config") 
         << obs_module_text("Match Scene")
         << obs_module_text("Transition")
