@@ -129,6 +129,7 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
 
     // finish init
     onNewActiveFilter(m_core->activeFilterRef());
+    onRunningEnabledChanged(m_core->runningEnabled());
     onPreviewConfigChanged(m_core->previewConfig());
     size_t selIdx = m_core->selectedConfigIndex();
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
@@ -188,6 +189,12 @@ void PmPreviewWidget::onNewActiveFilter(PmFilterRef ref)
 {
     //QMutexLocker locker(&m_filterMutex);
     m_activeFilter = ref;
+    setEnabled(m_activeFilter.isValid() && m_core->runningEnabled());
+}
+
+void PmPreviewWidget::onRunningEnabledChanged(bool enable)
+{
+    setEnabled(m_activeFilter.isValid() && enable);
 }
 
 void PmPreviewWidget::onImgSuccess(
