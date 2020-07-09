@@ -23,38 +23,18 @@ const char* PmMatchConfigWidget::k_failedImgStr
     = obs_module_text("[FAILED]");
 
 PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
-: QWidget(parent)
+: QGroupBox(parent)
 , m_core(pixelMatcher)
 {   
-#if 0
-    // checker brush
-    {
-        // TODO: optimize
-        const size_t half=8;
-        const size_t full=half*2;
-        uchar bits[full*full];
-        for (size_t x = 0; x < half; ++x) {
-            for (size_t y = 0; y < half; ++y) {
-                bits[y*full+x] = 0xFF;
-                bits[y*full+half+x] = 0;
-                bits[(y+half)*full+x] = 0;
-                bits[(y+half)*full+half+x] = 0xFF;
-            }
-        }
-        m_checkerPixMap = QPixmap::fromImage(QImage(bits, full, full, QImage::Format_Grayscale8));
-    }
-#endif
-
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
     // index and label
-    m_configCaption = new QLabel(this);
     m_labelEdit = new QLineEdit(this);   
     connect(m_labelEdit, &QLineEdit::textEdited,
             this, &PmMatchConfigWidget::onConfigUiChanged, Qt::QueuedConnection);
-    mainLayout->addRow(m_configCaption, m_labelEdit);
+    mainLayout->addRow(obs_module_text("Label:"), m_labelEdit);
 
     // image path display and browse button
     QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
@@ -154,18 +134,6 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     mainLayout->addRow(
         obs_module_text("Global Match Threshold: "), m_totalMatchThreshBox);
 
-    // divider line
-    QFrame* dividerLine = new QFrame();
-    dividerLine->setFrameShape(QFrame::HLine);
-    dividerLine->setFrameShadow(QFrame::Sunken);
-    mainLayout->addRow(dividerLine);
-
-    // match result label
-    m_matchResultDisplay = new QLabel("--", this);
-    m_matchResultDisplay->setTextFormat(Qt::RichText);
-    mainLayout->addRow(
-        obs_module_text("Match Result: "), m_matchResultDisplay);
-
     setLayout(mainLayout);
 
     // core signals -> local slots
@@ -186,23 +154,18 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
             m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
 
-    // finish init
+    // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
     onNewMultiMatchConfigSize(m_core->multiMatchConfigSize());
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
 }
 
-PmMatchConfigWidget::~PmMatchConfigWidget()
-{
-}
-
 void PmMatchConfigWidget::onSelectMatchIndex(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    m_configCaption->setText(
-        QString(obs_module_text("Config #%1:")).arg(matchIndex+1));
+    setTitle(QString(obs_module_text("Match Config #%1:")).arg(matchIndex+1));
 
     onChangedMatchConfig(matchIndex, cfg);
     bool existingSelected = matchIndex < m_multiConfigSz;
@@ -218,7 +181,6 @@ void PmMatchConfigWidget::onSelectMatchIndex(
         }
     } else {
         m_imgPathEdit->setStyleSheet("");
-        m_matchResultDisplay->setText(obs_module_text("N/A"));
     }
 
     onConfigUiChanged();
@@ -399,21 +361,11 @@ void PmMatchConfigWidget::onNewMatchResults(
      || m_prevResults.baseHeight != results.baseHeight
      || m_prevResults.matchImgWidth != results.matchImgWidth
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
-        roiRangesChanged(results.baseWidth, results.baseHeight,
-                         results.matchImgWidth, results.matchImgHeight);
+        roiRangesChanged(
+            results.baseWidth, results.baseHeight,
+            results.matchImgWidth, results.matchImgHeight);
     }
 
-    QString matchLabel = results.isMatched
-        ? obs_module_text("<font color=\"DarkGreen\">[MATCHED]</font>")
-        : obs_module_text("<font color=\"DarkRed\">[NO MATCH]</font>");
-
-    QString resultStr = QString(
-        obs_module_text("%1 %2 out of %3 pixels matched (%4 %)"))
-        .arg(matchLabel)
-        .arg(results.numMatched)
-        .arg(results.numCompared)
-        .arg(double(results.percentageMatched), 0, 'f', 1);
-    m_matchResultDisplay->setText(resultStr);
 
     m_prevResults = results;
 }
@@ -462,6 +414,25 @@ void PmMatchConfigWidget::onConfigUiChanged()
 }
 
 #if 0
+// checker brush
+{
+    // TODO: optimize
+    const size_t half = 8;
+    const size_t full = half * 2;
+    uchar bits[full * full];
+    for (size_t x = 0; x < half; ++x) {
+        for (size_t y = 0; y < half; ++y) {
+            bits[y * full + x] = 0xFF;
+            bits[y * full + half + x] = 0;
+            bits[(y + half) * full + x] = 0;
+            bits[(y + half) * full + half + x] = 0xFF;
+        }
+    }
+    m_checkerPixMap = QPixmap::fromImage(QImage(bits, full, full, QImage::Format_Grayscale8));
+}
+#endif
+
+#if 0
 QColor PmMatchConfigWidget::toQColor(uint32_t val)
 {
     uint8_t* colorBytes = reinterpret_cast<uint8_t*>(&val);
@@ -487,4 +458,9 @@ uint32_t PmMatchConfigWidget::toUInt32(QColor val)
         | uint32_t(val.red() << 8) | uint32_t(val.alpha());
 #endif
 }
+// divider line
+QFrame* dividerLine = new QFrame();
+dividerLine->setFrameShape(QFrame::HLine);
+dividerLine->setFrameShadow(QFrame::Sunken);
+mainLayout->addRow(dividerLine);
 #endif

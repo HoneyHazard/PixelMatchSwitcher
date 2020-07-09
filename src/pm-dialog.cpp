@@ -4,6 +4,7 @@
 #include "pm-presets-widget.hpp"
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
+#include "pm-match-results-widget.hpp"
 #include "pm-preview-widget.hpp"
 #include "pm-filter.h"
 
@@ -18,29 +19,25 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 : QDialog(parent)
 , m_core(core)
 {
-    //static const char* splitterStyle
-    //    = "QSplitter::handle{background: black; height: 2px}";
-    static const char* splitterStyle = "";
-
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // UI modules
-    
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
     PmPresetsWidget* presetsWidget = new PmPresetsWidget(core, this);
-    PmMatchListWidget *matchListWidget = new PmMatchListWidget(core, this);
-    PmMatchConfigWidget *matchConfigWidget  
-        = new PmMatchConfigWidget(core, this);
+    PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
+    PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
+    PmMatchResultsWidget* resultsWidget = new PmMatchResultsWidget(core, this);
     PmPreviewWidget* previewWidget = new PmPreviewWidget(core, this);
 
-    // main tab splitter
+    // left pane
     QVBoxLayout* leftLayout = new QVBoxLayout;
     leftLayout->setContentsMargins(0, 0, 0, 0);
     leftLayout->addWidget(togglesWidget);
     leftLayout->addWidget(presetsWidget);
-    leftLayout->addWidget(matchListWidget);
-    leftLayout->addWidget(matchConfigWidget);
+    leftLayout->addWidget(listWidget);
+    leftLayout->addWidget(configWidget);
+    leftLayout->addWidget(resultsWidget);
     QWidget* leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 
@@ -57,9 +54,10 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 #endif
 
     // top level splitter layout
+    //static const char* splitterStyle
+    //    = "QSplitter::handle{background: black; height: 2px}";
     QSplitter* topLevelSplitter = new QSplitter(Qt::Horizontal, this);
-    topLevelSplitter->setStyleSheet(splitterStyle);
-    //topLevelSplitter->addWidget(tabWidget);
+    //topLevelSplitter->setStyleSheet(splitterStyle);
     topLevelSplitter->addWidget(leftWidget);
     topLevelSplitter->addWidget(previewWidget);
 

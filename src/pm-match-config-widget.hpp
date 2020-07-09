@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QWidget>
+#include <QGroupBox>
 #include <QPointer>
 
 #include "pm-structs.hpp"
@@ -17,13 +17,12 @@ class QDoubleSpinBox;
 /*!
  * \brief UI tab that shows match settings, UI preview and preview settings
  */
-class PmMatchConfigWidget : public QWidget
+class PmMatchConfigWidget : public QGroupBox
 {
     Q_OBJECT
 
 public:
     PmMatchConfigWidget(PmCore *core, QWidget *parent);
-    ~PmMatchConfigWidget() override;
 
     size_t matchIndex() const { return m_matchIndex; }
 
@@ -63,7 +62,6 @@ protected:
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;
 
-    QLabel* m_configCaption;
     QLineEdit* m_labelEdit;
     QLineEdit* m_imgPathEdit;
     QComboBox *m_maskModeCombo;
@@ -73,8 +71,7 @@ protected:
     QSpinBox *m_posXBox, *m_posYBox;
     QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
-    QLabel *m_matchResultDisplay;
 
-    QPointer<PmCore> m_core;
+    PmCore *m_core;
     PmMatchResults m_prevResults;
 };
