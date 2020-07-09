@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QWidget>
+#include <QGroupBox>
 
 class PmCore;
 class QCheckBox;
 
-class PmTogglesWidget : public QWidget
+class PmTogglesWidget : public QGroupBox
 {
     Q_OBJECT
 

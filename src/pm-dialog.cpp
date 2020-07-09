@@ -19,8 +19,9 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 : QDialog(parent)
 , m_core(core)
 {
-    static const char* splitterStyle
-        = "QSplitter::handle{background: black; height: 2px}";
+    //static const char* splitterStyle
+    //    = "QSplitter::handle{background: black; height: 2px}";
+    static const char* splitterStyle = "";
 
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
     setAttribute(Qt::WA_DeleteOnClose, true);
@@ -42,7 +43,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     splitter->addWidget(presetsWidget);
     splitter->addWidget(matchListWidget);
     splitter->addWidget(matchConfigWidget);
-    for (size_t i = 0; i < splitter->count(); ++i) {
+    for (int i = 0; i < splitter->count(); ++i) {
         splitter->setCollapsible(i, false);
     }
 
@@ -60,8 +61,6 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     QHBoxLayout *topLevelLayout = new QHBoxLayout;
     topLevelLayout->addWidget(topLevelSplitter);
     setLayout(topLevelLayout);
-
-
 }
 
 void PmDialog::closeEvent(QCloseEvent*)

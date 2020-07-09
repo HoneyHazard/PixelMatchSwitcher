@@ -14,15 +14,15 @@ const char* PmPresetsWidget::k_unsavedPresetStr
     = obs_module_text("<unsaved preset>");
 
 PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
-: QWidget(parent)
+: QGroupBox(obs_module_text("Presets"), parent)
 , m_core(core)
-{
-    // preset controls
+
+{   
+    // top level layout
     QHBoxLayout* presetLayout = new QHBoxLayout;
+    setLayout(presetLayout);
 
-    QLabel* presetsLabel = new QLabel(obs_module_text("Preset: "), this);
-    presetLayout->addWidget(presetsLabel);
-
+    // preset controls
     m_presetCombo = new QComboBox(this);
     m_presetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
     m_presetCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -50,11 +50,6 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onPresetRemove, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetRemoveButton);
     
-    // top level layout
-    QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(presetLayout);
-    setLayout(mainLayout);
-
     // core event handlers
     connect(m_core, &PmCore::sigAvailablePresetsChanged,
         this, &PmPresetsWidget::onAvailablePresetsChanged, Qt::QueuedConnection);

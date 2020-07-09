@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QWidget>
+#include <QGroupBox>
 
 class QComboBox;
 class QPushButton;
 
 class PmCore;
 
-class PmPresetsWidget : public QWidget
+class PmPresetsWidget : public QGroupBox
 {
     Q_OBJECT
 

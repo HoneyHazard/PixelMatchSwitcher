@@ -3,19 +3,18 @@
 
 #include <QCheckBox>
 #include <QHBoxLayout>
-#include <QGroupBox>
 
 #include <obs-module.h>
 
 PmTogglesWidget::PmTogglesWidget(PmCore* core, QWidget* parent)
-: QWidget(parent)
+: QGroupBox(obs_module_text("Toggle Plugin Activity"), parent)
 , m_core(core)
 {
     // global toggles
     QHBoxLayout* togglesLayout = new QHBoxLayout;
 
     m_runningCheckbox = new QCheckBox(
-        obs_module_text("Enable Pixel Match Switcher"), this);
+        obs_module_text("Enable Matching"), this);
     connect(m_runningCheckbox, &QCheckBox::toggled,
         this, &PmTogglesWidget::sigRunningEnabledChanged, Qt::QueuedConnection);
 
@@ -27,7 +26,6 @@ PmTogglesWidget::PmTogglesWidget(PmCore* core, QWidget* parent)
     togglesLayout->addWidget(m_runningCheckbox);
     togglesLayout->addWidget(m_switchingCheckbox);
     setLayout(togglesLayout);
-
 
     // core event handlers
     connect(m_core, &PmCore::sigRunningEnabledChanged,
