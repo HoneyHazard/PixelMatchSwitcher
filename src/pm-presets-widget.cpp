@@ -17,22 +17,6 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
 {
-    // global toggles
-    QHBoxLayout* togglesLayout = new QHBoxLayout;
-
-    m_runningCheckbox = new QCheckBox(
-        obs_module_text("Enable Pixel Match Switcher"), this);
-    connect(m_runningCheckbox, &QCheckBox::toggled,
-        this, &PmPresetsWidget::sigRunningEnabledChanged, Qt::QueuedConnection);
-
-    m_switchingCheckbox = new QCheckBox(
-        obs_module_text("Enable Switching"), this);
-    connect(m_switchingCheckbox, &QCheckBox::toggled,
-        this, &PmPresetsWidget::sigSwitchingEnabledChanged, Qt::QueuedConnection);
-
-    togglesLayout->addWidget(m_runningCheckbox);
-    togglesLayout->addWidget(m_switchingCheckbox);
-
     // preset controls
     QHBoxLayout* presetLayout = new QHBoxLayout;
 
@@ -68,7 +52,6 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     
     // top level layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(togglesLayout);
     mainLayout->addLayout(presetLayout);
     setLayout(mainLayout);
 
@@ -79,10 +62,7 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onActivePresetChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigActivePresetDirtyChanged,
         this, &PmPresetsWidget::onActivePresetDirtyStateChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigRunningEnabledChanged,
-        this, &PmPresetsWidget::onRunningEnabledChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigSwitchingEnabledChanged,
-        this, &PmPresetsWidget::onSwitchingEnabledChanged, Qt::QueuedConnection);
+
 
     // local signals -> core slots
     connect(this, &PmPresetsWidget::sigSaveMatchPreset,
@@ -91,17 +71,12 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onSelectActiveMatchPreset, Qt::QueuedConnection);
     connect(this, &PmPresetsWidget::sigRemoveMatchPreset,
         m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
-    connect(this, &PmPresetsWidget::sigRunningEnabledChanged,
-        m_core, &PmCore::onRunningEnabledChanged, Qt::QueuedConnection);
-    connect(this, &PmPresetsWidget::sigSwitchingEnabledChanged,
-        m_core, &PmCore::onSwitchingEnabledChanged, Qt::QueuedConnection);
 
-    // finish init
+
+    // finish init state
     onAvailablePresetsChanged();
     onActivePresetChanged();
     onActivePresetDirtyStateChanged();
-    onRunningEnabledChanged(m_core->runningEnabled());
-    onSwitchingEnabledChanged(m_core->switchingEnabled());
 }
 
 void PmPresetsWidget::onAvailablePresetsChanged()
@@ -143,27 +118,10 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
     m_presetSaveButton->setEnabled(dirty);
 }
 
-void PmPresetsWidget::onRunningEnabledChanged(bool enable)
-{
-    m_runningCheckbox->blockSignals(true);
-    m_runningCheckbox->setChecked(enable);
-    m_runningCheckbox->blockSignals(false);
-}
-
-void PmPresetsWidget::onSwitchingEnabledChanged(bool enable)
-{
-    m_switchingCheckbox->blockSignals(true);
-    m_switchingCheckbox->setChecked(enable);
-    m_switchingCheckbox->blockSignals(false);
-}
-
 void PmPresetsWidget::onPresetSelected()
 {
     std::string selPreset = m_presetCombo->currentText().toUtf8().data();
-    //PmMatchConfig presetConfig = m_core->matchPresetByName(selPreset);
     emit sigSelectActiveMatchPreset(selPreset);
-    //configToUi(presetConfig);
-    //updateFilterDisplaySize(presetConfig, m_prevResults);
 }
 
 void PmPresetsWidget::onPresetSave()
@@ -201,10 +159,6 @@ void PmPresetsWidget::onPresetSaveAs()
 
 void PmPresetsWidget::onConfigReset()
 {
-    //PmMatchConfig config; // defaults
-    //configToUi(config);
-    //updateFilterDisplaySize(config, m_prevResults);
-    //emit sigNewUiConfig(config);
     emit sigSelectActiveMatchPreset("");
 }
 
@@ -213,11 +167,4 @@ void PmPresetsWidget::onPresetRemove()
     auto presets = m_core->matchPresets();
     std::string oldPreset = m_core->activeMatchPresetName();
     emit sigRemoveMatchPreset(oldPreset);
-    //for (auto p : presets) {
-    //    if (p.first != oldPreset) {
-            //configToUi(p.second);
-    //        emit sigSelectActiveMatchPreset(p.first);
-    //        break;
-    //    }
-    //}
 }

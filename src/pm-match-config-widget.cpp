@@ -212,7 +212,7 @@ void PmMatchConfigWidget::onSelectMatchIndex(
         std::string matchImgFilename = m_core->matchImgFilename(matchIndex);
         if (m_core->matchImageLoaded(matchIndex)) {
             onImgSuccess(matchIndex, matchImgFilename,
-                m_core->matchImage(matchIndex));
+                         m_core->matchImage(matchIndex));
         } else {
             onImgFailed(matchIndex, matchImgFilename);
         }

@@ -1,5 +1,6 @@
 #include "pm-dialog.hpp"
 #include "pm-core.hpp"
+#include "pm-toggles-widget.hpp"
 #include "pm-presets-widget.hpp"
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
@@ -25,6 +26,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // UI modules
+    
+    PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
     PmPresetsWidget* presetsWidget = new PmPresetsWidget(core, this);
     PmMatchListWidget *matchListWidget = new PmMatchListWidget(core, this);
     PmMatchConfigWidget *matchConfigWidget  
@@ -35,12 +38,13 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // main tab splitter
     QSplitter* splitter = new QSplitter(Qt::Vertical, this);
     splitter->setStyleSheet(splitterStyle);
+    splitter->addWidget(togglesWidget);
     splitter->addWidget(presetsWidget);
     splitter->addWidget(matchListWidget);
     splitter->addWidget(matchConfigWidget);
-    splitter->setCollapsible(0, false);
-    splitter->setCollapsible(1, false);
-    splitter->setCollapsible(2, false);
+    for (size_t i = 0; i < splitter->count(); ++i) {
+        splitter->setCollapsible(i, false);
+    }
 
     // tab widget
     QTabWidget *tabWidget = new QTabWidget(this);
