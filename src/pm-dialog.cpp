@@ -5,6 +5,7 @@
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
 #include "pm-match-results-widget.hpp"
+#include "pm-preview-config-widget.hpp"
 #include "pm-preview-widget.hpp"
 #include "pm-filter.h"
 
@@ -28,18 +29,25 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
     PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
     PmMatchResultsWidget* resultsWidget = new PmMatchResultsWidget(core, this);
+    PmPreviewConfigWidget* previewCfgWidget = new PmPreviewConfigWidget(core, this);
     PmPreviewWidget* previewWidget = new PmPreviewWidget(core, this);
 
     // left pane
     QVBoxLayout* leftLayout = new QVBoxLayout;
     leftLayout->setContentsMargins(0, 0, 0, 0);
-    leftLayout->addWidget(togglesWidget);
-    leftLayout->addWidget(presetsWidget);
+    //leftLayout->addWidget(togglesWidget);
+    //leftLayout->addWidget(presetsWidget);
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
     leftLayout->addWidget(resultsWidget);
     QWidget* leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
+
+    // top layout
+    QHBoxLayout *topLayout = new QHBoxLayout;
+    topLayout->addWidget(presetsWidget);
+    topLayout->addWidget(togglesWidget);
+    topLayout->addWidget(previewCfgWidget);
 
 #if 0
     QSplitter* splitter = new QSplitter(Qt::Vertical, this);
@@ -56,13 +64,14 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // top level splitter layout
     //static const char* splitterStyle
     //    = "QSplitter::handle{background: black; height: 2px}";
-    QSplitter* topLevelSplitter = new QSplitter(Qt::Horizontal, this);
+    QSplitter* horizSplitter = new QSplitter(Qt::Horizontal, this);
     //topLevelSplitter->setStyleSheet(splitterStyle);
-    topLevelSplitter->addWidget(leftWidget);
-    topLevelSplitter->addWidget(previewWidget);
+    horizSplitter->addWidget(leftWidget);
+    horizSplitter->addWidget(previewWidget);
 
-    QHBoxLayout *topLevelLayout = new QHBoxLayout;
-    topLevelLayout->addWidget(topLevelSplitter);
+    QVBoxLayout *topLevelLayout = new QVBoxLayout;
+    topLevelLayout->addLayout(topLayout);
+    topLevelLayout->addWidget(horizSplitter);
     setLayout(topLevelLayout);
 }
 

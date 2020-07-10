@@ -290,6 +290,15 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
                 blog(LOG_WARNING, "Unable to open filename: %s", filename);
                 emit sigImgFailed(matchIdx, filename);
                 img = QImage();
+
+                if (matchIdx == m_selectedMatchIndex) {
+                    auto previewCfg = previewConfig();
+                    if (previewCfg.previewMode != PmPreviewMode::Video) {
+                        QMutexLocker locker(&m_previewConfigMutex);
+                        m_previewConfig.previewMode = PmPreviewMode::Video;
+                        emit sigPreviewConfigChanged(previewCfg);
+                    }
+                }
             } else {
                 img = img.convertToFormat(QImage::Format_ARGB32);
                 if (img.isNull()) {
@@ -454,6 +463,15 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
     }
     
     emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));
+
+    if (!matchImageLoaded(matchIndex)) {
+        auto previewCfg = previewConfig();
+        if (previewCfg.previewMode != PmPreviewMode::Video) {
+            QMutexLocker locker(&m_previewConfigMutex);
+            m_previewConfig.previewMode = PmPreviewMode::Video;
+            emit sigPreviewConfigChanged(previewCfg);
+        }
+    }
 }
 
 void PmCore::onNoMatchSceneChanged(std::string sceneName)

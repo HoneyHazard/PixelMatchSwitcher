@@ -10,10 +10,10 @@
 class OBSQTDisplay;
 
 class PmCore;
-class QComboBox;
-class QStackedWidget;
-class QButtonGroup;
 
+/**
+ * @brief Provides a preview of filter's visualization output and match image
+ */
 class PmPreviewWidget : public QWidget
 {
     Q_OBJECT
@@ -21,9 +21,6 @@ class PmPreviewWidget : public QWidget
 public:
     PmPreviewWidget(PmCore* core, QWidget *parent);
     ~PmPreviewWidget();
-
-signals:
-    void sigPreviewConfigChanged(PmPreviewConfig cfg);
 
 protected slots:
     // reaction to core events
@@ -35,10 +32,7 @@ protected slots:
     void onNewActiveFilter(PmFilterRef ref);
     void onRunningEnabledChanged(bool enable);
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
-    void onImgFailed(size_t matchIndex, std::string filename);
-
-    // parse UI state into config
-    void onConfigUiChanged();
+    void onImgFailed(size_t matchIndex);
 
     // shutdown safety
     void onDestroy(QObject* obj); // todo: maybe not needed or useful
@@ -49,19 +43,13 @@ protected:
     void drawEffect();
     void drawMatchImage();
     void updateFilterDisplaySize();
-    void enableRegionViews(bool enable);
 
     // todo: maybe not needed or useful
     virtual void closeEvent(QCloseEvent* e) override;
 
-    QButtonGroup* m_previewModeButtons;
-    QStackedWidget* m_previewScaleStack;
-    QComboBox* m_videoScaleCombo;
-    QComboBox* m_regionScaleCombo;
-    QComboBox* m_matchImgScaleCombo;
     OBSQTDisplay* m_filterDisplay;
 
-    QPointer<PmCore> m_core;
+    PmCore* m_core;
     
     size_t m_matchIndex = 0;
     PmPreviewConfig m_previewCfg;
