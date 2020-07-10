@@ -14,13 +14,13 @@ class PmCore;
 /**
  * @brief Provides a preview of filter's visualization output and match image
  */
-class PmPreviewWidget : public QWidget
+class PmPreviewDisplayWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    PmPreviewWidget(PmCore* core, QWidget *parent);
-    ~PmPreviewWidget();
+    PmPreviewDisplayWidget(PmCore* core, QWidget *parent);
+    ~PmPreviewDisplayWidget();
 
 protected slots:
     // reaction to core events

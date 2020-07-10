@@ -6,7 +6,7 @@
 #include "pm-match-config-widget.hpp"
 #include "pm-match-results-widget.hpp"
 #include "pm-preview-config-widget.hpp"
-#include "pm-preview-widget.hpp"
+#include "pm-preview-display-widget.hpp"
 #include "pm-filter.h"
 
 #include <QVBoxLayout>
@@ -30,13 +30,12 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
     PmMatchResultsWidget* resultsWidget = new PmMatchResultsWidget(core, this);
     PmPreviewConfigWidget* previewCfgWidget = new PmPreviewConfigWidget(core, this);
-    PmPreviewWidget* previewWidget = new PmPreviewWidget(core, this);
+    PmPreviewDisplayWidget* previewWidget = new PmPreviewDisplayWidget(core, this);
 
     // left pane
     QVBoxLayout* leftLayout = new QVBoxLayout;
     leftLayout->setContentsMargins(0, 0, 0, 0);
-    //leftLayout->addWidget(togglesWidget);
-    //leftLayout->addWidget(presetsWidget);
+    leftLayout->addWidget(presetsWidget);
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
     leftLayout->addWidget(resultsWidget);
@@ -45,32 +44,32 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 
     // top layout
     QHBoxLayout *topLayout = new QHBoxLayout;
-    topLayout->addWidget(presetsWidget);
+    topLayout->setContentsMargins(0, 0, 0, 0);
+    topLayout->setAlignment(Qt::AlignLeft);
     topLayout->addWidget(togglesWidget);
     topLayout->addWidget(previewCfgWidget);
+    togglesWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    previewCfgWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-#if 0
-    QSplitter* splitter = new QSplitter(Qt::Vertical, this);
-    splitter->setStyleSheet(splitterStyle);
-    for (int i = 0; i < splitter->count(); ++i) {
-        splitter->setCollapsible(i, false);
-    }
-
-    // tab widget
-    QTabWidget *tabWidget = new QTabWidget(this);
-    tabWidget->addTab(splitter, obs_module_text("Main"));
-#endif
+    QVBoxLayout* rightLayout = new QVBoxLayout;
+    rightLayout->setContentsMargins(0, 0, 0, 0);
+    rightLayout->addLayout(topLayout);
+    rightLayout->addWidget(previewWidget);
+    QWidget* rightWidget = new QWidget(this);
+    rightWidget->setLayout(rightLayout);
 
     // top level splitter layout
+    QSplitter* horizSplitter = new QSplitter(Qt::Horizontal, this);
+    horizSplitter->addWidget(leftWidget);
+    horizSplitter->addWidget(rightWidget);
+    horizSplitter->setCollapsible(1, false);
+
     //static const char* splitterStyle
     //    = "QSplitter::handle{background: black; height: 2px}";
-    QSplitter* horizSplitter = new QSplitter(Qt::Horizontal, this);
     //topLevelSplitter->setStyleSheet(splitterStyle);
-    horizSplitter->addWidget(leftWidget);
-    horizSplitter->addWidget(previewWidget);
 
     QVBoxLayout *topLevelLayout = new QVBoxLayout;
-    topLevelLayout->addLayout(topLayout);
+    //topLevelLayout->addLayout(topLayout);
     topLevelLayout->addWidget(horizSplitter);
     setLayout(topLevelLayout);
 }

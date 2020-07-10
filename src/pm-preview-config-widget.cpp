@@ -42,6 +42,10 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
     m_previewModeButtons->addButton(matchImgRadio, int(PmPreviewMode::MatchImage));
     mainLayout->addWidget(matchImgRadio);
 
+    // some space inbetween
+    QSpacerItem* spacerItem = new QSpacerItem(50, 0);    
+    mainLayout->addItem(spacerItem);
+
     // preview scales
     QLabel* scaleLabel = new QLabel(obs_module_text("Scale: "), this);
     mainLayout->addWidget(scaleLabel);

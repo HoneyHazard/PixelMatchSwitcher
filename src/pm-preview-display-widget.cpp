@@ -1,4 +1,4 @@
-#include "pm-preview-widget.hpp"
+#include "pm-preview-display-widget.hpp"
 #include "pm-core.hpp"
 
 #include <qt-display.hpp>
@@ -8,7 +8,7 @@
 
 #include <QThread> // sleep
 
-PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
+PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
 {
@@ -16,12 +16,12 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
     m_filterDisplay = new OBSQTDisplay(this);
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
-                                      PmPreviewWidget::drawPreview, this);
+                                      PmPreviewDisplayWidget::drawPreview, this);
     };
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
     connect(m_filterDisplay, &OBSQTDisplay::destroyed,
-        this, &PmPreviewWidget::onDestroy, Qt::DirectConnection);
+        this, &PmPreviewDisplayWidget::onDestroy, Qt::DirectConnection);
     
     // main layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -30,17 +30,17 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
 
     // core event handlers
     connect(m_core, &PmCore::sigSelectMatchIndex,
-            this, &PmPreviewWidget::onSelectMatchIndex, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onSelectMatchIndex, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigChangedMatchConfig,
-        this, &PmPreviewWidget::onChangedMatchConfig, Qt::QueuedConnection);
+        this, &PmPreviewDisplayWidget::onChangedMatchConfig, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgSuccess,
-            this, &PmPreviewWidget::onImgSuccess, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
-            this, &PmPreviewWidget::onImgFailed, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigPreviewConfigChanged,
-            this, &PmPreviewWidget::onPreviewConfigChanged, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewActiveFilter,
-            this, &PmPreviewWidget::onNewActiveFilter, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onNewActiveFilter, Qt::QueuedConnection);
 
     // finish init
     onNewActiveFilter(m_core->activeFilterRef());
@@ -50,7 +50,7 @@ PmPreviewWidget::PmPreviewWidget(PmCore* core, QWidget* parent)
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
 }
 
-PmPreviewWidget::~PmPreviewWidget()
+PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
 {
     while (m_rendering) {
         QThread::sleep(1);
@@ -60,32 +60,32 @@ PmPreviewWidget::~PmPreviewWidget()
     }
 }
 
-void PmPreviewWidget::closeEvent(QCloseEvent* e)
+void PmPreviewDisplayWidget::closeEvent(QCloseEvent* e)
 {
     obs_display_remove_draw_callback(
-        m_filterDisplay->GetDisplay(), PmPreviewWidget::drawPreview, this);
+        m_filterDisplay->GetDisplay(), PmPreviewDisplayWidget::drawPreview, this);
     QWidget::closeEvent(e);
 }
 
-void PmPreviewWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
+void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
     m_previewCfg = cfg;
     updateFilterDisplaySize();
 }
 
-void PmPreviewWidget::onNewActiveFilter(PmFilterRef ref)
+void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
 {
     //QMutexLocker locker(&m_filterMutex);
     m_activeFilter = ref;
     setEnabled(m_activeFilter.isValid() && m_core->runningEnabled());
 }
 
-void PmPreviewWidget::onRunningEnabledChanged(bool enable)
+void PmPreviewDisplayWidget::onRunningEnabledChanged(bool enable)
 {
     setEnabled(m_activeFilter.isValid() && enable);
 }
 
-void PmPreviewWidget::onImgSuccess(
+void PmPreviewDisplayWidget::onImgSuccess(
     size_t matchIndex, std::string filename, QImage img)
 {
     if (matchIndex != m_matchIndex) return;
@@ -99,7 +99,7 @@ void PmPreviewWidget::onImgSuccess(
     m_matchImg = img;
 }
 
-void PmPreviewWidget::onImgFailed(size_t matchIndex)
+void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
 
@@ -112,7 +112,7 @@ void PmPreviewWidget::onImgFailed(size_t matchIndex)
     }
 }
 
-void PmPreviewWidget::onDestroy(QObject* obj)
+void PmPreviewDisplayWidget::onDestroy(QObject* obj)
 {
     while (m_rendering) {
         QThread::sleep(1);
@@ -120,7 +120,7 @@ void PmPreviewWidget::onDestroy(QObject* obj)
     UNUSED_PARAMETER(obj);
 }
 
-void PmPreviewWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewDisplayWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
     onChangedMatchConfig(matchIndex, cfg);
@@ -141,7 +141,7 @@ void PmPreviewWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
     }
 }
 
-void PmPreviewWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
 {
     if (matchIndex != m_matchIndex) return;
 
@@ -151,9 +151,9 @@ void PmPreviewWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     updateFilterDisplaySize();
 }
 
-void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
+void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
 {
-    auto widget = static_cast<PmPreviewWidget*>(data);
+    auto widget = static_cast<PmPreviewDisplayWidget*>(data);
     auto core = widget->m_core;
 
     if (!core) return;
@@ -170,7 +170,7 @@ void PmPreviewWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
     UNUSED_PARAMETER(cy);
 }
 
-void PmPreviewWidget::drawEffect()
+void PmPreviewDisplayWidget::drawEffect()
 {
     PmFilterRef &filterRef = m_activeFilter;
     auto renderSrc = filterRef.filter();
@@ -230,7 +230,7 @@ void PmPreviewWidget::drawEffect()
     gs_viewport_pop();
 }
 
-void PmPreviewWidget::drawMatchImage()
+void PmPreviewDisplayWidget::drawMatchImage()
 {
     {
         QMutexLocker locker(&m_matchImgLock);
@@ -262,7 +262,7 @@ void PmPreviewWidget::drawMatchImage()
 }
 
 
-void PmPreviewWidget::updateFilterDisplaySize()
+void PmPreviewDisplayWidget::updateFilterDisplaySize()
     //const PmMatchConfig& config, const PmMatchResults& results)
 {
     auto filterRef = m_core->activeFilterRef();
