@@ -294,9 +294,8 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
                 if (matchIdx == m_selectedMatchIndex) {
                     auto previewCfg = previewConfig();
                     if (previewCfg.previewMode != PmPreviewMode::Video) {
-                        QMutexLocker locker(&m_previewConfigMutex);
-                        m_previewConfig.previewMode = PmPreviewMode::Video;
-                        emit sigPreviewConfigChanged(previewCfg);
+                        previewCfg.previewMode = PmPreviewMode::Video;
+                        onPreviewConfigChanged(previewCfg);
                     }
                 }
             } else {
@@ -466,11 +465,8 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
 
     if (!matchImageLoaded(matchIndex)) {
         auto previewCfg = previewConfig();
-        if (previewCfg.previewMode != PmPreviewMode::Video) {
-            QMutexLocker locker(&m_previewConfigMutex);
-            m_previewConfig.previewMode = PmPreviewMode::Video;
-            emit sigPreviewConfigChanged(previewCfg);
-        }
+        previewCfg.previewMode = PmPreviewMode::Video;
+        onPreviewConfigChanged(previewCfg);
     }
 }
 
