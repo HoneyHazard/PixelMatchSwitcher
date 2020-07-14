@@ -111,6 +111,7 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
 {
     bool dirty = m_core->matchConfigDirty();
     m_presetSaveButton->setEnabled(dirty);
+    setTitle(dirty ? obs_module_text("Preset (*)") : obs_module_text("Preset"));
 }
 
 void PmPresetsWidget::onPresetSelected()
