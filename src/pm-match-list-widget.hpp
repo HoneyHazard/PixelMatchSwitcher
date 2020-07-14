@@ -69,6 +69,8 @@ protected:
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;
 
+    QPushButton* prepareButton(
+        const char *tooltip, const char* icoPath, const char* themeId);
     void constructRow(int idx);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
     void updateSceneChoices(QComboBox* combo);
@@ -86,7 +88,7 @@ protected:
     QPushButton* m_cfgMoveDownBtn;
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
-    QPushButton* m_cfgClearBtn;
+    //QPushButton* m_cfgClearBtn;
 
     QComboBox* m_noMatchSceneCombo;
     QComboBox* m_noMatchTransitionCombo;

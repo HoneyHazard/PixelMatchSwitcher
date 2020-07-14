@@ -165,7 +165,7 @@ void PmMatchConfigWidget::onSelectMatchIndex(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    setTitle(QString(obs_module_text("Match Config #%1:")).arg(matchIndex+1));
+    setTitle(QString(obs_module_text("Match Config #%1")).arg(matchIndex+1));
 
     onChangedMatchConfig(matchIndex, cfg);
     bool existingSelected = matchIndex < m_multiConfigSz;

@@ -11,7 +11,10 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
+#include <QStringLiteral>
 #include <QIcon>
+
+#include <QDebug>
 
 using namespace std;
 
@@ -23,7 +26,7 @@ const QString PmMatchListWidget::k_semiTranspBgStyle
     = "background-color: rgba(0, 0, 0, 0.6)";
 
 PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
-: QGroupBox(obs_module_text("Active Configuration"), parent)
+: QGroupBox(obs_module_text("Active Match Entries"), parent)
 , m_core(core)
 {
     // table widget
@@ -41,31 +44,29 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         << obs_module_text("Result"));
 
     // config editing buttons
-    m_cfgMoveUpBtn = new QPushButton(
-        QIcon::fromTheme("go-up"), obs_module_text("Up"), this);
-    m_cfgMoveUpBtn->setFocusPolicy(Qt::NoFocus);
+    m_cfgInsertBtn = prepareButton(obs_module_text("Insert New Match Entry"),
+        ":/res/images/add.png", "addIconSmall");
+    m_cfgMoveUpBtn = prepareButton(obs_module_text("Move Match Entry Up"),
+        ":/res/images/up.png", "upArrowIconSmall");
+    m_cfgMoveDownBtn = prepareButton(obs_module_text("Move Match Entry Down"),
+        ":/res/images/down.png", "downArrowIconSmall");
+    m_cfgRemoveBtn = prepareButton(obs_module_text("Remove Match Entry"),
+        ":/res/images/list_remove.png", "removeIconSmall");
 
-    m_cfgMoveDownBtn = new QPushButton(
-        QIcon::fromTheme("go-down"), obs_module_text("Down"), this);
-    m_cfgMoveDownBtn->setFocusPolicy(Qt::NoFocus);
+    //m_cfgClearBtn = new QPushButton(obs_module_text("Clear All"), this);
+    //m_cfgClearBtn->setFocusPolicy(Qt::NoFocus);
 
-    m_cfgInsertBtn = new QPushButton(
-        QIcon::fromTheme("list-add"), obs_module_text("Insert"), this);
-    m_cfgInsertBtn->setFocusPolicy(Qt::NoFocus);
-
-    m_cfgRemoveBtn = new QPushButton(
-        QIcon::fromTheme("list-remove"), obs_module_text("Remove"), this);
-    m_cfgRemoveBtn->setFocusPolicy(Qt::NoFocus);
-
-    m_cfgClearBtn = new QPushButton(obs_module_text("Clear All"), this);
-    m_cfgClearBtn->setFocusPolicy(Qt::NoFocus);
+    QSpacerItem* buttonSpacer1 = new QSpacerItem(0, 0, QSizePolicy::Expanding);
+    QSpacerItem* buttonSpacer2 = new QSpacerItem(0, 0, QSizePolicy::Expanding);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
+    buttonsLayout->addWidget(m_cfgInsertBtn);
+    buttonsLayout->addItem(buttonSpacer1);
     buttonsLayout->addWidget(m_cfgMoveUpBtn);
     buttonsLayout->addWidget(m_cfgMoveDownBtn);
-    buttonsLayout->addWidget(m_cfgInsertBtn);
+    buttonsLayout->addItem(buttonSpacer2);
     buttonsLayout->addWidget(m_cfgRemoveBtn);
-    buttonsLayout->addWidget(m_cfgClearBtn);
+    //buttonsLayout->addWidget(m_cfgClearBtn);
 
     // no-match configuration UI
     QLabel* noMatchSceneLabel = new QLabel(
@@ -168,8 +169,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onConfigInsertReleased, Qt::QueuedConnection);
     connect(m_cfgRemoveBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigRemoveReleased, Qt::QueuedConnection);
-    connect(m_cfgClearBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigClearReleased, Qt::QueuedConnection);
+    //connect(m_cfgClearBtn, &QPushButton::released,
+    //    this, &PmMatchListWidget::onConfigClearReleased, Qt::QueuedConnection);
     connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
         this, &PmMatchListWidget::onNoMatchSceneSelected, Qt::QueuedConnection);
     connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
@@ -367,6 +368,24 @@ void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
     emit sigNoMatchTransitionChanged(str.toUtf8().data());
 }
 
+QPushButton* PmMatchListWidget::prepareButton(
+    const char *tooltip, const char* icoPath, const char* themeId)
+{
+    QIcon icon;
+    icon.addFile(icoPath, QSize(), QIcon::Normal, QIcon::Off);
+
+    QPushButton *ret = new QPushButton(icon, "", this);
+    ret->setToolTip(tooltip);
+    ret->setIcon(icon);
+    ret->setIconSize(QSize(16, 16));
+    ret->setMaximumSize(22, 22);
+    ret->setFlat(true);
+    ret->setProperty("themeID", QVariant(themeId));
+    ret->setFocusPolicy(Qt::NoFocus);
+
+    return ret;
+}
+
 void PmMatchListWidget::constructRow(int idx)
 {
     QWidget* parent = m_tableWidget;
@@ -424,7 +443,7 @@ void PmMatchListWidget::updateAvailableButtons(
     m_cfgMoveUpBtn->setEnabled(currIdx > 0 && currIdx < numConfigs);
     m_cfgMoveDownBtn->setEnabled(numConfigs > 0 && currIdx < numConfigs - 1);
     m_cfgRemoveBtn->setEnabled(currIdx < numConfigs);
-    m_cfgClearBtn->setEnabled(numConfigs > 0);
+    //m_cfgClearBtn->setEnabled(numConfigs > 0);
 }
 
 void PmMatchListWidget::updateSceneChoices(

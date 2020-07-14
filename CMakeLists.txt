@@ -3,20 +3,20 @@ cmake_minimum_required(VERSION 3.5)
 project(pixel-match-switcher)
 
 if(WIN32)
-	if (QTDIR OR DEFINED ENV{QTDIR} OR DEFINED ENV{QTDIR32} OR DEFINED ENV{QTDIR64})
-		# Qt path set by user or env var
-	else()
-		set(QTDIR "" CACHE PATH "Path to Qt (e.g. C:\Qt\5.10.1\msvc2017_64)")
-		message(WARNING "QTDIR variable is missing.  Please set this variable to specify path to Qt (e.g. C:/Qt/5.7/msvc2015_64)")
-	endif()
-	if (DepsPath OR DEFINED ENV{DepsPath} OR DEFINED ENV{DepsPath32} OR DEFINED ENV{DepsPath64})
-		# Dependencies path set by user or env var
-	else()
-		set(DepsPath "" CACHE PATH "Path to compiled dependencies (e.g. D:/dependencies/win64)")
-		message(WARNING "DepsPath variable is missing.  Please set this variable to specify path to compiled dependencies (e.g. D:/dependencies/win64)")
-	endif()
+    if (QTDIR OR DEFINED ENV{QTDIR} OR DEFINED ENV{QTDIR32} OR DEFINED ENV{QTDIR64})
+        # Qt path set by user or env var
+    else()
+        set(QTDIR "" CACHE PATH "Path to Qt (e.g. C:\Qt\5.10.1\msvc2017_64)")
+        message(WARNING "QTDIR variable is missing.  Please set this variable to specify path to Qt (e.g. C:/Qt/5.7/msvc2015_64)")
+    endif()
+    if (DepsPath OR DEFINED ENV{DepsPath} OR DEFINED ENV{DepsPath32} OR DEFINED ENV{DepsPath64})
+        # Dependencies path set by user or env var
+    else()
+        set(DepsPath "" CACHE PATH "Path to compiled dependencies (e.g. D:/dependencies/win64)")
+        message(WARNING "DepsPath variable is missing.  Please set this variable to specify path to compiled dependencies (e.g. D:/dependencies/win64)")
+    endif()
 else()
-	set(CMAKE_PREFIX_PATH "${QTDIR}")
+    set(CMAKE_PREFIX_PATH "${QTDIR}")
 endif()
 
 set(CMAKE_AUTOMOC ON)
@@ -37,12 +37,12 @@ set(pixel-match-switcher_HEADERS
         src/pm-filter-ref.hpp
         src/pm-core.hpp
         src/pm-match-config-widget.hpp
-		src/pm-match-results-widget.hpp
+        src/pm-match-results-widget.hpp
         src/pm-match-list-widget.hpp
-		src/pm-preview-config-widget.hpp
-		src/pm-preview-display-widget.hpp
-		src/pm-presets-widget.hpp
-		src/pm-toggles-widget.hpp
+        src/pm-preview-config-widget.hpp
+        src/pm-preview-display-widget.hpp
+        src/pm-presets-widget.hpp
+        src/pm-toggles-widget.hpp
         src/pm-dialog.hpp
         src/pm-structs.hpp
         src/pm-debug-tab.hpp
@@ -56,17 +56,17 @@ set(pixel-match-switcher_SOURCES
         src/pm-filter-ref.cpp
         src/pm-core.cpp
         src/pm-match-config-widget.cpp
-		src/pm-match-results-widget.cpp
+        src/pm-match-results-widget.cpp
         src/pm-match-list-widget.cpp
-		src/pm-preview-config-widget.cpp
-		src/pm-preview-display-widget.cpp
-		src/pm-presets-widget.cpp
-		src/pm-toggles-widget.cpp
+        src/pm-preview-config-widget.cpp
+        src/pm-preview-display-widget.cpp
+        src/pm-presets-widget.cpp
+        src/pm-toggles-widget.cpp
         src/pm-debug-tab.cpp
         src/pm-dialog.cpp
         src/pm-structs.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
-        ${LIBOBS_UI_DIR}/qt-wrappers.cpp        
+        ${LIBOBS_UI_DIR}/qt-wrappers.cpp
 )
 
 add_library(pixel-match-switcher MODULE
@@ -110,9 +110,9 @@ file(GLOB EFFECT_FILES
    data/*.effect)
 
 install(TARGETS pixel-match-switcher
-	LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
 install(FILES ${EFFECT_FILES}
-	DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher")
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher")
 
 if(UNIX)
        set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-old-style-cast")
@@ -124,18 +124,18 @@ endif()
 
 # Linux
 #if(UNIX AND NOT APPLE)
-#	set(CMAKE_C_FLAGS "-Wall -Wextra -Wvla -Wno-unused-function -Werror-implicit-function-declaration -Wno-missing-braces -Wno-missing-field-initializers ${CMAKE_C_FLAGS} -std=c99 -fno-strict-aliasing")
+#    set(CMAKE_C_FLAGS "-Wall -Wextra -Wvla -Wno-unused-function -Werror-implicit-function-declaration -Wno-missing-braces -Wno-missing-field-initializers ${CMAKE_C_FLAGS} -std=c99 -fno-strict-aliasing")
 #
-#	if(ARCH EQUAL 64)
-#		set(ARCH_NAME "x86_64")
-#	else()
-#		set(ARCH_NAME "i686")
-#	endif()
+#    if(ARCH EQUAL 64)
+#        set(ARCH_NAME "x86_64")
+#    else()
+#        set(ARCH_NAME "i686")
+#    endif()
 #
-#	set_target_properties(pixel-match-switcher PROPERTIES PREFIX "")
+#    set_target_properties(pixel-match-switcher PROPERTIES PREFIX "")
 #
-#	install(TARGETS pixel-match-switcher
-#			LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
-#	install(FILES ${ASS_TRANSLATION_FILES}
-#			DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher/locale")
+#    install(TARGETS pixel-match-switcher
+#            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
+#    install(FILES ${ASS_TRANSLATION_FILES}
+#            DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher/locale")
 #endif()
