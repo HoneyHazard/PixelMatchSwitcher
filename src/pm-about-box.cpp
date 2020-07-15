@@ -26,7 +26,8 @@ const char* PmAboutBox::k_aboutText = obs_module_text(
 );
 
 PmAboutBox::PmAboutBox(QWidget* parent)
-: QDialog(parent)
+: QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint
+                | Qt::WindowCloseButtonHint)
 {
     setWindowTitle(obs_module_text("About"));
 

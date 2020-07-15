@@ -274,7 +274,6 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
         idx, (int)RowOrder::Result);
 
     float percentage = results.percentageMatched;
-
     
     QString text;     
     if (percentage == percentage && results.numCompared > 0) { // valid

@@ -18,7 +18,8 @@
 #include <obs-frontend-api.h>
 
 PmDialog::PmDialog(PmCore *core, QWidget *parent)
-: QDialog(parent)
+: QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint 
+                | Qt::WindowCloseButtonHint)
 , m_core(core)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));

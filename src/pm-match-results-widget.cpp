@@ -36,12 +36,19 @@ void PmMatchResultsWidget::onNewMatchResults(
         ? obs_module_text("<font color=\"Green\">[MATCHED]</font>")
         : obs_module_text("<font color=\"Red\">[NO MATCH]</font>");
 
-    QString resultStr = QString(
-        obs_module_text("%1 %2 out of %3 pixels matched (%4 %)"))
-        .arg(matchLabel)
-        .arg(results.numMatched)
-        .arg(results.numCompared)
-        .arg(double(results.percentageMatched), 0, 'f', 1);
+    float percentage = results.percentageMatched;
+
+    QString resultStr;
+    if (percentage == percentage && results.numCompared > 0) { // valid
+        resultStr = QString(
+            obs_module_text("%1 %2 out of %3 pixels matched (%4 %)"))
+            .arg(matchLabel)
+            .arg(results.numMatched)
+            .arg(results.numCompared)
+            .arg(double(results.percentageMatched), 0, 'f', 1);
+    } else {
+        resultStr = obs_module_text("N/A");
+    }
     m_matchResultDisplay->setText(resultStr);
 }
 
