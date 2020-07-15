@@ -1,15 +1,10 @@
 #include "pm-toggles-widget.hpp"
-#include "pm-debug-tab.hpp"
-#include "pm-about-box.hpp"
 #include "pm-core.hpp"
 
 #include <QCheckBox>
-#include <QPushButton>
 #include <QHBoxLayout>
-#include <QMainWindow>
 
 #include <obs-module.h>
-#include <obs-frontend-api.h>
 
 PmTogglesWidget::PmTogglesWidget(PmCore* core, QWidget* parent)
 : QGroupBox(obs_module_text("Toggle Plugin Activity"), parent)
@@ -25,24 +20,10 @@ PmTogglesWidget::PmTogglesWidget(PmCore* core, QWidget* parent)
     connect(m_switchingCheckbox, &QCheckBox::toggled,
         this, &PmTogglesWidget::sigSwitchingEnabledChanged, Qt::QueuedConnection);
 
-    QPushButton* showDebugButton = new QPushButton(
-        obs_module_text("Debug"), this);
-    showDebugButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
-    connect(showDebugButton, &QPushButton::released,
-        this, &PmTogglesWidget::onShowDebug, Qt::QueuedConnection);
-
-    QPushButton* aboutButton = new QPushButton(
-        obs_module_text("About"), this);
-    aboutButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
-    connect(aboutButton, &QPushButton::released,
-        this, &PmTogglesWidget::onShowAbout, Qt::QueuedConnection);
-
-    QHBoxLayout* mainLayout = new QHBoxLayout;
-    mainLayout->addWidget(m_runningCheckbox);
-    mainLayout->addWidget(m_switchingCheckbox);
-    mainLayout->addWidget(aboutButton);
-    mainLayout->addWidget(showDebugButton);
-    setLayout(mainLayout);
+    QHBoxLayout* layout = new QHBoxLayout;
+    layout->addWidget(m_runningCheckbox);
+    layout->addWidget(m_switchingCheckbox);
+    setLayout(layout);
 
     // core event handlers
     connect(m_core, &PmCore::sigRunningEnabledChanged,
@@ -75,18 +56,4 @@ void PmTogglesWidget::onSwitchingEnabledChanged(bool enable)
     m_switchingCheckbox->blockSignals(true);
     m_switchingCheckbox->setChecked(enable);
     m_switchingCheckbox->blockSignals(false);
-}
-
-void PmTogglesWidget::onShowDebug()
-{
-    auto mainWindow
-        = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    PmDebugTab* debugTab = new PmDebugTab(m_core, mainWindow);
-    setAttribute(Qt::WA_DeleteOnClose, true);
-    debugTab->show();
-}
-
-void PmTogglesWidget::onShowAbout()
-{
-    PmAboutBox* box = new PmAboutBox(this);
 }

@@ -7,6 +7,7 @@
 #include "pm-match-results-widget.hpp"
 #include "pm-preview-config-widget.hpp"
 #include "pm-preview-display-widget.hpp"
+#include "pm-help-widget.hpp"
 #include "pm-filter.h"
 
 #include <QVBoxLayout>
@@ -31,6 +32,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmMatchResultsWidget* resultsWidget = new PmMatchResultsWidget(core, this);
     PmPreviewConfigWidget* previewCfgWidget = new PmPreviewConfigWidget(core, this);
     PmPreviewDisplayWidget* previewWidget = new PmPreviewDisplayWidget(core, this);
+    PmHelpWidget* helpWidget = new PmHelpWidget(core, this);
 
     // left pane
     QVBoxLayout* leftLayout = new QVBoxLayout;
@@ -48,6 +50,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     topLayout->setAlignment(Qt::AlignLeft);
     topLayout->addWidget(togglesWidget);
     topLayout->addWidget(previewCfgWidget);
+    topLayout->addWidget(helpWidget);
     togglesWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     previewCfgWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 

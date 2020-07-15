@@ -22,10 +22,6 @@ protected slots:
     void onRunningEnabledChanged(bool enable);
     void onSwitchingEnabledChanged(bool enable);
     
-    // local UI event handlers
-    void onShowDebug();
-    void onShowAbout();
-
 protected:
     static const char *k_aboutText;
 
