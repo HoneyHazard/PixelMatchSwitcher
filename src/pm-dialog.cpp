@@ -48,12 +48,13 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // top layout
     QHBoxLayout *topLayout = new QHBoxLayout;
     topLayout->setContentsMargins(0, 0, 0, 0);
-    topLayout->setAlignment(Qt::AlignLeft);
+    topLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     topLayout->addWidget(togglesWidget);
     topLayout->addWidget(previewCfgWidget);
     topLayout->addWidget(helpWidget);
     togglesWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     previewCfgWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    helpWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     QVBoxLayout* rightLayout = new QVBoxLayout;
     rightLayout->setContentsMargins(0, 0, 0, 0);
