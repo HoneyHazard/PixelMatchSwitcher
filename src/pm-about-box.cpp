@@ -31,13 +31,13 @@ PmAboutBox::PmAboutBox(QWidget* parent)
 {
     setWindowTitle(obs_module_text("About"));
 
-    QTextBrowser* le = new QTextBrowser(this);
-    le->setOpenExternalLinks(true);
-    le->setReadOnly(true);
-    le->setText(k_aboutText);
+    QTextBrowser* tb = new QTextBrowser(this);
+    tb->setOpenExternalLinks(true);
+    tb->setReadOnly(true);
+    tb->setText(k_aboutText);
 
     QVBoxLayout* layout = new QVBoxLayout;
-    layout->addWidget(le);
+    layout->addWidget(tb);
     setLayout(layout);
 
     resize(400, 400);
