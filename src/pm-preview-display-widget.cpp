@@ -25,6 +25,8 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     
     // main layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     mainLayout->addWidget(m_filterDisplay);
     setLayout(mainLayout);
 
@@ -304,8 +306,11 @@ void PmPreviewDisplayWidget::updateFilterDisplaySize()
     }
 
     if (sizeChanged) {
-        adjustSize();
-        parentWidget()->adjustSize();
+        auto w = (QWidget*)this;
+        while(w) {
+            w->adjustSize();
+            w = w->parentWidget();
+        }
     }
 
 }

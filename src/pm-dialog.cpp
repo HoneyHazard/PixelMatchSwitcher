@@ -68,6 +68,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     QSplitter* horizSplitter = new QSplitter(Qt::Horizontal, this);
     horizSplitter->addWidget(leftWidget);
     horizSplitter->addWidget(rightWidget);
+    horizSplitter->setStretchFactor(0, 0);
+    horizSplitter->setStretchFactor(1, 1000);
     horizSplitter->setCollapsible(1, false);
 
     //static const char* splitterStyle
