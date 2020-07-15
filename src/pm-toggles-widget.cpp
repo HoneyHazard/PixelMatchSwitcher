@@ -1,5 +1,6 @@
 #include "pm-toggles-widget.hpp"
 #include "pm-debug-tab.hpp"
+#include "pm-about-box.hpp"
 #include "pm-core.hpp"
 
 #include <QCheckBox>
@@ -30,9 +31,16 @@ PmTogglesWidget::PmTogglesWidget(PmCore* core, QWidget* parent)
     connect(showDebugButton, &QPushButton::released,
         this, &PmTogglesWidget::onShowDebug, Qt::QueuedConnection);
 
+    QPushButton* aboutButton = new QPushButton(
+        obs_module_text("About"), this);
+    aboutButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
+    connect(aboutButton, &QPushButton::released,
+        this, &PmTogglesWidget::onShowAbout, Qt::QueuedConnection);
+
     QHBoxLayout* mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_runningCheckbox);
     mainLayout->addWidget(m_switchingCheckbox);
+    mainLayout->addWidget(aboutButton);
     mainLayout->addWidget(showDebugButton);
     setLayout(mainLayout);
 
@@ -76,4 +84,9 @@ void PmTogglesWidget::onShowDebug()
     PmDebugTab* debugTab = new PmDebugTab(m_core, mainWindow);
     setAttribute(Qt::WA_DeleteOnClose, true);
     debugTab->show();
+}
+
+void PmTogglesWidget::onShowAbout()
+{
+    PmAboutBox* box = new PmAboutBox(this);
 }

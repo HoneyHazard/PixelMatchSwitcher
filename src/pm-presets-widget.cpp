@@ -30,22 +30,26 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, SLOT(onPresetSelected()));
     presetLayout->addWidget(m_presetCombo);
 
-    m_presetSaveButton = new QPushButton(obs_module_text("Save"), this);
+    m_presetSaveButton = prepareButton(obs_module_text("Save Preset"),
+        ":/res/images/icons8-save-32.png");
     connect(m_presetSaveButton, &QPushButton::released,
         this, &PmPresetsWidget::onPresetSave, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetSaveButton);
 
-    m_presetSaveAsButton = new QPushButton(obs_module_text("Save As"), this);
+    m_presetSaveAsButton = prepareButton(obs_module_text("Save Preset As"),
+        ":/res/images/icons8-save-as-32.png");
     connect(m_presetSaveAsButton, &QPushButton::released,
         this, &PmPresetsWidget::onPresetSaveAs, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetSaveAsButton);
 
-    m_presetResetButton = new QPushButton(obs_module_text("Reset"), this);
+    m_presetResetButton = prepareButton(obs_module_text("New Configuration"),
+        ":/res/images/icons8-file.svg");
     connect(m_presetResetButton, &QPushButton::released,
         this, &PmPresetsWidget::onConfigReset, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetResetButton);
 
-    m_presetRemoveButton = new  QPushButton(obs_module_text("Remove"), this);
+    m_presetRemoveButton = prepareButton(obs_module_text("Remove Preset"),
+        ":/res/images/icons8-trash.svg");
     connect(m_presetRemoveButton, &QPushButton::released,
         this, &PmPresetsWidget::onPresetRemove, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetRemoveButton);
@@ -112,6 +116,23 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
     bool dirty = m_core->matchConfigDirty();
     m_presetSaveButton->setEnabled(dirty);
     setTitle(dirty ? obs_module_text("Preset (*)") : obs_module_text("Preset"));
+}
+
+QPushButton* PmPresetsWidget::prepareButton(const char* tooltip, const char* icoPath)
+{
+    QIcon icon;
+    icon.addFile(icoPath, QSize(), QIcon::Normal, QIcon::Off);
+
+    QPushButton* ret = new QPushButton(icon, "", this);
+    ret->setToolTip(tooltip);
+    ret->setIcon(icon);
+    ret->setIconSize(QSize(16, 16));
+    ret->setMaximumSize(22, 22);
+    ret->setFlat(true);
+    //ret->setProperty("themeID", QVariant(themeId));
+    ret->setFocusPolicy(Qt::NoFocus);
+
+    return ret;
 }
 
 void PmPresetsWidget::onPresetSelected()

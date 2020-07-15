@@ -35,6 +35,8 @@ protected slots:
 protected:
     static const char* k_unsavedPresetStr;
 
+    QPushButton* prepareButton(const char* tooltip, const char* icoPath);
+
     PmCore* m_core;
 
     QComboBox* m_presetCombo;

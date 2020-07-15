@@ -293,10 +293,19 @@ void PmPreviewDisplayWidget::updateFilterDisplaySize()
         cy = int(m_matchImgHeight * scale);
     }
 
+    bool sizeChanged = false;
     if (m_filterDisplay->width() != cx) {
         m_filterDisplay->setFixedWidth(cx);
+        sizeChanged = true;
     }
     if (m_filterDisplay->height() != cy) {
         m_filterDisplay->setFixedHeight(cy);
+        sizeChanged = true;
     }
+
+    if (sizeChanged) {
+        adjustSize();
+        parentWidget()->adjustSize();
+    }
+
 }

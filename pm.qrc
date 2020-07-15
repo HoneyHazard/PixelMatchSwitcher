@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="/res">
+    <file>images/icons8-file.svg</file>
+    <file>images/icons8-save-32.png</file>
+    <file>images/icons8-save-as-32.png</file>
+    <file>images/icons8-trash.svg</file>
+  </qresource>
+</RCC>

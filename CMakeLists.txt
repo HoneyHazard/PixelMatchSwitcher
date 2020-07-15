@@ -44,6 +44,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-presets-widget.hpp
         src/pm-toggles-widget.hpp
         src/pm-dialog.hpp
+		src/pm-about-box.hpp
         src/pm-structs.hpp
         src/pm-debug-tab.hpp
         ${LIBOBS_UI_DIR}/qt-display.hpp
@@ -64,10 +65,15 @@ set(pixel-match-switcher_SOURCES
         src/pm-toggles-widget.cpp
         src/pm-debug-tab.cpp
         src/pm-dialog.cpp
+		src/pm-about-box.cpp
         src/pm-structs.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
         ${LIBOBS_UI_DIR}/qt-wrappers.cpp
 )
+
+qt5_add_resources(pixel-match-switcher_SOURCES 
+        pm.qrc)
+
 
 add_library(pixel-match-switcher MODULE
         ${pixel-match-switcher_HEADERS}

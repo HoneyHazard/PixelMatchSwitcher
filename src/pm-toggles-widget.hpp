@@ -24,8 +24,11 @@ protected slots:
     
     // local UI event handlers
     void onShowDebug();
+    void onShowAbout();
 
 protected:
+    static const char *k_aboutText;
+
     PmCore* m_core;
 
     QCheckBox* m_runningCheckbox;
