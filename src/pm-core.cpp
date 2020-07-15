@@ -531,7 +531,7 @@ bool PmCore::matchConfigDirty() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     if (m_activeMatchPreset.empty()) {
-        return true;
+        return m_multiMatchConfig.size() > 0;
     } else {
         const PmMultiMatchConfig& presetCfg 
             = m_matchPresets[m_activeMatchPreset];
@@ -541,46 +541,51 @@ bool PmCore::matchConfigDirty() const
 
 void PmCore::onSaveMatchPreset(std::string name)
 {
-    QMutexLocker locker(&m_matchConfigMutex);
     bool isNew = !matchPresetExists(name);
-    m_matchPresets[name] = m_multiMatchConfig;
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+        m_matchPresets[name] = m_multiMatchConfig;
+    }
     if (isNew) {
         emit sigAvailablePresetsChanged();
     }
-    emit sigActivePresetDirtyChanged();
     onSelectActiveMatchPreset(name);
+    emit sigActivePresetDirtyChanged();
+
+    obs_frontend_save();
 }
 
 
 void PmCore::onSelectActiveMatchPreset(std::string name)
 {
-    QMutexLocker locker(&m_matchConfigMutex);
-    if (m_activeMatchPreset == name) return;
-    
-    m_activeMatchPreset = name;
-    emit sigActivePresetChanged();
+    PmMultiMatchConfig multiConfig;
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+        if (m_activeMatchPreset == name) return;
+        m_activeMatchPreset = name;
 
-    PmMultiMatchConfig multiConfig
-        = name.size() ? m_matchPresets[name] : PmMultiMatchConfig();
+        multiConfig = name.size() ? m_matchPresets[name] : PmMultiMatchConfig();
+    }
+    emit sigActivePresetChanged();
     activateMultiMatchConfig(multiConfig);
 }
 
 void PmCore::onRemoveMatchPreset(std::string name)
 {
-    QMutexLocker locker(&m_matchConfigMutex);
+    std::string selOther;
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+        if (m_matchPresets.empty()) return;
 
-    if (m_matchPresets.empty()) return;
-
-    PmMatchPresets newPresets = m_matchPresets;
-    newPresets.remove(name);
-    if (m_activeMatchPreset == name) {
-        std::string selOther 
-            = newPresets.size() ? newPresets.keys().first() : "";
-        onSelectActiveMatchPreset(selOther);
+        PmMatchPresets newPresets = m_matchPresets;
+        newPresets.remove(name);
+        if (m_activeMatchPreset == name && newPresets.size()) {
+            selOther = newPresets.keys().first();
+        }
+        m_matchPresets = newPresets;
     }
-
-    m_matchPresets = newPresets;
     emit sigAvailablePresetsChanged();
+    onSelectActiveMatchPreset(selOther);
 }
 
 void PmCore::onRunningEnabledChanged(bool enable)

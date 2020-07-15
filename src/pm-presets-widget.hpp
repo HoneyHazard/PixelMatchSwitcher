@@ -18,6 +18,7 @@ signals:
     void sigSelectActiveMatchPreset(std::string name);
     void sigSaveMatchPreset(std::string name);
     void sigRemoveMatchPreset(std::string name);
+    void sigResetMatchConfigs();
 
 protected slots:
     // local UI handlers

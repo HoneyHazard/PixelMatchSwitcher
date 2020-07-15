@@ -62,7 +62,6 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     connect(m_core, &PmCore::sigActivePresetDirtyChanged,
         this, &PmPresetsWidget::onActivePresetDirtyStateChanged, Qt::QueuedConnection);
 
-
     // local signals -> core slots
     connect(this, &PmPresetsWidget::sigSaveMatchPreset,
         m_core, &PmCore::onSaveMatchPreset, Qt::QueuedConnection);
@@ -70,6 +69,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onSelectActiveMatchPreset, Qt::QueuedConnection);
     connect(this, &PmPresetsWidget::sigRemoveMatchPreset,
         m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
+    connect(this, &PmPresetsWidget::sigResetMatchConfigs,
+        m_core, &PmCore::onResetMatchConfigs, Qt::QueuedConnection);
 
 
     // finish init state
@@ -176,7 +177,12 @@ void PmPresetsWidget::onPresetSaveAs()
 
 void PmPresetsWidget::onConfigReset()
 {
-    emit sigSelectActiveMatchPreset("");
+    std::string activePreset = m_core->activeMatchPresetName();
+    if (activePreset.empty()) {
+        emit sigResetMatchConfigs();
+    } else {
+        emit sigSelectActiveMatchPreset("");
+    }
 }
 
 void PmPresetsWidget::onPresetRemove()
