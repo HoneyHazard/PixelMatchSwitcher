@@ -57,6 +57,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     helpWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     QVBoxLayout* rightLayout = new QVBoxLayout;
+    rightLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     rightLayout->setContentsMargins(0, 0, 0, 0);
     rightLayout->addLayout(topLayout);
     rightLayout->addWidget(previewWidget);
