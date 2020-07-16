@@ -36,6 +36,9 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setColumnCount((int)RowOrder::NumRows);
+    m_tableWidget->horizontalHeader()->setSectionResizeMode(
+        QHeaderView::ResizeToContents);
+    m_tableWidget->horizontalHeader()->setResizeContentsPrecision(-1);
     m_tableWidget->setHorizontalHeaderLabels(QStringList() 
         << obs_module_text("Sw. On")
         << obs_module_text("Match Config") 
@@ -203,9 +206,6 @@ void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
     for (int c = 0; c < (int)RowOrder::NumRows; ++c) {
         m_tableWidget->setCellWidget((int)sz, c, nullptr);
         m_tableWidget->setItem((int)sz, c, nullptr);
-    }
-    if (oldSz == 0) {
-        m_tableWidget->resizeColumnsToContents();
     }
 
     // enable/disable control buttons
@@ -412,6 +412,7 @@ void PmMatchListWidget::constructRow(int idx)
     QComboBox* sceneCombo = new QComboBox(parent);
     sceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
     sceneCombo->setStyleSheet(k_transpBgStyle);
+    sceneCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     updateSceneChoices(sceneCombo);
     connect(sceneCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchSceneSelected(idx, str); });
@@ -419,6 +420,7 @@ void PmMatchListWidget::constructRow(int idx)
 
     QComboBox* transitionCombo = new QComboBox(parent);
     transitionCombo->setStyleSheet(k_transpBgStyle);
+    transitionCombo->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
     updateTransitionChoices(transitionCombo);
     connect(transitionCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchTransitionSelected(idx, str); });
@@ -433,7 +435,7 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)RowOrder::Result, resultLabel);
 
     // do this every time a row is added; otherwise new rows dont look correct
-    m_tableWidget->setStyleSheet("QTableWidget::item { padding: 3px };");
+    m_tableWidget->setStyleSheet("QTableWidget::item { padding: 1px };");
 }
 
 void PmMatchListWidget::updateAvailableButtons(
