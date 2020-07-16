@@ -22,6 +22,9 @@ public:
     PmPreviewDisplayWidget(PmCore* core, QWidget *parent);
     ~PmPreviewDisplayWidget();
 
+public slots:
+    void fixGeometry();
+
 protected slots:
     // reaction to core events
     void onPreviewConfigChanged(PmPreviewConfig cfg);
@@ -38,14 +41,15 @@ protected slots:
     void onDestroy(QObject* obj); // todo: maybe not needed or useful
 
 protected:
-    // preview related
+    // callback for OBS display system
     static void drawPreview(void* data, uint32_t cx, uint32_t cy);
+
+    // draw helpers
     void drawEffect();
     void drawMatchImage();
     void updateFilterDisplaySize();
 
-    // todo: maybe not needed or useful
-    virtual void closeEvent(QCloseEvent* e) override;
+    void closeEvent(QCloseEvent* e) override; // todo: maybe not needed or useful
 
     OBSQTDisplay* m_filterDisplay;
 
