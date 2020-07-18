@@ -327,7 +327,6 @@ void PmMatchListWidget::onConfigInsertReleased()
 {
     int idx = currentIndex();
     PmMatchConfig newCfg = PmMatchConfig();
-    newCfg.label = obs_module_text("new config");
     emit sigInsertMatchConfig(idx, newCfg);
     emit sigSelectMatchIndex(idx);
 }

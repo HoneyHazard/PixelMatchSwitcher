@@ -30,6 +30,9 @@ PmMatchConfig::PmMatchConfig()
     memset(&filterCfg, 0, sizeof(filterCfg));
     filterCfg.is_enabled = true;
     filterCfg.per_pixel_err_thresh = 10.f;
+    filterCfg.mask_color.x = 0.f;
+    filterCfg.mask_color.y = 1.f;
+    filterCfg.mask_color.z = 0.f;
 }
 
 bool PmMatchConfig::operator==(const PmMatchConfig &other) const

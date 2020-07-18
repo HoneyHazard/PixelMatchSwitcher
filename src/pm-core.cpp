@@ -269,63 +269,7 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     
     if (oldCfg == newCfg) return; // config hasn't changed?
 
-    // notify other modules
-    emit sigChangedMatchConfig(matchIdx, newCfg);
-
-    // store the new config
-    {
-        QMutexLocker locker(&m_matchConfigMutex);
-        m_multiMatchConfig[matchIdx] = newCfg;
-        emit sigActivePresetDirtyChanged();
-    }    
-   
-    // update images
-    bool imageChanged = false;
-    QImage img;
-    if (m_runningEnabled) {
-        if (newCfg.matchImgFilename != oldCfg.matchImgFilename) {
-            const char* filename = newCfg.matchImgFilename.data();
-            img = QImage(filename);
-            if (img.isNull()) {
-                blog(LOG_WARNING, "Unable to open filename: %s", filename);
-                emit sigImgFailed(matchIdx, filename);
-                img = QImage();
-
-                if (matchIdx == m_selectedMatchIndex) {
-                    auto previewCfg = previewConfig();
-                    if (previewCfg.previewMode != PmPreviewMode::Video) {
-                        previewCfg.previewMode = PmPreviewMode::Video;
-                        onPreviewConfigChanged(previewCfg);
-                    }
-                }
-            } else {
-                img = img.convertToFormat(QImage::Format_ARGB32);
-                if (img.isNull()) {
-                    blog(LOG_WARNING, "Image conversion failed: %s", filename);
-                    emit sigImgFailed(matchIdx, filename);
-                    img = QImage();
-                } else {
-                    emit sigImgSuccess(matchIdx, filename, img);
-                }
-            }
-            {
-                QMutexLocker locker(&m_matchImagesMutex);
-                m_matchImages[matchIdx] = img;
-                imageChanged = true;
-            }
-        }
-    }
-
-    // update filter
-    auto fr = activeFilterRef();
-    auto filterData = fr.filterData();
-    if (filterData) {
-        pm_supply_match_entry_config(
-            filterData, matchIdx, &newCfg.filterCfg);
-        if (imageChanged) {
-            supplyImageToFilter(filterData, matchIdx, img);
-        }
-    }
+    activateMatchConfig(matchIdx, newCfg);
 }
 
 void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
@@ -356,12 +300,13 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig.resize(newSz);
-        emit sigActivePresetDirtyChanged();
     }
     for (size_t i = matchIndex + 1; i < newSz; ++i) {
-        onChangedMatchConfig(i, m_multiMatchConfig[i-1]);
+        activateMatchConfig(i, m_multiMatchConfig[i-1]);
     }
-    onChangedMatchConfig(matchIndex, cfg);
+    activateMatchConfig(matchIndex, cfg);
+    
+    emit sigActivePresetDirtyChanged();
 }
 
 void PmCore::onRemoveMatchConfig(size_t matchIndex)
@@ -521,17 +466,33 @@ PmMultiMatchConfig PmCore::matchPresetByName(const std::string& name) const
     return m_matchPresets.value(name, PmMultiMatchConfig());
 }
 
-PmMatchPresets PmCore::matchPresets() const
+size_t PmCore::matchPresetSize(const std::string& name) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    return m_matchPresets;
+    auto find = m_matchPresets.find(name);
+    if (find == m_matchPresets.end()) {
+        return 0;
+    } else {
+        return find->size();
+    }
+}
+
+QList<std::string> PmCore::matchPresetNames() const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_matchPresets.keys();
 }
 
 bool PmCore::matchConfigDirty() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     if (m_activeMatchPreset.empty()) {
-        return m_multiMatchConfig.size() > 0;
+        for (size_t i = 0; i < m_multiMatchConfig.size(); ++i) {
+            if (m_multiMatchConfig[i] != PmMatchConfig()) {
+                return true;
+            }
+        }
+        return false;
     } else {
         const PmMultiMatchConfig& presetCfg 
             = m_matchPresets[m_activeMatchPreset];
@@ -825,6 +786,71 @@ void PmCore::updateActiveFilter()
                 pm_supply_match_entry_config(data, i, &cfg);
                 supplyImageToFilter(data, i, matchImage(i));
             }
+        }
+    }
+}
+
+void PmCore::activateMatchConfig(size_t matchIdx, const PmMatchConfig& newCfg)
+{
+    auto oldCfg = matchConfig(matchIdx);
+
+    // notify other modules
+    emit sigChangedMatchConfig(matchIdx, newCfg);
+
+    // store the new config
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+        m_multiMatchConfig[matchIdx] = newCfg;
+        emit sigActivePresetDirtyChanged();
+    }
+
+    // update images
+    bool imageChanged = false;
+    QImage img;
+    if (m_runningEnabled) {
+        if (newCfg.matchImgFilename != oldCfg.matchImgFilename) {
+            const char* filename = newCfg.matchImgFilename.data();
+            img = QImage(filename);
+            if (img.isNull()) {
+                blog(LOG_WARNING, "Unable to open filename: %s", filename);
+                emit sigImgFailed(matchIdx, filename);
+                img = QImage();
+
+                if (matchIdx == m_selectedMatchIndex) {
+                    auto previewCfg = previewConfig();
+                    if (previewCfg.previewMode != PmPreviewMode::Video) {
+                        previewCfg.previewMode = PmPreviewMode::Video;
+                        onPreviewConfigChanged(previewCfg);
+                    }
+                }
+            }
+            else {
+                img = img.convertToFormat(QImage::Format_ARGB32);
+                if (img.isNull()) {
+                    blog(LOG_WARNING, "Image conversion failed: %s", filename);
+                    emit sigImgFailed(matchIdx, filename);
+                    img = QImage();
+                }
+                else {
+                    emit sigImgSuccess(matchIdx, filename, img);
+                }
+            }
+            {
+                QMutexLocker locker(&m_matchImagesMutex);
+                m_matchImages[matchIdx] = img;
+                imageChanged = true;
+            }
+        }
+    }
+
+    // update filter
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
+    if (filterData) {
+        pm_supply_match_entry_config(
+            filterData, matchIdx, &newCfg.filterCfg);
+        if (imageChanged) {
+            supplyImageToFilter(filterData, matchIdx, img);
         }
     }
 }

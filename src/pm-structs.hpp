@@ -48,7 +48,7 @@ struct PmMatchConfig
     PmMatchConfig(obs_data_t* data);
     obs_data_t* save() const;
 
-    std::string label;
+    std::string label = obs_module_text("new config");
     std::string matchImgFilename;
 
     struct pm_match_entry_config filterCfg;

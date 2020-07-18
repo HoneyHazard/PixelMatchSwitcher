@@ -43,7 +43,8 @@ public:
     std::string activeMatchPresetName() const;
     bool matchPresetExists(const std::string &name) const;
     PmMultiMatchConfig matchPresetByName(const std::string &name) const;
-    PmMatchPresets matchPresets() const;
+    size_t matchPresetSize(const std::string& name) const;
+    QList<std::string> matchPresetNames() const;
     bool matchConfigDirty() const;
 
     PmMultiMatchConfig multiMatchConfig() const;
@@ -91,7 +92,7 @@ signals:
     void sigNewActiveFilter(PmFilterRef newAf);
 
 public slots:
-    void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);   
+    void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);
     void onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
     void onRemoveMatchConfig(size_t matchIndex);
     void onMoveMatchConfigUp(size_t matchIndex);
@@ -124,6 +125,7 @@ protected:
         const std::string& scene, const std::string &transition);
     void scanScenes();
     void updateActiveFilter();
+    void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
     
     void supplyImageToFilter(

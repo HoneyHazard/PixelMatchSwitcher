@@ -81,10 +81,10 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 
 void PmPresetsWidget::onAvailablePresetsChanged()
 {
-    PmMatchPresets presets = m_core->matchPresets();
+    auto presetNames = m_core->matchPresetNames();
     m_presetCombo->blockSignals(true);
     m_presetCombo->clear();
-    for (const auto &name : presets.keys()) {
+    for (const auto &name : presetNames) {
         m_presetCombo->addItem(name.data());
     }
     m_presetCombo->blockSignals(false);
@@ -165,8 +165,10 @@ void PmPresetsWidget::onPresetSaveAs()
 
     if (m_core->activeMatchPresetName() != presetName
         && m_core->matchPresetExists(presetName)) {
-        int ret = QMessageBox::warning(this, "Preset Exists",
-            QString("Overwrite preset \"%1\"?").arg(presetNameQstr),
+        int ret = QMessageBox::warning(this, 
+            obs_module_text("Preset Exists"),
+            QString(obs_module_text("Overwrite preset \"%1\"?"))
+               .arg(presetNameQstr),
             QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
 
         if (ret != QMessageBox::Yes) return;
@@ -177,6 +179,15 @@ void PmPresetsWidget::onPresetSaveAs()
 
 void PmPresetsWidget::onConfigReset()
 {
+    if (m_core->matchConfigDirty()) {
+        int ret = QMessageBox::warning(this, 
+            obs_module_text("Unsaved changes"),
+            obs_module_text("Unsaved changes will be lost.\nProceed?"),
+            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+        if (ret != QMessageBox::Yes)
+            return;
+    }
+
     std::string activePreset = m_core->activeMatchPresetName();
     if (activePreset.empty()) {
         emit sigResetMatchConfigs();
@@ -187,7 +198,15 @@ void PmPresetsWidget::onConfigReset()
 
 void PmPresetsWidget::onPresetRemove()
 {
-    auto presets = m_core->matchPresets();
     std::string oldPreset = m_core->activeMatchPresetName();
+    if (oldPreset.size() && m_core->matchPresetSize(oldPreset)) {
+        int ret = QMessageBox::warning(this,
+            obs_module_text("Remove preset?"),
+            QString(obs_module_text("Really remove preset \"%1\"?"))
+                .arg(oldPreset.data()),
+            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+        if (ret != QMessageBox::Yes)
+            return;
+    }
     emit sigRemoveMatchPreset(oldPreset);
 }
