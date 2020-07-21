@@ -203,7 +203,7 @@ void PmMatchConfigWidget::onSelectMatchIndex(
         m_imgPathEdit->setStyleSheet("");
     }
 
-    onConfigUiChanged();
+    //onConfigUiChanged();
 }
 
 void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
@@ -294,8 +294,6 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 
     roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
     maskModeChanged(cfg.maskMode, m_customColor);
-
-    blockSignals(false);
 }
 
 void PmMatchConfigWidget::onPickColorButtonReleased()
