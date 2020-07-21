@@ -31,27 +31,47 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
     // index and label
+#if 0
     m_labelEdit = new QLineEdit(this);   
     connect(m_labelEdit, &QLineEdit::textEdited,
             this, &PmMatchConfigWidget::onConfigUiChanged, Qt::QueuedConnection);
     mainLayout->addRow(obs_module_text("Label:"), m_labelEdit);
+#endif
 
-    // image path display and browse button
-    QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
-    imgPathSubLayout->setContentsMargins(0, 0, 0, 0);
+    // image controls
+    QHBoxLayout *imgControlLayout = new QHBoxLayout;
+    imgControlLayout->setContentsMargins(0, 0, 0, 0);
 
+    m_captureButton = new QPushButton(obs_module_text("Capture"), this);
+    m_captureButton->setFocusPolicy(Qt::NoFocus);
+    imgControlLayout->addWidget(m_captureButton);
+
+    m_openFileButton = new QPushButton(obs_module_text("Open"), this);
+    m_openFileButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_openFileButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onBrowseButtonReleased);
+    imgControlLayout->addWidget(m_openFileButton);
+
+    m_editFileButton = new QPushButton(obs_module_text("Edit"), this);
+    m_editFileButton->setFocusPolicy(Qt::NoFocus);
+    imgControlLayout->addWidget(m_editFileButton);
+
+    m_openFolderButton = new QPushButton(obs_module_text("Open Folder"), this);
+    m_openFolderButton->setFocusPolicy(Qt::NoFocus);
+    imgControlLayout->addWidget(m_openFolderButton);
+
+    mainLayout->addRow(imgControlLayout);
+
+    // some spacing
+    QFrame* spacer = new QFrame(this);
+    spacer->setFrameShape(QFrame::HLine);
+    spacer->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(spacer);
+
+    // image path display
     m_imgPathEdit = new QLineEdit(this);
     m_imgPathEdit->setReadOnly(true);
-    imgPathSubLayout->addWidget(m_imgPathEdit);
-
-    QPushButton *browseImgPathBtn = new QPushButton(
-        obs_module_text("Browse"), this);
-    browseImgPathBtn->setFocusPolicy(Qt::NoFocus);
-    connect(browseImgPathBtn, &QPushButton::released,
-            this, &PmMatchConfigWidget::onBrowseButtonReleased);
-    imgPathSubLayout->addWidget(browseImgPathBtn);
-
-    mainLayout->addRow(obs_module_text("Image: "), imgPathSubLayout);
+    mainLayout->addRow(obs_module_text("Image: "), m_imgPathEdit);
 
     // color mode selection
     QHBoxLayout *colorSubLayout = new QHBoxLayout;
@@ -240,9 +260,11 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 {
     if (matchIdx != m_matchIndex) return;
 
+#if 0
     m_labelEdit->blockSignals(true);
     m_labelEdit->setText(cfg.label.data());
     m_labelEdit->blockSignals(false);
+#endif
 
     m_imgPathEdit->blockSignals(true);
     m_imgPathEdit->setText(cfg.matchImgFilename.data());
@@ -374,7 +396,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
 {
     PmMatchConfig config = m_core->matchConfig(m_matchIndex);
     
-    std::string label = m_labelEdit->text().toUtf8().data();
+    //std::string label = m_labelEdit->text().toUtf8().data();
 
     std::string filename = m_imgPathEdit->text().toUtf8().data();
     size_t failedMarker = filename.find(k_failedImgStr);
@@ -382,7 +404,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
         filename.erase(failedMarker, strlen(k_failedImgStr)+1);
     }
     
-    config.label = label;
+    //config.label = label;
     config.matchImgFilename = filename;
     config.filterCfg.roi_left = m_posXBox->value();
     config.filterCfg.roi_bottom = m_posYBox->value();

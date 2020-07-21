@@ -49,7 +49,6 @@ protected slots:
 protected:
     // UI assist
     static QColor toQColor(vec3 val);
-    //uint32_t toUInt32(QColor val);
     static vec3 toVec3(QColor val);
     void maskModeChanged(PmMaskMode mode, vec3 customColor);
     void roiRangesChanged(
@@ -61,6 +60,11 @@ protected:
 
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;
+
+    QPushButton* m_captureButton;
+    QPushButton* m_openFileButton;
+    QPushButton* m_openFolderButton;
+    QPushButton* m_editFileButton;
 
     QLineEdit* m_labelEdit;
     QLineEdit* m_imgPathEdit;
