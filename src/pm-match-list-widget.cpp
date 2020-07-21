@@ -31,8 +31,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 {
     // table widget
     m_tableWidget = new QTableWidget(this);
-    m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_tableWidget->setEditTriggers(QAbstractItemView::DoubleClicked
+                                 | QAbstractItemView::EditKeyPressed
+                                 | QAbstractItemView::SelectedClicked);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setColumnCount((int)RowOrder::NumRows);
@@ -162,6 +164,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onNoMatchTransitionChanged, Qt::QueuedConnection);
 
     // connections: local ui
+    connect(m_tableWidget, &QTableWidget::itemChanged,
+        this, &PmMatchListWidget::onItemChanged, Qt::QueuedConnection);
     connect(m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
         this, &PmMatchListWidget::onRowSelected, Qt::QueuedConnection);
     connect(m_cfgMoveUpBtn, &QPushButton::released,
@@ -223,9 +227,11 @@ void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
     enableBox->blockSignals(false);
     
     auto nameItem = m_tableWidget->item(idx, (int)RowOrder::ConfigName);
+    m_tableWidget->blockSignals(true);
     nameItem->setText(cfg.label.data());
     nameItem->setToolTip(cfg.label.data());
-    
+    m_tableWidget->blockSignals(false);
+
     auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::SceneCombo);
     sceneCombo->blockSignals(true);
@@ -398,14 +404,16 @@ void PmMatchListWidget::constructRow(int idx)
 #if 0
     QLineEdit* nameEdit = new QLineEdit(parent);
     nameEdit->setEnabled(false);
-    nameEdit->setStyleSheet(bgStyle);
+    nameEdit->setStyleSheet(k_transpBgStyle);
     nameEdit->setText(placeholderName);
     connect(nameEdit, &QLineEdit::textChanged,
         [this, idx](const QString& str) { configRenamed(idx, str); });
     m_tableWidget->setCellWidget(idx, (int)RowOrder::ConfigName, nameEdit);
 #else
+    auto labelItem = new QTableWidgetItem(placeholderName);
+    labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
     m_tableWidget->setItem(
-        idx, (int)RowOrder::ConfigName, new QTableWidgetItem(placeholderName));
+        idx, (int)RowOrder::ConfigName, labelItem);
 #endif
 
     QComboBox* sceneCombo = new QComboBox(parent);
@@ -478,6 +486,16 @@ void PmMatchListWidget::updateTransitionChoices(QComboBox* combo)
 int PmMatchListWidget::currentIndex() const
 {
     return m_tableWidget->currentIndex().row();
+}
+
+void PmMatchListWidget::onItemChanged(QTableWidgetItem* item)
+{
+    if (item->column() != (int)RowOrder::ConfigName) return;
+
+    size_t matchIndex = (size_t)item->row();
+    PmMatchConfig cfg = m_core->matchConfig(matchIndex);
+    cfg.label = item->text().toUtf8().data();
+    emit sigChangedMatchConfig(matchIndex, cfg);
 }
 
 void PmMatchListWidget::enableConfigToggled(int idx, bool enable)

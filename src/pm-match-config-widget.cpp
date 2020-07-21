@@ -46,7 +46,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_captureButton->setFocusPolicy(Qt::NoFocus);
     imgControlLayout->addWidget(m_captureButton);
 
-    m_openFileButton = new QPushButton(obs_module_text("Open"), this);
+    m_openFileButton = new QPushButton(obs_module_text("Open File"), this);
     m_openFileButton->setFocusPolicy(Qt::NoFocus);
     connect(m_openFileButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onBrowseButtonReleased);
@@ -65,7 +65,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     // some spacing
     QFrame* spacer = new QFrame(this);
     spacer->setFrameShape(QFrame::HLine);
-    spacer->setFrameShadow(QFrame::Sunken);
+    //spacer->setFrameShadow(QFrame::Sunken);
     mainLayout->addWidget(spacer);
 
     // image path display

@@ -9,6 +9,7 @@ class PmCore;
 class QTableWidget;
 class QPushButton;
 class QComboBox;
+class QTableWidgetItem;
 
 /**
  * @brief Shows a list of match configuration entries and allows changing
@@ -47,6 +48,7 @@ protected slots:
 
     // local UI handlers
     void onRowSelected();
+    void onItemChanged(QTableWidgetItem* item);
     void onConfigInsertReleased();
     void onConfigRemoveReleased();
     void onConfigMoveUpReleased();
@@ -77,7 +79,6 @@ protected:
     void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
-    //void configRenamed(int idx, const QString& name);
     void matchSceneSelected(int idx, const QString &scene);
     void matchTransitionSelected(int idx, const QString& transName);
 
