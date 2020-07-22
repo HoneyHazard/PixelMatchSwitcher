@@ -227,8 +227,7 @@ void PmPreviewDisplayWidget::drawEffect()
     gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
 
     filterRef.lockData();
-    filterData->preview_mode = true;
-    filterData->show_border = (m_previewCfg.previewMode == PmPreviewMode::Video);
+    filterData->filter_mode = PM_VISUALIZE;
     filterRef.unlockData();
 
     obs_source_video_render(renderSrc);

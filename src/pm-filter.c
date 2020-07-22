@@ -31,7 +31,7 @@ static void *pixel_match_filter_create(
     memset(filter, 0, sizeof(struct pm_filter_data));
     filter->context = context;
     filter->settings = settings;
-    filter->visualize = true;
+    //filter->visualize = true;
 
 #if 1
     // recursive mutex
@@ -80,8 +80,8 @@ static void *pixel_match_filter_create(
     filter->result_match_counter =
         gs_effect_get_result_by_name(filter->effect, "match_counter");
 
-    filter->param_visualize =
-        gs_effect_get_param_by_name(filter->effect, "visualize");
+    filter->param_show_color_indicator =
+        gs_effect_get_param_by_name(filter->effect, "show_color_indicator");
     filter->param_show_border =
         gs_effect_get_param_by_name(filter->effect, "show_border");
     filter->param_px_width =
@@ -91,7 +91,7 @@ static void *pixel_match_filter_create(
 
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
-     || !filter->param_visualize || !filter->param_show_border
+     || !filter->param_show_color_indicator || !filter->param_show_border
      || !filter->param_match_counter || !filter->result_match_counter
      || !filter->param_compare_counter || !filter->result_compare_counter)
         goto error;
@@ -222,8 +222,13 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
+    if (filter->filter_mode == PM_LASSO) {
+        gs_effect_set_bool(filter->param_show_border, true);
+        // TODO
+    }
+
     if (filter->num_match_entries == 0 
-     || filter->preview_mode 
+     || filter->filter_mode == PM_VISUALIZE 
      && filter->selected_match_index >= filter->num_match_entries) {
         // no match entries to display; just do passthrough
         gs_effect_t* default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
@@ -241,7 +246,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     for (size_t i = 0; i < filter->num_match_entries; ++i) {       
         struct pm_match_entry_data* entry = filter->match_entries + i;
 
-        if (filter->preview_mode && i != filter->selected_match_index)
+        if (filter->filter_mode == PM_VISUALIZE 
+         && i != filter->selected_match_index)
              continue;
 
         if (entry->match_img_data 
@@ -272,6 +278,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
             + (float)(entry->match_img_width) / (float)(filter->base_width);
         float roi_top_v = roi_bottom_v
             + (float)(entry->match_img_height) / (float)(filter->base_height);
+        bool visualize = (filter->filter_mode == PM_VISUALIZE);
 
         gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
         gs_effect_set_atomic_uint(filter->param_match_counter, 0);
@@ -284,10 +291,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         gs_effect_set_bool(filter->param_mask_alpha, entry->cfg.mask_alpha);
         gs_effect_set_vec3(filter->param_mask_color, &entry->cfg.mask_color);
         gs_effect_set_texture(filter->param_match_img, entry->match_img_tex);
-
-        gs_effect_set_bool(filter->param_visualize,
-            filter->visualize && filter->preview_mode);
-        gs_effect_set_bool(filter->param_show_border, filter->show_border);
+        gs_effect_set_bool(filter->param_show_border, visualize);
+        gs_effect_set_bool(filter->param_show_color_indicator, visualize);
         gs_effect_set_float(filter->param_px_width,
             1.f / (float)(filter->base_width));
         gs_effect_set_float(filter->param_px_height,
@@ -296,7 +301,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         obs_source_process_filter_end(filter->context, filter->effect,
             filter->base_width, filter->base_height);
 
-        if (!filter->preview_mode) {
+        if (filter->filter_mode == PM_COUNT) {
             entry->num_compared =
                 gs_effect_get_atomic_uint_result(filter->result_compare_counter);
             entry->num_matched =
@@ -307,13 +312,12 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 done:
     pthread_mutex_unlock(&filter->mutex);
 
-    if (!filter->preview_mode 
+    if (filter->filter_mode == PM_COUNT
      && filter->num_match_entries > 0
      && filter->on_frame_processed) {
         filter->on_frame_processed();
     }
-    filter->preview_mode = false;
-    filter->show_border = false;
+    filter->filter_mode = PM_COUNT;
 
     UNUSED_PARAMETER(effect);
 }
