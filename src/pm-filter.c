@@ -109,98 +109,11 @@ error:
     return NULL;
 }
 
-#if 0
-static void pixel_match_filter_update(void *data, obs_data_t *settings)
-{
-    struct pm_filter_data *filter = data;
-
-    pthread_mutex_lock(&filter->mutex);
-    filter->roi_left = (int)obs_data_get_int(settings, "roi_left");
-    filter->roi_bottom = (int)obs_data_get_int(settings, "roi_bottom");
-    filter->per_pixel_err_thresh
-        = (int)obs_data_get_int(settings, "per_pixel_err_thresh");
-    filter->total_match_thresh
-        = (int)obs_data_get_int(settings, "total_match_thresh");
-    // TODO mask image
-    // TODO scenes
-    pthread_mutex_unlock(&filter->mutex);
-
-    UNUSED_PARAMETER(data);
-}
-#endif
-
-#if 0
-static bool pixel_match_prop_changed_callback(
-    obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
-{
-    UNUSED_PARAMETER(props);
-    UNUSED_PARAMETER(p);
-    UNUSED_PARAMETER(settings);
-    return true;
-}
-#endif
-
-#if 0
-static obs_properties_t *pixel_match_filter_properties(void *data)
-{
-    //struct pm_filter_data *filter
-    //    = (struct pm_filter_data*)data;
-
-    obs_properties_t *properties = obs_properties_create();
-
-    obs_properties_add_int(properties,
-        "roi_left", obs_module_text("Roi Left"),
-        0, 10000, 1);
-    obs_properties_add_int(properties,
-        "roi_bottom", obs_module_text("Roi Bottom"),
-        0, 10000, 1);
-    obs_properties_add_int(properties,
-        "roi_right", obs_module_text("Roi Right"),
-        0, 10000, 1);
-    obs_properties_add_int(properties,
-        "roi_top", obs_module_text("Roi Top"),
-        0, 10000, 1);
-
-    obs_properties_add_int(properties,
-        "per_pixel_err_thresh",
-        obs_module_text("Per-Pixel Error Threshold, %"),
-        0, 100, 1);
-    obs_properties_add_int(properties,
-        "total_match_thresh",
-        obs_module_text("Total Match Threshold, %"),
-        0, 100, 1);
-
-    obs_properties_add_int(properties,
-        "num_matched",
-        obs_module_text("Number Matched:"),
-        0, 65536, 1);
-
-    //obs_property_set_modified_callback(
-    //    p, pixel_match_prop_changed_callback);
-
-    // TODO scenes
-    // TODO mask image
-    return properties;
-
-    UNUSED_PARAMETER(data);
-}
-#endif
-
 static void pixel_match_filter_defaults(obs_data_t *settings)
 {
     obs_data_set_default_int(settings, "per_pixel_err_thresh", 10);
     obs_data_set_default_int(settings, "total_match_thresh", 90);
 }
-
-#if 0
-static void pixel_match_filter_tick(void *data, float seconds)
-{
-    struct pixel_match_filter_data *filter = data;
-    UNUSED_PARAMETER(seconds);
-    UNUSED_PARAMETER(filter);
-    // TODO: dispatch pixel processing every
-}
-#endif
 
 static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
@@ -222,8 +135,45 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
-    if (filter->filter_mode == PM_LASSO) {
+    if (filter->filter_mode == PM_SELECT_REGION) {
+        if (!obs_source_process_filter_begin(
+            filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+            blog(LOG_ERROR,
+                "pm_filter_data: obs_source_process_filter_begin failed.");
+            goto done;
+        }
+
+        float roi_left_u
+            = (float)(filter->select_left) / (float)(filter->base_width);
+        float roi_bottom_v
+            = (float)(filter->select_bottom) / (float)(filter->base_height);
+        float roi_right_u = roi_left_u
+            + (float)(filter->select_right) / (float)(filter->base_width);
+        float roi_top_v = roi_bottom_v
+            + (float)(filter->select_top) / (float)(filter->base_height);
+
+        // these values will be actually relevant to drawing a region selection
+        gs_effect_set_float(filter->param_roi_left, roi_left_u);
+        gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
+        gs_effect_set_float(filter->param_roi_right, roi_right_u);
+        gs_effect_set_float(filter->param_roi_top, roi_top_v);
         gs_effect_set_bool(filter->param_show_border, true);
+        gs_effect_set_bool(filter->param_show_color_indicator, false);
+        gs_effect_set_float(filter->param_px_width,
+            1.f / (float)(filter->base_width));
+        gs_effect_set_float(filter->param_px_height,
+            1.f / (float)(filter->base_height));
+
+        // the rest are just values stop unassigned value errors
+        gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
+        gs_effect_set_atomic_uint(filter->param_match_counter, 0);
+        gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
+        gs_effect_set_bool(filter->param_mask_alpha, false);
+        gs_effect_set_vec3(filter->param_mask_color, (struct vec3*)NULL);
+        gs_effect_set_texture(filter->param_match_img, NULL);
+
+        obs_source_process_filter_end(filter->context, filter->effect,
+            filter->base_width, filter->base_height);
         // TODO
     }
 
@@ -400,5 +350,92 @@ struct obs_source_info pixel_match_filter = {
         filter->frame_wanted = false;
         filter->frame_available = true;
         }
+    }
+#endif
+
+#if 0
+    static void pixel_match_filter_update(void* data, obs_data_t* settings)
+    {
+        struct pm_filter_data* filter = data;
+
+        pthread_mutex_lock(&filter->mutex);
+        filter->roi_left = (int)obs_data_get_int(settings, "roi_left");
+        filter->roi_bottom = (int)obs_data_get_int(settings, "roi_bottom");
+        filter->per_pixel_err_thresh
+            = (int)obs_data_get_int(settings, "per_pixel_err_thresh");
+        filter->total_match_thresh
+            = (int)obs_data_get_int(settings, "total_match_thresh");
+        // TODO mask image
+        // TODO scenes
+        pthread_mutex_unlock(&filter->mutex);
+
+        UNUSED_PARAMETER(data);
+    }
+#endif
+
+#if 0
+    static bool pixel_match_prop_changed_callback(
+        obs_properties_t* props, obs_property_t* p, obs_data_t* settings)
+    {
+        UNUSED_PARAMETER(props);
+        UNUSED_PARAMETER(p);
+        UNUSED_PARAMETER(settings);
+        return true;
+    }
+#endif
+
+#if 0
+    static obs_properties_t* pixel_match_filter_properties(void* data)
+    {
+        //struct pm_filter_data *filter
+        //    = (struct pm_filter_data*)data;
+
+        obs_properties_t* properties = obs_properties_create();
+
+        obs_properties_add_int(properties,
+            "roi_left", obs_module_text("Roi Left"),
+            0, 10000, 1);
+        obs_properties_add_int(properties,
+            "roi_bottom", obs_module_text("Roi Bottom"),
+            0, 10000, 1);
+        obs_properties_add_int(properties,
+            "roi_right", obs_module_text("Roi Right"),
+            0, 10000, 1);
+        obs_properties_add_int(properties,
+            "roi_top", obs_module_text("Roi Top"),
+            0, 10000, 1);
+
+        obs_properties_add_int(properties,
+            "per_pixel_err_thresh",
+            obs_module_text("Per-Pixel Error Threshold, %"),
+            0, 100, 1);
+        obs_properties_add_int(properties,
+            "total_match_thresh",
+            obs_module_text("Total Match Threshold, %"),
+            0, 100, 1);
+
+        obs_properties_add_int(properties,
+            "num_matched",
+            obs_module_text("Number Matched:"),
+            0, 65536, 1);
+
+        //obs_property_set_modified_callback(
+        //    p, pixel_match_prop_changed_callback);
+
+        // TODO scenes
+        // TODO mask image
+        return properties;
+
+        UNUSED_PARAMETER(data);
+    }
+#endif
+
+#if 0
+    static void pixel_match_filter_tick(void* data, float seconds)
+    {
+        struct pixel_match_filter_data* filter = data;
+        UNUSED_PARAMETER(seconds);
+        UNUSED_PARAMETER(filter);
+        // TODO: dispatch pixel processing every
     }
 #endif

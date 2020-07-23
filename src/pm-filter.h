@@ -32,7 +32,7 @@ struct pm_match_entry_data
     uint32_t num_matched;
 };
 
-enum pm_filter_mode { PM_COUNT = 0, PM_VISUALIZE = 1, PM_LASSO = 2 };
+enum pm_filter_mode { PM_COUNT = 0, PM_VISUALIZE = 1, PM_SELECT_REGION = 2 };
 
 struct pm_filter_data
 {
@@ -72,7 +72,7 @@ struct pm_filter_data
     enum pm_filter_mode filter_mode;
 
     // lasso mode
-    uint32_t lasso_left, lasso_bottom, lasso_right, lasso_top;
+    uint32_t select_left, select_bottom, select_right, select_top;
 
     // callbacks for fast reactions
     void (*on_frame_processed)();
