@@ -71,7 +71,7 @@ struct pm_filter_data
     uint32_t base_height;
     enum pm_filter_mode filter_mode;
 
-    // lasso mode
+    // selection mode
     uint32_t select_left, select_bottom, select_right, select_top;
 
     // callbacks for fast reactions
