@@ -179,8 +179,7 @@ void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
     if (widget->m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
         widget->drawMatchImage();
     } else {
-        widget->drawEffect(widget->width(), 
-                           widget->height());
+        widget->drawEffect();
     }
     widget->m_rendering = false;
 
@@ -188,7 +187,7 @@ void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
     UNUSED_PARAMETER(cy);
 }
 
-void PmPreviewDisplayWidget::drawEffect(int windowWidth, int windowHeight)
+void PmPreviewDisplayWidget::drawEffect()
 {
     PmFilterRef &filterRef = m_activeFilter;
     auto renderSrc = filterRef.filter();

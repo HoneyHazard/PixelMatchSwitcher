@@ -44,7 +44,7 @@ protected:
     static void drawPreview(void* data, uint32_t cx, uint32_t cy);
 
     // draw helpers
-    void drawEffect(int windowWidth, int windowHeight);
+    void drawEffect();
     void drawMatchImage();
 
     // display size related
