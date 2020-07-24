@@ -162,9 +162,9 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         gs_effect_set_bool(filter->param_show_border, true);
         gs_effect_set_bool(filter->param_show_color_indicator, false);
         gs_effect_set_float(filter->param_px_width,
-            1.f / (float)(filter->base_width));
+            4.f / (float)(filter->base_width));
         gs_effect_set_float(filter->param_px_height,
-            1.f / (float)(filter->base_height));
+            4.f / (float)(filter->base_height));
 
         // the rest are just values stop unassigned value errors
         gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
@@ -176,7 +176,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
         obs_source_process_filter_end(filter->context, filter->effect,
             filter->base_width, filter->base_height);
-        // TODO
+        goto done;
     }
 
     if (filter->num_match_entries == 0 

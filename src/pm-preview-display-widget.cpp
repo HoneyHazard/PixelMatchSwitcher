@@ -86,14 +86,15 @@ bool PmPreviewDisplayWidget::eventFilter(QObject* obj, QEvent* event)
 {
     auto captureState = m_core->captureState();
 
-    if (captureState == PmCaptureState::Activated
+    if ((captureState == PmCaptureState::Activated
+      || captureState == PmCaptureState::SelectFinished)
       && event->type() == QEvent::MouseButtonPress) {
         int imgX, imgY;
         getImageXY((QMouseEvent*)event, imgX, imgY);
         emit sigCaptureStateChanged(PmCaptureState::SelectBegin, imgX, imgY);
         return true;
     } else if ((captureState == PmCaptureState::SelectBegin
-        || captureState == PmCaptureState::SelectMoved)
+             || captureState == PmCaptureState::SelectMoved)
         && event->type() == QEvent::MouseMove) {
         int imgX, imgY;
         getImageXY((QMouseEvent*)event, imgX, imgY);
@@ -355,6 +356,8 @@ void PmPreviewDisplayWidget::fixGeometry()
 
 void PmPreviewDisplayWidget::getImageXY(QMouseEvent *e, int& imgX, int& imgY)
 {
-    imgX = (float)e->x() * (float)m_baseWidth / (float)width();
-    imgY = (float)e->y() * (float)m_baseHeight / (float)height();
+    imgX = int(
+        (float)e->x() * (float)m_baseWidth / (float)m_filterDisplay->width());
+    imgY = int(
+        (float)e->y() * (float)m_baseHeight / (float)m_filterDisplay->height());
 }
