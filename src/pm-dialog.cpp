@@ -73,17 +73,22 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     horizSplitter->setStretchFactor(1, 1000);
     horizSplitter->setCollapsible(1, false);
 
-    //connect(horizSplitter, &QSplitter::splitterMoved,
-    //        previewWidget, &PmPreviewDisplayWidget::fixGeometry, 
-    //        Qt::QueuedConnection);
-
-    //static const char* splitterStyle
-    //    = "QSplitter::handle{background: black; height: 2px}";
-    //topLevelSplitter->setStyleSheet(splitterStyle);
-
     QVBoxLayout *topLevelLayout = new QVBoxLayout;
     topLevelLayout->addWidget(horizSplitter);
     setLayout(topLevelLayout);
+
+    // connections
+    connect(m_core, &PmCore::sigCaptureStateChanged,
+            this, &PmDialog::onCaptureStateChanged, Qt::QueuedConnection);
+}
+
+void PmDialog::onCaptureStateChanged(PmCaptureState state)
+{
+    if (state == PmCaptureState::Inactive) {
+        unsetCursor();
+    } else {
+        setCursor(Qt::CrossCursor);
+    }
 }
 
 void PmDialog::closeEvent(QCloseEvent*)
