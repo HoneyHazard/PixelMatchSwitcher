@@ -27,8 +27,9 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     // main layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    //mainLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     mainLayout->addWidget(m_filterDisplay);
+    mainLayout->setStretchFactor(m_filterDisplay, 1000);
+    mainLayout->addStretch(1);
     setLayout(mainLayout);
 
     // core event handlers
@@ -61,6 +62,7 @@ void PmPreviewDisplayWidget::fixGeometry()
     //QWidget* container = m_filterDisplay->parentWidget();
     //m_filterDisplay->setFixedSize(container->size());
     //m_filterDisplay->hide();
+    //m_filterDisplay->show();
 }
 
 PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
@@ -219,7 +221,7 @@ void PmPreviewDisplayWidget::drawEffect(int windowWidth, int windowHeight)
         orthoRight = m_roiLeft + m_matchImgWidth;
         orthoTop = m_roiBottom + m_matchImgHeight;
 
-        float scale = m_previewCfg.previewRegionScale;
+        //float scale = m_previewCfg.previewRegionScale;
         vpLeft = 0.f;
         vpBottom = 0.0f;
     }
@@ -265,22 +267,20 @@ void PmPreviewDisplayWidget::drawMatchImage()
     int displayWidth, displayHeight;
     getDisplaySize(displayWidth, displayHeight);
 
+    gs_viewport_push();
+    gs_projection_push();
+    gs_ortho(0.0f, (float)m_matchImgWidth, 0.0f, (float)m_matchImgHeight,
+        -100.0f, 100.0f);
+    gs_set_viewport(0, 0, displayWidth, displayHeight);
+
+
     while (gs_effect_loop(effect, "Draw")) {
-
-        gs_viewport_push();
-        gs_projection_push();
-        gs_ortho(0.0f, (float)m_matchImgWidth, 0.0f, (float)m_matchImgHeight, 
-                 -100.0f, 100.0f);
-        gs_set_viewport(0, 0, displayWidth, displayHeight);
-
-        //gs_matrix_push();
-        //gs_matrix_scale3f(previewScale, previewScale, previewScale);
         gs_draw_sprite(m_matchImgTex, 0, 0, 0);
-        //gs_matrix_pop();
-        
-        gs_projection_pop();
-        gs_viewport_pop();
     }
+
+    gs_projection_pop();
+    gs_viewport_pop();
+
 }
 
 void PmPreviewDisplayWidget::getDisplaySize(

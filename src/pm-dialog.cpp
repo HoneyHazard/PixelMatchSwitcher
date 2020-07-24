@@ -57,11 +57,14 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     helpWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     previewWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    //QSpacerItem* spacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
     QVBoxLayout* rightLayout = new QVBoxLayout;
-    //rightLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    rightLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     rightLayout->setContentsMargins(0, 0, 0, 0);
     rightLayout->addLayout(topLayout);
     rightLayout->addWidget(previewWidget);
+    //rightLayout->addItem(spacer);
+    //rightLayout->addStretch();
     QWidget* rightWidget = new QWidget(this);
     rightWidget->setLayout(rightLayout);
 
