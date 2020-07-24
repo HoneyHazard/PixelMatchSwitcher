@@ -14,6 +14,9 @@ class PmDialog : public QDialog
 public:
     PmDialog(PmCore *pixelMatcher, QWidget *parent);
 
+signals:
+    void sigCaptureStateChanged(PmCaptureState state);
+
 protected slots:
     void onCaptureStateChanged(PmCaptureState state);
 

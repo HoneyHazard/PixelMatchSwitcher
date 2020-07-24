@@ -80,6 +80,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // connections
     connect(m_core, &PmCore::sigCaptureStateChanged,
             this, &PmDialog::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(this, &PmDialog::sigCaptureStateChanged,
+            m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
 }
 
 void PmDialog::onCaptureStateChanged(PmCaptureState state)
@@ -93,5 +95,7 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state)
 
 void PmDialog::closeEvent(QCloseEvent*)
 {
+    emit sigCaptureStateChanged(PmCaptureState::Inactive);
+
     obs_frontend_save();
 }
