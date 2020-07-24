@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 
 #include <QThread> // sleep
+#include <QMouseEvent>
 
 PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
@@ -18,11 +19,11 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
                                       PmPreviewDisplayWidget::drawPreview, this);
     };
+    m_filterDisplay->installEventFilter(this);
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
     connect(m_filterDisplay, &OBSQTDisplay::destroyed,
         this, &PmPreviewDisplayWidget::onDestroy, Qt::DirectConnection);
-
    
     // main layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -46,19 +47,16 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     connect(m_core, &PmCore::sigNewActiveFilter,
             this, &PmPreviewDisplayWidget::onNewActiveFilter, Qt::QueuedConnection);
 
+    // signals sent to the core
+    connect(this, &PmPreviewDisplayWidget::sigCaptureStateChanged,
+            m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
+
     // finish init
     onNewActiveFilter(m_core->activeFilterRef());
     onRunningEnabledChanged(m_core->runningEnabled());
     onPreviewConfigChanged(m_core->previewConfig());
     size_t selIdx = m_core->selectedConfigIndex();
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
-}
-
-void PmPreviewDisplayWidget::fixGeometry()
-{
-    int displayWidth, displayHeight;
-    getDisplaySize(displayWidth, displayHeight);
-    m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
 }
 
 PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
@@ -82,6 +80,35 @@ void PmPreviewDisplayWidget::closeEvent(QCloseEvent* e)
     obs_display_remove_draw_callback(
         m_filterDisplay->GetDisplay(), PmPreviewDisplayWidget::drawPreview, this);
     QWidget::closeEvent(e);
+}
+
+bool PmPreviewDisplayWidget::eventFilter(QObject* obj, QEvent* event)
+{
+    auto captureState = m_core->captureState();
+
+    if (captureState == PmCaptureState::Activated
+      && event->type() == QEvent::MouseButtonPress) {
+        int imgX, imgY;
+        getImageXY((QMouseEvent*)event, imgX, imgY);
+        emit sigCaptureStateChanged(PmCaptureState::SelectBegin, imgX, imgY);
+        return true;
+    } else if ((captureState == PmCaptureState::SelectBegin
+        || captureState == PmCaptureState::SelectMoved)
+        && event->type() == QEvent::MouseMove) {
+        int imgX, imgY;
+        getImageXY((QMouseEvent*)event, imgX, imgY);
+        emit sigCaptureStateChanged(PmCaptureState::SelectMoved, imgX, imgY);
+        return true;
+    } else if (captureState == PmCaptureState::SelectMoved
+            && event->type() == QEvent::MouseButtonRelease) {
+        int imgX, imgY;
+        getImageXY((QMouseEvent*)event, imgX, imgY);
+        emit sigCaptureStateChanged(PmCaptureState::SelectFinished, imgX, imgY);
+        return true;
+    } else {
+        // standard event processing
+        return QObject::eventFilter(obj, event);
+    }
 }
 
 void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
@@ -164,8 +191,6 @@ void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConf
 
     m_roiLeft = cfg.filterCfg.roi_left;
     m_roiBottom = cfg.filterCfg.roi_bottom;
-
-
 }
 
 void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
@@ -193,23 +218,23 @@ void PmPreviewDisplayWidget::drawEffect()
     auto renderSrc = filterRef.filter();
     auto filterData = filterRef.filterData();
 
-    if (!renderSrc || !filterRef.isValid()) return;
+    if (!renderSrc || !filterData) return;
+
+    filterRef.lockData();
+    m_baseWidth = filterData->base_width;
+    m_baseHeight = filterData->base_height;
+    filterRef.unlockData();
 
     float orthoLeft, orthoBottom, orthoRight, orthoTop;
     int vpLeft = 0, vpBottom = 0, vpWidth, vpHeight;
 
     getDisplaySize(vpWidth, vpHeight);
 
-    //auto results = m_core->matchResults(m_matchIndex);
-    //auto config = m_core->matchConfig(m_matchIndex);
-
     if (m_previewCfg.previewMode == PmPreviewMode::Video) {
         orthoLeft = 0.f;
         orthoBottom = 0.f;
-        filterRef.lockData();
-        orthoRight = int(filterData->base_width);  // wi
-        orthoTop = int(filterData->base_height); // hi
-        filterRef.unlockData();
+        orthoRight = m_baseWidth;
+        orthoTop = m_baseHeight;
     } else { // if (config.previewMode == PmPreviewMode::Region) {
         orthoLeft = m_roiLeft;
         orthoBottom = m_roiBottom;
@@ -227,7 +252,9 @@ void PmPreviewDisplayWidget::drawEffect()
     gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
 
     filterRef.lockData();
-    filterData->filter_mode = PM_VISUALIZE;
+    filterData->filter_mode =
+        (m_core->captureState() == PmCaptureState::Inactive) ? PM_VISUALIZE
+                                                             : PM_SELECT_REGION;
     filterRef.unlockData();
 
     obs_source_video_render(renderSrc);
@@ -284,17 +311,10 @@ void PmPreviewDisplayWidget::getDisplaySize(
     auto filterRef = m_core->activeFilterRef();
     auto filterData = filterRef.filterData();
 
-    int cx, cy;
+    int cx = 0, cy = 0;
     if (m_previewCfg.previewMode == PmPreviewMode::Video) {
-        if (filterData) {
-            filterRef.lockData();
-            cx = int(filterData->base_width);
-            cy = int(filterData->base_height);
-            filterRef.unlockData();
-        } else {
-            cx = 0;
-            cy = 0;
-        }
+        cx = m_baseWidth;
+        cy = m_baseHeight;
     } else { // PmPreviewMode::MatchImage or PmPreviewMode::Region
         cx = m_matchImgWidth;
         cy = m_matchImgHeight;
@@ -313,4 +333,17 @@ void PmPreviewDisplayWidget::getDisplaySize(
         displayWidth = windowWidth;
         displayHeight = int((float)cy * (float)windowWidth / (float)cx);
     }
+}
+
+void PmPreviewDisplayWidget::fixGeometry()
+{
+    int displayWidth, displayHeight;
+    getDisplaySize(displayWidth, displayHeight);
+    m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
+}
+
+void PmPreviewDisplayWidget::getImageXY(QMouseEvent *e, int& imgX, int& imgY)
+{
+    imgX = (float)e->x() * (float)m_baseWidth / (float)width();
+    imgY = (float)e->y() * (float)m_baseHeight / (float)height();
 }

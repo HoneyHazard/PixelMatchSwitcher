@@ -68,6 +68,15 @@ PmDebugTab::PmDebugTab(
     m_matchCountDisplay->setSizePolicy(minimumPolicy);
     layout->addWidget(m_matchCountDisplay, row++, 1);
 
+    // capture state
+    QLabel* captureLabel = new QLabel("Capture State ", this);
+    captureLabel->setSizePolicy(fixedPolicy);
+    layout->addWidget(captureLabel, row, 0);
+
+    m_captureStateDisplay = new QLabel("--", this);
+    m_captureStateDisplay->setSizePolicy(minimumPolicy);
+    layout->addWidget(m_captureStateDisplay, row++, 1);
+
     // find button
     QPushButton *scenesInfoButton = new QPushButton("Scenes Info", this);
     connect(scenesInfoButton, &QPushButton::released,
@@ -142,4 +151,16 @@ void PmDebugTab::periodicUpdate()
         m_filterDataResDisplay->setText("--");
         m_matchCountDisplay->setText("--");
     }
+
+    auto capState = m_core->captureState();
+    QString capStr;
+    switch(capState) {
+    case PmCaptureState::Inactive: capStr = "Inactive"; break;
+    case PmCaptureState::Activated: capStr = "Activated"; break;
+    case PmCaptureState::SelectBegin: capStr = "SelectBegin"; break;
+    case PmCaptureState::SelectMoved: capStr = "SelectMoved"; break;
+    case PmCaptureState::SelectFinished: capStr = "SelectFinished"; break;
+    case PmCaptureState::Accepted: capStr = "Accepted"; break;
+    }
+    m_captureStateDisplay->setText(capStr);
 }
