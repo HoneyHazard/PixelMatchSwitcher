@@ -236,6 +236,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
     qRegisterMetaType<PmScenes>("PmScenes");
     qRegisterMetaType<PmFilterRef>("PmFilterRef");
+    qRegisterMetaType<PmCaptureState>("PmCaptureState");
 }
 
 PmScenes::PmScenes(const PmScenes& other)

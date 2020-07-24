@@ -30,6 +30,13 @@ enum class PmPreviewMode : int {
     MatchImage=2
 };
 
+enum class PmCaptureState : unsigned char {
+    Inactive=0,
+    Activated=1,
+    SelectBegin=2,
+    SelectEnd=3
+};
+
 struct PmMatchResults
 {
     uint32_t matchImgWidth = 0, matchImgHeight = 0;

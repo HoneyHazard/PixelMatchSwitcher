@@ -15,6 +15,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QColorDialog>
+#include <QStackedWidget>
 
 #include <obs-module.h>
 
@@ -38,29 +39,60 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     mainLayout->addRow(obs_module_text("Label:"), m_labelEdit);
 #endif
 
-    // image controls
-    QHBoxLayout *imgControlLayout = new QHBoxLayout;
-    imgControlLayout->setContentsMargins(0, 0, 0, 0);
+    // image control buttons: when not capturing
+    QHBoxLayout *imgControlLayout0 = new QHBoxLayout;
+    imgControlLayout0->setContentsMargins(0, 0, 0, 0);
 
-    m_captureButton = new QPushButton(obs_module_text("Capture"), this);
-    m_captureButton->setFocusPolicy(Qt::NoFocus);
-    imgControlLayout->addWidget(m_captureButton);
+    m_captureBeginButton = new QPushButton(obs_module_text("Capture"), this);
+    m_captureBeginButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureBeginButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureBeginReleased);
+    imgControlLayout0->addWidget(m_captureBeginButton);
 
     m_openFileButton = new QPushButton(obs_module_text("Open File"), this);
     m_openFileButton->setFocusPolicy(Qt::NoFocus);
     connect(m_openFileButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onBrowseButtonReleased);
-    imgControlLayout->addWidget(m_openFileButton);
+    imgControlLayout0->addWidget(m_openFileButton);
 
     m_editFileButton = new QPushButton(obs_module_text("Edit"), this);
     m_editFileButton->setFocusPolicy(Qt::NoFocus);
-    imgControlLayout->addWidget(m_editFileButton);
+    m_editFileButton->setEnabled(false);
+    imgControlLayout0->addWidget(m_editFileButton);
 
     m_openFolderButton = new QPushButton(obs_module_text("Open Folder"), this);
     m_openFolderButton->setFocusPolicy(Qt::NoFocus);
-    imgControlLayout->addWidget(m_openFolderButton);
+    m_openFolderButton->setEnabled(false);
+    imgControlLayout0->addWidget(m_openFolderButton);
 
-    mainLayout->addRow(imgControlLayout);
+    // image control buttons: during capture
+    QHBoxLayout* imgControlLayout1 = new QHBoxLayout;
+    imgControlLayout1->setContentsMargins(0, 0, 0, 0);
+
+    m_captureAcceptButton = new QPushButton(
+        obs_module_text("Accept Capture"), this);
+    m_captureAcceptButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureAcceptButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureAcceptReleased);
+    imgControlLayout1->addWidget(m_captureAcceptButton);
+
+    m_captureCancelButton = new QPushButton(
+        obs_module_text("Cancel Capture"), this);
+    m_captureCancelButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureCancelButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureCancelReleased);
+    imgControlLayout1->addWidget(m_captureCancelButton);
+
+    // finish image controls widgets and stack
+    QWidget* buttonsPage0 = new QWidget(this);
+    QWidget* buttonsPage1 = new QWidget(this);
+    buttonsPage0->setLayout(imgControlLayout0);
+    buttonsPage1->setLayout(imgControlLayout1);
+    
+    m_buttonsStack = new QStackedWidget(this);
+    m_buttonsStack->addWidget(buttonsPage0);
+    m_buttonsStack->addWidget(buttonsPage1);
+    mainLayout->addRow(m_buttonsStack);
 
     // some spacing
     QFrame* spacer = new QFrame(this);
@@ -169,16 +201,21 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onSelectMatchIndex, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMultiMatchConfigSize,
             this, &PmMatchConfigWidget::onNewMultiMatchConfigSize, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigCaptureStateChanged,
+            this, &PmMatchConfigWidget::onCaptureStateChanged, Qt::QueuedConnection);
 
     // local signals -> core
     connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
             m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchConfigWidget::sigCaptureStateChanged,
+            m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
     onNewMultiMatchConfigSize(m_core->multiMatchConfigSize());
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
+    onCaptureStateChanged(m_core->captureState());
 }
 
 void PmMatchConfigWidget::onSelectMatchIndex(
@@ -309,6 +346,20 @@ void PmMatchConfigWidget::onPickColorButtonReleased()
     }
 }
 
+void PmMatchConfigWidget::onCaptureBeginReleased()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Activated);
+}
+
+void PmMatchConfigWidget::onCaptureAcceptReleased()
+{
+}
+
+void PmMatchConfigWidget::onCaptureCancelReleased()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Inactive);
+}
+
 void PmMatchConfigWidget::onBrowseButtonReleased()
 {
     auto config = m_core->matchConfig(m_matchIndex);
@@ -346,6 +397,26 @@ void PmMatchConfigWidget::onImgFailed(size_t matchIndex, std::string filename)
     }
     m_imgPathEdit->setText(imgStr);
     m_imgPathEdit->setStyleSheet("color: red");
+}
+
+void PmMatchConfigWidget::onCaptureStateChanged(PmCaptureState capState)
+{
+    switch (capState) {
+    case PmCaptureState::Inactive:
+        m_buttonsStack->setCurrentIndex(0);
+        break;
+    case PmCaptureState::Activated:
+    case PmCaptureState::SelectBegin:
+        m_buttonsStack->setCurrentIndex(1);
+        m_captureAcceptButton->setEnabled(false);
+        m_captureCancelButton->setEnabled(true);
+        break;
+    case PmCaptureState::SelectEnd:
+        m_buttonsStack->setCurrentIndex(1);
+        m_captureAcceptButton->setEnabled(true);
+        m_captureCancelButton->setEnabled(true);
+        break;
+    }
 }
 
 QColor PmMatchConfigWidget::toQColor(vec3 val)

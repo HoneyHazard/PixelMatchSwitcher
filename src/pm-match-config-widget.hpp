@@ -13,6 +13,7 @@ class QLineEdit;
 class QComboBox;
 class QSpinBox;
 class QDoubleSpinBox;
+class QStackedWidget;
 
 /*!
  * \brief UI tab that shows match settings, UI preview and preview settings
@@ -28,6 +29,7 @@ public:
 
 signals:
     void sigChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
+    void sigCaptureStateChanged(PmCaptureState capState);
 
 protected slots:
     // core interaction
@@ -38,10 +40,14 @@ protected slots:
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);
+    void onCaptureStateChanged(PmCaptureState capState);
 
     // UI element handlers
     void onBrowseButtonReleased();
     void onPickColorButtonReleased();
+    void onCaptureBeginReleased();
+    void onCaptureAcceptReleased();
+    void onCaptureCancelReleased();
 
     // parse UI state into config
     void onConfigUiChanged();
@@ -61,10 +67,13 @@ protected:
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;
 
-    QPushButton* m_captureButton;
+    QStackedWidget* m_buttonsStack;
     QPushButton* m_openFileButton;
     QPushButton* m_openFolderButton;
     QPushButton* m_editFileButton;
+    QPushButton* m_captureBeginButton;
+    QPushButton* m_captureAcceptButton;
+    QPushButton* m_captureCancelButton;
 
     QLineEdit* m_labelEdit;
     QLineEdit* m_imgPathEdit;

@@ -569,6 +569,21 @@ void PmCore::onSwitchingEnabledChanged(bool enable)
     }
 }
 
+void PmCore::onCaptureStateChanged(PmCaptureState capMode)
+{
+    // TODO: verify state transitions
+    m_captureState = capMode;
+    emit sigCaptureStateChanged(capMode);
+
+    if (capMode != PmCaptureState::Inactive) {
+        auto previewCfg = previewConfig();
+        if (previewCfg.previewMode != PmPreviewMode::Video) {
+            previewCfg.previewMode = PmPreviewMode::Video;
+            emit sigPreviewConfigChanged(previewCfg);
+        }
+    }
+}
+
 PmScenes PmCore::scenes() const
 {
     QMutexLocker locker(&m_scenesMutex);
