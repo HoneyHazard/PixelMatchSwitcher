@@ -594,6 +594,16 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
     case PmCaptureState::Inactive:
         m_captureStartX = m_captureStartY = 0;
         m_captureEndX = m_captureEndY = 0;
+        filter = activeFilterRef();
+        filterData = filter.filterData();
+        if (filterData) {
+            filter.lockData();
+            filterData->select_left = 0;
+            filterData->select_bottom = 0;
+            filterData->select_right = 0;
+            filterData->select_top = 0;
+            filter.unlockData();
+        }
         break;
     case PmCaptureState::SelectBegin:
         m_captureStartX = x;
