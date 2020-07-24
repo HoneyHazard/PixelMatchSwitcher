@@ -301,7 +301,7 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig.resize(newSz);
     }
-    for (size_t i = matchIndex + 1; i < newSz; ++i) {
+    for (size_t i = newSz - 1; i > matchIndex; i--) {
         activateMatchConfig(i, m_multiMatchConfig[i-1]);
     }
     activateMatchConfig(matchIndex, cfg);
