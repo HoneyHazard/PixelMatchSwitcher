@@ -256,17 +256,30 @@ void PmPreviewDisplayWidget::drawMatchImage()
         }
     }
 
-    float previewScale = m_previewCfg.previewMatchImageScale;
+    //float previewScale = m_previewCfg.previewMatchImageScale;
 
     gs_effect* effect = m_core->drawMatchImageEffect();
     gs_eparam_t* param = gs_effect_get_param_by_name(effect, "image");
     gs_effect_set_texture(param, m_matchImgTex);
 
+    int displayWidth, displayHeight;
+    getDisplaySize(displayWidth, displayHeight);
+
     while (gs_effect_loop(effect, "Draw")) {
-        gs_matrix_push();
-        gs_matrix_scale3f(previewScale, previewScale, previewScale);
+
+        gs_viewport_push();
+        gs_projection_push();
+        gs_ortho(0.0f, (float)m_matchImgWidth, 0.0f, (float)m_matchImgHeight, 
+                 -100.0f, 100.0f);
+        gs_set_viewport(0, 0, displayWidth, displayHeight);
+
+        //gs_matrix_push();
+        //gs_matrix_scale3f(previewScale, previewScale, previewScale);
         gs_draw_sprite(m_matchImgTex, 0, 0, 0);
-        gs_matrix_pop();
+        //gs_matrix_pop();
+        
+        gs_projection_pop();
+        gs_viewport_pop();
     }
 }
 
@@ -283,16 +296,16 @@ void PmPreviewDisplayWidget::getDisplaySize(
             cx = int(filterData->base_width);
             cy = int(filterData->base_height);
             filterRef.unlockData();
-        }
-        else {
+        } else {
             cx = 0;
             cy = 0;
         }
     } else { // PmPreviewMode::MatchImage or PmPreviewMode::Region
-        cx = int(m_matchImgWidth);
-        cy = int(m_matchImgHeight);
+        cx = m_matchImgWidth;
+        cy = m_matchImgHeight;
     }
 
+    // https://stackoverflow.com/questions/6565703/math-algorithm-fit-image-to-screen-retain-aspect-ratio
     int windowWidth = width(), windowHeight = height();
     float ri = (float)cx / float(cy);
     float rs = (float)windowWidth / (float)windowHeight;
