@@ -34,7 +34,9 @@ enum class PmCaptureState : unsigned char {
     Inactive=0,
     Activated=1,
     SelectBegin=2,
-    SelectEnd=3
+    SelectMoved=3,
+    SelectFinished=4,
+    Accepted=5
 };
 
 struct PmMatchResults

@@ -569,19 +569,55 @@ void PmCore::onSwitchingEnabledChanged(bool enable)
     }
 }
 
-void PmCore::onCaptureStateChanged(PmCaptureState capMode)
+void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
 {
-    // TODO: verify state transitions
-    m_captureState = capMode;
-    emit sigCaptureStateChanged(capMode);
+    if (m_captureState == state) return;
 
-    if (capMode != PmCaptureState::Inactive) {
+    // TODO: verify state transitions
+    PmCaptureState prevState = m_captureState;
+    m_captureState = state;
+
+    if (state != PmCaptureState::Inactive) {
         auto previewCfg = previewConfig();
         if (previewCfg.previewMode != PmPreviewMode::Video) {
             previewCfg.previewMode = PmPreviewMode::Video;
             emit sigPreviewConfigChanged(previewCfg);
         }
     }
+
+    PmFilterRef filter;
+    pm_filter_data *filterData;
+
+    switch(state) {
+    case PmCaptureState::Inactive:
+        m_captureStartX = m_captureStartY = 0;
+        m_captureEndX = m_captureEndY = 0;
+        break;
+    case PmCaptureState::SelectBegin:
+        m_captureStartX = x;
+        m_captureStartY = y;
+        break;
+    case PmCaptureState::SelectMoved:
+    case PmCaptureState::SelectFinished:
+        m_captureEndX = x;
+        m_captureEndY = y;
+        filter = activeFilterRef();
+        filterData = filter.filterData();
+        if (filterData) {
+            filter.lockData();
+            filterData->select_left = std::min(m_captureStartX, m_captureEndX);
+            filterData->select_bottom = std::max(m_captureStartY, m_captureEndY);
+            filterData->select_right = std::max(m_captureStartX, m_captureEndX);
+            filterData->select_top = std::max(m_captureStartY, m_captureEndY);
+            filter.unlockData();
+        }
+        break;
+    case PmCaptureState::Accepted:
+        // TODO!!!
+        break;
+    }
+
+    emit sigCaptureStateChanged(m_captureState, x, y);
 }
 
 PmScenes PmCore::scenes() const
@@ -776,6 +812,9 @@ void PmCore::updateActiveFilter()
             }
         }
         emit sigNewActiveFilter(m_activeFilter);
+        if (!m_activeFilter.isValid()) {
+            onCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
+        }
     }
 
     if (oldFilt.isValid()) {

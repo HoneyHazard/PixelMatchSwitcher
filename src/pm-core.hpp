@@ -92,7 +92,7 @@ signals:
     void sigSwitchingEnabledChanged(bool enable);
     void sigNewActiveFilter(PmFilterRef newAf);
 
-    void sigCaptureStateChanged(PmCaptureState capMode);
+    void sigCaptureStateChanged(PmCaptureState capMode, int x, int y);
 
 public slots:
     void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);
@@ -113,7 +113,7 @@ public slots:
     void onRunningEnabledChanged(bool enable);
     void onSwitchingEnabledChanged(bool enable);
 
-    void onCaptureStateChanged(PmCaptureState capMode);
+    void onCaptureStateChanged(PmCaptureState capMode, int x, int y);
 
 protected slots:
     void onMenuAction();
@@ -168,7 +168,10 @@ protected:
 
     bool m_runningEnabled = false;
     bool m_switchingEnabled = true;
+    
     PmCaptureState m_captureState = PmCaptureState::Inactive;
+    int m_captureStartX, m_captureStartY;
+    int m_captureEndX, m_captureEndY;
 
     mutable QMutex m_matchImagesMutex;
     std::vector<QImage> m_matchImages;

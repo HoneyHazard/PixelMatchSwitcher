@@ -15,10 +15,10 @@ public:
     PmDialog(PmCore *pixelMatcher, QWidget *parent);
 
 signals:
-    void sigCaptureStateChanged(PmCaptureState state);
+    void sigCaptureStateChanged(PmCaptureState state, int x, int y);
 
 protected slots:
-    void onCaptureStateChanged(PmCaptureState state);
+    void onCaptureStateChanged(PmCaptureState state, int x, int y);
 
 protected:
     void closeEvent(QCloseEvent*) override;

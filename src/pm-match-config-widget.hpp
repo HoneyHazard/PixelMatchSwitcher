@@ -29,7 +29,7 @@ public:
 
 signals:
     void sigChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
-    void sigCaptureStateChanged(PmCaptureState capState);
+    void sigCaptureStateChanged(PmCaptureState capState, int x, int y);
 
 protected slots:
     // core interaction
@@ -40,7 +40,7 @@ protected slots:
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);
-    void onCaptureStateChanged(PmCaptureState capState);
+    void onCaptureStateChanged(PmCaptureState capState, int x, int y);
 
     // UI element handlers
     void onBrowseButtonReleased();

@@ -215,7 +215,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onNewMultiMatchConfigSize(m_core->multiMatchConfigSize());
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
-    onCaptureStateChanged(m_core->captureState());
+    onCaptureStateChanged(m_core->captureState(), 0, 0);
 }
 
 void PmMatchConfigWidget::onSelectMatchIndex(
@@ -348,7 +348,7 @@ void PmMatchConfigWidget::onPickColorButtonReleased()
 
 void PmMatchConfigWidget::onCaptureBeginReleased()
 {
-    emit sigCaptureStateChanged(PmCaptureState::Activated);
+    emit sigCaptureStateChanged(PmCaptureState::Activated, 0, 0);
 }
 
 void PmMatchConfigWidget::onCaptureAcceptReleased()
@@ -357,7 +357,7 @@ void PmMatchConfigWidget::onCaptureAcceptReleased()
 
 void PmMatchConfigWidget::onCaptureCancelReleased()
 {
-    emit sigCaptureStateChanged(PmCaptureState::Inactive);
+    emit sigCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
 }
 
 void PmMatchConfigWidget::onBrowseButtonReleased()
@@ -399,7 +399,8 @@ void PmMatchConfigWidget::onImgFailed(size_t matchIndex, std::string filename)
     m_imgPathEdit->setStyleSheet("color: red");
 }
 
-void PmMatchConfigWidget::onCaptureStateChanged(PmCaptureState capState)
+void PmMatchConfigWidget::onCaptureStateChanged(
+    PmCaptureState capState, int x, int y)
 {
     switch (capState) {
     case PmCaptureState::Inactive:
@@ -407,11 +408,12 @@ void PmMatchConfigWidget::onCaptureStateChanged(PmCaptureState capState)
         break;
     case PmCaptureState::Activated:
     case PmCaptureState::SelectBegin:
+    case PmCaptureState::SelectMoved:
         m_buttonsStack->setCurrentIndex(1);
         m_captureAcceptButton->setEnabled(false);
         m_captureCancelButton->setEnabled(true);
         break;
-    case PmCaptureState::SelectEnd:
+    case PmCaptureState::SelectFinished:
         m_buttonsStack->setCurrentIndex(1);
         m_captureAcceptButton->setEnabled(true);
         m_captureCancelButton->setEnabled(true);

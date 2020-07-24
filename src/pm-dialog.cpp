@@ -84,7 +84,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
 }
 
-void PmDialog::onCaptureStateChanged(PmCaptureState state)
+void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
 {
     if (state == PmCaptureState::Inactive) {
         unsetCursor();
@@ -95,7 +95,7 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state)
 
 void PmDialog::closeEvent(QCloseEvent*)
 {
-    emit sigCaptureStateChanged(PmCaptureState::Inactive);
+    emit sigCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
 
     obs_frontend_save();
 }
