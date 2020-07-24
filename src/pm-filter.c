@@ -2,6 +2,8 @@
 
 #include <graphics/graphics.h>
 
+struct vec3 vec3_dummy;
+
 static const char *pixel_match_filter_get_name(void* unused)
 {
     UNUSED_PARAMETER(unused);
@@ -147,10 +149,10 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
             = (float)(filter->select_left) / (float)(filter->base_width);
         float roi_bottom_v
             = (float)(filter->select_bottom) / (float)(filter->base_height);
-        float roi_right_u = roi_left_u
-            + (float)(filter->select_right) / (float)(filter->base_width);
-        float roi_top_v = roi_bottom_v
-            + (float)(filter->select_top) / (float)(filter->base_height);
+        float roi_right_u
+            = (float)(filter->select_right) / (float)(filter->base_width);
+        float roi_top_v 
+            = (float)(filter->select_top) / (float)(filter->base_height);
 
         // these values will be actually relevant to drawing a region selection
         gs_effect_set_float(filter->param_roi_left, roi_left_u);
@@ -169,7 +171,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         gs_effect_set_atomic_uint(filter->param_match_counter, 0);
         gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
         gs_effect_set_bool(filter->param_mask_alpha, false);
-        gs_effect_set_vec3(filter->param_mask_color, (struct vec3*)NULL);
+        gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
         gs_effect_set_texture(filter->param_match_img, NULL);
 
         obs_source_process_filter_end(filter->context, filter->effect,

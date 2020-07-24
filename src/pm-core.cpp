@@ -606,7 +606,7 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         if (filterData) {
             filter.lockData();
             filterData->select_left = std::min(m_captureStartX, m_captureEndX);
-            filterData->select_bottom = std::max(m_captureStartY, m_captureEndY);
+            filterData->select_bottom = std::min(m_captureStartY, m_captureEndY);
             filterData->select_right = std::max(m_captureStartX, m_captureEndX);
             filterData->select_top = std::max(m_captureStartY, m_captureEndY);
             filter.unlockData();
