@@ -571,7 +571,9 @@ void PmCore::onSwitchingEnabledChanged(bool enable)
 
 void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
 {
-    if (m_captureState == state) return;
+    if (m_captureState == PmCaptureState::Inactive
+     && state == PmCaptureState::Inactive) 
+        return;
 
     // TODO: verify state transitions
     PmCaptureState prevState = m_captureState;
