@@ -122,6 +122,17 @@ void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
     //QMutexLocker locker(&m_filterMutex);
     m_activeFilter = ref;
     setEnabled(m_activeFilter.isValid() && m_core->runningEnabled());
+    auto filterData = m_activeFilter.filterData();
+    if (filterData) {
+        m_activeFilter.lockData();
+        m_baseWidth = filterData->base_width;
+        m_baseHeight = filterData->base_height;
+        m_activeFilter.unlockData();
+    } else {
+        m_baseWidth = 0;
+        m_baseHeight = 0;
+    }
+    fixGeometry();
 }
 
 void PmPreviewDisplayWidget::onRunningEnabledChanged(bool enable)
