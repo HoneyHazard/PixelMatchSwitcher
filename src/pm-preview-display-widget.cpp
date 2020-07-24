@@ -59,10 +59,6 @@ void PmPreviewDisplayWidget::fixGeometry()
     int displayWidth, displayHeight;
     getDisplaySize(displayWidth, displayHeight);
     m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
-    //QWidget* container = m_filterDisplay->parentWidget();
-    //m_filterDisplay->setFixedSize(container->size());
-    //m_filterDisplay->hide();
-    //m_filterDisplay->show();
 }
 
 PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
@@ -169,7 +165,7 @@ void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConf
     m_roiLeft = cfg.filterCfg.roi_left;
     m_roiBottom = cfg.filterCfg.roi_bottom;
 
-    updateFilterDisplaySize();
+
 }
 
 void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
@@ -318,56 +314,4 @@ void PmPreviewDisplayWidget::getDisplaySize(
         displayWidth = windowWidth;
         displayHeight = int((float)cy * (float)windowWidth / (float)cx);
     }
-}
-
-void PmPreviewDisplayWidget::updateFilterDisplaySize()
-    //const PmMatchConfig& config, const PmMatchResults& results)
-{
-#if 0
-    auto filterRef = m_core->activeFilterRef();
-    auto filterData = filterRef.filterData();
-
-    int cx, cy;
-    if (m_previewCfg.previewMode == PmPreviewMode::Video) {
-        if (filterData) {
-            float scale = m_previewCfg.previewVideoScale;
-            cx = int(filterData->base_width * scale);
-            cy = int(filterData->base_height * scale);
-        } else {
-            cx = 0;
-            cy = 0;
-        }
-    } else if (m_previewCfg.previewMode == PmPreviewMode::Region) {
-        if (filterData) {
-            float scale = m_previewCfg.previewRegionScale;
-            cx = int(m_matchImgWidth * scale);
-            cy = int(m_matchImgHeight * scale);
-        } else {
-            cx = 0;
-            cy = 0;
-        }
-    } else { // PmPreviewMode::MatchImage
-        float scale = m_previewCfg.previewMatchImageScale;
-        cx = int(m_matchImgWidth * scale);
-        cy = int(m_matchImgHeight * scale);
-    }
-
-    bool sizeChanged = false;
-    if (m_filterDisplay->width() != cx) {
-        //m_filterDisplay->setFixedWidth(cx);
-        sizeChanged = true;
-    }
-    if (m_filterDisplay->height() != cy) {
-        //m_filterDisplay->setFixedHeight(cy);
-        sizeChanged = true;
-    }
-
-    if (sizeChanged) {
-        adjustSize();
-        auto parent = parentWidget();
-        if (parent)
-            parent->adjustSize();
-    }
-#endif
-
 }

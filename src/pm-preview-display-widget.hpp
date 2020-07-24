@@ -23,7 +23,6 @@ public:
     ~PmPreviewDisplayWidget();
 
 public slots:
-    void fixGeometry();
 
 protected slots:
     // reaction to core events
@@ -47,9 +46,10 @@ protected:
     // draw helpers
     void drawEffect(int windowWidth, int windowHeight);
     void drawMatchImage();
-    void updateFilterDisplaySize();
 
+    // display size related
     void getDisplaySize(int& displayWidth, int& displayHeight);
+    void fixGeometry();
 
     void resizeEvent(QResizeEvent* e) override;
     void closeEvent(QCloseEvent* e) override; // todo: maybe not needed or useful
@@ -60,7 +60,6 @@ protected:
     
     size_t m_matchIndex = 0;
     PmPreviewConfig m_previewCfg;
-    PmMatchConfig m_matchConfig;
     int m_roiLeft = 0, m_roiBottom = 0;
     int m_matchImgWidth = 0, m_matchImgHeight = 0;
 

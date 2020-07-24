@@ -57,14 +57,11 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     helpWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     previewWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    //QSpacerItem* spacer = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
     QVBoxLayout* rightLayout = new QVBoxLayout;
     rightLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     rightLayout->setContentsMargins(0, 0, 0, 0);
     rightLayout->addLayout(topLayout);
     rightLayout->addWidget(previewWidget);
-    //rightLayout->addItem(spacer);
-    //rightLayout->addStretch();
     QWidget* rightWidget = new QWidget(this);
     rightWidget->setLayout(rightLayout);
 
@@ -76,16 +73,15 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     horizSplitter->setStretchFactor(1, 1000);
     horizSplitter->setCollapsible(1, false);
 
-    connect(horizSplitter, &QSplitter::splitterMoved,
-            previewWidget, &PmPreviewDisplayWidget::fixGeometry, 
-            Qt::QueuedConnection);
+    //connect(horizSplitter, &QSplitter::splitterMoved,
+    //        previewWidget, &PmPreviewDisplayWidget::fixGeometry, 
+    //        Qt::QueuedConnection);
 
     //static const char* splitterStyle
     //    = "QSplitter::handle{background: black; height: 2px}";
     //topLevelSplitter->setStyleSheet(splitterStyle);
 
     QVBoxLayout *topLevelLayout = new QVBoxLayout;
-    //topLevelLayout->addLayout(topLayout);
     topLevelLayout->addWidget(horizSplitter);
     setLayout(topLevelLayout);
 }
