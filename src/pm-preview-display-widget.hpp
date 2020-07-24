@@ -45,10 +45,13 @@ protected:
     static void drawPreview(void* data, uint32_t cx, uint32_t cy);
 
     // draw helpers
-    void drawEffect();
+    void drawEffect(int windowWidth, int windowHeight);
     void drawMatchImage();
     void updateFilterDisplaySize();
 
+    void getDisplaySize(int& displayWidth, int& displayHeight);
+
+    void resizeEvent(QResizeEvent* e) override;
     void closeEvent(QCloseEvent* e) override; // todo: maybe not needed or useful
 
     OBSQTDisplay* m_filterDisplay;

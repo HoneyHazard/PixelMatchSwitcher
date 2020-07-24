@@ -22,10 +22,12 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
             addDrawCallback);
     connect(m_filterDisplay, &OBSQTDisplay::destroyed,
         this, &PmPreviewDisplayWidget::onDestroy, Qt::DirectConnection);
-    
+
+   
     // main layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    //mainLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     mainLayout->addWidget(m_filterDisplay);
     setLayout(mainLayout);
 
@@ -53,8 +55,12 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 
 void PmPreviewDisplayWidget::fixGeometry()
 {
-    m_filterDisplay->hide();
-    m_filterDisplay->show();
+    int displayWidth, displayHeight;
+    getDisplaySize(displayWidth, displayHeight);
+    m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
+    //QWidget* container = m_filterDisplay->parentWidget();
+    //m_filterDisplay->setFixedSize(container->size());
+    //m_filterDisplay->hide();
 }
 
 PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
@@ -67,6 +73,12 @@ PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
     }
 }
 
+void PmPreviewDisplayWidget::resizeEvent(QResizeEvent* e)
+{
+    fixGeometry();
+    QWidget::resizeEvent(e);
+}
+
 void PmPreviewDisplayWidget::closeEvent(QCloseEvent* e)
 {
     obs_display_remove_draw_callback(
@@ -77,7 +89,7 @@ void PmPreviewDisplayWidget::closeEvent(QCloseEvent* e)
 void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
     m_previewCfg = cfg;
-    updateFilterDisplaySize();
+    fixGeometry();
 }
 
 void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
@@ -100,7 +112,7 @@ void PmPreviewDisplayWidget::onImgSuccess(
     m_matchImgWidth = img.width();
     m_matchImgHeight = img.height();
 
-    updateFilterDisplaySize();
+    fixGeometry();
 
     QMutexLocker locker(&m_matchImgLock);
     m_matchImg = img;
@@ -169,7 +181,8 @@ void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
     if (widget->m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
         widget->drawMatchImage();
     } else {
-        widget->drawEffect();
+        widget->drawEffect(widget->width(), 
+                           widget->height());
     }
     widget->m_rendering = false;
 
@@ -177,7 +190,7 @@ void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
     UNUSED_PARAMETER(cy);
 }
 
-void PmPreviewDisplayWidget::drawEffect()
+void PmPreviewDisplayWidget::drawEffect(int windowWidth, int windowHeight)
 {
     PmFilterRef &filterRef = m_activeFilter;
     auto renderSrc = filterRef.filter();
@@ -186,28 +199,20 @@ void PmPreviewDisplayWidget::drawEffect()
     if (!renderSrc || !filterRef.isValid()) return;
 
     float orthoLeft, orthoBottom, orthoRight, orthoTop;
-    int vpLeft, vpBottom, vpWidth, vpHeight;
+    int vpLeft = 0, vpBottom = 0, vpWidth, vpHeight;
+
+    getDisplaySize(vpWidth, vpHeight);
 
     //auto results = m_core->matchResults(m_matchIndex);
     //auto config = m_core->matchConfig(m_matchIndex);
 
     if (m_previewCfg.previewMode == PmPreviewMode::Video) {
-        filterRef.lockData();
-        int cx = int(filterData->base_width);
-        int cy = int(filterData->base_height);
-        filterRef.unlockData();
-        int scaledCx = int(cx * m_previewCfg.previewVideoScale);
-        int scaledCy = int(cy * m_previewCfg.previewVideoScale);
-
         orthoLeft = 0.f;
         orthoBottom = 0.f;
-        orthoRight = cx;
-        orthoTop = cy;
-
-        float scale;
-        GetScaleAndCenterPos(cx, cy, scaledCx, scaledCy, vpLeft, vpBottom, scale);
-        vpWidth = scaledCx;
-        vpHeight = scaledCy;
+        filterRef.lockData();
+        orthoRight = int(filterData->base_width);  // wi
+        orthoTop = int(filterData->base_height); // hi
+        filterRef.unlockData();
     } else { // if (config.previewMode == PmPreviewMode::Region) {
         orthoLeft = m_roiLeft;
         orthoBottom = m_roiBottom;
@@ -217,8 +222,6 @@ void PmPreviewDisplayWidget::drawEffect()
         float scale = m_previewCfg.previewRegionScale;
         vpLeft = 0.f;
         vpBottom = 0.0f;
-        vpWidth = int(m_matchImgWidth * scale);
-        vpHeight = int(m_matchImgHeight * scale);
     }
 
     gs_viewport_push();
@@ -267,10 +270,47 @@ void PmPreviewDisplayWidget::drawMatchImage()
     }
 }
 
+void PmPreviewDisplayWidget::getDisplaySize(
+    int& displayWidth, int& displayHeight)
+{
+    auto filterRef = m_core->activeFilterRef();
+    auto filterData = filterRef.filterData();
+
+    int cx, cy;
+    if (m_previewCfg.previewMode == PmPreviewMode::Video) {
+        if (filterData) {
+            filterRef.lockData();
+            cx = int(filterData->base_width);
+            cy = int(filterData->base_height);
+            filterRef.unlockData();
+        }
+        else {
+            cx = 0;
+            cy = 0;
+        }
+    } else { // PmPreviewMode::MatchImage or PmPreviewMode::Region
+        cx = int(m_matchImgWidth);
+        cy = int(m_matchImgHeight);
+    }
+
+    int windowWidth = width(), windowHeight = height();
+    float ri = (float)cx / float(cy);
+    float rs = (float)windowWidth / (float)windowHeight;
+
+    if (rs > ri) {
+        displayWidth = int((float)cx * (float)windowHeight / (float)cy);
+        displayHeight = windowHeight;
+    }
+    else {
+        displayWidth = windowWidth;
+        displayHeight = int((float)cy * (float)windowWidth / (float)cx);
+    }
+}
 
 void PmPreviewDisplayWidget::updateFilterDisplaySize()
     //const PmMatchConfig& config, const PmMatchResults& results)
 {
+#if 0
     auto filterRef = m_core->activeFilterRef();
     auto filterData = filterRef.filterData();
 
@@ -301,11 +341,11 @@ void PmPreviewDisplayWidget::updateFilterDisplaySize()
 
     bool sizeChanged = false;
     if (m_filterDisplay->width() != cx) {
-        m_filterDisplay->setFixedWidth(cx);
+        //m_filterDisplay->setFixedWidth(cx);
         sizeChanged = true;
     }
     if (m_filterDisplay->height() != cy) {
-        m_filterDisplay->setFixedHeight(cy);
+        //m_filterDisplay->setFixedHeight(cy);
         sizeChanged = true;
     }
 
@@ -315,5 +355,6 @@ void PmPreviewDisplayWidget::updateFilterDisplaySize()
         if (parent)
             parent->adjustSize();
     }
+#endif
 
 }
