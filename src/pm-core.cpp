@@ -966,7 +966,7 @@ void PmCore::onFrameProcessed()
 {
     PmMultiMatchResults newResults;
 
-    // fetch new results
+    // fetch new results and possible snapshots
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
     if (filterData) {
@@ -986,6 +986,25 @@ void PmCore::onFrameProcessed()
             newResult.isMatched
                 = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
         }
+
+        if (filterData->snapshot_data) {
+            QImage snapshotImg(
+                filterData->snapshot_data,
+                filterData->base_width,
+                filterData->base_height,
+                filterData->base_width * 4,
+                QImage::Format_RGBA8888);
+            QRect matchRect(
+                QPoint(std::min(m_captureStartX, m_captureEndX),
+                       std::min(m_captureStartY, m_captureEndY)),
+                QPoint(std::max(m_captureStartX, m_captureEndX),
+                       std::max(m_captureStartY, m_captureEndY)));
+            QImage matchImg = snapshotImg.copy(matchRect);
+            emit sigCapturedMatchImage(matchImg);
+            bfree(filterData->snapshot_data);
+            filterData->snapshot_data = nullptr;
+        }
+
         fr.unlockData();
     }
 
