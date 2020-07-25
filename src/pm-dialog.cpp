@@ -125,8 +125,8 @@ void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
             emit sigChangedMatchConfig(matchIndex, matchCfg);
             emit sigCaptureStateChanged(PmCaptureState::Inactive);
         } else {
-            QString errMsg = QString(obs_module_text("Unable to save file: %1"))
-                             .arg(saveFilename);
+            QString errMsg = QString(
+                obs_module_text("Unable to save file: %1")).arg(saveFilename);
             QMessageBox::critical(
                 this, obs_module_text("Error"), errMsg);
             emit sigCaptureStateChanged(PmCaptureState::SelectFinished);

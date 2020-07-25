@@ -52,8 +52,15 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     bool hbound = (u >= roi_left && u <= roi_right);
     bool vbound = (v >= roi_bottom && v <= roi_top);
 
-    if (!hbound || !vbound)
+    if (!hbound || !vbound) {
+        if (show_border && !show_color_indicator) {
+            // when in selection mode hide areas outside the region
+            val.r = val.r * 0.6;
+            val.g = val.g * 0.6;
+            val.b = val.b * 0.6;
+        }
         return val;
+    }
 
     bool cmp_on;
     float4 cmp_val;
@@ -109,7 +116,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         }
         // else: compare off, no border -> keep the passthrough value
     }
-
+    
     return val;
 }
 
