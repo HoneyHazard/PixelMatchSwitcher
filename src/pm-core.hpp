@@ -93,6 +93,7 @@ signals:
     void sigNewActiveFilter(PmFilterRef newAf);
 
     void sigCaptureStateChanged(PmCaptureState capMode, int x, int y);
+    void sigCapturedMatchImage(QImage img);
 
 public slots:
     void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);

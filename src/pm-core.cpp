@@ -625,7 +625,10 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         }
         break;
     case PmCaptureState::Accepted:
-        // TODO!!!
+        filter = activeFilterRef();
+        filterData = filter.filterData();
+        if (filterData)
+            filterData->request_snapshot = true;
         break;
     }
 

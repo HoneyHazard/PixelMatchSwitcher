@@ -153,7 +153,6 @@ void capture_snapshot(
     filter->snapshot_data = (uint8_t*)bmalloc(snapshot_sz); // rgba
 
     // https://github.com/synap5e/obs-screenshot-plugin/blob/master/screenshot-filter.c
-    //gs_effect_t* default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 
     gs_texrender_reset(*stx);
     gs_blend_state_push();

@@ -353,6 +353,7 @@ void PmMatchConfigWidget::onCaptureBeginReleased()
 
 void PmMatchConfigWidget::onCaptureAcceptReleased()
 {
+    emit sigCaptureStateChanged(PmCaptureState::Accepted, 0, 0);
 }
 
 void PmMatchConfigWidget::onCaptureCancelReleased()
