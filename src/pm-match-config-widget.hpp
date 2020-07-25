@@ -43,7 +43,10 @@ protected slots:
     void onCaptureStateChanged(PmCaptureState capState, int x, int y);
 
     // UI element handlers
-    void onBrowseButtonReleased();
+    void onOpenFileButtonReleased();
+    void onOpenFolderButtonReleased();
+    void onRefreshButtonReleased();
+
     void onPickColorButtonReleased();
     void onCaptureBeginReleased();
     void onCaptureAcceptReleased();
@@ -69,8 +72,10 @@ protected:
 
     QStackedWidget* m_buttonsStack;
     QPushButton* m_openFileButton;
-    QPushButton* m_openFolderButton;
     QPushButton* m_editFileButton;
+    QPushButton* m_openFolderButton;
+    QPushButton* m_refreshButton;
+
     QPushButton* m_captureBeginButton;
     QPushButton* m_captureAcceptButton;
     QPushButton* m_captureCancelButton;

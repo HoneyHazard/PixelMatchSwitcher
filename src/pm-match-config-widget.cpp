@@ -16,6 +16,7 @@
 #include <QMessageBox>
 #include <QColorDialog>
 #include <QStackedWidget>
+#include <QProcess>
 
 #include <obs-module.h>
 
@@ -52,7 +53,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_openFileButton = new QPushButton(obs_module_text("Open File"), this);
     m_openFileButton->setFocusPolicy(Qt::NoFocus);
     connect(m_openFileButton, &QPushButton::released,
-            this, &PmMatchConfigWidget::onBrowseButtonReleased);
+            this, &PmMatchConfigWidget::onOpenFileButtonReleased);
     imgControlLayout0->addWidget(m_openFileButton);
 
     m_editFileButton = new QPushButton(obs_module_text("Edit"), this);
@@ -62,8 +63,15 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     m_openFolderButton = new QPushButton(obs_module_text("Open Folder"), this);
     m_openFolderButton->setFocusPolicy(Qt::NoFocus);
-    m_openFolderButton->setEnabled(false);
+    connect(m_openFolderButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onOpenFolderButtonReleased);
     imgControlLayout0->addWidget(m_openFolderButton);
+
+    m_refreshButton = new QPushButton(obs_module_text("Refresh"), this);
+    m_refreshButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_refreshButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onRefreshButtonReleased);
+    imgControlLayout0->addWidget(m_refreshButton);
 
     // image control buttons: during capture
     QHBoxLayout* imgControlLayout1 = new QHBoxLayout;
@@ -331,6 +339,10 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 
     roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
     maskModeChanged(cfg.maskMode, m_customColor);
+
+    bool hasMatchFilename = !cfg.matchImgFilename.empty();
+    m_openFolderButton->setEnabled(hasMatchFilename);
+    m_refreshButton->setEnabled(hasMatchFilename);
 }
 
 void PmMatchConfigWidget::onPickColorButtonReleased()
@@ -361,7 +373,7 @@ void PmMatchConfigWidget::onCaptureCancelReleased()
     emit sigCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
 }
 
-void PmMatchConfigWidget::onBrowseButtonReleased()
+void PmMatchConfigWidget::onOpenFileButtonReleased()
 {
     auto config = m_core->matchConfig(m_matchIndex);
 
@@ -375,6 +387,48 @@ void PmMatchConfigWidget::onBrowseButtonReleased()
         config.matchImgFilename = path.toUtf8().data();
         emit sigChangedMatchConfig(m_matchIndex, config);
     }
+}
+
+void PmMatchConfigWidget::onOpenFolderButtonReleased()
+{
+    auto cfg = m_core->matchConfig(m_matchIndex);
+    QFileInfo info(cfg.matchImgFilename.data());
+    QString path = info.canonicalFilePath();
+
+#if defined(Q_OS_WIN)
+    QStringList args;
+    args << "/select," << QDir::toNativeSeparators(path);
+    QProcess::startDetached("explorer", args);
+#elif defined(Q_OS_MACOS)
+    QStringList args;
+    args << "-e";
+    args << "tell application \"Finder\"";
+    args << "-e";
+    args << "activate";
+    args << "-e";
+    args << "select POSIX file \"" + path + "\"";
+    args << "-e";
+    args << "end tell";
+    QProcess::startDetached("osascript", args);
+#else
+    // TODO: try to figure out open and select on Linux
+    QStringList args;
+    args << path;
+    QProcess::startDetached("xdg-open", args);
+#endif
+
+}
+
+void PmMatchConfigWidget::onRefreshButtonReleased()
+{
+    // TODO: make less hacky
+    std::string filename;
+    auto cfg = m_core->matchConfig(m_matchIndex);
+    filename = cfg.matchImgFilename;
+    cfg.matchImgFilename = "";
+    emit sigChangedMatchConfig(m_matchIndex, cfg);
+    cfg.matchImgFilename = filename;
+    emit sigChangedMatchConfig(m_matchIndex, cfg);
 }
 
 void PmMatchConfigWidget::onImgSuccess(
