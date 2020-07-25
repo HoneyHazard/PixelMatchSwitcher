@@ -2,11 +2,15 @@
 
 #include <QDialog>
 #include <QPointer>
+#include <QImage>
 
 #include "pm-structs.hpp"
 
 class PmCore;
 
+/**
+ * @brief Top-level aggregate module of all UI elements used by the plugin
+ */
 class PmDialog : public QDialog
 {
     Q_OBJECT
@@ -19,6 +23,7 @@ signals:
 
 protected slots:
     void onCaptureStateChanged(PmCaptureState state, int x, int y);
+    void onCapturedMatchImage(QImage matchImg);
 
 protected:
     void closeEvent(QCloseEvent*) override;

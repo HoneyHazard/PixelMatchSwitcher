@@ -14,6 +14,8 @@
 #include <QTabWidget>
 #include <QSplitter>
 
+#include <QFileDialog>
+
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 
@@ -80,6 +82,9 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // connections
     connect(m_core, &PmCore::sigCaptureStateChanged,
             this, &PmDialog::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigCapturedMatchImage,
+            this, &PmDialog::onCapturedMatchImage, Qt::QueuedConnection);
+
     connect(this, &PmDialog::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
 }
@@ -91,6 +96,18 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
     } else {
         setCursor(Qt::CrossCursor);
     }
+}
+
+void PmDialog::onCapturedMatchImage(QImage matchImg)
+{
+    QString saveFilename = QFileDialog::getSaveFileName(
+        this,
+        obs_module_text("Save New Match Image"),
+        "",
+        PmConstants::k_imageFilenameFilter);
+    
+    if (saveFilename.size())
+        matchImg.save(saveFilename);
 }
 
 void PmDialog::closeEvent(QCloseEvent*)

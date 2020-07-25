@@ -365,14 +365,12 @@ void PmMatchConfigWidget::onBrowseButtonReleased()
 {
     auto config = m_core->matchConfig(m_matchIndex);
 
-    static const QString filter
-        = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
-
     QString curPath
         = QFileInfo(config.matchImgFilename.data()).absoluteDir().path();
 
     QString path = QFileDialog::getOpenFileName(
-        this, obs_module_text("Open an image file"), curPath, filter);
+        this, obs_module_text("Open an image file"), curPath, 
+        PmConstants::k_imageFilenameFilter);
     if (!path.isEmpty()) {
         config.matchImgFilename = path.toUtf8().data();
         emit sigChangedMatchConfig(m_matchIndex, config);

@@ -117,6 +117,12 @@ struct PmPreviewConfig
     float previewMatchImageScale = 0.5f;
 };
 
+namespace PmConstants
+{
+    const QString k_imageFilenameFilter 
+        = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
+};
+
 
 void pmRegisterMetaTypes();
 
