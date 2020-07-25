@@ -15,6 +15,7 @@
 #include <QSplitter>
 
 #include <QFileDialog>
+#include <QMessageBox>
 
 #include <obs-module.h>
 #include <obs-frontend-api.h>
@@ -87,6 +88,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 
     connect(this, &PmDialog::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(this, &PmDialog::sigChangedMatchConfig,
+            m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
 }
 
 void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
@@ -98,7 +101,7 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
     }
 }
 
-void PmDialog::onCapturedMatchImage(QImage matchImg)
+void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
 {
     QString saveFilename = QFileDialog::getSaveFileName(
         this,
@@ -106,13 +109,36 @@ void PmDialog::onCapturedMatchImage(QImage matchImg)
         "",
         PmConstants::k_imageFilenameFilter);
     
-    if (saveFilename.size())
-        matchImg.save(saveFilename);
+    if (saveFilename.size()) {
+        bool ok = matchImg.save(saveFilename);
+        if (ok) {
+            size_t matchIndex = m_core->selectedConfigIndex();
+            auto matchCfg = m_core->matchConfig(matchIndex);
+
+            // force image reload in case filenames are same:
+            matchCfg.matchImgFilename = ""; 
+            emit sigChangedMatchConfig(matchIndex, matchCfg);
+
+            matchCfg.matchImgFilename = saveFilename.toUtf8().data();
+            matchCfg.filterCfg.roi_left = roiLeft;
+            matchCfg.filterCfg.roi_bottom = roiBottom;
+            emit sigChangedMatchConfig(matchIndex, matchCfg);
+            emit sigCaptureStateChanged(PmCaptureState::Inactive);
+        } else {
+            QString errMsg = QString(obs_module_text("Unable to save file: %1"))
+                             .arg(saveFilename);
+            QMessageBox::critical(
+                this, obs_module_text("Error"), errMsg);
+            emit sigCaptureStateChanged(PmCaptureState::SelectFinished);
+        }
+    } else {
+        emit sigCaptureStateChanged(PmCaptureState::SelectFinished);
+    }
 }
 
 void PmDialog::closeEvent(QCloseEvent*)
 {
-    emit sigCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
+    emit sigCaptureStateChanged(PmCaptureState::Inactive);
 
     obs_frontend_save();
 }

@@ -994,13 +994,15 @@ void PmCore::onFrameProcessed()
                 filterData->base_height,
                 filterData->base_width * 4,
                 QImage::Format_RGBA8888);
+            int roiLeft = std::min(m_captureStartX, m_captureEndX);
+            int roiBottom = std::min(m_captureStartY, m_captureEndY);
+            int roiRight = std::max(m_captureStartX, m_captureEndX);
+            int roiTop = std::max(m_captureStartY, m_captureEndY);
+
             QRect matchRect(
-                QPoint(std::min(m_captureStartX, m_captureEndX),
-                       std::min(m_captureStartY, m_captureEndY)),
-                QPoint(std::max(m_captureStartX, m_captureEndX),
-                       std::max(m_captureStartY, m_captureEndY)));
+                QPoint(roiLeft, roiBottom), QPoint(roiRight, roiTop));
             QImage matchImg = snapshotImg.copy(matchRect);
-            emit sigCapturedMatchImage(matchImg);
+            emit sigCapturedMatchImage(matchImg, roiLeft, roiBottom);
             bfree(filterData->snapshot_data);
             filterData->snapshot_data = nullptr;
         }
