@@ -95,7 +95,7 @@ bool PmPreviewDisplayWidget::eventFilter(QObject* obj, QEvent* event)
         return true;
     } else if ((captureState == PmCaptureState::SelectBegin
              || captureState == PmCaptureState::SelectMoved)
-        && event->type() == QEvent::MouseMove) {
+             && event->type() == QEvent::MouseMove) {
         int imgX, imgY;
         getImageXY((QMouseEvent*)event, imgX, imgY);
         emit sigCaptureStateChanged(PmCaptureState::SelectMoved, imgX, imgY);

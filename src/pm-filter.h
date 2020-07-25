@@ -39,7 +39,7 @@ struct pm_filter_data
     // plugin basics
     obs_source_t *context;
     gs_effect_t *effect;
-    obs_data_t *settings;
+    //obs_data_t *settings;
 
     // shader parameters and results
     gs_eparam_t *param_show_color_indicator;
@@ -71,8 +71,13 @@ struct pm_filter_data
     uint32_t base_height;
     enum pm_filter_mode filter_mode;
 
-    // selection mode
+    // selection mode and snapshot
     uint32_t select_left, select_bottom, select_right, select_top;
+
+    bool request_snapshot;
+    gs_texrender_t* snapshot_texrender;
+    gs_stagesurf_t* snapshot_stagesurface;
+    uint8_t* snapshot_data;
 
     // callbacks for fast reactions
     void (*on_frame_processed)();

@@ -17,8 +17,14 @@ static void pixel_match_filter_destroy(void *data)
     pthread_mutex_lock(&filter->mutex);
     pm_resize_match_entries(filter, 0);
     obs_enter_graphics();
+    if (filter->snapshot_texrender)
+        gs_texrender_destroy(filter->snapshot_texrender);
+    if (filter->snapshot_stagesurface)
+        gs_stagesurface_destroy(filter->snapshot_stagesurface);
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
+    if (filter->snapshot_data)
+        bfree(filter->snapshot_data);
     pthread_mutex_unlock(&filter->mutex);
     pthread_mutex_destroy(&filter->mutex);
     bfree(filter);
@@ -32,7 +38,7 @@ static void *pixel_match_filter_create(
 
     memset(filter, 0, sizeof(struct pm_filter_data));
     filter->context = context;
-    filter->settings = settings;
+    //filter->settings = settings;
     //filter->visualize = true;
 
 #if 1
@@ -98,7 +104,7 @@ static void *pixel_match_filter_create(
      || !filter->param_compare_counter || !filter->result_compare_counter)
         goto error;
 
-    obs_source_update(context, settings);
+    //obs_source_update(context, settings);
     return filter;
 
 gfx_fail:
@@ -113,8 +119,76 @@ error:
 
 static void pixel_match_filter_defaults(obs_data_t *settings)
 {
-    obs_data_set_default_int(settings, "per_pixel_err_thresh", 10);
-    obs_data_set_default_int(settings, "total_match_thresh", 90);
+    //obs_data_set_default_int(settings, "per_pixel_err_thresh", 10);
+    //obs_data_set_default_int(settings, "total_match_thresh", 90);
+}
+
+void capture_snapshot(
+    struct pm_filter_data* filter, obs_source_t *target, obs_source_t *parent)
+{
+    gs_texrender_t** stx = &filter->snapshot_texrender;
+    if (!*stx) {
+        *stx = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
+    }
+    
+    gs_stagesurf_t** sss = &filter->snapshot_stagesurface;
+    if (*sss) {
+        uint32_t width = gs_stagesurface_get_width(*sss);
+        uint32_t height = gs_stagesurface_get_height(*sss);
+        if (width != filter->base_width
+            || height != filter->base_height) {
+            gs_stagesurface_destroy(*sss);
+            *sss = NULL;
+        }
+    }
+    if (!*sss) {
+        *sss = gs_stagesurface_create(
+            filter->base_width, filter->base_height, GS_RGBA);
+    }
+
+    if (filter->snapshot_data)
+        bfree(filter->snapshot_data);
+    size_t snapshot_sz 
+        = (size_t)filter->base_width * (size_t)filter->base_height * 4;
+    filter->snapshot_data = (uint8_t*)bmalloc(snapshot_sz); // rgba
+
+    // https://github.com/synap5e/obs-screenshot-plugin/blob/master/screenshot-filter.c
+    //gs_effect_t* default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+
+    gs_texrender_reset(*stx);
+    gs_blend_state_push();
+    gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+
+    if (gs_texrender_begin(*stx, filter->base_width, filter->base_height)) {
+        uint32_t parent_flags = obs_source_get_output_flags(target);
+        bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
+        bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
+        struct vec4 clear_color;
+
+        vec4_zero(&clear_color);
+        gs_clear(GS_CLEAR_COLOR, &clear_color, 0.0f, 0);
+        gs_ortho(0.0f, (float)filter->base_width, 0.0f,
+                       (float)filter->base_height, -100.0f, 100.0f);
+        if (target == parent && !custom_draw && !async) {
+            obs_source_default_render(target);
+        } else {
+            obs_source_video_render(target);
+        }
+        gs_texrender_end(*stx);
+    }
+
+    gs_blend_state_pop();
+    gs_texture_t* tex = gs_texrender_get_texture(*stx);
+    
+    if (tex) {
+        gs_stage_texture(*sss, tex);
+        uint8_t *data;
+        uint32_t linesize;
+        if (gs_stagesurface_map(*sss, &data, &linesize)) {
+            memcpy(filter->snapshot_data, data, snapshot_sz);
+            gs_stagesurface_unmap(*sss);
+        }
+    }
 }
 
 static void pixel_match_filter_render(void *data, gs_effect_t *effect)
@@ -138,6 +212,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         goto done;
 
     if (filter->filter_mode == PM_SELECT_REGION) {
+        // select region mode just displays a selection rectangle
+        // TODO: move to a function
         if (!obs_source_process_filter_begin(
             filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
             blog(LOG_ERROR,
@@ -185,7 +261,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         // no match entries to display; just do passthrough
         gs_effect_t* default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
         if (!obs_source_process_filter_begin(
-            filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+                filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
             blog(LOG_ERROR,
                 "pm_filter_data: obs_source_process_filter_begin failed.");
             goto done;
@@ -195,7 +271,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         goto done;
     }
 
-    for (size_t i = 0; i < filter->num_match_entries; ++i) {       
+    for (size_t i = 0; i < filter->num_match_entries; ++i) {
         struct pm_match_entry_data* entry = filter->match_entries + i;
 
         if (filter->filter_mode == PM_VISUALIZE 
@@ -258,6 +334,14 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
                 gs_effect_get_atomic_uint_result(filter->result_compare_counter);
             entry->num_matched =
                 gs_effect_get_atomic_uint_result(filter->result_match_counter);
+
+            if (filter->request_snapshot) {
+                // do a passthrough to render and extract snapshot data
+                // TODO: move to a separate function?
+                capture_snapshot(filter, target, parent);
+                filter->request_snapshot = false;
+            }
+
         }
     }
 
