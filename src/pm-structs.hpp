@@ -111,6 +111,7 @@ struct PmPreviewConfig
     bool operator!=(const PmPreviewConfig& other) const
         { return !operator==(other); }
 
+    // TODO: consider permanent cleanup of the parameters below
     PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;
     float previewRegionScale = 0.5f;

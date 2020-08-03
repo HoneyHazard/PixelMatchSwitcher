@@ -266,7 +266,7 @@ void capture_snapshot(
         uint32_t width = gs_stagesurface_get_width(*sss);
         uint32_t height = gs_stagesurface_get_height(*sss);
         if (width != filter->base_width
-            || height != filter->base_height) {
+         || height != filter->base_height) {
             gs_stagesurface_destroy(*sss);
             *sss = NULL;
         }
