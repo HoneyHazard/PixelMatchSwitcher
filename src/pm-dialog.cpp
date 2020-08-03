@@ -45,6 +45,10 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
     leftLayout->addWidget(resultsWidget);
+    leftLayout->setStretch(0, 1);
+    leftLayout->setStretch(1, 1000);
+    leftLayout->setStretch(2, 1);
+    leftLayout->setStretch(3, 1);
     QWidget* leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 
