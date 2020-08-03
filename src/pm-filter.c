@@ -123,163 +123,78 @@ static void pixel_match_filter_defaults(obs_data_t *settings)
     //obs_data_set_default_int(settings, "total_match_thresh", 90);
 }
 
-void capture_snapshot(
-    struct pm_filter_data* filter, obs_source_t *target, obs_source_t *parent)
+void render_select_region(struct pm_filter_data* filter)
 {
-    gs_texrender_t** stx = &filter->snapshot_texrender;
-    if (!*stx) {
-        *stx = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
-    }
-    
-    gs_stagesurf_t** sss = &filter->snapshot_stagesurface;
-    if (*sss) {
-        uint32_t width = gs_stagesurface_get_width(*sss);
-        uint32_t height = gs_stagesurface_get_height(*sss);
-        if (width != filter->base_width
-            || height != filter->base_height) {
-            gs_stagesurface_destroy(*sss);
-            *sss = NULL;
-        }
-    }
-    if (!*sss) {
-        *sss = gs_stagesurface_create(
-            filter->base_width, filter->base_height, GS_RGBA);
+    // select region mode just displays a selection rectangle
+        // TODO: move to a function
+    if (!obs_source_process_filter_begin(
+        filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+        blog(LOG_ERROR,
+            "pm_filter_data: obs_source_process_filter_begin failed.");
+        return;
     }
 
-    if (filter->snapshot_data)
-        bfree(filter->snapshot_data);
-    size_t snapshot_sz 
-        = (size_t)filter->base_width * (size_t)filter->base_height * 4;
-    filter->snapshot_data = (uint8_t*)bmalloc(snapshot_sz); // rgba
+    float roi_left_u
+        = (float)(filter->select_left) / (float)(filter->base_width);
+    float roi_bottom_v
+        = (float)(filter->select_bottom) / (float)(filter->base_height);
+    float roi_right_u
+        = (float)(filter->select_right) / (float)(filter->base_width);
+    float roi_top_v
+        = (float)(filter->select_top) / (float)(filter->base_height);
 
-    // https://github.com/synap5e/obs-screenshot-plugin/blob/master/screenshot-filter.c
+    // these values will be actually relevant to drawing a region selection
+    gs_effect_set_float(filter->param_roi_left, roi_left_u);
+    gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
+    gs_effect_set_float(filter->param_roi_right, roi_right_u);
+    gs_effect_set_float(filter->param_roi_top, roi_top_v);
+    gs_effect_set_bool(filter->param_show_border, true);
+    gs_effect_set_bool(filter->param_show_color_indicator, false);
+    gs_effect_set_float(filter->param_px_width,
+        4.f / (float)(filter->base_width));
+    gs_effect_set_float(filter->param_px_height,
+        4.f / (float)(filter->base_height));
 
-    gs_texrender_reset(*stx);
-    gs_blend_state_push();
-    gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+    // the rest are just values stop unassigned value errors
+    gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
+    gs_effect_set_atomic_uint(filter->param_match_counter, 0);
+    gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
+    gs_effect_set_bool(filter->param_mask_alpha, false);
+    gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
+    gs_effect_set_texture(filter->param_match_img, NULL);
 
-    if (gs_texrender_begin(*stx, filter->base_width, filter->base_height)) {
-        uint32_t parent_flags = obs_source_get_output_flags(target);
-        bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
-        bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
-        struct vec4 clear_color;
-
-        vec4_zero(&clear_color);
-        gs_clear(GS_CLEAR_COLOR, &clear_color, 0.0f, 0);
-        gs_ortho(0.0f, (float)filter->base_width, 0.0f,
-                       (float)filter->base_height, -100.0f, 100.0f);
-        if (target == parent && !custom_draw && !async) {
-            obs_source_default_render(target);
-        } else {
-            obs_source_video_render(target);
-        }
-        gs_texrender_end(*stx);
-    }
-
-    gs_blend_state_pop();
-    gs_texture_t* tex = gs_texrender_get_texture(*stx);
-    
-    if (tex) {
-        gs_stage_texture(*sss, tex);
-        uint8_t *data;
-        uint32_t linesize;
-        if (gs_stagesurface_map(*sss, &data, &linesize)) {
-            memcpy(filter->snapshot_data, data, snapshot_sz);
-            gs_stagesurface_unmap(*sss);
-        }
-    }
+    obs_source_process_filter_end(filter->context, filter->effect,
+        filter->base_width, filter->base_height);
 }
 
-static void pixel_match_filter_render(void *data, gs_effect_t *effect)
+void render_passthrough(struct pm_filter_data* filter)
 {
-    struct pm_filter_data *filter = data;
-    obs_source_t *target, *parent;
-
-    pthread_mutex_lock(&filter->mutex);
-
-    target = obs_filter_get_target(filter->context);
-    parent = obs_filter_get_parent(filter->context);
-    if (target && parent) {
-        filter->base_width = obs_source_get_base_width(target);
-        filter->base_height = obs_source_get_base_height(target);
-    } else {
-        filter->base_width = 0;
-        filter->base_height = 0;
+    // no match entries to display; just do passthrough
+    gs_effect_t* default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+    if (!obs_source_process_filter_begin(
+        filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+        blog(LOG_ERROR,
+            "pm_filter_data: obs_source_process_filter_begin failed.");
+        return;
     }
+    obs_source_process_filter_end(filter->context, default_effect,
+        filter->base_width, filter->base_height);
+}
 
-    if (filter->base_width == 0 || filter->base_height == 0)
-        goto done;
-
-    if (filter->filter_mode == PM_SELECT_REGION) {
-        // select region mode just displays a selection rectangle
-        // TODO: move to a function
-        if (!obs_source_process_filter_begin(
-            filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
-            blog(LOG_ERROR,
-                "pm_filter_data: obs_source_process_filter_begin failed.");
-            goto done;
-        }
-
-        float roi_left_u
-            = (float)(filter->select_left) / (float)(filter->base_width);
-        float roi_bottom_v
-            = (float)(filter->select_bottom) / (float)(filter->base_height);
-        float roi_right_u
-            = (float)(filter->select_right) / (float)(filter->base_width);
-        float roi_top_v 
-            = (float)(filter->select_top) / (float)(filter->base_height);
-
-        // these values will be actually relevant to drawing a region selection
-        gs_effect_set_float(filter->param_roi_left, roi_left_u);
-        gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
-        gs_effect_set_float(filter->param_roi_right, roi_right_u);
-        gs_effect_set_float(filter->param_roi_top, roi_top_v);
-        gs_effect_set_bool(filter->param_show_border, true);
-        gs_effect_set_bool(filter->param_show_color_indicator, false);
-        gs_effect_set_float(filter->param_px_width,
-            4.f / (float)(filter->base_width));
-        gs_effect_set_float(filter->param_px_height,
-            4.f / (float)(filter->base_height));
-
-        // the rest are just values stop unassigned value errors
-        gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
-        gs_effect_set_atomic_uint(filter->param_match_counter, 0);
-        gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
-        gs_effect_set_bool(filter->param_mask_alpha, false);
-        gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
-        gs_effect_set_texture(filter->param_match_img, NULL);
-
-        obs_source_process_filter_end(filter->context, filter->effect,
-            filter->base_width, filter->base_height);
-        goto done;
-    }
-
-    if (filter->num_match_entries == 0 
-     || filter->filter_mode == PM_VISUALIZE 
-     && filter->selected_match_index >= filter->num_match_entries) {
-        // no match entries to display; just do passthrough
-        gs_effect_t* default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-        if (!obs_source_process_filter_begin(
-                filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
-            blog(LOG_ERROR,
-                "pm_filter_data: obs_source_process_filter_begin failed.");
-            goto done;
-        }
-        obs_source_process_filter_end(filter->context, default_effect,
-            filter->base_width, filter->base_height);
-        goto done;
-    }
-
+void render_match_entries(struct pm_filter_data* filter)
+{
     for (size_t i = 0; i < filter->num_match_entries; ++i) {
         struct pm_match_entry_data* entry = filter->match_entries + i;
 
-        if (filter->filter_mode == PM_VISUALIZE 
-         && i != filter->selected_match_index)
-             continue;
+        if (filter->filter_mode == PM_VISUALIZE
+            && i != filter->selected_match_index) {
+            // visualize mode only renders the selected match entry
+            continue;
+        }
 
-        if (entry->match_img_data 
-         && entry->match_img_width
-         && entry->match_img_height) {
+        if (entry->match_img_data
+            && entry->match_img_width
+            && entry->match_img_height) {
             if (entry->match_img_tex)
                 gs_texture_destroy(entry->match_img_tex);
             entry->match_img_tex = gs_texture_create(
@@ -294,12 +209,12 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
             filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
             blog(LOG_ERROR,
                 "pm_filter_data: obs_source_process_filter_begin failed.");
-            goto done;
+            return;
         }
 
-        float roi_left_u 
+        float roi_left_u
             = (float)(entry->cfg.roi_left) / (float)(filter->base_width);
-        float roi_bottom_v 
+        float roi_bottom_v
             = (float)(entry->cfg.roi_bottom) / (float)(filter->base_height);
         float roi_right_u = roi_left_u
             + (float)(entry->match_img_width) / (float)(filter->base_width);
@@ -333,15 +248,117 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
                 gs_effect_get_atomic_uint_result(filter->result_compare_counter);
             entry->num_matched =
                 gs_effect_get_atomic_uint_result(filter->result_match_counter);
-
-            if (filter->request_snapshot) {
-                // do a passthrough to render and extract snapshot data
-                // TODO: move to a separate function?
-                capture_snapshot(filter, target, parent);
-                filter->request_snapshot = false;
-            }
-
         }
+    }
+}
+
+
+void capture_snapshot(
+    struct pm_filter_data* filter, obs_source_t* target, obs_source_t* parent)
+{
+    gs_texrender_t** stx = &filter->snapshot_texrender;
+    if (!*stx) {
+        *stx = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
+    }
+
+    gs_stagesurf_t** sss = &filter->snapshot_stagesurface;
+    if (*sss) {
+        uint32_t width = gs_stagesurface_get_width(*sss);
+        uint32_t height = gs_stagesurface_get_height(*sss);
+        if (width != filter->base_width
+            || height != filter->base_height) {
+            gs_stagesurface_destroy(*sss);
+            *sss = NULL;
+        }
+    }
+    if (!*sss) {
+        *sss = gs_stagesurface_create(
+            filter->base_width, filter->base_height, GS_RGBA);
+    }
+
+    if (filter->snapshot_data)
+        bfree(filter->snapshot_data);
+    size_t snapshot_sz
+        = (size_t)filter->base_width * (size_t)filter->base_height * 4;
+    filter->snapshot_data = (uint8_t*)bmalloc(snapshot_sz); // rgba
+
+    // https://github.com/synap5e/obs-screenshot-plugin/blob/master/screenshot-filter.c
+
+    gs_texrender_reset(*stx);
+    gs_blend_state_push();
+    gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+
+    if (gs_texrender_begin(*stx, filter->base_width, filter->base_height)) {
+        uint32_t parent_flags = obs_source_get_output_flags(target);
+        bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
+        bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
+        struct vec4 clear_color;
+
+        vec4_zero(&clear_color);
+        gs_clear(GS_CLEAR_COLOR, &clear_color, 0.0f, 0);
+        gs_ortho(0.0f, (float)filter->base_width, 0.0f,
+            (float)filter->base_height, -100.0f, 100.0f);
+        if (target == parent && !custom_draw && !async) {
+            obs_source_default_render(target);
+        }
+        else {
+            obs_source_video_render(target);
+        }
+        gs_texrender_end(*stx);
+    }
+
+    gs_blend_state_pop();
+    gs_texture_t* tex = gs_texrender_get_texture(*stx);
+
+    if (tex) {
+        gs_stage_texture(*sss, tex);
+        uint8_t* data;
+        uint32_t linesize;
+        if (gs_stagesurface_map(*sss, &data, &linesize)) {
+            memcpy(filter->snapshot_data, data, snapshot_sz);
+            gs_stagesurface_unmap(*sss);
+        }
+    }
+}
+
+static void pixel_match_filter_render(void *data, gs_effect_t *effect)
+{
+    struct pm_filter_data *filter = data;
+    obs_source_t *target, *parent;
+
+    pthread_mutex_lock(&filter->mutex);
+
+    target = obs_filter_get_target(filter->context);
+    parent = obs_filter_get_parent(filter->context);
+    if (target && parent) {
+        filter->base_width = obs_source_get_base_width(target);
+        filter->base_height = obs_source_get_base_height(target);
+    } else {
+        filter->base_width = 0;
+        filter->base_height = 0;
+    }
+
+    if (filter->base_width == 0 || filter->base_height == 0)
+        goto done;
+
+    if (filter->filter_mode == PM_SELECT_REGION) {
+        render_select_region(filter);
+        goto done;
+    }
+
+    if (filter->num_match_entries == 0 
+     || filter->filter_mode == PM_VISUALIZE 
+     && filter->selected_match_index >= filter->num_match_entries) {
+        render_passthrough(filter);
+        goto done;
+    }
+
+    render_match_entries(filter);
+
+    if (filter->request_snapshot) {
+        // do a specialized passthrough to render and extract snapshot data
+        capture_snapshot(filter, target, parent);
+        filter->request_snapshot = false;
     }
 
 done:

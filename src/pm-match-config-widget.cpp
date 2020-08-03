@@ -55,23 +55,27 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     connect(m_openFileButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onOpenFileButtonReleased);
     imgControlLayout0->addWidget(m_openFileButton);
+    imgControlLayout0->setStretchFactor(m_openFileButton, 1);
 
     m_editFileButton = new QPushButton(obs_module_text("Edit"), this);
     m_editFileButton->setFocusPolicy(Qt::NoFocus);
     m_editFileButton->setEnabled(false);
     imgControlLayout0->addWidget(m_editFileButton);
+    imgControlLayout0->setStretchFactor(m_editFileButton, 1);
 
     m_openFolderButton = new QPushButton(obs_module_text("Open Folder"), this);
     m_openFolderButton->setFocusPolicy(Qt::NoFocus);
     connect(m_openFolderButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onOpenFolderButtonReleased);
     imgControlLayout0->addWidget(m_openFolderButton);
+    imgControlLayout0->setStretchFactor(m_openFolderButton, 1);
 
     m_refreshButton = new QPushButton(obs_module_text("Refresh"), this);
     m_refreshButton->setFocusPolicy(Qt::NoFocus);
     connect(m_refreshButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onRefreshButtonReleased);
     imgControlLayout0->addWidget(m_refreshButton);
+    imgControlLayout0->setStretchFactor(m_refreshButton, 1);
 
     // image control buttons: during capture
     QHBoxLayout* imgControlLayout1 = new QHBoxLayout;
