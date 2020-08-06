@@ -26,5 +26,6 @@ private:
     QLabel *m_sourceResDisplay;
     QLabel *m_filterDataResDisplay;
     QLabel *m_matchCountDisplay;
+    QLabel* m_captureStateDisplay;
     QTextEdit *m_textDisplay;
 };

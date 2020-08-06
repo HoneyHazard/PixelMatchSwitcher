@@ -22,8 +22,8 @@ public:
     PmPreviewDisplayWidget(PmCore* core, QWidget *parent);
     ~PmPreviewDisplayWidget();
 
-public slots:
-    void fixGeometry();
+signals:
+    void sigCaptureStateChanged(PmCaptureState state, int x, int y);
 
 protected slots:
     // reaction to core events
@@ -47,9 +47,16 @@ protected:
     // draw helpers
     void drawEffect();
     void drawMatchImage();
-    void updateFilterDisplaySize();
 
+    // display size related
+    void getDisplaySize(int& displayWidth, int& displayHeight);
+    void fixGeometry();
+    void getImageXY(QMouseEvent *mouseEvent, int &imgX, int &imgY);
+
+    void resizeEvent(QResizeEvent* e) override;    
     void closeEvent(QCloseEvent* e) override; // todo: maybe not needed or useful
+
+    bool eventFilter(QObject* obj, QEvent* event) override; // for display events
 
     OBSQTDisplay* m_filterDisplay;
 
@@ -57,8 +64,9 @@ protected:
     
     size_t m_matchIndex = 0;
     PmPreviewConfig m_previewCfg;
-    PmMatchConfig m_matchConfig;
     int m_roiLeft = 0, m_roiBottom = 0;
+    
+    int m_baseWidth = 0, m_baseHeight = 0;
     int m_matchImgWidth = 0, m_matchImgHeight = 0;
 
     //QMutex m_filterMutex;

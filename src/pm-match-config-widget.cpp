@@ -15,6 +15,8 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QColorDialog>
+#include <QStackedWidget>
+#include <QProcess>
 
 #include <obs-module.h>
 
@@ -31,27 +33,89 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
     // index and label
+#if 0
     m_labelEdit = new QLineEdit(this);   
     connect(m_labelEdit, &QLineEdit::textEdited,
             this, &PmMatchConfigWidget::onConfigUiChanged, Qt::QueuedConnection);
     mainLayout->addRow(obs_module_text("Label:"), m_labelEdit);
+#endif
 
-    // image path display and browse button
-    QHBoxLayout *imgPathSubLayout = new QHBoxLayout;
-    imgPathSubLayout->setContentsMargins(0, 0, 0, 0);
+    // image control buttons: when not capturing
+    QHBoxLayout *imgControlLayout0 = new QHBoxLayout;
+    imgControlLayout0->setContentsMargins(0, 0, 0, 0);
 
+    m_captureBeginButton = new QPushButton(obs_module_text("Capture"), this);
+    m_captureBeginButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureBeginButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureBeginReleased);
+    imgControlLayout0->addWidget(m_captureBeginButton);
+
+    m_openFileButton = new QPushButton(obs_module_text("Open File"), this);
+    m_openFileButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_openFileButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onOpenFileButtonReleased);
+    imgControlLayout0->addWidget(m_openFileButton);
+    imgControlLayout0->setStretchFactor(m_openFileButton, 1);
+
+    m_editFileButton = new QPushButton(obs_module_text("Edit"), this);
+    m_editFileButton->setFocusPolicy(Qt::NoFocus);
+    m_editFileButton->setEnabled(false);
+    imgControlLayout0->addWidget(m_editFileButton);
+    imgControlLayout0->setStretchFactor(m_editFileButton, 1);
+
+    m_openFolderButton = new QPushButton(obs_module_text("Open Folder"), this);
+    m_openFolderButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_openFolderButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onOpenFolderButtonReleased);
+    imgControlLayout0->addWidget(m_openFolderButton);
+    imgControlLayout0->setStretchFactor(m_openFolderButton, 1);
+
+    m_refreshButton = new QPushButton(obs_module_text("Refresh"), this);
+    m_refreshButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_refreshButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onRefreshButtonReleased);
+    imgControlLayout0->addWidget(m_refreshButton);
+    imgControlLayout0->setStretchFactor(m_refreshButton, 1);
+
+    // image control buttons: during capture
+    QHBoxLayout* imgControlLayout1 = new QHBoxLayout;
+    imgControlLayout1->setContentsMargins(0, 0, 0, 0);
+
+    m_captureAcceptButton = new QPushButton(
+        obs_module_text("Accept Capture"), this);
+    m_captureAcceptButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureAcceptButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureAcceptReleased);
+    imgControlLayout1->addWidget(m_captureAcceptButton);
+
+    m_captureCancelButton = new QPushButton(
+        obs_module_text("Cancel Capture"), this);
+    m_captureCancelButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureCancelButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureCancelReleased);
+    imgControlLayout1->addWidget(m_captureCancelButton);
+
+    // finish image controls widgets and stack
+    QWidget* buttonsPage0 = new QWidget(this);
+    QWidget* buttonsPage1 = new QWidget(this);
+    buttonsPage0->setLayout(imgControlLayout0);
+    buttonsPage1->setLayout(imgControlLayout1);
+    
+    m_buttonsStack = new QStackedWidget(this);
+    m_buttonsStack->addWidget(buttonsPage0);
+    m_buttonsStack->addWidget(buttonsPage1);
+    mainLayout->addRow(m_buttonsStack);
+
+    // some spacing
+    QFrame* spacer = new QFrame(this);
+    spacer->setFrameShape(QFrame::HLine);
+    //spacer->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(spacer);
+
+    // image path display
     m_imgPathEdit = new QLineEdit(this);
     m_imgPathEdit->setReadOnly(true);
-    imgPathSubLayout->addWidget(m_imgPathEdit);
-
-    QPushButton *browseImgPathBtn = new QPushButton(
-        obs_module_text("Browse"), this);
-    browseImgPathBtn->setFocusPolicy(Qt::NoFocus);
-    connect(browseImgPathBtn, &QPushButton::released,
-            this, &PmMatchConfigWidget::onBrowseButtonReleased);
-    imgPathSubLayout->addWidget(browseImgPathBtn);
-
-    mainLayout->addRow(obs_module_text("Image: "), imgPathSubLayout);
+    mainLayout->addRow(obs_module_text("Image: "), m_imgPathEdit);
 
     // color mode selection
     QHBoxLayout *colorSubLayout = new QHBoxLayout;
@@ -149,16 +213,21 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onSelectMatchIndex, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMultiMatchConfigSize,
             this, &PmMatchConfigWidget::onNewMultiMatchConfigSize, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigCaptureStateChanged,
+            this, &PmMatchConfigWidget::onCaptureStateChanged, Qt::QueuedConnection);
 
     // local signals -> core
     connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
             m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchConfigWidget::sigCaptureStateChanged,
+            m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
     onNewMultiMatchConfigSize(m_core->multiMatchConfigSize());
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
+    onCaptureStateChanged(m_core->captureState(), 0, 0);
 }
 
 void PmMatchConfigWidget::onSelectMatchIndex(
@@ -240,9 +309,11 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 {
     if (matchIdx != m_matchIndex) return;
 
+#if 0
     m_labelEdit->blockSignals(true);
     m_labelEdit->setText(cfg.label.data());
     m_labelEdit->blockSignals(false);
+#endif
 
     m_imgPathEdit->blockSignals(true);
     m_imgPathEdit->setText(cfg.matchImgFilename.data());
@@ -272,6 +343,10 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 
     roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
     maskModeChanged(cfg.maskMode, m_customColor);
+
+    bool hasMatchFilename = !cfg.matchImgFilename.empty();
+    m_openFolderButton->setEnabled(hasMatchFilename);
+    m_refreshButton->setEnabled(hasMatchFilename);
 }
 
 void PmMatchConfigWidget::onPickColorButtonReleased()
@@ -287,22 +362,77 @@ void PmMatchConfigWidget::onPickColorButtonReleased()
     }
 }
 
-void PmMatchConfigWidget::onBrowseButtonReleased()
+void PmMatchConfigWidget::onCaptureBeginReleased()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Activated, 0, 0);
+}
+
+void PmMatchConfigWidget::onCaptureAcceptReleased()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Accepted, 0, 0);
+}
+
+void PmMatchConfigWidget::onCaptureCancelReleased()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
+}
+
+void PmMatchConfigWidget::onOpenFileButtonReleased()
 {
     auto config = m_core->matchConfig(m_matchIndex);
-
-    static const QString filter
-        = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
 
     QString curPath
         = QFileInfo(config.matchImgFilename.data()).absoluteDir().path();
 
     QString path = QFileDialog::getOpenFileName(
-        this, obs_module_text("Open an image file"), curPath, filter);
+        this, obs_module_text("Open an image file"), curPath, 
+        PmConstants::k_imageFilenameFilter);
     if (!path.isEmpty()) {
         config.matchImgFilename = path.toUtf8().data();
         emit sigChangedMatchConfig(m_matchIndex, config);
     }
+}
+
+void PmMatchConfigWidget::onOpenFolderButtonReleased()
+{
+    auto cfg = m_core->matchConfig(m_matchIndex);
+    QFileInfo info(cfg.matchImgFilename.data());
+    QString path = info.canonicalFilePath();
+
+#if defined(Q_OS_WIN)
+    QStringList args;
+    args << "/select," << QDir::toNativeSeparators(path);
+    QProcess::startDetached("explorer", args);
+#elif defined(Q_OS_MACOS)
+    QStringList args;
+    args << "-e";
+    args << "tell application \"Finder\"";
+    args << "-e";
+    args << "activate";
+    args << "-e";
+    args << "select POSIX file \"" + path + "\"";
+    args << "-e";
+    args << "end tell";
+    QProcess::startDetached("osascript", args);
+#else
+    // TODO: try to figure out open and select on Linux
+    QStringList args;
+    args << path;
+    QProcess::startDetached("xdg-open", args);
+#endif
+
+}
+
+void PmMatchConfigWidget::onRefreshButtonReleased()
+{
+    // TODO: make less hacky
+    std::string filename;
+    auto cfg = m_core->matchConfig(m_matchIndex);
+    filename = cfg.matchImgFilename;
+    cfg.matchImgFilename = "";
+    emit sigChangedMatchConfig(m_matchIndex, cfg);
+    cfg.matchImgFilename = filename;
+    emit sigChangedMatchConfig(m_matchIndex, cfg);
 }
 
 void PmMatchConfigWidget::onImgSuccess(
@@ -324,6 +454,28 @@ void PmMatchConfigWidget::onImgFailed(size_t matchIndex, std::string filename)
     }
     m_imgPathEdit->setText(imgStr);
     m_imgPathEdit->setStyleSheet("color: red");
+}
+
+void PmMatchConfigWidget::onCaptureStateChanged(
+    PmCaptureState capState, int x, int y)
+{
+    switch (capState) {
+    case PmCaptureState::Inactive:
+        m_buttonsStack->setCurrentIndex(0);
+        break;
+    case PmCaptureState::Activated:
+    case PmCaptureState::SelectBegin:
+    case PmCaptureState::SelectMoved:
+        m_buttonsStack->setCurrentIndex(1);
+        m_captureAcceptButton->setEnabled(false);
+        m_captureCancelButton->setEnabled(true);
+        break;
+    case PmCaptureState::SelectFinished:
+        m_buttonsStack->setCurrentIndex(1);
+        m_captureAcceptButton->setEnabled(true);
+        m_captureCancelButton->setEnabled(true);
+        break;
+    }
 }
 
 QColor PmMatchConfigWidget::toQColor(vec3 val)
@@ -372,7 +524,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
 {
     PmMatchConfig config = m_core->matchConfig(m_matchIndex);
     
-    std::string label = m_labelEdit->text().toUtf8().data();
+    //std::string label = m_labelEdit->text().toUtf8().data();
 
     std::string filename = m_imgPathEdit->text().toUtf8().data();
     size_t failedMarker = filename.find(k_failedImgStr);
@@ -380,7 +532,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
         filename.erase(failedMarker, strlen(k_failedImgStr)+1);
     }
     
-    config.label = label;
+    //config.label = label;
     config.matchImgFilename = filename;
     config.filterCfg.roi_left = m_posXBox->value();
     config.filterCfg.roi_bottom = m_posYBox->value();

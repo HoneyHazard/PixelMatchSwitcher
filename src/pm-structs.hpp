@@ -30,6 +30,15 @@ enum class PmPreviewMode : int {
     MatchImage=2
 };
 
+enum class PmCaptureState : unsigned char {
+    Inactive=0,
+    Activated=1,
+    SelectBegin=2,
+    SelectMoved=3,
+    SelectFinished=4,
+    Accepted=5
+};
+
 struct PmMatchResults
 {
     uint32_t matchImgWidth = 0, matchImgHeight = 0;
@@ -102,10 +111,17 @@ struct PmPreviewConfig
     bool operator!=(const PmPreviewConfig& other) const
         { return !operator==(other); }
 
+    // TODO: consider permanent cleanup of the parameters below
     PmPreviewMode previewMode = PmPreviewMode::Video;
     float previewVideoScale = 0.5f;
     float previewRegionScale = 0.5f;
     float previewMatchImageScale = 0.5f;
+};
+
+namespace PmConstants
+{
+    const QString k_imageFilenameFilter 
+        = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
 };
 
 

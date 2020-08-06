@@ -14,12 +14,15 @@
 #include <QTabWidget>
 #include <QSplitter>
 
+#include <QFileDialog>
+#include <QMessageBox>
+
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 
 PmDialog::PmDialog(PmCore *core, QWidget *parent)
 : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint 
-                | Qt::WindowCloseButtonHint)
+                | Qt::WindowCloseButtonHint | Qt::WindowMaximizeButtonHint)
 , m_core(core)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
@@ -42,6 +45,10 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
     leftLayout->addWidget(resultsWidget);
+    leftLayout->setStretch(0, 1);
+    leftLayout->setStretch(1, 1000);
+    leftLayout->setStretch(2, 1);
+    leftLayout->setStretch(3, 1);
     QWidget* leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 
@@ -56,6 +63,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     previewCfgWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     helpWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
+    previewWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QVBoxLayout* rightLayout = new QVBoxLayout;
     rightLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     rightLayout->setContentsMargins(0, 0, 0, 0);
@@ -72,21 +80,71 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     horizSplitter->setStretchFactor(1, 1000);
     horizSplitter->setCollapsible(1, false);
 
-    connect(horizSplitter, &QSplitter::splitterMoved,
-            previewWidget, &PmPreviewDisplayWidget::fixGeometry, 
-            Qt::QueuedConnection);
-
-    //static const char* splitterStyle
-    //    = "QSplitter::handle{background: black; height: 2px}";
-    //topLevelSplitter->setStyleSheet(splitterStyle);
-
     QVBoxLayout *topLevelLayout = new QVBoxLayout;
-    //topLevelLayout->addLayout(topLayout);
     topLevelLayout->addWidget(horizSplitter);
     setLayout(topLevelLayout);
+
+    setMinimumSize(200, 200);
+
+    // connections
+    connect(m_core, &PmCore::sigCaptureStateChanged,
+            this, &PmDialog::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigCapturedMatchImage,
+            this, &PmDialog::onCapturedMatchImage, Qt::QueuedConnection);
+
+    connect(this, &PmDialog::sigCaptureStateChanged,
+            m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(this, &PmDialog::sigChangedMatchConfig,
+            m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
+}
+
+void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
+{
+    if (state == PmCaptureState::Inactive) {
+        unsetCursor();
+    } else {
+        setCursor(Qt::CrossCursor);
+    }
+}
+
+void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
+{
+    QString saveFilename = QFileDialog::getSaveFileName(
+        this,
+        obs_module_text("Save New Match Image"),
+        "",
+        PmConstants::k_imageFilenameFilter);
+    
+    if (saveFilename.size()) {
+        bool ok = matchImg.save(saveFilename);
+        if (ok) {
+            size_t matchIndex = m_core->selectedConfigIndex();
+            auto matchCfg = m_core->matchConfig(matchIndex);
+
+            // force image reload in case filenames are same:
+            matchCfg.matchImgFilename = ""; 
+            emit sigChangedMatchConfig(matchIndex, matchCfg);
+
+            matchCfg.matchImgFilename = saveFilename.toUtf8().data();
+            matchCfg.filterCfg.roi_left = roiLeft;
+            matchCfg.filterCfg.roi_bottom = roiBottom;
+            emit sigChangedMatchConfig(matchIndex, matchCfg);
+            emit sigCaptureStateChanged(PmCaptureState::Inactive);
+        } else {
+            QString errMsg = QString(
+                obs_module_text("Unable to save file: %1")).arg(saveFilename);
+            QMessageBox::critical(
+                this, obs_module_text("Error"), errMsg);
+            emit sigCaptureStateChanged(PmCaptureState::SelectFinished);
+        }
+    } else {
+        emit sigCaptureStateChanged(PmCaptureState::SelectFinished);
+    }
 }
 
 void PmDialog::closeEvent(QCloseEvent*)
 {
+    emit sigCaptureStateChanged(PmCaptureState::Inactive);
+
     obs_frontend_save();
 }

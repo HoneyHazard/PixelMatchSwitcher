@@ -32,15 +32,17 @@ struct pm_match_entry_data
     uint32_t num_matched;
 };
 
+enum pm_filter_mode { PM_COUNT = 0, PM_VISUALIZE = 1, PM_SELECT_REGION = 2 };
+
 struct pm_filter_data
 {
     // plugin basics
     obs_source_t *context;
     gs_effect_t *effect;
-    obs_data_t *settings;
+    //obs_data_t *settings;
 
     // shader parameters and results
-    gs_eparam_t *param_visualize;
+    gs_eparam_t *param_show_color_indicator;
     gs_eparam_t *param_show_border;
     gs_eparam_t *param_px_width;
     gs_eparam_t *param_px_height;
@@ -64,14 +66,18 @@ struct pm_filter_data
 
     // dynamic data
     pthread_mutex_t mutex;
-    bool preview_mode;
-    bool show_border;
     size_t selected_match_index;
     uint32_t base_width;
     uint32_t base_height;
+    enum pm_filter_mode filter_mode;
 
-    // debug and visualization
-    bool visualize;
+    // selection mode and snapshot
+    uint32_t select_left, select_bottom, select_right, select_top;
+
+    bool request_snapshot;
+    gs_texrender_t* snapshot_texrender;
+    gs_stagesurf_t* snapshot_stagesurface;
+    uint8_t* snapshot_data;
 
     // callbacks for fast reactions
     void (*on_frame_processed)();

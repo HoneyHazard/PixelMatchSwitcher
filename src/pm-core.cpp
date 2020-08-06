@@ -569,6 +569,72 @@ void PmCore::onSwitchingEnabledChanged(bool enable)
     }
 }
 
+void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
+{
+    if (m_captureState == PmCaptureState::Inactive
+     && state == PmCaptureState::Inactive) 
+        return;
+
+    // TODO: verify state transitions
+    PmCaptureState prevState = m_captureState;
+    m_captureState = state;
+
+    if (state != PmCaptureState::Inactive) {
+        auto previewCfg = previewConfig();
+        if (previewCfg.previewMode != PmPreviewMode::Video) {
+            previewCfg.previewMode = PmPreviewMode::Video;
+            emit sigPreviewConfigChanged(previewCfg);
+        }
+    }
+
+    PmFilterRef filter;
+    pm_filter_data *filterData;
+
+    switch(state) {
+    case PmCaptureState::Inactive:
+        m_captureStartX = m_captureStartY = 0;
+        m_captureEndX = m_captureEndY = 0;
+        filter = activeFilterRef();
+        filterData = filter.filterData();
+        if (filterData) {
+            filter.lockData();
+            filterData->select_left = 0;
+            filterData->select_bottom = 0;
+            filterData->select_right = 0;
+            filterData->select_top = 0;
+            filter.unlockData();
+        }
+        break;
+    case PmCaptureState::SelectBegin:
+        m_captureStartX = x;
+        m_captureStartY = y;
+        break;
+    case PmCaptureState::SelectMoved:
+    case PmCaptureState::SelectFinished:
+        m_captureEndX = x;
+        m_captureEndY = y;
+        filter = activeFilterRef();
+        filterData = filter.filterData();
+        if (filterData) {
+            filter.lockData();
+            filterData->select_left = std::min(m_captureStartX, m_captureEndX);
+            filterData->select_bottom = std::min(m_captureStartY, m_captureEndY);
+            filterData->select_right = std::max(m_captureStartX, m_captureEndX);
+            filterData->select_top = std::max(m_captureStartY, m_captureEndY);
+            filter.unlockData();
+        }
+        break;
+    case PmCaptureState::Accepted:
+        filter = activeFilterRef();
+        filterData = filter.filterData();
+        if (filterData)
+            filterData->request_snapshot = true;
+        break;
+    }
+
+    emit sigCaptureStateChanged(m_captureState, x, y);
+}
+
 PmScenes PmCore::scenes() const
 {
     QMutexLocker locker(&m_scenesMutex);
@@ -761,6 +827,9 @@ void PmCore::updateActiveFilter()
             }
         }
         emit sigNewActiveFilter(m_activeFilter);
+        if (!m_activeFilter.isValid()) {
+            onCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
+        }
     }
 
     if (oldFilt.isValid()) {
@@ -897,7 +966,7 @@ void PmCore::onFrameProcessed()
 {
     PmMultiMatchResults newResults;
 
-    // fetch new results
+    // fetch new results and possible snapshots
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
     if (filterData) {
@@ -917,6 +986,27 @@ void PmCore::onFrameProcessed()
             newResult.isMatched
                 = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
         }
+
+        if (filterData->snapshot_data) {
+            QImage snapshotImg(
+                filterData->snapshot_data,
+                filterData->base_width,
+                filterData->base_height,
+                filterData->base_width * 4,
+                QImage::Format_RGBA8888);
+            int roiLeft = std::min(m_captureStartX, m_captureEndX);
+            int roiBottom = std::min(m_captureStartY, m_captureEndY);
+            int roiRight = std::max(m_captureStartX, m_captureEndX);
+            int roiTop = std::max(m_captureStartY, m_captureEndY);
+
+            QRect matchRect(
+                QPoint(roiLeft, roiBottom), QPoint(roiRight, roiTop));
+            QImage matchImg = snapshotImg.copy(matchRect);
+            emit sigCapturedMatchImage(matchImg, roiLeft, roiBottom);
+            bfree(filterData->snapshot_data);
+            filterData->snapshot_data = nullptr;
+        }
+
         fr.unlockData();
     }
 

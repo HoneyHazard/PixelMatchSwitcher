@@ -13,8 +13,8 @@ uniform float roi_bottom;
 uniform float roi_right;
 uniform float roi_top;
 
-uniform bool visualize;
 uniform bool show_border;
+uniform bool show_color_indicator;
 uniform float px_width;
 uniform float px_height;
 
@@ -52,20 +52,37 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     bool hbound = (u >= roi_left && u <= roi_right);
     bool vbound = (v >= roi_bottom && v <= roi_top);
 
-    if (!hbound || !vbound)
+    if (!hbound || !vbound) {
+        if (show_border && !show_color_indicator) {
+            // when in selection mode hide areas outside the region
+            val.r = val.r * 0.6;
+            val.g = val.g * 0.6;
+            val.b = val.b * 0.6;
+        }
         return val;
-
-    float2 sample_uv = (uv - float2(roi_left, roi_bottom))
-        / float2(roi_right - roi_left, roi_top - roi_bottom);
-    float4 cmp_val = match_img.Sample(def_sampler, sample_uv);
-    bool cmp_on;
-    if (mask_alpha) {
-        cmp_on = (cmp_val.a > 0);
-    } else {
-        cmp_on = cmp_val.x != mask_color.x 
-              || cmp_val.y != mask_color.y 
-              || cmp_val.z != mask_color.z;
     }
+
+    bool cmp_on;
+    float4 cmp_val;
+    if (show_border && !show_color_indicator) {
+        cmp_on = false;
+        //val.x = 0;
+        //val.y = 1;
+        //val.z = 0;
+        //val.w = 1;
+    } else {
+        float2 sample_uv = (uv - float2(roi_left, roi_bottom))
+            / float2(roi_right - roi_left, roi_top - roi_bottom);
+        cmp_val = match_img.Sample(def_sampler, sample_uv);
+        if (mask_alpha) {
+            cmp_on = (cmp_val.a > 0);
+        } else {
+            cmp_on = cmp_val.x != mask_color.x 
+                  || cmp_val.y != mask_color.y 
+                  || cmp_val.z != mask_color.z;
+        }
+    }
+
 
     if (cmp_on) {
         atomicCounterIncrement(compare_counter);
@@ -77,7 +94,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         atomicCounterIncrement(match_counter);
     }
 
-    if (visualize) {
+    if (show_border || show_color_indicator) {
         float border_width = px_width * 2.0, border_height = px_height * 2.0;
         if (show_border && vbound
           && (abs(u - roi_left) < border_width
@@ -91,7 +108,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
             // show inverted border for the ROI region
             val.xyz = float3(1, 1, 1) - val.xyz;
             val.w = 1;
-        } else if (cmp_on) {
+        } else if (show_color_indicator && cmp_on) {
             // show green or red hues, depending on a match/no match
             float intensity = 0.3 + (val.r + val.g + val.b) / 3.0 * 0.7;
             val = match_on ? float4(0, intensity, 0, 1)
@@ -99,7 +116,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         }
         // else: compare off, no border -> keep the passthrough value
     }
-
+    
     return val;
 }
 

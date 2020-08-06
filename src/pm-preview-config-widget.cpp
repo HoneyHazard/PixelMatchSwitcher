@@ -11,7 +11,7 @@
 #include <QLabel>
 
 PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
-: QGroupBox(obs_module_text("Preview Settings"), parent)
+: QGroupBox(obs_module_text("Preview Mode"), parent)
 , m_core(core)
 {
     // main layout
@@ -19,8 +19,8 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
     setLayout(mainLayout);
 
     // preview mode
-    QLabel* modeLabel = new QLabel(obs_module_text("Mode: "), this);
-    mainLayout->addWidget(modeLabel);
+    //QLabel* modeLabel = new QLabel(obs_module_text("Mode: "), this);
+    //mainLayout->addWidget(modeLabel);
 
     m_previewModeButtons = new QButtonGroup(this);
     m_previewModeButtons->setExclusive(true);
@@ -42,8 +42,9 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
     m_previewModeButtons->addButton(matchImgRadio, int(PmPreviewMode::MatchImage));
     mainLayout->addWidget(matchImgRadio);
 
+#if 0
     // some space inbetween
-    QSpacerItem* spacerItem = new QSpacerItem(50, 0);    
+    QSpacerItem* spacerItem = new QSpacerItem(50, 0);
     mainLayout->addItem(spacerItem);
 
     // preview scales
@@ -92,6 +93,7 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
         int(PmPreviewMode::MatchImage), m_matchImgScaleCombo);
 
     mainLayout->addWidget(m_previewScaleStack);
+#endif
 
     // core event handlers
     connect(m_core, &PmCore::sigSelectMatchIndex,
@@ -127,13 +129,14 @@ void PmPreviewConfigWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 
     int previewModeIdx = int(cfg.previewMode);
 
-    m_previewScaleStack->blockSignals(true);
-    m_previewScaleStack->setCurrentIndex(previewModeIdx);
-    m_previewScaleStack->blockSignals(false);
-
     m_previewModeButtons->blockSignals(true);
     m_previewModeButtons->button(previewModeIdx)->setChecked(true);
     m_previewModeButtons->blockSignals(false);
+
+#if 0
+    m_previewScaleStack->blockSignals(true);
+    m_previewScaleStack->setCurrentIndex(previewModeIdx);
+    m_previewScaleStack->blockSignals(false);
 
     m_videoScaleCombo->blockSignals(true);
     m_videoScaleCombo->setCurrentIndex(
@@ -149,6 +152,7 @@ void PmPreviewConfigWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
     m_matchImgScaleCombo->setCurrentIndex(
         m_matchImgScaleCombo->findData(cfg.previewMatchImageScale));
     m_matchImgScaleCombo->blockSignals(false);
+#endif
 }
 
 void PmPreviewConfigWidget::onNewActiveFilter(PmFilterRef ref)
@@ -182,6 +186,9 @@ void PmPreviewConfigWidget::onConfigUiChanged()
     PmPreviewConfig config = m_core->previewConfig();
 
     int previewModeIdx = m_previewModeButtons->checkedId();
+    config.previewMode = PmPreviewMode(previewModeIdx);
+
+#if 0
     m_previewScaleStack->setCurrentIndex(previewModeIdx);
     auto scaleCombo = m_previewScaleStack->widget(previewModeIdx);
     if (scaleCombo) {
@@ -195,6 +202,7 @@ void PmPreviewConfigWidget::onConfigUiChanged()
         = m_regionScaleCombo->currentData().toFloat();
     config.previewMatchImageScale
         = m_matchImgScaleCombo->currentData().toFloat();
+#endif
 
     emit sigPreviewConfigChanged(config);
 }
@@ -219,6 +227,8 @@ void PmPreviewConfigWidget::enableRegionViews(bool enable)
     imgButton->setVisible(enable);
     imgButton->setEnabled(enable);
 
+#if 0
     m_regionScaleCombo->setEnabled(enable);
     m_matchImgScaleCombo->setEnabled(enable);
+#endif
 }

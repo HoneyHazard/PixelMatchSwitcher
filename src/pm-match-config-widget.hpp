@@ -13,6 +13,7 @@ class QLineEdit;
 class QComboBox;
 class QSpinBox;
 class QDoubleSpinBox;
+class QStackedWidget;
 
 /*!
  * \brief UI tab that shows match settings, UI preview and preview settings
@@ -28,6 +29,7 @@ public:
 
 signals:
     void sigChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
+    void sigCaptureStateChanged(PmCaptureState capState, int x, int y);
 
 protected slots:
     // core interaction
@@ -38,10 +40,17 @@ protected slots:
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);
+    void onCaptureStateChanged(PmCaptureState capState, int x, int y);
 
     // UI element handlers
-    void onBrowseButtonReleased();
+    void onOpenFileButtonReleased();
+    void onOpenFolderButtonReleased();
+    void onRefreshButtonReleased();
+
     void onPickColorButtonReleased();
+    void onCaptureBeginReleased();
+    void onCaptureAcceptReleased();
+    void onCaptureCancelReleased();
 
     // parse UI state into config
     void onConfigUiChanged();
@@ -49,7 +58,6 @@ protected slots:
 protected:
     // UI assist
     static QColor toQColor(vec3 val);
-    //uint32_t toUInt32(QColor val);
     static vec3 toVec3(QColor val);
     void maskModeChanged(PmMaskMode mode, vec3 customColor);
     void roiRangesChanged(
@@ -61,6 +69,16 @@ protected:
 
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;
+
+    QStackedWidget* m_buttonsStack;
+    QPushButton* m_openFileButton;
+    QPushButton* m_editFileButton;
+    QPushButton* m_openFolderButton;
+    QPushButton* m_refreshButton;
+
+    QPushButton* m_captureBeginButton;
+    QPushButton* m_captureAcceptButton;
+    QPushButton* m_captureCancelButton;
 
     QLineEdit* m_labelEdit;
     QLineEdit* m_imgPathEdit;
