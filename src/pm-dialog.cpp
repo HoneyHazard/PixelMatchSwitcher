@@ -25,6 +25,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
                 | Qt::WindowCloseButtonHint)
 , m_core(core)
 {
+    setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
     setWindowTitle(obs_module_text("Pixel Match Switcher"));
     setAttribute(Qt::WA_DeleteOnClose, true);
 
