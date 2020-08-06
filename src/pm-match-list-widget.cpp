@@ -214,6 +214,9 @@ void PmMatchListWidget::onNewMultiMatchConfigSize(size_t sz)
 
     // enable/disable control buttons
     updateAvailableButtons((size_t)currentIndex(), sz);
+
+    // workaround for a buggy behavior that automatic resizing isn't handling
+    m_tableWidget->resizeColumnsToContents();
 }
 
 void PmMatchListWidget::onChangedMatchConfig(size_t index, PmMatchConfig cfg)
