@@ -92,7 +92,7 @@ signals:
     void sigSwitchingEnabledChanged(bool enable);
     void sigNewActiveFilter(PmFilterRef newAf);
 
-    void sigCaptureStateChanged(PmCaptureState capMode, int x, int y);
+    void sigCaptureStateChanged(PmCaptureState capMode, int x=0, int y=0);
     void sigCapturedMatchImage(QImage img, int roiLeft, int roiBottom);
 
 public slots:
@@ -114,7 +114,7 @@ public slots:
     void onRunningEnabledChanged(bool enable);
     void onSwitchingEnabledChanged(bool enable);
 
-    void onCaptureStateChanged(PmCaptureState capMode, int x, int y);
+    void onCaptureStateChanged(PmCaptureState capMode, int x=0, int y=0);
 
 protected slots:
     void onMenuAction();

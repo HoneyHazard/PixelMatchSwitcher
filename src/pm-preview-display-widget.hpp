@@ -23,7 +23,7 @@ public:
     ~PmPreviewDisplayWidget();
 
 signals:
-    void sigCaptureStateChanged(PmCaptureState state, int x, int y);
+    void sigCaptureStateChanged(PmCaptureState state, int x=0, int y=0);
 
 protected slots:
     // reaction to core events

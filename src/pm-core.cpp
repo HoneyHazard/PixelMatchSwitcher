@@ -63,9 +63,11 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
     size_t num = transitionList.sources.num;
     for (size_t i = 0; i < num; i++) {
         obs_source_t* src = transitionList.sources.array[i];
-        auto weakSrc = obs_source_get_weak_source(src);
-        auto name = obs_source_get_name(src);
-        ret.insert(name, weakSrc);
+        if (src) {
+            auto weakSrc = obs_source_get_weak_source(src);
+            auto name = obs_source_get_name(src);
+            ret.insert(name, weakSrc);
+        }
     }
     obs_frontend_source_list_free(&transitionList);
     return ret;
@@ -396,6 +398,8 @@ void PmCore::onMoveMatchConfigDown(size_t matchIndex)
 
 void PmCore::onSelectMatchIndex(size_t matchIndex)
 {   
+    onCaptureStateChanged(PmCaptureState::Inactive);
+
     m_selectedMatchIndex = matchIndex;
 
     auto fr = activeFilterRef();
@@ -406,8 +410,6 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
         fr.unlockData();
     }
     
-    emit sigSelectMatchIndex(matchIndex, matchConfig(matchIndex));
-
     if (!matchImageLoaded(matchIndex)) {
         auto previewCfg = previewConfig();
         previewCfg.previewMode = PmPreviewMode::Video;
@@ -828,7 +830,7 @@ void PmCore::updateActiveFilter()
         }
         emit sigNewActiveFilter(m_activeFilter);
         if (!m_activeFilter.isValid()) {
-            onCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
+            onCaptureStateChanged(PmCaptureState::Inactive);
         }
     }
 

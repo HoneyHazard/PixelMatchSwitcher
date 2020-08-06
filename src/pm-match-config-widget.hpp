@@ -29,7 +29,7 @@ public:
 
 signals:
     void sigChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
-    void sigCaptureStateChanged(PmCaptureState capState, int x, int y);
+    void sigCaptureStateChanged(PmCaptureState capState, int x=0, int y=0);
 
 protected slots:
     // core interaction

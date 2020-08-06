@@ -364,17 +364,17 @@ void PmMatchConfigWidget::onPickColorButtonReleased()
 
 void PmMatchConfigWidget::onCaptureBeginReleased()
 {
-    emit sigCaptureStateChanged(PmCaptureState::Activated, 0, 0);
+    emit sigCaptureStateChanged(PmCaptureState::Activated);
 }
 
 void PmMatchConfigWidget::onCaptureAcceptReleased()
 {
-    emit sigCaptureStateChanged(PmCaptureState::Accepted, 0, 0);
+    emit sigCaptureStateChanged(PmCaptureState::Accepted);
 }
 
 void PmMatchConfigWidget::onCaptureCancelReleased()
 {
-    emit sigCaptureStateChanged(PmCaptureState::Inactive, 0, 0);
+    emit sigCaptureStateChanged(PmCaptureState::Inactive);
 }
 
 void PmMatchConfigWidget::onOpenFileButtonReleased()
