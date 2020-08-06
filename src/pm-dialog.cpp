@@ -84,6 +84,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     topLevelLayout->addWidget(horizSplitter);
     setLayout(topLevelLayout);
 
+    setMinimumSize(200, 200);
+
     // connections
     connect(m_core, &PmCore::sigCaptureStateChanged,
             this, &PmDialog::onCaptureStateChanged, Qt::QueuedConnection);
