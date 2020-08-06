@@ -133,7 +133,8 @@ protected:
     void updateActiveFilter();
     void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
-    
+    void activeFilterChanged();
+
     void supplyImageToFilter(
         struct pm_filter_data *data, size_t matchIdx, const QImage &image);
 

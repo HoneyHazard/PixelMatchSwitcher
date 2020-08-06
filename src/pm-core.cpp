@@ -75,6 +75,7 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
 
 PmCore::PmCore()
 : m_matchConfigMutex(QMutex::Recursive)
+, m_filtersMutex(QMutex::Recursive)
 {
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
@@ -152,7 +153,7 @@ void PmCore::deactivate()
         oldAfr = m_activeFilter;
         m_activeFilter.reset();
         m_filters.clear();
-        emit sigNewActiveFilter(m_activeFilter);
+        activeFilterChanged();
     }
     if (oldAfr.isValid()) {
         auto data = oldAfr.filterData();
@@ -445,6 +446,9 @@ void PmCore::onPreviewConfigChanged(PmPreviewConfig cfg)
     QMutexLocker locker(&m_previewConfigMutex);
 
     if (m_previewConfig == cfg) return;
+
+    if (cfg.previewMode != PmPreviewMode::Video)
+        onCaptureStateChanged(PmCaptureState::Inactive);
 
     m_previewConfig = cfg;
     emit sigPreviewConfigChanged(cfg);
@@ -828,10 +832,7 @@ void PmCore::updateActiveFilter()
                 break;
             }
         }
-        emit sigNewActiveFilter(m_activeFilter);
-        if (!m_activeFilter.isValid()) {
-            onCaptureStateChanged(PmCaptureState::Inactive);
-        }
+        activeFilterChanged();
     }
 
     if (oldFilt.isValid()) {
@@ -935,6 +936,14 @@ void PmCore::activateMultiMatchConfig(const PmMultiMatchConfig& mCfg)
     onNoMatchSceneChanged(mCfg.noMatchScene);
     onNoMatchTransitionChanged(mCfg.noMatchTransition);
     onSelectMatchIndex(0);
+}
+
+void PmCore::activeFilterChanged()
+{
+    if (!m_activeFilter.isValid()) {
+        onCaptureStateChanged(PmCaptureState::Inactive);
+    }
+    emit sigNewActiveFilter(m_activeFilter);
 }
 
 void PmCore::onMenuAction()
