@@ -135,10 +135,17 @@ void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
                 obs_module_text("Unable to save file: %1")).arg(saveFilename);
             QMessageBox::critical(
                 this, obs_module_text("Error"), errMsg);
-            emit sigCaptureStateChanged(PmCaptureState::SelectFinished);
+            
+            // fallback to SelectFinished state
+            int x, y;
+            m_core->getCaptureEndXY(x, y);
+            emit sigCaptureStateChanged(PmCaptureState::SelectFinished, x, y);
         }
     } else {
-        emit sigCaptureStateChanged(PmCaptureState::SelectFinished);
+        // fallback to SelectFinished state
+        int x, y;
+        m_core->getCaptureEndXY(x, y);
+        emit sigCaptureStateChanged(PmCaptureState::SelectFinished, x, y);
     }
 }
 

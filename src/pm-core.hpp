@@ -70,6 +70,7 @@ public:
     inline bool runningEnabled() const { return m_runningEnabled; }
     inline bool switchingEnabled() const { return m_switchingEnabled; }
     inline PmCaptureState captureState() const { return m_captureState; }
+    void getCaptureEndXY(int& x, int& y) const;
 
 signals:
     void sigFrameProcessed();

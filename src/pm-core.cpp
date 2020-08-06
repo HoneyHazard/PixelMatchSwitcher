@@ -17,6 +17,8 @@
 #include <QTextStream>
 #include <QSet>
 
+//#include <QDebug>
+
 PmCore* PmCore::m_instance = nullptr;
 
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)
@@ -638,6 +640,23 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         break;
     }
 
+#if 0
+    QString capStr;
+    switch (m_captureState) {
+    case PmCaptureState::Inactive: capStr = "Inactive"; break;
+    case PmCaptureState::Activated: capStr = "Activated"; break;
+    case PmCaptureState::SelectBegin: capStr = "SelectBegin"; break;
+    case PmCaptureState::SelectMoved: capStr = "SelectMoved"; break;
+    case PmCaptureState::SelectFinished: capStr = "SelectFinished"; break;
+    case PmCaptureState::Accepted: capStr = "Accepted"; break;
+    }
+
+    qDebug() << QString("capture state: %1, startX = %2, startY = %3, "
+        "endX = %4, endY = %5")
+        .arg(capStr).arg(m_captureStartX).arg(m_captureStartY)
+        .arg(m_captureEndX).arg(m_captureEndY);
+#endif
+
     emit sigCaptureStateChanged(m_captureState, x, y);
 }
 
@@ -664,6 +683,12 @@ bool PmCore::matchImageLoaded(size_t matchIdx) const
         return false;
     else 
         return !m_matchImages[matchIdx].isNull();
+}
+
+void PmCore::getCaptureEndXY(int& x, int& y) const
+{
+    x = m_captureEndX;
+    y = m_captureEndY;
 }
 
 std::string PmCore::scenesInfo() const

@@ -221,9 +221,10 @@ obs_data_t* PmPreviewConfig::save() const
 bool PmPreviewConfig::operator==(const PmPreviewConfig& other) const
 {
     return previewMode == other.previewMode
-        && previewVideoScale == other.previewVideoScale
-        && previewRegionScale == other.previewRegionScale
-        && previewMatchImageScale == other.previewMatchImageScale;
+    //    && previewVideoScale == other.previewVideoScale
+    //    && previewRegionScale == other.previewRegionScale
+    //    && previewMatchImageScale == other.previewMatchImageScale
+    ;
 }
 
 void pmRegisterMetaTypes()

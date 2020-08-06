@@ -1,7 +1,7 @@
 #include "pm-debug-tab.hpp"
 #include "pm-core.hpp"
 
-#include <QGridLayout>
+#include <QFormLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QTextEdit>
@@ -17,81 +17,65 @@ PmDebugTab::PmDebugTab(
 , m_core(pixelMatcher)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher: Debug"));
-    QGridLayout *layout = new QGridLayout;
+    QFormLayout *mainLayout = new QFormLayout;
     int row = 0;
 
     QSizePolicy fixedPolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     QSizePolicy minimumPolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     // filters
-    QLabel *filtersLabel = new QLabel("Filters: ", this);
-    filtersLabel->setSizePolicy(fixedPolicy);
-    layout->addWidget(filtersLabel, row, 0);
-
     m_filtersStatusDisplay = new QLabel("--", this);
     m_filtersStatusDisplay->setSizePolicy(minimumPolicy);
-    layout->addWidget(m_filtersStatusDisplay, row++, 1);
+    mainLayout->addRow("Filters: ", m_filtersStatusDisplay);
 
     // active filter
-    QLabel *activeFilterLabel = new QLabel("Active Filter: ", this);
-    activeFilterLabel->setSizePolicy(fixedPolicy);
-    layout->addWidget(activeFilterLabel, row, 0);
-
     m_activeFilterDisplay = new QLabel("--", this);
     m_activeFilterDisplay->setSizePolicy(minimumPolicy);
-    layout->addWidget(m_activeFilterDisplay, row++, 1);
+    mainLayout->addRow("Active Filter: ", m_activeFilterDisplay);
 
     // source/filter resolution
-    QLabel *sourceResLabel = new QLabel("Source Resolution: ", this);
-    sourceResLabel->setSizePolicy(fixedPolicy);
-    layout->addWidget(sourceResLabel, row, 0);
-
     m_sourceResDisplay = new QLabel("--", this);
     m_sourceResDisplay->setSizePolicy(minimumPolicy);
-    layout->addWidget(m_sourceResDisplay, row++, 1);
+    mainLayout->addRow("Source Resolution: ", m_sourceResDisplay);
 
     // filter data resolution
-    QLabel *filterDataResLabel = new QLabel("Data Resolution ", this);
-    filterDataResLabel->setSizePolicy(fixedPolicy);
-    layout->addWidget(filterDataResLabel, row, 0);
-
     m_filterDataResDisplay = new QLabel("--");
     m_filterDataResDisplay->setSizePolicy(minimumPolicy);
-    layout->addWidget(m_filterDataResDisplay, row++, 1);
+    mainLayout->addRow("Data Resolution: ", m_filterDataResDisplay);
 
     // number matched
-    QLabel *numMatchedLabel = new QLabel("Number Matched ", this);
-    numMatchedLabel->setSizePolicy(fixedPolicy);
-    layout->addWidget(numMatchedLabel, row, 0);
-
     m_matchCountDisplay = new QLabel("--", this);
     m_matchCountDisplay->setSizePolicy(minimumPolicy);
-    layout->addWidget(m_matchCountDisplay, row++, 1);
+    mainLayout->addRow("Number Matched: ", m_matchCountDisplay);
 
     // capture state
-    QLabel* captureLabel = new QLabel("Capture State ", this);
-    captureLabel->setSizePolicy(fixedPolicy);
-    layout->addWidget(captureLabel, row, 0);
-
     m_captureStateDisplay = new QLabel("--", this);
     m_captureStateDisplay->setSizePolicy(minimumPolicy);
-    layout->addWidget(m_captureStateDisplay, row++, 1);
+    mainLayout->addRow("Capture State: ", m_captureStateDisplay);
+
+    // preview mode
+    m_previewModeDisplay = new QLabel("--", this);
+    m_previewModeDisplay->setSizePolicy(minimumPolicy);
+    mainLayout->addRow("Preview Mode: ", m_previewModeDisplay);
 
     // find button
     QPushButton *scenesInfoButton = new QPushButton("Scenes Info", this);
     connect(scenesInfoButton, &QPushButton::released,
             this, &PmDebugTab::scenesInfoReleased);
-    layout->addWidget(scenesInfoButton, row++, 0);
+
+    // buttons (in case there will be more)
+    QHBoxLayout* buttonsLayout = new QHBoxLayout;
+    buttonsLayout->addWidget(scenesInfoButton);
+    mainLayout->addRow(buttonsLayout);
 
     // text display
     m_textDisplay = new QTextEdit(this);
     m_textDisplay->setReadOnly(true);
     m_textDisplay->setSizePolicy(
         QSizePolicy::Expanding, QSizePolicy::Expanding);
-    layout->addWidget(m_textDisplay, row, 0, 2, 2);
-    row += 2;
+    mainLayout->addRow(m_textDisplay);
 
-    setLayout(layout);
+    setLayout(mainLayout);
 
     // periodic update timer
     QTimer *timer = new QTimer(this);
@@ -163,4 +147,13 @@ void PmDebugTab::periodicUpdate()
     case PmCaptureState::Accepted: capStr = "Accepted"; break;
     }
     m_captureStateDisplay->setText(capStr);
+
+    auto previewMode = m_core->previewConfig().previewMode;
+    QString previewModeStr;
+    switch (previewMode) {
+    case PmPreviewMode::Video: previewModeStr = "Video"; break;
+    case PmPreviewMode::Region: previewModeStr = "Region"; break;
+    case PmPreviewMode::MatchImage: previewModeStr = "Match Image"; break;
+    }
+    m_previewModeDisplay->setText(previewModeStr);
 }
