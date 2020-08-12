@@ -591,7 +591,7 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         auto previewCfg = previewConfig();
         if (previewCfg.previewMode != PmPreviewMode::Video) {
             previewCfg.previewMode = PmPreviewMode::Video;
-            emit sigPreviewConfigChanged(previewCfg);
+            onPreviewConfigChanged(previewCfg);
         }
     }
 
