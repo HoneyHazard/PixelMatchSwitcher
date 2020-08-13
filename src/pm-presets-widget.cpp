@@ -119,7 +119,8 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
     setTitle(dirty ? obs_module_text("Preset (*)") : obs_module_text("Preset"));
 }
 
-QPushButton* PmPresetsWidget::prepareButton(const char* tooltip, const char* icoPath)
+QPushButton* PmPresetsWidget::prepareButton(
+    const char* tooltip, const char* icoPath)
 {
     QIcon icon;
     icon.addFile(icoPath, QSize(), QIcon::Normal, QIcon::Off);
