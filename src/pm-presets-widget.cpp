@@ -139,6 +139,20 @@ QPushButton* PmPresetsWidget::prepareButton(const char* tooltip, const char* ico
 void PmPresetsWidget::onPresetSelected()
 {
     std::string selPreset = m_presetCombo->currentText().toUtf8().data();
+    std::string activePreset = m_core->activeMatchPresetName();
+
+    if (activePreset.size() && selPreset != activePreset
+     && m_core->matchConfigDirty()) {
+        int ret = QMessageBox::warning(this,
+            obs_module_text("Unsaved changes"),
+            obs_module_text("Unsaved changes will be lost.\nProceed?"),
+            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+        if (ret != QMessageBox::Yes) {
+            m_presetCombo->setCurrentText(activePreset.data());
+            return;
+        }
+    }
+
     emit sigSelectActiveMatchPreset(selPreset);
 }
 
