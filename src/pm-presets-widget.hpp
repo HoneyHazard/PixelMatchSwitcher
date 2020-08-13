@@ -23,6 +23,7 @@ signals:
 protected slots:
     // local UI handlers
     void onPresetSelected();
+    void onPresetRevert();
     void onPresetSave();
     void onPresetSaveAs();
     void onConfigReset();
@@ -41,6 +42,7 @@ protected:
     PmCore* m_core;
 
     QComboBox* m_presetCombo;
+    QPushButton* m_presetRevertButton;
     QPushButton* m_presetSaveButton;
     QPushButton* m_presetSaveAsButton;
     QPushButton* m_presetResetButton;

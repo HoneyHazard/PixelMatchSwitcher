@@ -42,6 +42,13 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onPresetSaveAs, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetSaveAsButton);
 
+    m_presetRevertButton = prepareButton(obs_module_text("Revert Changes"),
+        ":/res/images/revert.svg");
+    m_presetRevertButton->setProperty("themeID", QVariant("revertIcon"));
+    connect(m_presetRevertButton, &QPushButton::released,
+        this, &PmPresetsWidget::onPresetRevert, Qt::QueuedConnection);
+    presetLayout->addWidget(m_presetRevertButton);
+
     m_presetResetButton = prepareButton(obs_module_text("New Configuration"),
         ":/res/images/icons8-file.svg");
     connect(m_presetResetButton, &QPushButton::released,
@@ -115,6 +122,7 @@ void PmPresetsWidget::onActivePresetChanged()
 void PmPresetsWidget::onActivePresetDirtyStateChanged()
 {
     bool dirty = m_core->matchConfigDirty();
+    m_presetRevertButton->setEnabled(dirty);
     m_presetSaveButton->setEnabled(dirty);
     setTitle(dirty ? obs_module_text("Preset (*)") : obs_module_text("Preset"));
 }
@@ -155,6 +163,16 @@ void PmPresetsWidget::onPresetSelected()
     }
 
     emit sigSelectActiveMatchPreset(selPreset);
+}
+
+void PmPresetsWidget::onPresetRevert()
+{
+    // TODO: make less hacky
+    std::string presetName = m_core->activeMatchPresetName();
+    if (presetName.size() && m_core->matchConfigDirty()) {
+        emit sigSelectActiveMatchPreset("");
+        emit sigSelectActiveMatchPreset(presetName);
+    }
 }
 
 void PmPresetsWidget::onPresetSave()
