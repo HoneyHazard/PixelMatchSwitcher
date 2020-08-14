@@ -4,6 +4,7 @@
 #include <QPointer>
 
 #include "pm-structs.hpp"
+#include "pm-filter-ref.hpp"
 
 class PmCore;
 
@@ -37,6 +38,7 @@ protected slots:
     void onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
     void onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg);
     void onNewMultiMatchConfigSize(size_t sz);
+    void onNewActiveFilter(PmFilterRef newAf);
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);

@@ -215,6 +215,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onNewMultiMatchConfigSize, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigCaptureStateChanged,
             this, &PmMatchConfigWidget::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNewActiveFilter,
+            this, &PmMatchConfigWidget::onNewActiveFilter, Qt::QueuedConnection);
 
     // local signals -> core
     connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
@@ -228,6 +230,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onCaptureStateChanged(m_core->captureState(), 0, 0);
+    onNewActiveFilter(m_core->activeFilterRef());
 }
 
 void PmMatchConfigWidget::onSelectMatchIndex(
@@ -261,6 +264,10 @@ void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
     setEnabled(m_matchIndex < m_multiConfigSz);
 }
 
+void PmMatchConfigWidget::onNewActiveFilter(PmFilterRef newAf)
+{
+    m_captureBeginButton->setEnabled(newAf.isValid());
+}
 
 void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
 {
