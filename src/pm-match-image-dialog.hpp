@@ -22,7 +22,6 @@ public:
 
 protected slots:
     void onSaveReleased();
-    void onCancelReleased();
 
 protected:
     std::string m_saveLocation;

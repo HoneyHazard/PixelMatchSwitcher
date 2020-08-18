@@ -4,6 +4,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QMessageBox>
 
 PmMatchImageDialog::PmMatchImageDialog(
     const QImage& image, QWidget* parent)
@@ -26,7 +28,7 @@ PmMatchImageDialog::PmMatchImageDialog(
     QPushButton* cancelButton = new QPushButton(
         obs_module_text("Cancel"), this);
     connect(cancelButton, &QPushButton::released,
-            this, &PmMatchImageDialog::onCancelReleased, Qt::QueuedConnection);
+            this, &QDialog::reject, Qt::QueuedConnection);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->addWidget(saveButton);
@@ -43,10 +45,23 @@ PmMatchImageDialog::PmMatchImageDialog(
 
 void PmMatchImageDialog::onSaveReleased()
 {
+    QString saveFilename = QFileDialog::getSaveFileName(
+        this,
+        obs_module_text("Save New Match Image"),
+        "",
+        PmConstants::k_imageFilenameFilter);
 
+    if (saveFilename.size()) {
+        bool ok = m_image.save(saveFilename);
+        if (ok) {
+            m_saveLocation = saveFilename.toUtf8();
+            accept();
+        } else {
+            QString errMsg = QString(
+                obs_module_text("Unable to save file: %1")).arg(saveFilename);
+            QMessageBox::critical(
+                this, obs_module_text("Error"), errMsg);
+        }
+    }
 }
 
-void PmMatchImageDialog::onCancelReleased()
-{
-
-}
