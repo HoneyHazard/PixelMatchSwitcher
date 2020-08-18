@@ -14,6 +14,8 @@ PmMatchImageDialog::PmMatchImageDialog(
 , m_scene(new QGraphicsScene(this))
 , m_view(new QGraphicsView(m_scene, this))
 {
+    setWindowTitle(obs_module_text("Match Image Preview"));
+
     // image view
     QPixmap pixMap = QPixmap::fromImage(image);
     auto* item = new QGraphicsPixmapItem(pixMap);
