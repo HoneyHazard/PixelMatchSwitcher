@@ -7,6 +7,7 @@
 #include "pm-match-results-widget.hpp"
 #include "pm-preview-config-widget.hpp"
 #include "pm-preview-display-widget.hpp"
+#include "pm-match-image-dialog.hpp"
 #include "pm-help-widget.hpp"
 #include "pm-filter.h"
 
@@ -109,6 +110,11 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
 
 void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
 {
+    PmMatchImageDialog* mid = new PmMatchImageDialog(matchImg, this);
+    mid->exec();
+
+    return;
+
     QString saveFilename = QFileDialog::getSaveFileName(
         this,
         obs_module_text("Save New Match Image"),
