@@ -88,6 +88,15 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onCaptureAcceptReleased);
     imgControlLayout1->addWidget(m_captureAcceptButton);
 
+    m_captureAutomaskButton = new QPushButton(
+        obs_module_text("Auto-Mask"), this);
+    m_captureAutomaskButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureAutomaskButton, &QPushButton::pressed,
+            this, &PmMatchConfigWidget::onCaptureAutomaskPressed);
+    connect(m_captureAutomaskButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureAutomaskReleased);
+    imgControlLayout1->addWidget(m_captureAutomaskButton);
+
     m_captureCancelButton = new QPushButton(
         obs_module_text("Cancel Capture"), this);
     m_captureCancelButton->setFocusPolicy(Qt::NoFocus);
@@ -374,6 +383,17 @@ void PmMatchConfigWidget::onCaptureBeginReleased()
     emit sigCaptureStateChanged(PmCaptureState::Activated);
 }
 
+void PmMatchConfigWidget::onCaptureAutomaskPressed()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Automask);
+}
+
+void PmMatchConfigWidget::onCaptureAutomaskReleased()
+{
+    // TODO: what happens?
+    emit sigCaptureStateChanged(PmCaptureState::Inactive);
+}
+
 void PmMatchConfigWidget::onCaptureAcceptReleased()
 {
     emit sigCaptureStateChanged(PmCaptureState::Accepted);
@@ -475,10 +495,12 @@ void PmMatchConfigWidget::onCaptureStateChanged(
     case PmCaptureState::SelectMoved:
         m_buttonsStack->setCurrentIndex(1);
         m_captureAcceptButton->setEnabled(false);
+        m_captureAutomaskButton->setEnabled(false);
         m_captureCancelButton->setEnabled(true);
         break;
     case PmCaptureState::SelectFinished:
         m_buttonsStack->setCurrentIndex(1);
+        m_captureAcceptButton->setEnabled(true);
         m_captureAcceptButton->setEnabled(true);
         m_captureCancelButton->setEnabled(true);
         break;

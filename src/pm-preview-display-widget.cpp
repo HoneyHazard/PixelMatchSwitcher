@@ -263,10 +263,19 @@ void PmPreviewDisplayWidget::drawEffect()
     gs_ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, -100.0f, 100.0f);
     gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
 
+    auto captureState = m_core->captureState();
+    enum pm_filter_mode filterMode;
+    switch (captureState) {
+    case PmCaptureState::Automask:
+        filterMode = PM_MASK_VISUALIZE; break;
+    case PmCaptureState::Inactive:
+        filterMode = PM_MASK_VISUALIZE; break;
+    default:
+        filterMode = PM_SELECT_REGION; break;
+    }
+
     filterRef.lockData();
-    filterData->filter_mode =
-        (m_core->captureState() == PmCaptureState::Inactive) ? PM_VISUALIZE
-                                                             : PM_SELECT_REGION;
+    filterData->filter_mode = filterMode;
     filterRef.unlockData();
 
     obs_source_video_render(renderSrc);

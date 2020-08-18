@@ -15,6 +15,7 @@ uniform float roi_top;
 
 uniform bool show_border;
 uniform bool show_color_indicator;
+uniform bool store_match_alpha;
 uniform float px_width;
 uniform float px_height;
 
@@ -66,10 +67,6 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     float4 cmp_val;
     if (show_border && !show_color_indicator) {
         cmp_on = false;
-        //val.x = 0;
-        //val.y = 1;
-        //val.z = 0;
-        //val.w = 1;
     } else {
         float2 sample_uv = (uv - float2(roi_left, roi_bottom))
             / float2(roi_right - roi_left, roi_top - roi_bottom);
@@ -92,6 +89,8 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         = (cmp_on && match_ratio(val.xyz, cmp_val.xyz) <= per_pixel_err_thresh);
     if (match_on) {
         atomicCounterIncrement(match_counter);
+    } else if (store_match_alpha) {
+        val.w = 0;
     }
 
     if (show_border || show_color_indicator) {

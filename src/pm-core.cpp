@@ -633,6 +633,7 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         }
         break;
     case PmCaptureState::Accepted:
+    case PmCaptureState::Automask:
         filter = activeFilterRef();
         filterData = filter.filterData();
         if (filterData)
@@ -1005,6 +1006,7 @@ void PmCore::onFrameProcessed()
     // fetch new results and possible snapshots
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
+    auto capState = captureState();
     if (filterData) {
         fr.lockData();
         newResults.resize(filterData->num_match_entries);
@@ -1038,9 +1040,11 @@ void PmCore::onFrameProcessed()
             QRect matchRect(
                 QPoint(roiLeft, roiBottom), QPoint(roiRight, roiTop));
             QImage matchImg = snapshotImg.copy(matchRect);
-            emit sigCapturedMatchImage(matchImg, roiLeft, roiBottom);
             bfree(filterData->snapshot_data);
             filterData->snapshot_data = nullptr;
+            if (capState == PmCaptureState::Accepted) {
+                emit sigCapturedMatchImage(matchImg, roiLeft, roiBottom);
+            }
         }
 
         fr.unlockData();

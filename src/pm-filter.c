@@ -167,6 +167,58 @@ void render_select_region(struct pm_filter_data* filter)
         filter->base_width, filter->base_height);
 }
 
+void render_mask(struct pm_filter_data* filter)
+{
+    if (!obs_source_process_filter_begin(
+        filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+        blog(LOG_ERROR,
+            "pm_filter_data: obs_source_process_filter_begin failed.");
+        return;
+    }
+
+    gs_texrender_t* stx = filter->snapshot_texrender;
+    if (!stx) {
+        blog(LOG_ERROR, "pm_filter_data: snapshot texrender not available.");
+        return;
+    }
+    gs_texture_t* tex = gs_texrender_get_texture(stx);
+    if (!tex) {
+        blog(LOG_ERROR, "pm_filter_data: snapshot texture not available");
+        return;
+    }
+
+    float roi_left_u
+        = (float)(filter->select_left) / (float)(filter->base_width);
+    float roi_bottom_v
+        = (float)(filter->select_bottom) / (float)(filter->base_height);
+    float roi_right_u
+        = (float)(filter->select_right) / (float)(filter->base_width);
+    float roi_top_v
+        = (float)(filter->select_top) / (float)(filter->base_height);
+
+    bool visualize = (filter->filter_mode == PM_MASK_VISUALIZE);
+
+    gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
+    gs_effect_set_atomic_uint(filter->param_match_counter, 0);
+    gs_effect_set_float(filter->param_roi_left, roi_left_u);
+    gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
+    gs_effect_set_float(filter->param_roi_right, roi_right_u);
+    gs_effect_set_float(filter->param_roi_top, roi_top_v);
+    gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
+    gs_effect_set_bool(filter->param_mask_alpha, true);
+    gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
+    gs_effect_set_texture(filter->param_match_img, tex);
+    gs_effect_set_bool(filter->param_show_border, visualize);
+    gs_effect_set_bool(filter->param_show_color_indicator, visualize);
+    gs_effect_set_float(filter->param_px_width,
+        4.f / (float)(filter->base_width));
+    gs_effect_set_float(filter->param_px_height,
+        4.f / (float)(filter->base_height));
+
+    obs_source_process_filter_end(filter->context, filter->effect,
+        filter->base_width, filter->base_height);
+}
+
 void render_passthrough(struct pm_filter_data* filter)
 {
     // no match entries to display; just do passthrough
@@ -186,7 +238,7 @@ void render_match_entries(struct pm_filter_data* filter)
     for (size_t i = 0; i < filter->num_match_entries; ++i) {
         struct pm_match_entry_data* entry = filter->match_entries + i;
 
-        if (filter->filter_mode == PM_VISUALIZE
+        if (filter->filter_mode == PM_MATCH_VISUALIZE
             && i != filter->selected_match_index) {
             // visualize mode only renders the selected match entry
             continue;
@@ -220,7 +272,7 @@ void render_match_entries(struct pm_filter_data* filter)
             + (float)(entry->match_img_width) / (float)(filter->base_width);
         float roi_top_v = roi_bottom_v
             + (float)(entry->match_img_height) / (float)(filter->base_height);
-        bool visualize = (filter->filter_mode == PM_VISUALIZE);
+        bool visualize = (filter->filter_mode == PM_MATCH_VISUALIZE);
 
         gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
         gs_effect_set_atomic_uint(filter->param_match_counter, 0);
@@ -243,7 +295,7 @@ void render_match_entries(struct pm_filter_data* filter)
         obs_source_process_filter_end(filter->context, filter->effect,
             filter->base_width, filter->base_height);
 
-        if (filter->filter_mode == PM_COUNT) {
+        if (filter->filter_mode == PM_MATCH) {
             entry->num_compared =
                 gs_effect_get_atomic_uint_result(filter->result_compare_counter);
             entry->num_matched =
@@ -308,16 +360,14 @@ void capture_snapshot(
     }
 
     gs_blend_state_pop();
-    gs_texture_t* tex = gs_texrender_get_texture(*stx);
 
-    if (tex) {
-        gs_stage_texture(*sss, tex);
-        uint8_t* data;
-        uint32_t linesize;
-        if (gs_stagesurface_map(*sss, &data, &linesize)) {
-            memcpy(filter->snapshot_data, data, snapshot_sz);
-            gs_stagesurface_unmap(*sss);
-        }
+    gs_texture_t* tex = gs_texrender_get_texture(*stx);
+    gs_stage_texture(*sss, tex);
+    uint8_t* data;
+    uint32_t linesize;
+    if (gs_stagesurface_map(*sss, &data, &linesize)) {
+        memcpy(filter->snapshot_data, data, snapshot_sz);
+        gs_stagesurface_unmap(*sss);
     }
 }
 
@@ -325,8 +375,10 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 {
     struct pm_filter_data *filter = data;
     obs_source_t *target, *parent;
+    enum pm_filter_mode prevMode;
 
     pthread_mutex_lock(&filter->mutex);
+    prevMode = filter->filter_mode;
 
     target = obs_filter_get_target(filter->context);
     parent = obs_filter_get_parent(filter->context);
@@ -346,8 +398,14 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         goto done;
     }
 
+    if (filter->filter_mode == PM_MASK 
+     || filter->filter_mode == PM_MASK_VISUALIZE) {
+        render_mask(filter);
+        goto snapshot;
+    }
+
     if (filter->num_match_entries == 0 
-     || filter->filter_mode == PM_VISUALIZE 
+     || filter->filter_mode == PM_MATCH_VISUALIZE 
      && filter->selected_match_index >= filter->num_match_entries) {
         render_passthrough(filter);
         goto done;
@@ -355,21 +413,25 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     render_match_entries(filter);
 
-    if (filter->request_snapshot) {
+snapshot:
+    if (filter->request_snapshot || filter->filter_mode == PM_MASK) {
         // do a specialized passthrough to render and extract snapshot data
         capture_snapshot(filter, target, parent);
         filter->request_snapshot = false;
     }
 
 done:
+    if (filter->filter_mode == PM_MATCH_VISUALIZE)
+        filter->filter_mode = PM_MATCH;
+    else if (filter->filter_mode == PM_MASK_VISUALIZE)
+        filter->filter_mode = PM_MASK;
     pthread_mutex_unlock(&filter->mutex);
 
-    if (filter->filter_mode == PM_COUNT
-     && filter->num_match_entries > 0
-     && filter->on_frame_processed) {
+    if (filter->on_frame_processed
+    && (prevMode == PM_MASK 
+     || prevMode == PM_MATCH && filter->num_match_entries > 0)) {
         filter->on_frame_processed();
     }
-    filter->filter_mode = PM_COUNT;
 
     UNUSED_PARAMETER(effect);
 }

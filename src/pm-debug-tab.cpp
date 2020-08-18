@@ -33,6 +33,11 @@ PmDebugTab::PmDebugTab(
     m_activeFilterDisplay->setSizePolicy(minimumPolicy);
     mainLayout->addRow("Active Filter: ", m_activeFilterDisplay);
 
+    // filter mode
+    m_filterModeDisplay = new QLabel("--", this);
+    m_filterModeDisplay->setSizePolicy(minimumPolicy);
+    mainLayout->addRow("Filter Mode: ", m_filterModeDisplay);
+
     // source/filter resolution
     m_sourceResDisplay = new QLabel("--", this);
     m_sourceResDisplay->setSizePolicy(minimumPolicy);
@@ -136,24 +141,51 @@ void PmDebugTab::periodicUpdate()
         m_matchCountDisplay->setText("--");
     }
 
-    auto capState = m_core->captureState();
-    QString capStr;
-    switch(capState) {
-    case PmCaptureState::Inactive: capStr = "Inactive"; break;
-    case PmCaptureState::Activated: capStr = "Activated"; break;
-    case PmCaptureState::SelectBegin: capStr = "SelectBegin"; break;
-    case PmCaptureState::SelectMoved: capStr = "SelectMoved"; break;
-    case PmCaptureState::SelectFinished: capStr = "SelectFinished"; break;
-    case PmCaptureState::Accepted: capStr = "Accepted"; break;
-    }
-    m_captureStateDisplay->setText(capStr);
+    {
+        QString filterModeStr;
+        if (fi.isValid()) {
+            fi.lockData();
+            auto filterMode = fi.filterData()->filter_mode;
+            fi.unlockData();
 
-    auto previewMode = m_core->previewConfig().previewMode;
-    QString previewModeStr;
-    switch (previewMode) {
-    case PmPreviewMode::Video: previewModeStr = "Video"; break;
-    case PmPreviewMode::Region: previewModeStr = "Region"; break;
-    case PmPreviewMode::MatchImage: previewModeStr = "Match Image"; break;
+            switch (filterMode) {
+            case PM_MATCH: filterModeStr = "PM_MATCH"; break;
+            case PM_MATCH_VISUALIZE: filterModeStr = "PM_MATCH_VISUALIZE"; break;
+            case PM_SELECT_REGION: filterModeStr = "PM_SELECT_REGION"; break;
+            case PM_MASK: filterModeStr = "PM_MASK"; break;
+            case PM_MASK_VISUALIZE: filterModeStr = "PM_MASK_VISUALIZE"; break;
+            default: 
+                filterModeStr = QString("Unknown (%1)").arg((int)filterMode);
+            }
+            m_filterModeDisplay->setText(filterModeStr);
+        }
     }
-    m_previewModeDisplay->setText(previewModeStr);
+
+    {
+        auto capState = m_core->captureState();
+        QString capStr;
+        switch (capState) {
+        case PmCaptureState::Inactive: capStr = "Inactive"; break;
+        case PmCaptureState::Activated: capStr = "Activated"; break;
+        case PmCaptureState::SelectBegin: capStr = "SelectBegin"; break;
+        case PmCaptureState::SelectMoved: capStr = "SelectMoved"; break;
+        case PmCaptureState::SelectFinished: capStr = "SelectFinished"; break;
+        case PmCaptureState::Accepted: capStr = "Accepted"; break;
+        case PmCaptureState::Automask: capStr = "Automask"; break;
+        default: capStr = QString("Unknown (%1)").arg((int)capState);
+        }
+        m_captureStateDisplay->setText(capStr);
+    }
+
+    {
+        auto previewMode = m_core->previewConfig().previewMode;
+        QString previewModeStr;
+        switch (previewMode) {
+        case PmPreviewMode::Video: previewModeStr = "Video"; break;
+        case PmPreviewMode::Region: previewModeStr = "Region"; break;
+        case PmPreviewMode::MatchImage: previewModeStr = "Match Image"; break;
+        default: previewModeStr = QString("Unknown (%1)").arg((int)previewMode);
+        }
+        m_previewModeDisplay->setText(previewModeStr);
+    }
 }

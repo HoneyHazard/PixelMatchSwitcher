@@ -32,7 +32,10 @@ struct pm_match_entry_data
     uint32_t num_matched;
 };
 
-enum pm_filter_mode { PM_COUNT = 0, PM_VISUALIZE = 1, PM_SELECT_REGION = 2 };
+enum pm_filter_mode { 
+    PM_MATCH = 0, PM_MATCH_VISUALIZE = 1, PM_SELECT_REGION = 2, 
+    PM_MASK = 3, PM_MASK_VISUALIZE = 4,
+};
 
 struct pm_filter_data
 {
