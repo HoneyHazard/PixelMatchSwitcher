@@ -501,7 +501,7 @@ void PmMatchConfigWidget::onCaptureStateChanged(
     case PmCaptureState::SelectFinished:
         m_buttonsStack->setCurrentIndex(1);
         m_captureAcceptButton->setEnabled(true);
-        m_captureAcceptButton->setEnabled(true);
+        m_captureAutomaskButton->setEnabled(true);
         m_captureCancelButton->setEnabled(true);
         break;
     }
