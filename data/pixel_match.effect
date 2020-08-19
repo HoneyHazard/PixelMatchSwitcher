@@ -40,7 +40,7 @@ VertInOut VSDefault(VertInOut vert_in)
 {
     VertInOut vert_out;
     vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
-    vert_out.uv  = vert_in.uv;
+    vert_out.uv  = vert_in.uv; 
     return vert_out;
 }
 
@@ -81,16 +81,15 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     }
 
 
+    bool match_on = false;
     if (cmp_on) {
         atomicCounterIncrement(compare_counter);
-    }
-
-    bool match_on
-        = (cmp_on && match_ratio(val.xyz, cmp_val.xyz) <= per_pixel_err_thresh);
-    if (match_on) {
-        atomicCounterIncrement(match_counter);
-    } else if (store_match_alpha) {
-        val.w = 0;
+        match_on = (match_ratio(val.xyz, cmp_val.xyz) <= per_pixel_err_thresh);
+        if (match_on) {
+            atomicCounterIncrement(match_counter);
+        } else if (store_match_alpha) {
+            val.w = 0;
+        }
     }
 
     if (show_border || show_color_indicator) {
