@@ -333,12 +333,6 @@ void capture_snapshot(
             filter->base_width, filter->base_height, GS_RGBA);
     }
 
-    if (filter->snapshot_data)
-        bfree(filter->snapshot_data);
-    size_t snapshot_sz
-        = (size_t)filter->base_width * (size_t)filter->base_height * 4;
-    filter->snapshot_data = (uint8_t*)bmalloc(snapshot_sz); // rgba
-
     // https://github.com/synap5e/obs-screenshot-plugin/blob/master/screenshot-filter.c
 
     gs_texrender_reset(*stx);
@@ -366,12 +360,29 @@ void capture_snapshot(
 
     gs_blend_state_pop();
 
+
+    const size_t pixSz = 4;
+    size_t scanWidth =
+        (size_t)(filter->select_right - filter->select_left) * pixSz;
+    size_t scanHeight = filter->select_top - filter->select_bottom;
+
+    if (filter->snapshot_data)
+        bfree(filter->snapshot_data);
+    filter->snapshot_data = (uint8_t*)bmalloc(scanWidth * scanHeight); // rgba
+
     gs_texture_t* tex = gs_texrender_get_texture(*stx);
     gs_stage_texture(*sss, tex);
     uint8_t* data;
     uint32_t linesize;
     if (gs_stagesurface_map(*sss, &data, &linesize)) {
-        memcpy(filter->snapshot_data, data, snapshot_sz);
+        uint8_t* snapshotPtr = filter->snapshot_data;
+        uint8_t* srcPtr = data 
+            + filter->select_bottom * linesize + filter->select_left * pixSz;
+        for (size_t i = 0; i < scanHeight; ++i) {
+            memcpy(snapshotPtr, srcPtr, scanWidth);
+            snapshotPtr += scanWidth;
+            srcPtr += linesize;
+        }
         gs_stagesurface_unmap(*sss);
     }
 }

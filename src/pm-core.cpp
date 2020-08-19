@@ -1080,32 +1080,24 @@ void PmCore::onSnapshotAvailable()
     if (filterData) {
         fr.lockData();
         if (filterData->snapshot_data) {
-            QImage snapshotImg(
-                filterData->snapshot_data,
-                filterData->base_width,
-                filterData->base_height,
-                filterData->base_width * 4,
-                QImage::Format_RGBA8888);
             if (capState == PmCaptureState::Accepted) {
                 int roiLeft = std::min(m_captureStartX, m_captureEndX);
                 int roiBottom = std::min(m_captureStartY, m_captureEndY);
                 int roiRight = std::max(m_captureStartX, m_captureEndX);
                 int roiTop = std::max(m_captureStartY, m_captureEndY);
 
-                QRect matchRect(
-                    QPoint(roiLeft, roiBottom), QPoint(roiRight, roiTop));
-                QImage matchImg = snapshotImg.copy(matchRect);
+                QImage snapshotImg(
+                    filterData->snapshot_data,
+                    roiRight - roiLeft,
+                    roiTop - roiBottom,
+                    QImage::Format_RGBA8888);
+
+                emit sigCapturedMatchImage(snapshotImg.copy(), roiLeft, roiBottom);
                 bfree(filterData->snapshot_data);
-                // TODO: verify image is non-zero size
                 filterData->snapshot_data = nullptr;
-                emit sigCapturedMatchImage(matchImg, roiLeft, roiBottom);
                 filterData->filter_mode = PM_MATCH;
             } else if (capState == PmCaptureState::Automask) {
-                // pass image back to filter
-//                size_t sz = size_t(matchImg.sizeInBytes());
-//                filterData->snapshot_data = (uint8_t*)bmalloc(sz);
-//                memcpy(filterData->snapshot_data, matchImg.bits(), sz);
-
+                // ???
             }
         }
         fr.unlockData();
