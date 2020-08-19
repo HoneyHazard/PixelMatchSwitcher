@@ -57,6 +57,7 @@ struct pm_filter_data
     gs_eparam_t *param_per_pixel_err_thresh;
     gs_eparam_t *param_mask_color;
     gs_eparam_t *param_mask_alpha;
+    gs_eparam_t* param_store_match_alpha;
     gs_eparam_t *param_match_img;
     gs_eparam_t *param_compare_counter;
     gs_eparam_t *param_match_counter;

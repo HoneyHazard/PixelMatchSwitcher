@@ -76,6 +76,8 @@ static void *pixel_match_filter_create(
         gs_effect_get_param_by_name(filter->effect, "mask_color");
     filter->param_mask_alpha =
         gs_effect_get_param_by_name(filter->effect, "mask_alpha");
+    filter->param_store_match_alpha =
+        gs_effect_get_param_by_name(filter->effect, "store_match_alpha");
     filter->param_per_pixel_err_thresh =
         gs_effect_get_param_by_name(filter->effect, "per_pixel_err_thresh");
 
@@ -160,6 +162,7 @@ void render_select_region(struct pm_filter_data* filter)
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
     gs_effect_set_bool(filter->param_mask_alpha, false);
+    gs_effect_set_bool(filter->param_store_match_alpha, false);
     gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
     gs_effect_set_texture(filter->param_match_img, NULL);
 
@@ -206,6 +209,7 @@ void render_mask(struct pm_filter_data* filter)
     gs_effect_set_float(filter->param_roi_top, roi_top_v);
     gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
     gs_effect_set_bool(filter->param_mask_alpha, true);
+    gs_effect_set_bool(filter->param_store_match_alpha, true);
     gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
     gs_effect_set_texture(filter->param_match_img, tex);
     gs_effect_set_bool(filter->param_show_border, visualize);
@@ -283,6 +287,7 @@ void render_match_entries(struct pm_filter_data* filter)
         gs_effect_set_float(filter->param_per_pixel_err_thresh,
             entry->cfg.per_pixel_err_thresh / 100.f);
         gs_effect_set_bool(filter->param_mask_alpha, entry->cfg.mask_alpha);
+        gs_effect_set_bool(filter->param_store_match_alpha, false);
         gs_effect_set_vec3(filter->param_mask_color, &entry->cfg.mask_color);
         gs_effect_set_texture(filter->param_match_img, entry->match_img_tex);
         gs_effect_set_bool(filter->param_show_border, visualize);
