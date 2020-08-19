@@ -34,7 +34,7 @@ struct pm_match_entry_data
 
 enum pm_filter_mode { 
     PM_MATCH = 0, PM_MATCH_VISUALIZE = 1, PM_SELECT_REGION = 2, 
-    PM_MASK = 3, PM_MASK_VISUALIZE = 4,
+    PM_MASK = 3, PM_MASK_VISUALIZE = 4, PM_SNAPSHOT = 6
 };
 
 struct pm_filter_data
@@ -78,12 +78,12 @@ struct pm_filter_data
     // selection mode and snapshot
     uint32_t select_left, select_bottom, select_right, select_top;
 
-    bool request_snapshot;
     gs_texrender_t* snapshot_texrender;
     gs_stagesurf_t* snapshot_stagesurface;
     uint8_t* snapshot_data;
 
     // callbacks for fast reactions
+    void (*on_snapshot_available)();
     void (*on_frame_processed)();
 };
 

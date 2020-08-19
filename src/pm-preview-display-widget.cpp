@@ -269,7 +269,7 @@ void PmPreviewDisplayWidget::drawEffect()
     case PmCaptureState::Automask:
         filterMode = PM_MASK_VISUALIZE; break;
     case PmCaptureState::Inactive:
-        filterMode = PM_MASK_VISUALIZE; break;
+        filterMode = PM_MATCH_VISUALIZE; break;
     default:
         filterMode = PM_SELECT_REGION; break;
     }

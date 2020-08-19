@@ -55,6 +55,14 @@ void on_frame_processed()
     }
 }
 
+void on_snapshot_available()
+{
+    auto core = PmCore::m_instance;
+    if (core) {
+        emit core->sigSnapshotAvailable();
+    }
+}
+
 //------------------------------------
 
 QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
@@ -94,6 +102,8 @@ PmCore::PmCore()
     // fast reaction signal/slot: process in the core's thread
     connect(this, &PmCore::sigFrameProcessed,
             this, &PmCore::onFrameProcessed, Qt::QueuedConnection);
+    connect(this, &PmCore::sigSnapshotAvailable,
+            this, &PmCore::onSnapshotAvailable, Qt::QueuedConnection);
 
     // basically the default effect except sampler is made Point instead of Linear
     obs_enter_graphics();
@@ -163,6 +173,7 @@ void PmCore::deactivate()
             pm_resize_match_entries(data, 0);
             oldAfr.lockData();
             data->on_frame_processed = nullptr;
+            data->on_snapshot_available = nullptr;
             oldAfr.unlockData();
         }
     }
@@ -636,8 +647,11 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
     case PmCaptureState::Automask:
         filter = activeFilterRef();
         filterData = filter.filterData();
-        if (filterData)
-            filterData->request_snapshot = true;
+        if (filterData) {
+            filter.lockData();
+            filterData->filter_mode = PM_SNAPSHOT;
+            filter.unlockData();
+        }
         break;
     }
 
@@ -866,6 +880,7 @@ void PmCore::updateActiveFilter()
         if (data) {
             oldFilt.lockData();
             data->on_frame_processed = nullptr;
+            data->on_snapshot_available = nullptr;
             oldFilt.unlockData();
             pm_resize_match_entries(data, 0);
         }
@@ -876,6 +891,7 @@ void PmCore::updateActiveFilter()
         if (data) {
             newFilt.lockData();
             data->on_frame_processed = on_frame_processed;
+            data->on_snapshot_available = on_snapshot_available;
             data->selected_match_index = m_selectedMatchIndex;
             newFilt.unlockData();
             pm_resize_match_entries(data, cfgSize);
@@ -1006,7 +1022,6 @@ void PmCore::onFrameProcessed()
     // fetch new results and possible snapshots
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
-    auto capState = captureState();
     if (filterData) {
         fr.lockData();
         newResults.resize(filterData->num_match_entries);
@@ -1023,28 +1038,6 @@ void PmCore::onFrameProcessed()
                 = float(newResult.numMatched) / float(newResult.numCompared) * 100.0f;
             newResult.isMatched
                 = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
-        }
-
-        if (filterData->snapshot_data) {
-            QImage snapshotImg(
-                filterData->snapshot_data,
-                filterData->base_width,
-                filterData->base_height,
-                filterData->base_width * 4,
-                QImage::Format_RGBA8888);
-            int roiLeft = std::min(m_captureStartX, m_captureEndX);
-            int roiBottom = std::min(m_captureStartY, m_captureEndY);
-            int roiRight = std::max(m_captureStartX, m_captureEndX);
-            int roiTop = std::max(m_captureStartY, m_captureEndY);
-
-            QRect matchRect(
-                QPoint(roiLeft, roiBottom), QPoint(roiRight, roiTop));
-            QImage matchImg = snapshotImg.copy(matchRect);
-            bfree(filterData->snapshot_data);
-            filterData->snapshot_data = nullptr;
-            if (capState == PmCaptureState::Accepted) {
-                emit sigCapturedMatchImage(matchImg, roiLeft, roiBottom);
-            }
         }
 
         fr.unlockData();
@@ -1076,6 +1069,39 @@ void PmCore::onFrameProcessed()
         if (nms.size()) {
             switchScene(nms, noMatchTransition());
         }
+    }
+}
+
+void PmCore::onSnapshotAvailable()
+{
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
+    auto capState = captureState();
+    if (filterData) {
+        fr.lockData();
+        if (filterData->snapshot_data) {
+            QImage snapshotImg(
+                filterData->snapshot_data,
+                filterData->base_width,
+                filterData->base_height,
+                filterData->base_width * 4,
+                QImage::Format_RGBA8888);
+            int roiLeft = std::min(m_captureStartX, m_captureEndX);
+            int roiBottom = std::min(m_captureStartY, m_captureEndY);
+            int roiRight = std::max(m_captureStartX, m_captureEndX);
+            int roiTop = std::max(m_captureStartY, m_captureEndY);
+
+            QRect matchRect(
+                QPoint(roiLeft, roiBottom), QPoint(roiRight, roiTop));
+            QImage matchImg = snapshotImg.copy(matchRect);
+            bfree(filterData->snapshot_data);
+            filterData->snapshot_data = nullptr;
+            if (capState == PmCaptureState::Accepted) {
+                emit sigCapturedMatchImage(matchImg, roiLeft, roiBottom);
+                filterData->filter_mode = PM_MATCH;
+            }
+        }
+        fr.unlockData();
     }
 }
 

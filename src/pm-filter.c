@@ -398,15 +398,26 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
-    if (filter->filter_mode == PM_SELECT_REGION) {
-        render_select_region(filter);
+    if (filter->filter_mode == PM_SNAPSHOT) {
+        render_passthrough(filter);
+        capture_snapshot(filter, target, parent);
         goto done;
     }
 
-    if (filter->filter_mode == PM_MASK 
-     || filter->filter_mode == PM_MASK_VISUALIZE) {
+    if (filter->filter_mode == PM_MASK_VISUALIZE) {
         render_mask(filter);
-        goto snapshot;
+        goto done;
+    }
+
+    if (filter->filter_mode == PM_MASK) {
+        render_mask(filter);
+        capture_snapshot(filter, target, parent);
+        goto done;
+    }
+
+    if (filter->filter_mode == PM_SELECT_REGION) {
+        render_select_region(filter);
+        goto done;
     }
 
     if (filter->num_match_entries == 0 
@@ -418,13 +429,6 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     render_match_entries(filter);
 
-snapshot:
-    if (filter->request_snapshot || filter->filter_mode == PM_MASK) {
-        // do a specialized passthrough to render and extract snapshot data
-        capture_snapshot(filter, target, parent);
-        filter->request_snapshot = false;
-    }
-
 done:
     if (filter->filter_mode == PM_MATCH_VISUALIZE)
         filter->filter_mode = PM_MATCH;
@@ -432,9 +436,13 @@ done:
         filter->filter_mode = PM_MASK;
     pthread_mutex_unlock(&filter->mutex);
 
-    if (filter->on_frame_processed
-    && (prevMode == PM_MASK 
-     || prevMode == PM_MATCH && filter->num_match_entries > 0)) {
+    if (prevMode == PM_SNAPSHOT && filter->on_snapshot_available) {
+        filter->on_snapshot_available();
+    }
+
+    if ((prevMode == PM_MASK 
+      || prevMode == PM_MATCH && filter->num_match_entries > 0)
+      && filter->on_frame_processed) {
         filter->on_frame_processed();
     }
 
