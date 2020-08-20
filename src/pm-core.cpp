@@ -644,7 +644,6 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         }
         break;
     case PmCaptureState::Accepted:
-    case PmCaptureState::Automask:
         filter = activeFilterRef();
         filterData = filter.filterData();
         if (filterData) {
@@ -653,6 +652,14 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
             filter.unlockData();
         }
         break;
+    case PmCaptureState::Automask:
+        filter = activeFilterRef();
+        filterData = filter.filterData();
+        if (filterData) {
+            filter.lockData();
+            filterData->filter_mode = PM_MASK_BEGIN;
+            filter.unlockData();
+        }
     }
 
 #if 0
@@ -1097,7 +1104,7 @@ void PmCore::onSnapshotAvailable()
                 filterData->snapshot_data = nullptr;
                 filterData->filter_mode = PM_MATCH;
             } else if (capState == PmCaptureState::Automask) {
-                // ???
+                
             }
         }
         fr.unlockData();

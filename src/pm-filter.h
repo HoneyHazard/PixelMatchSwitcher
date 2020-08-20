@@ -33,8 +33,9 @@ struct pm_match_entry_data
 };
 
 enum pm_filter_mode { 
-    PM_MATCH = 0, PM_MATCH_VISUALIZE = 1, PM_SELECT_REGION = 2, 
-    PM_MASK = 3, PM_MASK_VISUALIZE = 4, PM_SNAPSHOT = 6
+    PM_MATCH = 0, PM_MATCH_VISUALIZE = 1, 
+    PM_MASK_BEGIN = 2, PM_MASK = 3, PM_MASK_END = 4, PM_MASK_VISUALIZE = 5, 
+    PM_SELECT_REGION = 6, PM_SNAPSHOT = 7
 };
 
 struct pm_filter_data
@@ -81,6 +82,7 @@ struct pm_filter_data
     gs_texrender_t* snapshot_texrender;
     gs_stagesurf_t* snapshot_stagesurface;
     uint8_t* snapshot_data;
+    gs_texture_t* mask_texture;
 
     // callbacks for fast reactions
     void (*on_snapshot_available)();

@@ -21,6 +21,8 @@ static void pixel_match_filter_destroy(void *data)
         gs_texrender_destroy(filter->snapshot_texrender);
     if (filter->snapshot_stagesurface)
         gs_stagesurface_destroy(filter->snapshot_stagesurface);
+    if (filter->mask_texture)
+        gs_texture_destroy(filter->mask_texture);
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
     if (filter->snapshot_data)
@@ -184,9 +186,9 @@ void render_mask(struct pm_filter_data* filter)
         blog(LOG_ERROR, "pm_filter_data: snapshot texrender not available.");
         return;
     }
-    gs_texture_t* tex = gs_texrender_get_texture(stx);
+    gs_texture_t* tex = filter->mask_texture;
     if (!tex) {
-        blog(LOG_ERROR, "pm_filter_data: snapshot texture not available");
+        blog(LOG_WARNING, "pm_filter_data: mask texture not available");
         return;
     }
 
@@ -362,28 +364,51 @@ void capture_snapshot(
 
 
     const size_t pixSz = 4;
-    size_t scanWidth =
-        (size_t)(filter->select_right - filter->select_left) * pixSz;
-    size_t scanHeight = filter->select_top - filter->select_bottom;
+    size_t width = filter->select_right - filter->select_left;
+    size_t height = filter->select_top - filter->select_bottom;
+    size_t scanWidth = width * pixSz;
 
-    if (filter->snapshot_data)
-        bfree(filter->snapshot_data);
-    filter->snapshot_data = (uint8_t*)bmalloc(scanWidth * scanHeight); // rgba
+    uint32_t linesize;
+    uint8_t* dstPtr = NULL;
+    if (filter->filter_mode == PM_SNAPSHOT) {
+        if (filter->snapshot_data)
+            bfree(filter->snapshot_data);
+        filter->snapshot_data = (uint8_t*)bmalloc(scanWidth * height);
+        dstPtr = filter->snapshot_data;
+    } else {
+        if (filter->filter_mode == PM_MASK_BEGIN) {
+            if (filter->mask_texture)
+                gs_texture_destroy(filter->mask_texture);
+            filter->mask_texture = NULL;
+            filter->mask_texture = gs_texture_create(
+                (uint32_t)width, (uint32_t)height, GS_BGRA, 
+                (uint8_t)-1, &dstPtr, 0);
+        }
+        if (!gs_texture_map(filter->mask_texture, &dstPtr, &linesize)) {
+            blog(LOG_ERROR, "pm_filter_data: failed to map texture");
+            return;
+        }
+    }
 
     gs_texture_t* tex = gs_texrender_get_texture(*stx);
     gs_stage_texture(*sss, tex);
-    uint8_t* data;
-    uint32_t linesize;
-    if (gs_stagesurface_map(*sss, &data, &linesize)) {
-        uint8_t* snapshotPtr = filter->snapshot_data;
-        uint8_t* srcPtr = data 
-            + filter->select_bottom * linesize + filter->select_left * pixSz;
-        for (size_t i = 0; i < scanHeight; ++i) {
-            memcpy(snapshotPtr, srcPtr, scanWidth);
-            snapshotPtr += scanWidth;
-            srcPtr += linesize;
-        }
-        gs_stagesurface_unmap(*sss);
+    uint8_t* stageSurfData;
+    if (!gs_stagesurface_map(*sss, &stageSurfData, &linesize)) {
+        blog(LOG_ERROR, "pm_filter_data: failed to map stage surface");
+        return;
+    }
+
+    uint8_t* srcPtr = stageSurfData 
+        + filter->select_bottom * linesize + filter->select_left * pixSz;
+    for (size_t i = 0; i < height; ++i) {
+        memcpy(dstPtr, srcPtr, scanWidth);
+        dstPtr += scanWidth;
+        srcPtr += linesize;
+    }
+    gs_stagesurface_unmap(*sss);
+    
+    if (filter->filter_mode != PM_SNAPSHOT) {
+        gs_texture_unmap(filter->mask_texture);
     }
 }
 
@@ -409,7 +434,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
-    if (filter->filter_mode == PM_SNAPSHOT) {
+    if (filter->filter_mode == PM_SNAPSHOT
+     || filter->filter_mode == PM_MASK_BEGIN) {
         render_passthrough(filter);
         capture_snapshot(filter, target, parent);
         goto done;
