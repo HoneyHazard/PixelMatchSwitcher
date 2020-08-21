@@ -648,7 +648,10 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         filterData = filter.filterData();
         if (filterData) {
             filter.lockData();
-            filterData->filter_mode = PM_SNAPSHOT;
+            if (prevState == PmCaptureState::Automask)
+                filterData->filter_mode = PM_MASK_END;
+            else
+                filterData->filter_mode = PM_SNAPSHOT;
             filter.unlockData();
         }
         break;
@@ -1087,25 +1090,21 @@ void PmCore::onSnapshotAvailable()
     if (filterData) {
         fr.lockData();
         if (filterData->snapshot_data) {
-            if (capState == PmCaptureState::Accepted) {
-                int roiLeft = std::min(m_captureStartX, m_captureEndX);
-                int roiBottom = std::min(m_captureStartY, m_captureEndY);
-                int roiRight = std::max(m_captureStartX, m_captureEndX);
-                int roiTop = std::max(m_captureStartY, m_captureEndY);
+            int roiLeft = std::min(m_captureStartX, m_captureEndX);
+            int roiBottom = std::min(m_captureStartY, m_captureEndY);
+            int roiRight = std::max(m_captureStartX, m_captureEndX);
+            int roiTop = std::max(m_captureStartY, m_captureEndY);
 
-                QImage snapshotImg(
-                    filterData->snapshot_data,
-                    roiRight - roiLeft,
-                    roiTop - roiBottom,
-                    QImage::Format_RGBA8888);
+            QImage snapshotImg(
+                filterData->snapshot_data,
+                roiRight - roiLeft,
+                roiTop - roiBottom,
+                QImage::Format_RGBA8888);
 
-                emit sigCapturedMatchImage(snapshotImg.copy(), roiLeft, roiBottom);
-                bfree(filterData->snapshot_data);
-                filterData->snapshot_data = nullptr;
-                filterData->filter_mode = PM_MATCH;
-            } else if (capState == PmCaptureState::Automask) {
-                
-            }
+            emit sigCapturedMatchImage(snapshotImg.copy(), roiLeft, roiBottom);
+            bfree(filterData->snapshot_data);
+            filterData->snapshot_data = nullptr;
+            filterData->filter_mode = PM_MATCH;
         }
         fr.unlockData();
     }

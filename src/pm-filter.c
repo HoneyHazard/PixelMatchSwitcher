@@ -311,6 +311,28 @@ void render_match_entries(struct pm_filter_data* filter)
     }
 }
 
+void capture_mask(struct pm_filter_data* filter)
+{
+    size_t width = filter->select_right - filter->select_left;
+    size_t height = filter->select_top - filter->select_bottom;
+    size_t imgSz = width * height * 4;
+
+    uint8_t* srcPtr;
+    uint32_t linesize;
+    if (!gs_texture_map(filter->mask_texture, &srcPtr, &linesize)) {
+        blog(LOG_ERROR, "pm_filter_data: failed to map texture");
+        return;
+    }
+
+    if (filter->snapshot_data)
+        bfree(filter->snapshot_data);
+    filter->snapshot_data = (uint8_t*)bmalloc(imgSz);
+    memcpy(filter->snapshot_data, srcPtr, imgSz);
+
+    gs_texture_unmap(filter->mask_texture);
+    gs_texture_destroy(filter->mask_texture);
+    filter->mask_texture = NULL;
+}
 
 void capture_snapshot(
     struct pm_filter_data* filter, obs_source_t* target, obs_source_t* parent)
@@ -382,7 +404,7 @@ void capture_snapshot(
             filter->mask_texture = NULL;
             filter->mask_texture = gs_texture_create(
                 (uint32_t)width, (uint32_t)height, GS_BGRA, 
-                (uint8_t)-1, &dstPtr, 0);
+                1, NULL, GS_DYNAMIC);
         }
         if (!gs_texture_map(filter->mask_texture, &dstPtr, &linesize)) {
             blog(LOG_ERROR, "pm_filter_data: failed to map texture");
@@ -441,6 +463,11 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         goto done;
     }
 
+    if (filter->filter_mode == PM_MASK_END) {
+        capture_mask(filter);
+        goto done;
+    }
+
     if (filter->filter_mode == PM_MASK_VISUALIZE) {
         render_mask(filter);
         goto done;
@@ -473,7 +500,8 @@ done:
         filter->filter_mode = PM_MASK;
     pthread_mutex_unlock(&filter->mutex);
 
-    if (prevMode == PM_SNAPSHOT && filter->on_snapshot_available) {
+    if (filter->on_snapshot_available
+     && (prevMode == PM_SNAPSHOT || prevMode == PM_MASK_END)) {
         filter->on_snapshot_available();
     }
 

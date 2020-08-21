@@ -390,8 +390,7 @@ void PmMatchConfigWidget::onCaptureAutomaskPressed()
 
 void PmMatchConfigWidget::onCaptureAutomaskReleased()
 {
-    // TODO: what happens?
-    emit sigCaptureStateChanged(PmCaptureState::Inactive);
+    emit sigCaptureStateChanged(PmCaptureState::Accepted);
 }
 
 void PmMatchConfigWidget::onCaptureAcceptReleased()
