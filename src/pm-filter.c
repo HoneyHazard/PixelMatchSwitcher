@@ -174,6 +174,11 @@ void render_select_region(struct pm_filter_data* filter)
 
 void render_mask(struct pm_filter_data* filter)
 {
+    size_t sel_idx = filter->selected_match_index;
+    if (sel_idx >= filter->num_match_entries) return;
+    struct pm_match_entry_data* entry = filter->match_entries + sel_idx;
+    float match_ratio = entry->cfg.per_pixel_err_thresh / 100.f;
+
     if (!obs_source_process_filter_begin(
         filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
         blog(LOG_ERROR,
@@ -209,7 +214,7 @@ void render_mask(struct pm_filter_data* filter)
     gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
     gs_effect_set_float(filter->param_roi_right, roi_right_u);
     gs_effect_set_float(filter->param_roi_top, roi_top_v);
-    gs_effect_set_float(filter->param_per_pixel_err_thresh, 0.f);
+    gs_effect_set_float(filter->param_per_pixel_err_thresh, match_ratio);
     gs_effect_set_bool(filter->param_mask_alpha, true);
     gs_effect_set_bool(filter->param_store_match_alpha, true);
     gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
@@ -403,7 +408,7 @@ void capture_snapshot(
                 gs_texture_destroy(filter->mask_texture);
             filter->mask_texture = NULL;
             filter->mask_texture = gs_texture_create(
-                (uint32_t)width, (uint32_t)height, GS_BGRA, 
+                (uint32_t)width, (uint32_t)height, GS_RGBA, 
                 1, NULL, GS_DYNAMIC);
         }
         if (!gs_texture_map(filter->mask_texture, &dstPtr, &linesize)) {
