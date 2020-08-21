@@ -216,7 +216,7 @@ void render_mask(struct pm_filter_data* filter)
     gs_effect_set_float(filter->param_roi_top, roi_top_v);
     gs_effect_set_float(filter->param_per_pixel_err_thresh, match_ratio);
     gs_effect_set_bool(filter->param_mask_alpha, true);
-    gs_effect_set_bool(filter->param_store_match_alpha, true);
+    gs_effect_set_bool(filter->param_store_match_alpha, !visualize);
     gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
     gs_effect_set_texture(filter->param_match_img, tex);
     gs_effect_set_bool(filter->param_show_border, visualize);
@@ -408,7 +408,7 @@ void capture_snapshot(
                 gs_texture_destroy(filter->mask_texture);
             filter->mask_texture = NULL;
             filter->mask_texture = gs_texture_create(
-                (uint32_t)width, (uint32_t)height, GS_RGBA, 
+                (uint32_t)width, (uint32_t)height, GS_BGRA, 
                 1, NULL, GS_DYNAMIC);
         }
         if (!gs_texture_map(filter->mask_texture, &dstPtr, &linesize)) {
@@ -425,6 +425,7 @@ void capture_snapshot(
         return;
     }
 
+    linesize = filter->base_width * pixSz;
     uint8_t* srcPtr = stageSurfData 
         + filter->select_bottom * linesize + filter->select_left * pixSz;
     for (size_t i = 0; i < height; ++i) {
@@ -499,9 +500,11 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     render_match_entries(filter);
 
 done:
-    if (filter->filter_mode == PM_MATCH_VISUALIZE)
+    if (filter->filter_mode == PM_MATCH_VISUALIZE
+     || filter->filter_mode == PM_SELECT_REGION)
         filter->filter_mode = PM_MATCH;
-    else if (filter->filter_mode == PM_MASK_VISUALIZE)
+    else if (filter->filter_mode == PM_MASK_VISUALIZE
+          || filter->filter_mode == PM_MASK_BEGIN)
         filter->filter_mode = PM_MASK;
     pthread_mutex_unlock(&filter->mutex);
 
