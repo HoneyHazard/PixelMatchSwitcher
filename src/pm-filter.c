@@ -219,7 +219,7 @@ void render_mask(struct pm_filter_data* filter)
     gs_effect_set_bool(filter->param_store_match_alpha, !visualize);
     gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
     gs_effect_set_texture(filter->param_match_img, tex);
-    gs_effect_set_bool(filter->param_show_border, visualize);
+    gs_effect_set_bool(filter->param_show_border, false /*visualize*/);
     gs_effect_set_bool(filter->param_show_color_indicator, visualize);
     gs_effect_set_float(filter->param_px_width,
         4.f / (float)(filter->base_width));
@@ -318,13 +318,15 @@ void render_match_entries(struct pm_filter_data* filter)
 
 void capture_mask(struct pm_filter_data* filter)
 {
-    size_t width = filter->select_right - filter->select_left;
-    size_t height = filter->select_top - filter->select_bottom;
-    size_t imgSz = width * height * 4;
+    const size_t pxSz = 4;
+    size_t width = filter->select_right - filter->select_left + 1;
+    size_t height = filter->select_top - filter->select_bottom + 1;
+    size_t dstStride = width * pxSz;
+    size_t imgSz = dstStride * height;
 
     uint8_t* srcPtr;
-    uint32_t linesize;
-    if (!gs_texture_map(filter->mask_texture, &srcPtr, &linesize)) {
+    uint32_t srcStride;
+    if (!gs_texture_map(filter->mask_texture, &srcPtr, &srcStride)) {
         blog(LOG_ERROR, "pm_filter_data: failed to map texture");
         return;
     }
@@ -332,7 +334,13 @@ void capture_mask(struct pm_filter_data* filter)
     if (filter->snapshot_data)
         bfree(filter->snapshot_data);
     filter->snapshot_data = (uint8_t*)bmalloc(imgSz);
-    memcpy(filter->snapshot_data, srcPtr, imgSz);
+    uint8_t* dstPtr = filter->snapshot_data;
+
+    for (size_t i = 0; i < height; ++i) {
+        memcpy(dstPtr, srcPtr, dstStride);
+        srcPtr += srcStride;
+        dstPtr += dstStride;
+    }
 
     gs_texture_unmap(filter->mask_texture);
     gs_texture_destroy(filter->mask_texture);
@@ -391,16 +399,16 @@ void capture_snapshot(
 
 
     const size_t pixSz = 4;
-    size_t width = filter->select_right - filter->select_left;
-    size_t height = filter->select_top - filter->select_bottom;
-    size_t scanWidth = width * pixSz;
+    size_t width = filter->select_right - filter->select_left + 1;
+    size_t height = filter->select_top - filter->select_bottom + 1;
+    uint32_t dstStride;
 
-    uint32_t linesize;
     uint8_t* dstPtr = NULL;
     if (filter->filter_mode == PM_SNAPSHOT) {
         if (filter->snapshot_data)
             bfree(filter->snapshot_data);
-        filter->snapshot_data = (uint8_t*)bmalloc(scanWidth * height);
+        dstStride = width * pixSz;
+        filter->snapshot_data = (uint8_t*)bmalloc(dstStride * height);
         dstPtr = filter->snapshot_data;
     } else {
         if (filter->filter_mode == PM_MASK_BEGIN) {
@@ -411,7 +419,7 @@ void capture_snapshot(
                 (uint32_t)width, (uint32_t)height, GS_BGRA, 
                 1, NULL, GS_DYNAMIC);
         }
-        if (!gs_texture_map(filter->mask_texture, &dstPtr, &linesize)) {
+        if (!gs_texture_map(filter->mask_texture, &dstPtr, &dstStride)) {
             blog(LOG_ERROR, "pm_filter_data: failed to map texture");
             return;
         }
@@ -420,18 +428,19 @@ void capture_snapshot(
     gs_texture_t* tex = gs_texrender_get_texture(*stx);
     gs_stage_texture(*sss, tex);
     uint8_t* stageSurfData;
-    if (!gs_stagesurface_map(*sss, &stageSurfData, &linesize)) {
+    uint32_t srcStride;
+    if (!gs_stagesurface_map(*sss, &stageSurfData, &srcStride)) {
         blog(LOG_ERROR, "pm_filter_data: failed to map stage surface");
         return;
     }
 
-    linesize = filter->base_width * pixSz;
     uint8_t* srcPtr = stageSurfData 
-        + filter->select_bottom * linesize + filter->select_left * pixSz;
+        + filter->select_bottom * srcStride + filter->select_left * pixSz;
+    size_t lineWidth = min(srcStride, dstStride);
     for (size_t i = 0; i < height; ++i) {
-        memcpy(dstPtr, srcPtr, scanWidth);
-        dstPtr += scanWidth;
-        srcPtr += linesize;
+        memcpy(dstPtr, srcPtr, lineWidth);
+        dstPtr += dstStride;
+        srcPtr += srcStride;
     }
     gs_stagesurface_unmap(*sss);
     
@@ -481,7 +490,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     if (filter->filter_mode == PM_MASK) {
         render_mask(filter);
-        capture_snapshot(filter, target, parent);
+        //capture_snapshot(filter, target, parent);
         goto done;
     }
 

@@ -55,7 +55,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
 
     if (!hbound || !vbound) {
         if (show_border && !show_color_indicator) {
-            // when in selection mode hide areas outside the region
+            // when in selection mode dim areas outside the selection region
             val.r = val.r * 0.6;
             val.g = val.g * 0.6;
             val.b = val.b * 0.6;
@@ -91,6 +91,11 @@ float4 PSMatch(VertInOut vert_in) : TARGET
             val.w = 0;
         }
     }
+    
+    // if (store_match_alpha)
+    // {
+    //     val.w = 0;
+    // }
 
     if (show_border || show_color_indicator) {
         float border_width = px_width * 2.0, border_height = px_height * 2.0;

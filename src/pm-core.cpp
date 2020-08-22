@@ -1097,8 +1097,8 @@ void PmCore::onSnapshotAvailable()
 
             QImage snapshotImg(
                 filterData->snapshot_data,
-                roiRight - roiLeft,
-                roiTop - roiBottom,
+                roiRight - roiLeft + 1,
+                roiTop - roiBottom + 1,
                 QImage::Format_RGBA8888);
 
             emit sigCapturedMatchImage(snapshotImg.copy(), roiLeft, roiBottom);

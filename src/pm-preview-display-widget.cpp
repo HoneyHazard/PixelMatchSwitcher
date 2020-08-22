@@ -282,7 +282,8 @@ void PmPreviewDisplayWidget::drawEffect()
         case PmCaptureState::SelectFinished:
         case PmCaptureState::Accepted:
             filterMode = PM_SELECT_REGION; break;
-        default: break;
+        default: 
+            filterMode = filterData->filter_mode; break;
         }
         filterData->filter_mode = filterMode;
     }
