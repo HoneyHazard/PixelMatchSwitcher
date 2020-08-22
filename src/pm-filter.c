@@ -143,9 +143,9 @@ void render_select_region(struct pm_filter_data* filter)
     float roi_bottom_v
         = (float)(filter->select_bottom) / (float)(filter->base_height);
     float roi_right_u
-        = (float)(filter->select_right) / (float)(filter->base_width);
+        = (float)(filter->select_right + 1) / (float)(filter->base_width);
     float roi_top_v
-        = (float)(filter->select_top) / (float)(filter->base_height);
+        = (float)(filter->select_top + 1) / (float)(filter->base_height);
 
     // these values will be actually relevant to drawing a region selection
     gs_effect_set_float(filter->param_roi_left, roi_left_u);
@@ -202,9 +202,9 @@ void render_mask(struct pm_filter_data* filter)
     float roi_bottom_v
         = (float)(filter->select_bottom) / (float)(filter->base_height);
     float roi_right_u
-        = (float)(filter->select_right) / (float)(filter->base_width);
+        = (float)(filter->select_right + 1) / (float)(filter->base_width);
     float roi_top_v
-        = (float)(filter->select_top) / (float)(filter->base_height);
+        = (float)(filter->select_top + 1) / (float)(filter->base_height);
 
     bool visualize = (filter->filter_mode == PM_MASK_VISUALIZE);
 
@@ -219,12 +219,12 @@ void render_mask(struct pm_filter_data* filter)
     gs_effect_set_bool(filter->param_store_match_alpha, !visualize);
     gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
     gs_effect_set_texture(filter->param_match_img, tex);
-    gs_effect_set_bool(filter->param_show_border, false /*visualize*/);
+    gs_effect_set_bool(filter->param_show_border, visualize);
     gs_effect_set_bool(filter->param_show_color_indicator, visualize);
     gs_effect_set_float(filter->param_px_width,
-        4.f / (float)(filter->base_width));
+        2.f / (float)(filter->base_width));
     gs_effect_set_float(filter->param_px_height,
-        4.f / (float)(filter->base_height));
+        2.f / (float)(filter->base_height));
 
     obs_source_process_filter_end(filter->context, filter->effect,
         filter->base_width, filter->base_height);
@@ -411,12 +411,13 @@ void capture_snapshot(
         filter->snapshot_data = (uint8_t*)bmalloc(dstStride * height);
         dstPtr = filter->snapshot_data;
     } else {
+        // mask begin or mask
         if (filter->filter_mode == PM_MASK_BEGIN) {
             if (filter->mask_texture)
                 gs_texture_destroy(filter->mask_texture);
             filter->mask_texture = NULL;
             filter->mask_texture = gs_texture_create(
-                (uint32_t)width, (uint32_t)height, GS_BGRA, 
+                (uint32_t)width, (uint32_t)height, GS_RGBA, 
                 1, NULL, GS_DYNAMIC);
         }
         if (!gs_texture_map(filter->mask_texture, &dstPtr, &dstStride)) {
@@ -490,7 +491,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     if (filter->filter_mode == PM_MASK) {
         render_mask(filter);
-        //capture_snapshot(filter, target, parent);
+        capture_snapshot(filter, target, parent);
         goto done;
     }
 
