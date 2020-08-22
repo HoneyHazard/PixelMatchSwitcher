@@ -173,7 +173,7 @@ void PmCore::deactivate()
             pm_resize_match_entries(data, 0);
             oldAfr.lockData();
             data->on_frame_processed = nullptr;
-            data->on_snapshot_available = nullptr;
+            data->on_region_captured = nullptr;
             oldAfr.unlockData();
         }
     }
@@ -890,7 +890,7 @@ void PmCore::updateActiveFilter()
         if (data) {
             oldFilt.lockData();
             data->on_frame_processed = nullptr;
-            data->on_snapshot_available = nullptr;
+            data->on_region_captured = nullptr;
             oldFilt.unlockData();
             pm_resize_match_entries(data, 0);
         }
@@ -901,7 +901,7 @@ void PmCore::updateActiveFilter()
         if (data) {
             newFilt.lockData();
             data->on_frame_processed = on_frame_processed;
-            data->on_snapshot_available = on_snapshot_available;
+            data->on_region_captured = on_snapshot_available;
             data->selected_match_index = m_selectedMatchIndex;
             newFilt.unlockData();
             pm_resize_match_entries(data, cfgSize);
@@ -1089,21 +1089,21 @@ void PmCore::onSnapshotAvailable()
     auto capState = captureState();
     if (filterData) {
         fr.lockData();
-        if (filterData->snapshot_data) {
+        if (filterData->captured_region_data) {
             int roiLeft = std::min(m_captureStartX, m_captureEndX);
             int roiBottom = std::min(m_captureStartY, m_captureEndY);
             int roiRight = std::max(m_captureStartX, m_captureEndX);
             int roiTop = std::max(m_captureStartY, m_captureEndY);
 
             QImage snapshotImg(
-                filterData->snapshot_data,
+                filterData->captured_region_data,
                 roiRight - roiLeft + 1,
                 roiTop - roiBottom + 1,
                 QImage::Format_RGBA8888);
 
             emit sigCapturedMatchImage(snapshotImg.copy(), roiLeft, roiBottom);
-            bfree(filterData->snapshot_data);
-            filterData->snapshot_data = nullptr;
+            bfree(filterData->captured_region_data);
+            filterData->captured_region_data = nullptr;
             filterData->filter_mode = PM_MATCH;
         }
         fr.unlockData();

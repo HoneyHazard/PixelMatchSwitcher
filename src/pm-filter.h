@@ -46,6 +46,7 @@ struct pm_filter_data
     //obs_data_t *settings;
 
     // shader parameters and results
+    gs_eparam_t *param_image;
     gs_eparam_t *param_show_color_indicator;
     gs_eparam_t *param_show_border;
     gs_eparam_t *param_px_width;
@@ -78,14 +79,17 @@ struct pm_filter_data
 
     // selection mode and snapshot
     uint32_t select_left, select_bottom, select_right, select_top;
+    uint8_t* captured_region_data;
 
     gs_texrender_t* snapshot_texrender;
     gs_stagesurf_t* snapshot_stagesurface;
-    uint8_t* snapshot_data;
-    gs_texture_t* mask_texture;
+    
+    gs_texrender_t* mask_texrender;
+    gs_stagesurf_t* mask_stagesurface;
+    gs_texture_t* mask_region_texture;
 
     // callbacks for fast reactions
-    void (*on_snapshot_available)();
+    void (*on_region_captured)();
     void (*on_frame_processed)();
 };
 

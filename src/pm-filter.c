@@ -21,12 +21,12 @@ static void pixel_match_filter_destroy(void *data)
         gs_texrender_destroy(filter->snapshot_texrender);
     if (filter->snapshot_stagesurface)
         gs_stagesurface_destroy(filter->snapshot_stagesurface);
-    if (filter->mask_texture)
-        gs_texture_destroy(filter->mask_texture);
+    if (filter->mask_region_texture)
+        gs_texture_destroy(filter->mask_region_texture);
     gs_effect_destroy(filter->effect);
     obs_leave_graphics();
-    if (filter->snapshot_data)
-        bfree(filter->snapshot_data);
+    if (filter->captured_region_data)
+        bfree(filter->captured_region_data);
     pthread_mutex_unlock(&filter->mutex);
     pthread_mutex_destroy(&filter->mutex);
     bfree(filter);
@@ -63,6 +63,8 @@ static void *pixel_match_filter_create(
     obs_leave_graphics();
 
     // init filters and result handles
+    filter->param_image = gs_effect_get_param_by_name(
+        filter->effect, "image");
     filter->param_match_img = gs_effect_get_param_by_name(
         filter->effect, "match_img");
     filter->param_roi_left =
@@ -172,64 +174,6 @@ void render_select_region(struct pm_filter_data* filter)
         filter->base_width, filter->base_height);
 }
 
-void render_mask(struct pm_filter_data* filter)
-{
-    size_t sel_idx = filter->selected_match_index;
-    if (sel_idx >= filter->num_match_entries) return;
-    struct pm_match_entry_data* entry = filter->match_entries + sel_idx;
-    float match_ratio = entry->cfg.per_pixel_err_thresh / 100.f;
-
-    if (!obs_source_process_filter_begin(
-        filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
-        blog(LOG_ERROR,
-            "pm_filter_data: obs_source_process_filter_begin failed.");
-        return;
-    }
-
-    gs_texrender_t* stx = filter->snapshot_texrender;
-    if (!stx) {
-        blog(LOG_ERROR, "pm_filter_data: snapshot texrender not available.");
-        return;
-    }
-    gs_texture_t* tex = filter->mask_texture;
-    if (!tex) {
-        blog(LOG_WARNING, "pm_filter_data: mask texture not available");
-        return;
-    }
-
-    float roi_left_u
-        = (float)(filter->select_left) / (float)(filter->base_width);
-    float roi_bottom_v
-        = (float)(filter->select_bottom) / (float)(filter->base_height);
-    float roi_right_u
-        = (float)(filter->select_right + 1) / (float)(filter->base_width);
-    float roi_top_v
-        = (float)(filter->select_top + 1) / (float)(filter->base_height);
-
-    bool visualize = (filter->filter_mode == PM_MASK_VISUALIZE);
-
-    gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
-    gs_effect_set_atomic_uint(filter->param_match_counter, 0);
-    gs_effect_set_float(filter->param_roi_left, roi_left_u);
-    gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
-    gs_effect_set_float(filter->param_roi_right, roi_right_u);
-    gs_effect_set_float(filter->param_roi_top, roi_top_v);
-    gs_effect_set_float(filter->param_per_pixel_err_thresh, match_ratio);
-    gs_effect_set_bool(filter->param_mask_alpha, true);
-    gs_effect_set_bool(filter->param_store_match_alpha, !visualize);
-    gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
-    gs_effect_set_texture(filter->param_match_img, tex);
-    gs_effect_set_bool(filter->param_show_border, visualize);
-    gs_effect_set_bool(filter->param_show_color_indicator, visualize);
-    gs_effect_set_float(filter->param_px_width,
-        2.f / (float)(filter->base_width));
-    gs_effect_set_float(filter->param_px_height,
-        2.f / (float)(filter->base_height));
-
-    obs_source_process_filter_end(filter->context, filter->effect,
-        filter->base_width, filter->base_height);
-}
-
 void render_passthrough(struct pm_filter_data* filter)
 {
     // no match entries to display; just do passthrough
@@ -316,46 +260,13 @@ void render_match_entries(struct pm_filter_data* filter)
     }
 }
 
-void capture_mask(struct pm_filter_data* filter)
+bool stagerender_begin(
+    struct pm_filter_data* filter,gs_stagesurf_t** sss, gs_texrender_t** stx)
 {
-    const size_t pxSz = 4;
-    size_t width = filter->select_right - filter->select_left + 1;
-    size_t height = filter->select_top - filter->select_bottom + 1;
-    size_t dstStride = width * pxSz;
-    size_t imgSz = dstStride * height;
-
-    uint8_t* srcPtr;
-    uint32_t srcStride;
-    if (!gs_texture_map(filter->mask_texture, &srcPtr, &srcStride)) {
-        blog(LOG_ERROR, "pm_filter_data: failed to map texture");
-        return;
-    }
-
-    if (filter->snapshot_data)
-        bfree(filter->snapshot_data);
-    filter->snapshot_data = (uint8_t*)bmalloc(imgSz);
-    uint8_t* dstPtr = filter->snapshot_data;
-
-    for (size_t i = 0; i < height; ++i) {
-        memcpy(dstPtr, srcPtr, dstStride);
-        srcPtr += srcStride;
-        dstPtr += dstStride;
-    }
-
-    gs_texture_unmap(filter->mask_texture);
-    gs_texture_destroy(filter->mask_texture);
-    filter->mask_texture = NULL;
-}
-
-void capture_snapshot(
-    struct pm_filter_data* filter, obs_source_t* target, obs_source_t* parent)
-{
-    gs_texrender_t** stx = &filter->snapshot_texrender;
     if (!*stx) {
         *stx = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
     }
 
-    gs_stagesurf_t** sss = &filter->snapshot_stagesurface;
     if (*sss) {
         uint32_t width = gs_stagesurface_get_width(*sss);
         uint32_t height = gs_stagesurface_get_height(*sss);
@@ -376,66 +287,47 @@ void capture_snapshot(
     gs_blend_state_push();
     gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
 
-    if (gs_texrender_begin(*stx, filter->base_width, filter->base_height)) {
-        uint32_t parent_flags = obs_source_get_output_flags(target);
-        bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
-        bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
-        struct vec4 clear_color;
-
-        vec4_zero(&clear_color);
-        gs_clear(GS_CLEAR_COLOR, &clear_color, 0.0f, 0);
-        gs_ortho(0.0f, (float)filter->base_width, 0.0f,
-            (float)filter->base_height, -100.0f, 100.0f);
-        if (target == parent && !custom_draw && !async) {
-            obs_source_default_render(target);
-        }
-        else {
-            obs_source_video_render(target);
-        }
-        gs_texrender_end(*stx);
+    if (!gs_texrender_begin(*stx, filter->base_width, filter->base_height)) {
+        blog(LOG_ERROR, "%s",
+            obs_module_text("pm_filter_data: texrender begin failed"));
+        return false;
     }
 
+    struct vec4 clear_color;
+    vec4_zero(&clear_color);
+    gs_clear(GS_CLEAR_COLOR, &clear_color, 0.0f, 0);
+    gs_ortho(0.0f, (float)filter->base_width,
+        0.0f, (float)filter->base_height, -100.0f, 100.0f);
+
+    return true;
+}
+
+void stagerender_end(gs_texrender_t* stx)
+{
+    gs_texrender_end(stx);
+
     gs_blend_state_pop();
+}
 
-
+void copy_region_from_stagerender(
+    struct pm_filter_data* filter,
+    gs_stagesurf_t* sss, gs_texrender_t* stx,
+    uint8_t *dstPtr, uint32_t dstStride)
+{
     const size_t pixSz = 4;
     size_t width = filter->select_right - filter->select_left + 1;
     size_t height = filter->select_top - filter->select_bottom + 1;
-    uint32_t dstStride;
 
-    uint8_t* dstPtr = NULL;
-    if (filter->filter_mode == PM_SNAPSHOT) {
-        if (filter->snapshot_data)
-            bfree(filter->snapshot_data);
-        dstStride = width * pixSz;
-        filter->snapshot_data = (uint8_t*)bmalloc(dstStride * height);
-        dstPtr = filter->snapshot_data;
-    } else {
-        // mask begin or mask
-        if (filter->filter_mode == PM_MASK_BEGIN) {
-            if (filter->mask_texture)
-                gs_texture_destroy(filter->mask_texture);
-            filter->mask_texture = NULL;
-            filter->mask_texture = gs_texture_create(
-                (uint32_t)width, (uint32_t)height, GS_RGBA, 
-                1, NULL, GS_DYNAMIC);
-        }
-        if (!gs_texture_map(filter->mask_texture, &dstPtr, &dstStride)) {
-            blog(LOG_ERROR, "pm_filter_data: failed to map texture");
-            return;
-        }
-    }
-
-    gs_texture_t* tex = gs_texrender_get_texture(*stx);
-    gs_stage_texture(*sss, tex);
+    gs_texture_t* tex = gs_texrender_get_texture(stx);
+    gs_stage_texture(sss, tex);
     uint8_t* stageSurfData;
     uint32_t srcStride;
-    if (!gs_stagesurface_map(*sss, &stageSurfData, &srcStride)) {
+    if (!gs_stagesurface_map(sss, &stageSurfData, &srcStride)) {
         blog(LOG_ERROR, "pm_filter_data: failed to map stage surface");
         return;
     }
 
-    uint8_t* srcPtr = stageSurfData 
+    uint8_t* srcPtr = stageSurfData
         + filter->select_bottom * srcStride + filter->select_left * pixSz;
     size_t lineWidth = min(srcStride, dstStride);
     for (size_t i = 0; i < height; ++i) {
@@ -443,11 +335,153 @@ void capture_snapshot(
         dstPtr += dstStride;
         srcPtr += srcStride;
     }
-    gs_stagesurface_unmap(*sss);
-    
-    if (filter->filter_mode != PM_SNAPSHOT) {
-        gs_texture_unmap(filter->mask_texture);
+    gs_stagesurface_unmap(sss);
+}
+
+void snapshot_stagerender(
+    struct pm_filter_data* filter, obs_source_t* target, obs_source_t* parent)
+{
+    stagerender_begin(
+        filter, &filter->snapshot_stagesurface, &filter->snapshot_texrender);
+
+    uint32_t parent_flags = obs_source_get_output_flags(target);
+    bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
+    bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
+    if (target == parent && !custom_draw && !async) {
+        obs_source_default_render(target);
+    } else {
+        obs_source_video_render(target);
     }
+
+    stagerender_end(filter->snapshot_texrender);
+}
+
+void capture_region_from_stagerender(
+    struct pm_filter_data* filter, gs_stagesurf_t* sss, gs_texrender_t* stx)
+{
+    const uint32_t pixSz = 4;
+    uint32_t width = filter->select_right - filter->select_left + 1;
+    uint32_t height = filter->select_top - filter->select_bottom + 1;
+    uint8_t* dst_ptr;
+    uint32_t dst_stride = width * pixSz;
+
+    if (filter->captured_region_data)
+        bfree(filter->captured_region_data);
+    filter->captured_region_data = (uint8_t*)bmalloc(dst_stride * height);
+    dst_ptr = filter->captured_region_data;
+
+    copy_region_from_stagerender(
+        filter, sss, stx,
+        dst_ptr, dst_stride);
+}
+
+void capture_mask_tex_from_snapshot_stagerender(struct pm_filter_data* filter)
+{
+    const uint32_t pixSz = 4;
+    uint32_t width = filter->select_right - filter->select_left + 1;
+    uint32_t height = filter->select_top - filter->select_bottom + 1;
+    uint8_t* dst_ptr;
+    uint32_t dst_stride;
+
+    // mask begin
+    if (filter->mask_region_texture)
+        gs_texture_destroy(filter->mask_region_texture);
+    filter->mask_region_texture = NULL;
+    filter->mask_region_texture = gs_texture_create(
+        (uint32_t)width, (uint32_t)height, GS_RGBA,
+        1, NULL, GS_DYNAMIC);
+    if (!gs_texture_map(filter->mask_region_texture, &dst_ptr, &dst_stride)) {
+        blog(LOG_ERROR, "pm_filter_data: failed to map texture");
+        return;
+    }
+
+    copy_region_from_stagerender(
+        filter, filter->snapshot_stagesurface, filter->snapshot_texrender,
+        dst_ptr, dst_stride);
+
+    if (filter->filter_mode != PM_SNAPSHOT) {
+        gs_texture_unmap(filter->mask_region_texture);
+    }
+
+}
+
+void configure_mask(struct pm_filter_data* filter)
+{
+    size_t sel_idx = filter->selected_match_index;
+    if (sel_idx >= filter->num_match_entries) return;
+    struct pm_match_entry_data* entry = filter->match_entries + sel_idx;
+    float match_ratio = entry->cfg.per_pixel_err_thresh / 100.f;
+
+    float roi_left_u
+        = (float)(filter->select_left) / (float)(filter->base_width);
+    float roi_bottom_v
+        = (float)(filter->select_bottom) / (float)(filter->base_height);
+    float roi_right_u
+        = (float)(filter->select_right + 1) / (float)(filter->base_width);
+    float roi_top_v
+        = (float)(filter->select_top + 1) / (float)(filter->base_height);
+
+    bool visualize = (filter->filter_mode == PM_MASK_VISUALIZE);
+
+    //gs_effect_set_texture(filter->param_image, tex);
+    gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
+    gs_effect_set_atomic_uint(filter->param_match_counter, 0);
+    gs_effect_set_float(filter->param_roi_left, roi_left_u);
+    gs_effect_set_float(filter->param_roi_bottom, roi_bottom_v);
+    gs_effect_set_float(filter->param_roi_right, roi_right_u);
+    gs_effect_set_float(filter->param_roi_top, roi_top_v);
+    gs_effect_set_float(filter->param_per_pixel_err_thresh, match_ratio);
+    gs_effect_set_bool(filter->param_mask_alpha, true);
+    gs_effect_set_bool(filter->param_store_match_alpha, !visualize);
+    gs_effect_set_vec3(filter->param_mask_color, &vec3_dummy);
+    gs_effect_set_texture(filter->param_match_img, filter->mask_region_texture);
+    gs_effect_set_bool(filter->param_show_border, visualize);
+    gs_effect_set_bool(filter->param_show_color_indicator, visualize);
+    gs_effect_set_float(filter->param_px_width,
+        2.f / (float)(filter->base_width));
+    gs_effect_set_float(filter->param_px_height,
+        2.f / (float)(filter->base_height));
+
+#if 0
+    while (gs_effect_loop(filter->effect, "Draw")) {
+        gs_draw_sprite(tex, 0, 0, 0);
+}
+#endif
+}
+
+void render_mask_visualization(struct pm_filter_data* filter)
+{
+    if (!obs_source_process_filter_begin(
+        filter->context, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+        blog(LOG_ERROR,
+            "pm_filter_data: obs_source_process_filter_begin failed.");
+        return;
+    }
+    configure_mask(filter);
+    obs_source_process_filter_end(filter->context, filter->effect,
+        filter->base_width, filter->base_height);
+}
+
+void mask_stagerender(
+    struct pm_filter_data* filter, obs_source_t* target, obs_source_t* parent)
+{
+    // grab a snapshot to use it as input to mask rendering
+    snapshot_stagerender(filter, target, parent);
+    gs_texture_t* snapshot_texture 
+        = gs_texrender_get_texture(filter->snapshot_texrender);
+    
+
+    // prepare and render mask stagerender
+    stagerender_begin(
+        filter, &filter->mask_stagesurface, &filter->mask_texrender);
+
+    gs_effect_set_texture(filter->param_image, snapshot_texture);
+    configure_mask(filter);
+    while (gs_effect_loop(filter->effect, "Draw")) {
+        gs_draw_sprite(snapshot_texture, 0, 0, 0);
+    }
+
+    stagerender_end(filter->mask_texrender);
 }
 
 static void pixel_match_filter_render(void *data, gs_effect_t *effect)
@@ -472,26 +506,31 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->base_width == 0 || filter->base_height == 0)
         goto done;
 
-    if (filter->filter_mode == PM_SNAPSHOT
-     || filter->filter_mode == PM_MASK_BEGIN) {
-        render_passthrough(filter);
-        capture_snapshot(filter, target, parent);
+    if (filter->filter_mode == PM_SNAPSHOT) {
+        snapshot_stagerender(filter, target, parent);
+        capture_region_from_stagerender(filter,
+            filter->snapshot_stagesurface, filter->snapshot_texrender);
+        goto done;
+    }
+
+    if (filter->filter_mode == PM_MASK_BEGIN) {
+        snapshot_stagerender(filter, target, parent);
+        capture_mask_tex_from_snapshot_stagerender(filter);
+    }
+
+    if (filter->filter_mode == PM_MASK) {
+        mask_stagerender(filter, target, parent);
         goto done;
     }
 
     if (filter->filter_mode == PM_MASK_END) {
-        capture_mask(filter);
+        capture_region_from_stagerender(filter,
+            filter->mask_stagesurface, filter->mask_texrender);
         goto done;
     }
 
     if (filter->filter_mode == PM_MASK_VISUALIZE) {
-        render_mask(filter);
-        goto done;
-    }
-
-    if (filter->filter_mode == PM_MASK) {
-        render_mask(filter);
-        capture_snapshot(filter, target, parent);
+        render_mask_visualization(filter);
         goto done;
     }
 
@@ -518,9 +557,9 @@ done:
         filter->filter_mode = PM_MASK;
     pthread_mutex_unlock(&filter->mutex);
 
-    if (filter->on_snapshot_available
+    if (filter->on_region_captured
      && (prevMode == PM_SNAPSHOT || prevMode == PM_MASK_END)) {
-        filter->on_snapshot_available();
+        filter->on_region_captured();
     }
 
     if ((prevMode == PM_MASK 
