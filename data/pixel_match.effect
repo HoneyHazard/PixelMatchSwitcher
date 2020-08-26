@@ -92,10 +92,10 @@ float4 PSMatch(VertInOut vert_in) : TARGET
         }
     }
     
-     if (store_match_alpha)
-     {
-         val.w = 0;
-     }
+    // if (store_match_alpha)
+    // {
+    //     val.w = 0;
+    // }
 
     if (show_border || show_color_indicator) {
         float border_width = px_width * 2.0, border_height = px_height * 2.0;

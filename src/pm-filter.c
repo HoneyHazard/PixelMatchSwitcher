@@ -375,7 +375,8 @@ void capture_region_from_stagerender(
         dst_ptr, dst_stride);
 }
 
-void capture_mask_tex_from_snapshot_stagerender(struct pm_filter_data* filter)
+void capture_mask_tex_from_stagerender(
+    struct pm_filter_data* filter, gs_stagesurf_t* sss, gs_texrender_t* stx)
 {
     const uint32_t pixSz = 4;
     uint32_t width = filter->select_right - filter->select_left + 1;
@@ -395,14 +396,9 @@ void capture_mask_tex_from_snapshot_stagerender(struct pm_filter_data* filter)
         return;
     }
 
-    copy_region_from_stagerender(
-        filter, filter->snapshot_stagesurface, filter->snapshot_texrender,
-        dst_ptr, dst_stride);
+    copy_region_from_stagerender(filter, sss, stx, dst_ptr, dst_stride);
 
-    if (filter->filter_mode != PM_SNAPSHOT) {
-        gs_texture_unmap(filter->mask_region_texture);
-    }
-
+    gs_texture_unmap(filter->mask_region_texture);
 }
 
 void configure_mask(struct pm_filter_data* filter)
@@ -469,7 +465,6 @@ void mask_stagerender(
     snapshot_stagerender(filter, target, parent);
     gs_texture_t* snapshot_texture 
         = gs_texrender_get_texture(filter->snapshot_texrender);
-    
 
     // prepare and render mask stagerender
     stagerender_begin(
@@ -478,7 +473,8 @@ void mask_stagerender(
     gs_effect_set_texture(filter->param_image, snapshot_texture);
     configure_mask(filter);
     while (gs_effect_loop(filter->effect, "Draw")) {
-        gs_draw_sprite(snapshot_texture, 0, 0, 0);
+        //gs_draw_sprite(snapshot_texture, 0, 0, 0);
+        gs_draw(GS_TRISTRIP, 0, 0);
     }
 
     stagerender_end(filter->mask_texrender);
@@ -515,11 +511,15 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     if (filter->filter_mode == PM_MASK_BEGIN) {
         snapshot_stagerender(filter, target, parent);
-        capture_mask_tex_from_snapshot_stagerender(filter);
+        capture_mask_tex_from_stagerender(
+            filter, filter->snapshot_stagesurface, filter->snapshot_texrender);
+        goto done;
     }
 
     if (filter->filter_mode == PM_MASK) {
         mask_stagerender(filter, target, parent);
+        capture_mask_tex_from_stagerender(
+            filter, filter->mask_stagesurface, filter->mask_texrender);
         goto done;
     }
 
