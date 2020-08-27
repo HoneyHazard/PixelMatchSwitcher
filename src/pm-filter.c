@@ -542,6 +542,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         capture_mask_tex_from_stagerender(
             filter, filter->mask_stagesurface, filter->mask_texrender,
             false);
+        render_passthrough(filter);
         goto done;
     }
 
