@@ -567,22 +567,26 @@ void PmMatchConfigWidget::onConfigUiChanged()
     config.filterCfg.per_pixel_err_thresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
 
-    config.filterCfg.mask_alpha = (config.maskMode == PmMaskMode::AlphaMode);
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
-    //config.filterCfg.mask_color = m_customColor;
-    float r = 0.f, g = 0.f, b = 0.f;
     switch (config.maskMode) {
     case PmMaskMode::AlphaMode:
+        config.filterCfg.mask_alpha = true;
+        config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
+        break;
     case PmMaskMode::BlackMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
         break;
     case PmMaskMode::GreenMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = { 0.f, 1.f, 0.f };
         break;
     case PmMaskMode::MagentaMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = { 1.f, 0.f, 1.f };
         break;
     case PmMaskMode::CustomClrMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = m_customColor;
         break;
     }
