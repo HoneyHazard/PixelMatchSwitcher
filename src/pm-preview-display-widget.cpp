@@ -370,7 +370,6 @@ void PmPreviewDisplayWidget::drawMatchImage()
 
     gs_projection_pop();
     gs_viewport_pop();
-
 }
 
 void PmPreviewDisplayWidget::getDisplaySize(

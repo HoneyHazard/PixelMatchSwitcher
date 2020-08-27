@@ -376,7 +376,8 @@ void capture_region_from_stagerender(
 }
 
 void capture_mask_tex_from_stagerender(
-    struct pm_filter_data* filter, gs_stagesurf_t* sss, gs_texrender_t* stx)
+    struct pm_filter_data* filter, gs_stagesurf_t* sss, gs_texrender_t* stx,
+    bool reset)
 {
     const uint32_t pixSz = 4;
     uint32_t width = filter->select_right - filter->select_left + 1;
@@ -385,12 +386,14 @@ void capture_mask_tex_from_stagerender(
     uint32_t dst_stride;
 
     // mask begin
-    if (filter->mask_region_texture)
-        gs_texture_destroy(filter->mask_region_texture);
-    filter->mask_region_texture = NULL;
-    filter->mask_region_texture = gs_texture_create(
-        (uint32_t)width, (uint32_t)height, GS_RGBA,
-        1, NULL, GS_DYNAMIC);
+    if (reset) {
+        if (filter->mask_region_texture)
+            gs_texture_destroy(filter->mask_region_texture);
+        filter->mask_region_texture = NULL;
+        filter->mask_region_texture = gs_texture_create(
+            (uint32_t)width, (uint32_t)height, GS_RGBA,
+            1, NULL, GS_DYNAMIC);
+    }
     if (!gs_texture_map(filter->mask_region_texture, &dst_ptr, &dst_stride)) {
         blog(LOG_ERROR, "pm_filter_data: failed to map texture");
         return;
@@ -470,12 +473,29 @@ void mask_stagerender(
     stagerender_begin(
         filter, &filter->mask_stagesurface, &filter->mask_texrender);
 
+    gs_viewport_push();
+    gs_projection_push();
+    gs_ortho(0.0f, (float)filter->base_width, 0.0f, (float)filter->base_height,
+        -100.0f, 100.0f);
+    gs_set_viewport(0, 0, filter->base_width, filter->base_height);
+
+    gs_blend_state_push();
+    gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+    struct vec4 clear_color;
+    vec4_zero(&clear_color);
+    gs_clear(GS_CLEAR_COLOR, &clear_color, .0f, 0);
+
     gs_effect_set_texture(filter->param_image, snapshot_texture);
     configure_mask(filter);
     while (gs_effect_loop(filter->effect, "Draw")) {
         //gs_draw_sprite(snapshot_texture, 0, 0, 0);
         gs_draw(GS_TRISTRIP, 0, 0);
     }
+
+    gs_blend_state_pop();
+
+    gs_projection_pop();
+    gs_viewport_pop();
 
     stagerender_end(filter->mask_texrender);
 }
@@ -512,14 +532,16 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     if (filter->filter_mode == PM_MASK_BEGIN) {
         snapshot_stagerender(filter, target, parent);
         capture_mask_tex_from_stagerender(
-            filter, filter->snapshot_stagesurface, filter->snapshot_texrender);
+            filter, filter->snapshot_stagesurface, filter->snapshot_texrender,
+            true);
         goto done;
     }
 
     if (filter->filter_mode == PM_MASK) {
         mask_stagerender(filter, target, parent);
         capture_mask_tex_from_stagerender(
-            filter, filter->mask_stagesurface, filter->mask_texrender);
+            filter, filter->mask_stagesurface, filter->mask_texrender,
+            false);
         goto done;
     }
 
@@ -612,7 +634,7 @@ struct obs_source_info pixel_match_filter = {
     }
 
     // frame capture
-    if (cx > 0 && cy > 0) {        
+    if (cx > 0 && cy > 0) {
         uint32_t parent_flags = obs_source_get_output_flags(target);
         bool custom_draw = (parent_flags & OBS_SOURCE_CUSTOM_DRAW) != 0;
         bool async = (parent_flags & OBS_SOURCE_ASYNC) != 0;
