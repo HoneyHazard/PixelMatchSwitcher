@@ -17,10 +17,10 @@
 // TODO: organize and add comments
 
 enum class PmMaskMode : int {
-    GreenMode=0,
-    MagentaMode=1,
-    BlackMode=2,
-    AlphaMode=3,
+    AlphaMode=0,
+    GreenMode=1,
+    MagentaMode=2,
+    BlackMode=3,
     CustomClrMode=4
 };
 
@@ -64,7 +64,7 @@ struct PmMatchConfig
     struct pm_match_entry_config filterCfg;
     float totalMatchThresh = 90.f;
 
-    PmMaskMode maskMode = PmMaskMode::GreenMode;
+    PmMaskMode maskMode = PmMaskMode::AlphaMode;
 
     //OBSWeakSource matchScene;
     //OBSWeakSource transition;

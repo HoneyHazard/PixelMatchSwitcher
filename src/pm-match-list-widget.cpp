@@ -281,6 +281,7 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
 
     auto resultLabel = (QLabel*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::Result);
+    if (!resultLabel) return;
 
     float percentage = results.percentageMatched;
     

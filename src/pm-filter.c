@@ -485,14 +485,26 @@ void mask_stagerender(
 
     gs_blend_state_push();
     gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+
     struct vec4 clear_color;
     vec4_zero(&clear_color);
+    if (filter->filter_mode == PM_MASK_END) {
+        size_t selIdx = filter->selected_match_index;
+        if (selIdx < filter->num_match_entries) {
+            struct pm_match_entry_data* entry = filter->match_entries + selIdx;
+            if (!entry->cfg.mask_alpha) {
+                // user specified non-alpha as the background for match entry
+                vec4_from_vec3(&clear_color, &entry->cfg.mask_color);
+                gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
+            }
+        }
+    }
+
     gs_clear(GS_CLEAR_COLOR, &clear_color, .0f, 0);
 
     gs_effect_set_texture(filter->param_image, snapshot_texture);
     configure_mask(filter);
     while (gs_effect_loop(filter->effect, "Draw")) {
-        //gs_draw_sprite(snapshot_texture, 0, 0, 0);
         gs_draw(GS_TRISTRIP, 0, 0);
     }
 
@@ -551,6 +563,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     }
 
     if (filter->filter_mode == PM_MASK_END) {
+        mask_stagerender(filter, target, parent);
         capture_region_from_stagerender(filter,
             filter->mask_stagesurface, filter->mask_texrender);
         goto done;
