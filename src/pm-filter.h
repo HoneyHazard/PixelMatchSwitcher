@@ -32,7 +32,11 @@ struct pm_match_entry_data
     uint32_t num_matched;
 };
 
-enum pm_filter_mode { PM_COUNT = 0, PM_VISUALIZE = 1, PM_SELECT_REGION = 2 };
+enum pm_filter_mode { 
+    PM_MATCH = 0, PM_MATCH_VISUALIZE = 1, 
+    PM_MASK_BEGIN = 2, PM_MASK = 3, PM_MASK_END = 4, PM_MASK_VISUALIZE = 5, 
+    PM_SELECT_REGION = 6, PM_SNAPSHOT = 7
+};
 
 struct pm_filter_data
 {
@@ -42,6 +46,7 @@ struct pm_filter_data
     //obs_data_t *settings;
 
     // shader parameters and results
+    gs_eparam_t *param_image;
     gs_eparam_t *param_show_color_indicator;
     gs_eparam_t *param_show_border;
     gs_eparam_t *param_px_width;
@@ -54,6 +59,7 @@ struct pm_filter_data
     gs_eparam_t *param_per_pixel_err_thresh;
     gs_eparam_t *param_mask_color;
     gs_eparam_t *param_mask_alpha;
+    gs_eparam_t* param_store_match_alpha;
     gs_eparam_t *param_match_img;
     gs_eparam_t *param_compare_counter;
     gs_eparam_t *param_match_counter;
@@ -73,13 +79,17 @@ struct pm_filter_data
 
     // selection mode and snapshot
     uint32_t select_left, select_bottom, select_right, select_top;
+    uint8_t* captured_region_data;
 
-    bool request_snapshot;
     gs_texrender_t* snapshot_texrender;
     gs_stagesurf_t* snapshot_stagesurface;
-    uint8_t* snapshot_data;
+    
+    gs_texrender_t* mask_texrender;
+    gs_stagesurf_t* mask_stagesurface;
+    gs_texture_t* mask_region_texture;
 
     // callbacks for fast reactions
+    void (*on_region_captured)();
     void (*on_frame_processed)();
 };
 

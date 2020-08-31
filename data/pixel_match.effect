@@ -15,6 +15,7 @@ uniform float roi_top;
 
 uniform bool show_border;
 uniform bool show_color_indicator;
+uniform bool store_match_alpha;
 uniform float px_width;
 uniform float px_height;
 
@@ -39,7 +40,7 @@ VertInOut VSDefault(VertInOut vert_in)
 {
     VertInOut vert_out;
     vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
-    vert_out.uv  = vert_in.uv;
+    vert_out.uv  = vert_in.uv; 
     return vert_out;
 }
 
@@ -54,7 +55,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
 
     if (!hbound || !vbound) {
         if (show_border && !show_color_indicator) {
-            // when in selection mode hide areas outside the region
+            // when in selection mode dim areas outside the selection region
             val.r = val.r * 0.6;
             val.g = val.g * 0.6;
             val.b = val.b * 0.6;
@@ -66,10 +67,6 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     float4 cmp_val;
     if (show_border && !show_color_indicator) {
         cmp_on = false;
-        //val.x = 0;
-        //val.y = 1;
-        //val.z = 0;
-        //val.w = 1;
     } else {
         float2 sample_uv = (uv - float2(roi_left, roi_bottom))
             / float2(roi_right - roi_left, roi_top - roi_bottom);
@@ -84,14 +81,17 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     }
 
 
+    bool match_on = false;
     if (cmp_on) {
         atomicCounterIncrement(compare_counter);
-    }
-
-    bool match_on
-        = (cmp_on && match_ratio(val.xyz, cmp_val.xyz) <= per_pixel_err_thresh);
-    if (match_on) {
-        atomicCounterIncrement(match_counter);
+        match_on = (match_ratio(val.xyz, cmp_val.xyz) <= per_pixel_err_thresh);
+        if (match_on) {
+            atomicCounterIncrement(match_counter);
+        } else if (store_match_alpha) {
+            val.w = 0;
+        }
+    } else if (store_match_alpha) {
+        val.w = 0;
     }
 
     if (show_border || show_color_indicator) {

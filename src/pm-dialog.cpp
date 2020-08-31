@@ -7,15 +7,13 @@
 #include "pm-match-results-widget.hpp"
 #include "pm-preview-config-widget.hpp"
 #include "pm-preview-display-widget.hpp"
+#include "pm-match-image-dialog.hpp"
 #include "pm-help-widget.hpp"
 #include "pm-filter.h"
 
 #include <QVBoxLayout>
 #include <QTabWidget>
 #include <QSplitter>
-
-#include <QFileDialog>
-#include <QMessageBox>
 
 #include <obs-module.h>
 #include <obs-frontend-api.h>
@@ -109,38 +107,23 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
 
 void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
 {
-    QString saveFilename = QFileDialog::getSaveFileName(
-        this,
-        obs_module_text("Save New Match Image"),
-        "",
-        PmConstants::k_imageFilenameFilter);
-    
-    if (saveFilename.size()) {
-        bool ok = matchImg.save(saveFilename);
-        if (ok) {
-            size_t matchIndex = m_core->selectedConfigIndex();
-            auto matchCfg = m_core->matchConfig(matchIndex);
+    PmMatchImageDialog* mid = new PmMatchImageDialog(matchImg, this);
+    mid->exec();
 
-            // force image reload in case filenames are same:
-            matchCfg.matchImgFilename = ""; 
-            emit sigChangedMatchConfig(matchIndex, matchCfg);
+    if (mid->result() == QDialog::Accepted) {
+        std::string filename = mid->saveLocation();
+        size_t matchIndex = m_core->selectedConfigIndex();
+        auto matchCfg = m_core->matchConfig(matchIndex);
 
-            matchCfg.matchImgFilename = saveFilename.toUtf8().data();
-            matchCfg.filterCfg.roi_left = roiLeft;
-            matchCfg.filterCfg.roi_bottom = roiBottom;
-            emit sigChangedMatchConfig(matchIndex, matchCfg);
-            emit sigCaptureStateChanged(PmCaptureState::Inactive);
-        } else {
-            QString errMsg = QString(
-                obs_module_text("Unable to save file: %1")).arg(saveFilename);
-            QMessageBox::critical(
-                this, obs_module_text("Error"), errMsg);
-            
-            // fallback to SelectFinished state
-            int x, y;
-            m_core->getCaptureEndXY(x, y);
-            emit sigCaptureStateChanged(PmCaptureState::SelectFinished, x, y);
-        }
+        // force image reload in case filenames are same:
+        matchCfg.matchImgFilename = "";
+        emit sigChangedMatchConfig(matchIndex, matchCfg);
+
+        matchCfg.matchImgFilename = filename;
+        matchCfg.filterCfg.roi_left = roiLeft;
+        matchCfg.filterCfg.roi_bottom = roiBottom;
+        emit sigChangedMatchConfig(matchIndex, matchCfg);
+        emit sigCaptureStateChanged(PmCaptureState::Inactive);
     } else {
         // fallback to SelectFinished state
         int x, y;

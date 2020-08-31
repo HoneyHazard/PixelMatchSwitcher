@@ -20,6 +20,9 @@ public:
     PmMatchImageDialog(const QImage& image, QWidget *parent = nullptr);
     const std::string& saveLocation() const { return m_saveLocation; }
 
+protected slots:
+    void onSaveReleased();
+
 protected:
     std::string m_saveLocation;
     QGraphicsScene* m_scene;

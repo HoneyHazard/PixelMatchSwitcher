@@ -21,7 +21,7 @@ struct obs_scene;
 struct pm_filter_data;
 class PmDialog;
 
-class PmCore : public QObject
+class PmCore : public QObject   
 {
     Q_OBJECT
 
@@ -29,6 +29,7 @@ class PmCore : public QObject
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
     friend void on_frame_processed();
+    friend void on_snapshot_available();
     friend void pm_save_load_callback(
         obs_data_t *save_data, bool saving, void *corePtr);
 
@@ -74,6 +75,8 @@ public:
 
 signals:
     void sigFrameProcessed();
+    void sigSnapshotAvailable();
+
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
     void sigChangedMatchConfig(size_t matchIndex, PmMatchConfig config);
     void sigNewMultiMatchConfigSize(size_t sz);
@@ -121,6 +124,7 @@ protected slots:
     void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed();
+    void onSnapshotAvailable();
 
 protected:
     static QHash<std::string, OBSWeakSource> getAvailableTransitions();

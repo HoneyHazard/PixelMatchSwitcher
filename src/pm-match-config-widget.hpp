@@ -4,6 +4,7 @@
 #include <QPointer>
 
 #include "pm-structs.hpp"
+#include "pm-filter-ref.hpp"
 
 class PmCore;
 
@@ -37,6 +38,7 @@ protected slots:
     void onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
     void onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg);
     void onNewMultiMatchConfigSize(size_t sz);
+    void onNewActiveFilter(PmFilterRef newAf);
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);
@@ -49,6 +51,8 @@ protected slots:
 
     void onPickColorButtonReleased();
     void onCaptureBeginReleased();
+    void onCaptureAutomaskPressed();
+    void onCaptureAutomaskReleased();
     void onCaptureAcceptReleased();
     void onCaptureCancelReleased();
 
@@ -78,6 +82,7 @@ protected:
 
     QPushButton* m_captureBeginButton;
     QPushButton* m_captureAcceptButton;
+    QPushButton* m_captureAutomaskButton;
     QPushButton* m_captureCancelButton;
 
     QLineEdit* m_labelEdit;

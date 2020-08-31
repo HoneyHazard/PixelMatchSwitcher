@@ -258,16 +258,72 @@ void PmPreviewDisplayWidget::drawEffect()
         vpBottom = 0.0f;
     }
 
+#if 1
+    bool skip = false;
+    auto captureState = m_core->captureState();
+    filterRef.lockData();
+
+    if (filterData->filter_mode == PM_MASK_BEGIN
+     || filterData->filter_mode == PM_MASK_END
+     || filterData->filter_mode == PM_SNAPSHOT) {
+        // don't mess with these
+        skip = true;
+    } else {
+
+        enum pm_filter_mode filterMode;
+        switch (captureState) {
+        case PmCaptureState::Inactive:
+            filterMode = PM_MATCH_VISUALIZE; break;
+        case PmCaptureState::Automask:
+            filterMode = PM_MASK_VISUALIZE; break;
+        case PmCaptureState::Activated:
+        case PmCaptureState::SelectBegin:
+        case PmCaptureState::SelectMoved:
+        case PmCaptureState::SelectFinished:
+        case PmCaptureState::Accepted:
+            filterMode = PM_SELECT_REGION; break;
+        default: 
+            filterMode = filterData->filter_mode; break;
+        }
+        filterData->filter_mode = filterMode;
+    }
+    filterRef.unlockData();
+
+#else
+    bool skip = false;
+    auto captureState = m_core->captureState();
+
+    filterRef.lockData();
+    enum pm_filter_mode filterMode;
+    switch (filterData->filter_mode) {
+    case PM_MATCH:
+        filterMode = PM_MATCH_VISUALIZE; break;
+    case PM_MASK:
+        filterMode = PM_MASK_VISUALIZE; break;
+    default:
+        if (captureState == PmCaptureState::SelectBegin
+         || captureState == PmCaptureState::SelectMoved
+         || captureState == PmCaptureState::SelectFinished
+         || captureState == PmCaptureState::Accepted) {
+            filterMode = PM_SELECT_REGION;
+        } else { 
+            // don't mess with it
+            skip = true;
+        }
+    }
+    if (!skip) 
+        filterData->filter_mode = filterMode;
+    filterRef.unlockData();
+
+
+#endif
+
+    if (skip) return;
+
     gs_viewport_push();
     gs_projection_push();
     gs_ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, -100.0f, 100.0f);
     gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
-
-    filterRef.lockData();
-    filterData->filter_mode =
-        (m_core->captureState() == PmCaptureState::Inactive) ? PM_VISUALIZE
-                                                             : PM_SELECT_REGION;
-    filterRef.unlockData();
 
     obs_source_video_render(renderSrc);
 
@@ -314,7 +370,6 @@ void PmPreviewDisplayWidget::drawMatchImage()
 
     gs_projection_pop();
     gs_viewport_pop();
-
 }
 
 void PmPreviewDisplayWidget::getDisplaySize(

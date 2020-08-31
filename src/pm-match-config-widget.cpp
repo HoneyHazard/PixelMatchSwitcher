@@ -88,6 +88,15 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onCaptureAcceptReleased);
     imgControlLayout1->addWidget(m_captureAcceptButton);
 
+    m_captureAutomaskButton = new QPushButton(
+        obs_module_text("Auto-Mask"), this);
+    m_captureAutomaskButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_captureAutomaskButton, &QPushButton::pressed,
+            this, &PmMatchConfigWidget::onCaptureAutomaskPressed);
+    connect(m_captureAutomaskButton, &QPushButton::released,
+            this, &PmMatchConfigWidget::onCaptureAutomaskReleased);
+    imgControlLayout1->addWidget(m_captureAutomaskButton);
+
     m_captureCancelButton = new QPushButton(
         obs_module_text("Cancel Capture"), this);
     m_captureCancelButton->setFocusPolicy(Qt::NoFocus);
@@ -215,6 +224,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onNewMultiMatchConfigSize, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigCaptureStateChanged,
             this, &PmMatchConfigWidget::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigNewActiveFilter,
+            this, &PmMatchConfigWidget::onNewActiveFilter, Qt::QueuedConnection);
 
     // local signals -> core
     connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
@@ -228,6 +239,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onCaptureStateChanged(m_core->captureState(), 0, 0);
+    onNewActiveFilter(m_core->activeFilterRef());
 }
 
 void PmMatchConfigWidget::onSelectMatchIndex(
@@ -261,6 +273,10 @@ void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
     setEnabled(m_matchIndex < m_multiConfigSz);
 }
 
+void PmMatchConfigWidget::onNewActiveFilter(PmFilterRef newAf)
+{
+    m_captureBeginButton->setEnabled(newAf.isValid());
+}
 
 void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
 {
@@ -367,6 +383,16 @@ void PmMatchConfigWidget::onCaptureBeginReleased()
     emit sigCaptureStateChanged(PmCaptureState::Activated);
 }
 
+void PmMatchConfigWidget::onCaptureAutomaskPressed()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Automask);
+}
+
+void PmMatchConfigWidget::onCaptureAutomaskReleased()
+{
+    emit sigCaptureStateChanged(PmCaptureState::Accepted);
+}
+
 void PmMatchConfigWidget::onCaptureAcceptReleased()
 {
     emit sigCaptureStateChanged(PmCaptureState::Accepted);
@@ -468,11 +494,13 @@ void PmMatchConfigWidget::onCaptureStateChanged(
     case PmCaptureState::SelectMoved:
         m_buttonsStack->setCurrentIndex(1);
         m_captureAcceptButton->setEnabled(false);
+        m_captureAutomaskButton->setEnabled(false);
         m_captureCancelButton->setEnabled(true);
         break;
     case PmCaptureState::SelectFinished:
         m_buttonsStack->setCurrentIndex(1);
         m_captureAcceptButton->setEnabled(true);
+        m_captureAutomaskButton->setEnabled(true);
         m_captureCancelButton->setEnabled(true);
         break;
     }
@@ -539,22 +567,26 @@ void PmMatchConfigWidget::onConfigUiChanged()
     config.filterCfg.per_pixel_err_thresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
 
-    config.filterCfg.mask_alpha = (config.maskMode == PmMaskMode::AlphaMode);
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
-    //config.filterCfg.mask_color = m_customColor;
-    float r = 0.f, g = 0.f, b = 0.f;
     switch (config.maskMode) {
     case PmMaskMode::AlphaMode:
+        config.filterCfg.mask_alpha = true;
+        config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
+        break;
     case PmMaskMode::BlackMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
         break;
     case PmMaskMode::GreenMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = { 0.f, 1.f, 0.f };
         break;
     case PmMaskMode::MagentaMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = { 1.f, 0.f, 1.f };
         break;
     case PmMaskMode::CustomClrMode:
+        config.filterCfg.mask_alpha = false;
         config.filterCfg.mask_color = m_customColor;
         break;
     }
