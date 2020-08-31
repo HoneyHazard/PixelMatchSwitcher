@@ -2,6 +2,10 @@
 
 #include <graphics/graphics.h>
 
+const float PM_VISUALIZE_BORDER_THICKNESS = 2.f;
+const float PM_SELECT_REGION_BORDER_THICKNESS = 4.f;
+const float PM_AUTOMASK_BORDER_THICKNESS = 4.f;
+
 struct vec3 vec3_dummy;
 
 static const char *pixel_match_filter_get_name(void* unused)
@@ -98,10 +102,10 @@ static void *pixel_match_filter_create(
         gs_effect_get_param_by_name(filter->effect, "show_color_indicator");
     filter->param_show_border =
         gs_effect_get_param_by_name(filter->effect, "show_border");
-    filter->param_px_width =
-        gs_effect_get_param_by_name(filter->effect, "px_width");
-    filter->param_px_height =
-        gs_effect_get_param_by_name(filter->effect, "px_height");
+    filter->param_border_px_width =
+        gs_effect_get_param_by_name(filter->effect, "border_px_width");
+    filter->param_border_px_height =
+        gs_effect_get_param_by_name(filter->effect, "border_px_height");
 
 
     if (!filter->param_match_img || !filter->param_per_pixel_err_thresh
@@ -156,10 +160,10 @@ void render_select_region(struct pm_filter_data* filter)
     gs_effect_set_float(filter->param_roi_top, roi_top_v);
     gs_effect_set_bool(filter->param_show_border, true);
     gs_effect_set_bool(filter->param_show_color_indicator, false);
-    gs_effect_set_float(filter->param_px_width,
-        4.f / (float)(filter->base_width));
-    gs_effect_set_float(filter->param_px_height,
-        4.f / (float)(filter->base_height));
+    gs_effect_set_float(filter->param_border_px_width,
+        PM_SELECT_REGION_BORDER_THICKNESS / (float)(filter->base_width));
+    gs_effect_set_float(filter->param_border_px_height,
+        PM_SELECT_REGION_BORDER_THICKNESS / (float)(filter->base_height));
 
     // the rest are just values stop unassigned value errors
     gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
@@ -243,10 +247,10 @@ void render_match_entries(struct pm_filter_data* filter)
         gs_effect_set_texture(filter->param_match_img, entry->match_img_tex);
         gs_effect_set_bool(filter->param_show_border, visualize);
         gs_effect_set_bool(filter->param_show_color_indicator, visualize);
-        gs_effect_set_float(filter->param_px_width,
-            1.f / (float)(filter->base_width));
-        gs_effect_set_float(filter->param_px_height,
-            1.f / (float)(filter->base_height));
+        gs_effect_set_float(filter->param_border_px_width,
+            PM_VISUALIZE_BORDER_THICKNESS / (float)(filter->base_width));
+        gs_effect_set_float(filter->param_border_px_height,
+            PM_VISUALIZE_BORDER_THICKNESS / (float)(filter->base_height));
 
         obs_source_process_filter_end(filter->context, filter->effect,
             filter->base_width, filter->base_height);
@@ -436,10 +440,10 @@ void configure_mask(struct pm_filter_data* filter)
     gs_effect_set_texture(filter->param_match_img, filter->mask_region_texture);
     gs_effect_set_bool(filter->param_show_border, visualize);
     gs_effect_set_bool(filter->param_show_color_indicator, visualize);
-    gs_effect_set_float(filter->param_px_width,
-        2.f / (float)(filter->base_width));
-    gs_effect_set_float(filter->param_px_height,
-        2.f / (float)(filter->base_height));
+    gs_effect_set_float(filter->param_border_px_width,
+        PM_AUTOMASK_BORDER_THICKNESS / (float)(filter->base_width));
+    gs_effect_set_float(filter->param_border_px_height,
+        PM_AUTOMASK_BORDER_THICKNESS / (float)(filter->base_height));
 
 #if 0
     while (gs_effect_loop(filter->effect, "Draw")) {

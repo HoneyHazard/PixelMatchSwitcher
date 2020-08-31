@@ -49,8 +49,8 @@ struct pm_filter_data
     gs_eparam_t *param_image;
     gs_eparam_t *param_show_color_indicator;
     gs_eparam_t *param_show_border;
-    gs_eparam_t *param_px_width;
-    gs_eparam_t *param_px_height;
+    gs_eparam_t *param_border_px_width;
+    gs_eparam_t *param_border_px_height;
 
     gs_eparam_t *param_roi_left;
     gs_eparam_t *param_roi_bottom;
@@ -95,7 +95,6 @@ struct pm_filter_data
 
 static void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data)
 {
-
     if (tex) {
         obs_enter_graphics();
         gs_texture_destroy(tex);

@@ -16,8 +16,8 @@ uniform float roi_top;
 uniform bool show_border;
 uniform bool show_color_indicator;
 uniform bool store_match_alpha;
-uniform float px_width;
-uniform float px_height;
+uniform float border_px_width;
+uniform float border_px_height;
 
 sampler_state def_sampler {
     Filter   = Point;
@@ -95,7 +95,7 @@ float4 PSMatch(VertInOut vert_in) : TARGET
     }
 
     if (show_border || show_color_indicator) {
-        float border_width = px_width * 2.0, border_height = px_height * 2.0;
+        float border_width = border_px_width * 2.0, border_height = border_px_height * 2.0;
         if (show_border && vbound
           && (abs(u - roi_left) < border_width
            || abs(u - roi_right) < border_width)) {
