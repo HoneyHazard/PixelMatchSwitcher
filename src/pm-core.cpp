@@ -412,6 +412,8 @@ void PmCore::onMoveMatchConfigDown(size_t matchIndex)
 
 void PmCore::onSelectMatchIndex(size_t matchIndex)
 {   
+    if (matchIndex == m_selectedMatchIndex) return;
+
     onCaptureStateChanged(PmCaptureState::Inactive);
 
     m_selectedMatchIndex = matchIndex;
@@ -429,6 +431,9 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
         previewCfg.previewMode = PmPreviewMode::Video;
         onPreviewConfigChanged(previewCfg);
     }
+
+    auto selCfg = matchConfig(matchIndex);
+    emit sigSelectMatchIndex(matchIndex, selCfg);
 }
 
 void PmCore::onNoMatchSceneChanged(std::string sceneName)
