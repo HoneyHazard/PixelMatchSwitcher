@@ -635,12 +635,16 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         break;
     case PmCaptureState::SelectMoved:
     case PmCaptureState::SelectFinished:
-        m_captureEndX = x;
-        m_captureEndY = y;
         filter = activeFilterRef();
         filterData = filter.filterData();
         if (filterData) {
             filter.lockData();
+            x = std::max(x, 0);
+            y = std::max(y, 0);
+            x = std::min(x, (int)filterData->base_width-1);
+            y = std::min(y, (int)filterData->base_height-1);
+            m_captureEndX = x;
+            m_captureEndY = y;
             filterData->select_left = std::min(m_captureStartX, m_captureEndX);
             filterData->select_bottom = std::min(m_captureStartY, m_captureEndY);
             filterData->select_right = std::max(m_captureStartX, m_captureEndX);
