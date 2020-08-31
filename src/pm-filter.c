@@ -484,7 +484,7 @@ void mask_stagerender(
     gs_set_viewport(0, 0, filter->base_width, filter->base_height);
 
     gs_blend_state_push();
-    gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+    gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
 
     struct vec4 clear_color;
     vec4_zero(&clear_color);
@@ -493,13 +493,11 @@ void mask_stagerender(
         if (selIdx < filter->num_match_entries) {
             struct pm_match_entry_data* entry = filter->match_entries + selIdx;
             if (!entry->cfg.mask_alpha) {
-                // user specified non-alpha as the background for match entry
+                // background color for the final mask capture, when appropriate
                 vec4_from_vec3(&clear_color, &entry->cfg.mask_color);
-                gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
             }
         }
     }
-
     gs_clear(GS_CLEAR_COLOR, &clear_color, .0f, 0);
 
     gs_effect_set_texture(filter->param_image, snapshot_texture);
