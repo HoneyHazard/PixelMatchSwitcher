@@ -132,13 +132,13 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     m_maskModeCombo = new QComboBox(this);
     m_maskModeCombo->insertItem(
+        int(PmMaskMode::AlphaMode), obs_module_text("Alpha"));
+    m_maskModeCombo->insertItem(
         int(PmMaskMode::GreenMode), obs_module_text("Green"));
     m_maskModeCombo->insertItem(
         int(PmMaskMode::MagentaMode), obs_module_text("Magenta"));
     m_maskModeCombo->insertItem(
         int(PmMaskMode::BlackMode), obs_module_text("Black"));
-    m_maskModeCombo->insertItem(
-        int(PmMaskMode::AlphaMode), obs_module_text("Alpha"));
     m_maskModeCombo->insertItem(
         int(PmMaskMode::CustomClrMode), obs_module_text("Custom"));
     connect(m_maskModeCombo, SIGNAL(currentIndexChanged(int)),
@@ -345,7 +345,7 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
     m_posXBox->setValue(cfg.filterCfg.roi_left);
     m_posXBox->blockSignals(false);
 
-    m_posYBox->blockSignals(true);;
+    m_posYBox->blockSignals(true);
     m_posYBox->setValue(cfg.filterCfg.roi_bottom);
     m_posYBox->blockSignals(false);
 
@@ -357,7 +357,7 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
     m_totalMatchThreshBox->setValue(double(cfg.totalMatchThresh));
     m_totalMatchThreshBox->blockSignals(false);
 
-    roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight, 0, 0);
+    roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight);
     maskModeChanged(cfg.maskMode, m_customColor);
 
     bool hasMatchFilename = !cfg.matchImgFilename.empty();
@@ -521,13 +521,12 @@ vec3 PmMatchConfigWidget::toVec3(QColor val)
 }
 
 void PmMatchConfigWidget::roiRangesChanged(
-    uint32_t baseWidth, uint32_t baseHeight,
-    uint32_t imgWidth, uint32_t imgHeight)
+    uint32_t baseWidth, uint32_t baseHeight)
 {
     if (baseWidth == 0 || baseHeight == 0)
         return;
-    m_posXBox->setMaximum(int(baseWidth - imgWidth));
-    m_posYBox->setMaximum(int(baseHeight - imgHeight));
+    m_posXBox->setMaximum(std::max(int(baseWidth), m_posXBox->value()));
+    m_posYBox->setMaximum(std::max(int(baseHeight), m_posYBox->value()));
 }
 
 void PmMatchConfigWidget::onNewMatchResults(
@@ -539,9 +538,7 @@ void PmMatchConfigWidget::onNewMatchResults(
      || m_prevResults.baseHeight != results.baseHeight
      || m_prevResults.matchImgWidth != results.matchImgWidth
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
-        roiRangesChanged(
-            results.baseWidth, results.baseHeight,
-            results.matchImgWidth, results.matchImgHeight);
+        roiRangesChanged(results.baseWidth, results.baseHeight);
     }
 
 

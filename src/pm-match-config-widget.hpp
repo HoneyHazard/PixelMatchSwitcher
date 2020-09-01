@@ -64,9 +64,7 @@ protected:
     static QColor toQColor(vec3 val);
     static vec3 toVec3(QColor val);
     void maskModeChanged(PmMaskMode mode, vec3 customColor);
-    void roiRangesChanged(
-        uint32_t baseWidth, uint32_t baseHeight,
-        uint32_t imgWidth, uint32_t imgHeight);
+    void roiRangesChanged(uint32_t baseWidth, uint32_t baseHeight);
 
 protected:
     static const char* k_failedImgStr;
