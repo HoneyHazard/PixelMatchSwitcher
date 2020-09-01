@@ -412,8 +412,6 @@ void PmCore::onMoveMatchConfigDown(size_t matchIndex)
 
 void PmCore::onSelectMatchIndex(size_t matchIndex)
 {   
-    if (matchIndex == m_selectedMatchIndex) return;
-
     onCaptureStateChanged(PmCaptureState::Inactive);
 
     m_selectedMatchIndex = matchIndex;
