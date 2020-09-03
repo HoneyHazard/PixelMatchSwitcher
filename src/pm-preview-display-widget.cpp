@@ -425,6 +425,8 @@ void PmPreviewDisplayWidget::fixGeometry()
     int displayWidth, displayHeight;
     getDisplaySize(displayWidth, displayHeight);
     m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
+    m_imageView->setMaximumSize(displayWidth, displayHeight);
+    m_imageView->fixGeometry();
 }
 
 void PmPreviewDisplayWidget::getImageXY(QMouseEvent *e, int& imgX, int& imgY)

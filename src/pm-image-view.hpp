@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QGraphicsView>
+#include <QPointer>
+
+class QGraphicsItem;
 
 /**
  * @brief Viewer widget for displaying simple graphics scenes containing match 
@@ -16,7 +19,12 @@ public:
     PmImageView(QWidget* parent = nullptr);
     PmImageView(const QImage& image, QWidget* parent = nullptr);
     void showImage(const QImage& image);
+    void fixGeometry();
 
 protected:
+    void resizeEvent(QResizeEvent* resizeEvent) override;
+    void showEvent(QShowEvent* se) override;
+
     QGraphicsView* m_view;
+    QGraphicsItem* m_activeItem = nullptr;
 };

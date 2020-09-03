@@ -2,10 +2,13 @@
 
 #include <QGraphicsPixmapItem>
 #include <QGraphicsRectItem>
+#include <QShowEvent>
 
 PmImageView::PmImageView(QWidget* parent)
 : QGraphicsView(new QGraphicsScene(parent), parent)
 {
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 PmImageView::PmImageView(const QImage& image, QWidget* parent)
@@ -26,6 +29,26 @@ void PmImageView::showImage(const QImage& image)
     viewScene->addItem(bgItem);
 
     QPixmap pixMap = QPixmap::fromImage(image);
-    auto* item = new QGraphicsPixmapItem(pixMap);
-    viewScene->addItem(item);
+    auto* imageItem = new QGraphicsPixmapItem(pixMap);
+    viewScene->addItem(imageItem);
+
+    m_activeItem = imageItem;
+}
+
+void PmImageView::fixGeometry()
+{
+    if (m_activeItem) {
+        fitInView(m_activeItem);
+    }
+}
+
+void PmImageView::resizeEvent(QResizeEvent* resizeEvent)
+{
+    if (isVisible())
+        fixGeometry();
+}
+
+void PmImageView::showEvent(QShowEvent* se)
+{
+    fixGeometry();
 }
