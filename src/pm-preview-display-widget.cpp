@@ -19,7 +19,7 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     m_filterDisplay = new OBSQTDisplay(this);
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
-                                      PmPreviewDisplayWidget::drawPreview, this);
+                                      PmPreviewDisplayWidget::drawFilter, this);
     };
     m_filterDisplay->installEventFilter(this);
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
@@ -71,7 +71,7 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 
 PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
 {
-    while (m_rendering) {
+    while (m_renderingFilter) {
         QThread::sleep(1);
     }
     if (m_matchImgTex) {
@@ -88,7 +88,7 @@ void PmPreviewDisplayWidget::resizeEvent(QResizeEvent* e)
 void PmPreviewDisplayWidget::closeEvent(QCloseEvent* e)
 {
     obs_display_remove_draw_callback(
-        m_filterDisplay->GetDisplay(), PmPreviewDisplayWidget::drawPreview, this);
+        m_filterDisplay->GetDisplay(), PmPreviewDisplayWidget::drawFilter, this);
     QWidget::closeEvent(e);
 }
 
@@ -189,7 +189,7 @@ void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
 
 void PmPreviewDisplayWidget::onDestroy(QObject* obj)
 {
-    while (m_rendering) {
+    while (m_renderingFilter) {
         QThread::sleep(1);
     }
     UNUSED_PARAMETER(obj);
@@ -224,26 +224,21 @@ void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConf
     m_roiBottom = cfg.filterCfg.roi_bottom;
 }
 
-void PmPreviewDisplayWidget::drawPreview(void* data, uint32_t cx, uint32_t cy)
+void PmPreviewDisplayWidget::drawFilter(void* data, uint32_t cx, uint32_t cy)
 {
     auto widget = static_cast<PmPreviewDisplayWidget*>(data);
-    auto core = widget->m_core;
 
-    if (!core) return;
-
-    widget->m_rendering = true;
-    if (widget->m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
-        widget->drawMatchImage();
-    } else {
-        widget->drawEffect();
+    if (widget->m_previewCfg.previewMode != PmPreviewMode::MatchImage) {
+        widget->m_renderingFilter = true;
+        widget->drawFilter();
+        widget->m_renderingFilter = false;
     }
-    widget->m_rendering = false;
 
     UNUSED_PARAMETER(cx);
     UNUSED_PARAMETER(cy);
 }
 
-void PmPreviewDisplayWidget::drawEffect()
+void PmPreviewDisplayWidget::drawFilter()
 {
     PmFilterRef &filterRef = m_activeFilter;
     auto renderSrc = filterRef.filter();
@@ -277,11 +272,10 @@ void PmPreviewDisplayWidget::drawEffect()
         vpBottom = 0.0f;
     }
 
-#if 1
     bool skip = false;
     auto captureState = m_core->captureState();
+    
     filterRef.lockData();
-
     if (filterData->filter_mode == PM_MASK_BEGIN
      || filterData->filter_mode == PM_MASK_END
      || filterData->filter_mode == PM_SNAPSHOT) {
@@ -308,35 +302,6 @@ void PmPreviewDisplayWidget::drawEffect()
     }
     filterRef.unlockData();
 
-#else
-    bool skip = false;
-    auto captureState = m_core->captureState();
-
-    filterRef.lockData();
-    enum pm_filter_mode filterMode;
-    switch (filterData->filter_mode) {
-    case PM_MATCH:
-        filterMode = PM_MATCH_VISUALIZE; break;
-    case PM_MASK:
-        filterMode = PM_MASK_VISUALIZE; break;
-    default:
-        if (captureState == PmCaptureState::SelectBegin
-         || captureState == PmCaptureState::SelectMoved
-         || captureState == PmCaptureState::SelectFinished
-         || captureState == PmCaptureState::Accepted) {
-            filterMode = PM_SELECT_REGION;
-        } else { 
-            // don't mess with it
-            skip = true;
-        }
-    }
-    if (!skip) 
-        filterData->filter_mode = filterMode;
-    filterRef.unlockData();
-
-
-#endif
-
     if (skip) return;
 
     gs_viewport_push();
@@ -345,47 +310,6 @@ void PmPreviewDisplayWidget::drawEffect()
     gs_set_viewport(vpLeft, vpBottom, vpWidth, vpHeight);
 
     obs_source_video_render(renderSrc);
-
-    gs_projection_pop();
-    gs_viewport_pop();
-}
-
-void PmPreviewDisplayWidget::drawMatchImage()
-{
-    {
-        QMutexLocker locker(&m_matchImgLock);
-        if (!m_matchImg.isNull()) {
-            if (m_matchImgTex) {
-                gs_texture_destroy(m_matchImgTex);
-            }
-            unsigned char* bits = m_matchImg.bits();
-            m_matchImgTex = gs_texture_create(
-                m_matchImgWidth, m_matchImgHeight,
-                GS_BGRA, (uint8_t)-1,
-                (const uint8_t**)(&bits), 0);
-            m_matchImg = QImage();
-        }
-    }
-
-    //float previewScale = m_previewCfg.previewMatchImageScale;
-
-    gs_effect* effect = m_core->drawMatchImageEffect();
-    gs_eparam_t* param = gs_effect_get_param_by_name(effect, "image");
-    gs_effect_set_texture(param, m_matchImgTex);
-
-    int displayWidth, displayHeight;
-    getDisplaySize(displayWidth, displayHeight);
-
-    gs_viewport_push();
-    gs_projection_push();
-    gs_ortho(0.0f, (float)m_matchImgWidth, 0.0f, (float)m_matchImgHeight,
-        -100.0f, 100.0f);
-    gs_set_viewport(0, 0, displayWidth, displayHeight);
-
-
-    while (gs_effect_loop(effect, "Draw")) {
-        gs_draw_sprite(m_matchImgTex, 0, 0, 0);
-    }
 
     gs_projection_pop();
     gs_viewport_pop();

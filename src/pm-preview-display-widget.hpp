@@ -43,10 +43,10 @@ protected slots:
 
 protected:
     // callback for OBS display system
-    static void drawPreview(void* data, uint32_t cx, uint32_t cy);
+    static void drawFilter(void* data, uint32_t cx, uint32_t cy);
 
     // draw helpers
-    void drawEffect();
+    void drawFilter();
     void drawMatchImage();
 
     // display size related
@@ -74,7 +74,7 @@ protected:
 
     PmFilterRef m_activeFilter;
 
-    bool m_rendering = false; // safeguard against deletion while rendering in obs render thread
+    bool m_renderingFilter = false; // safeguard against deletion while rendering in obs render thread
     QMutex m_matchImgLock;
     QImage m_matchImg;
     gs_texture_t* m_matchImgTex = nullptr;
