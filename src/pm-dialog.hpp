@@ -19,7 +19,7 @@ public:
     PmDialog(PmCore *pixelMatcher, QWidget *parent);
 
 signals:
-    void sigCaptureStateChanged(PmCaptureState state, int x=0, int y=0);
+    void sigCaptureStateChanged(PmCaptureState state, int x=-1, int y=-1);
     void sigChangedMatchConfig(size_t matchIndex, PmMatchConfig config);
 
 protected slots:

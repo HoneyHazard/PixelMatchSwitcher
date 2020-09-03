@@ -389,7 +389,7 @@ void PmMatchConfigWidget::onCaptureAutomaskReleased()
         emit sigCaptureStateChanged(PmCaptureState::Automask);
     }
     else if (capState == PmCaptureState::Automask) {
-        emit sigCaptureStateChanged(PmCaptureState::Accepted);
+        emit sigCaptureStateChanged(PmCaptureState::SelectFinished);
     }
 }
 

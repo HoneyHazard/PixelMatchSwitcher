@@ -633,21 +633,21 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
         break;
     case PmCaptureState::SelectMoved:
     case PmCaptureState::SelectFinished:
-        filter = activeFilterRef();
-        filterData = filter.filterData();
-        if (filterData) {
-            filter.lockData();
-            x = std::max(x, 0);
-            y = std::max(y, 0);
-            x = std::min(x, (int)filterData->base_width-1);
-            y = std::min(y, (int)filterData->base_height-1);
-            m_captureEndX = x;
-            m_captureEndY = y;
-            filterData->select_left = std::min(m_captureStartX, m_captureEndX);
-            filterData->select_bottom = std::min(m_captureStartY, m_captureEndY);
-            filterData->select_right = std::max(m_captureStartX, m_captureEndX);
-            filterData->select_top = std::max(m_captureStartY, m_captureEndY);
-            filter.unlockData();
+        if (x >= 0 && y >= 0) {
+            filter = activeFilterRef();
+            filterData = filter.filterData();
+            if (filterData) {
+                filter.lockData();
+                x = std::min(x, (int)filterData->base_width - 1);
+                y = std::min(y, (int)filterData->base_height - 1);
+                m_captureEndX = x;
+                m_captureEndY = y;
+                filterData->select_left = std::min(m_captureStartX, m_captureEndX);
+                filterData->select_bottom = std::min(m_captureStartY, m_captureEndY);
+                filterData->select_right = std::max(m_captureStartX, m_captureEndX);
+                filterData->select_top = std::max(m_captureStartY, m_captureEndY);
+                filter.unlockData();
+            }
         }
         break;
     case PmCaptureState::Accepted:
@@ -671,23 +671,6 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
             filter.unlockData();
         }
     }
-
-#if 0
-    QString capStr;
-    switch (m_captureState) {
-    case PmCaptureState::Inactive: capStr = "Inactive"; break;
-    case PmCaptureState::Activated: capStr = "Activated"; break;
-    case PmCaptureState::SelectBegin: capStr = "SelectBegin"; break;
-    case PmCaptureState::SelectMoved: capStr = "SelectMoved"; break;
-    case PmCaptureState::SelectFinished: capStr = "SelectFinished"; break;
-    case PmCaptureState::Accepted: capStr = "Accepted"; break;
-    }
-
-    qDebug() << QString("capture state: %1, startX = %2, startY = %3, "
-        "endX = %4, endY = %5")
-        .arg(capStr).arg(m_captureStartX).arg(m_captureStartY)
-        .arg(m_captureEndX).arg(m_captureEndY);
-#endif
 
     emit sigCaptureStateChanged(m_captureState, x, y);
 }

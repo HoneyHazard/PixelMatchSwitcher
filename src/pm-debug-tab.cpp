@@ -13,7 +13,7 @@
 
 PmDebugTab::PmDebugTab(
     PmCore *pixelMatcher, QWidget *parent)
-: QDialog(parent)
+: QDialog(parent, Qt::WindowStaysOnTopHint)
 , m_core(pixelMatcher)
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher: Debug"));
