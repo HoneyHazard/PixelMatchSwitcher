@@ -43,6 +43,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-preview-display-widget.hpp
         src/pm-presets-widget.hpp
         src/pm-toggles-widget.hpp
+		src/pm-image-view.hpp
         src/pm-match-image-dialog.hpp
         src/pm-help-widget.hpp
         src/pm-dialog.hpp
@@ -65,6 +66,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-preview-display-widget.cpp
         src/pm-presets-widget.cpp
         src/pm-toggles-widget.cpp
+		src/pm-image-view.cpp
         src/pm-match-image-dialog.cpp
         src/pm-help-widget.cpp
         src/pm-debug-tab.cpp

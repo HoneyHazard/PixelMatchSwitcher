@@ -1,7 +1,6 @@
 #include "pm-match-image-dialog.hpp"
+#include "pm-image-view.hpp"
 
-#include <QGraphicsPixmapItem>
-#include <QGraphicsRectItem>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -12,21 +11,11 @@ PmMatchImageDialog::PmMatchImageDialog(
     const QImage& image, QWidget* parent)
 : QDialog(parent)
 , m_image(image)
-, m_scene(new QGraphicsScene(this))
-, m_view(new QGraphicsView(m_scene, this))
 {
     setWindowTitle(obs_module_text("Match Image Preview"));
 
-    // scene
-    QImage tileImage(":/res/images/tile.png");
-    QGraphicsRectItem* bgItem = new QGraphicsRectItem(
-        0, 0, image.width(), image.height());
-    bgItem->setBrush(tileImage);
-    m_scene->addItem(bgItem);
-
-    QPixmap pixMap = QPixmap::fromImage(image);
-    auto* item = new QGraphicsPixmapItem(pixMap);
-    m_scene->addItem(item);
+    // image preview
+    PmImageView* imageView = new PmImageView(image, this);
 
     // save buttons
     QPushButton* saveButton = new QPushButton(
@@ -45,7 +34,7 @@ PmMatchImageDialog::PmMatchImageDialog(
 
     // put it all together
     QVBoxLayout* mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(m_view);
+    mainLayout->addWidget(imageView);
     mainLayout->addLayout(buttonsLayout);
     setLayout(mainLayout);
 

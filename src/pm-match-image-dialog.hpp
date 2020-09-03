@@ -25,7 +25,5 @@ protected slots:
 
 protected:
     std::string m_saveLocation;
-    QGraphicsScene* m_scene;
-    QGraphicsView* m_view;
     QImage m_image;
 };
