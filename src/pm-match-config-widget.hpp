@@ -51,7 +51,6 @@ protected slots:
 
     void onPickColorButtonReleased();
     void onCaptureBeginReleased();
-    void onCaptureAutomaskPressed();
     void onCaptureAutomaskReleased();
     void onCaptureAcceptReleased();
     void onCaptureCancelReleased();

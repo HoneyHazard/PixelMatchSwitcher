@@ -89,10 +89,9 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     imgControlLayout1->addWidget(m_captureAcceptButton);
 
     m_captureAutomaskButton = new QPushButton(
-        obs_module_text("Auto-Mask"), this);
+        obs_module_text("Begin Auto-Mask"), this);
+    m_captureAutomaskButton->setCheckable(true);
     m_captureAutomaskButton->setFocusPolicy(Qt::NoFocus);
-    connect(m_captureAutomaskButton, &QPushButton::pressed,
-            this, &PmMatchConfigWidget::onCaptureAutomaskPressed);
     connect(m_captureAutomaskButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onCaptureAutomaskReleased);
     imgControlLayout1->addWidget(m_captureAutomaskButton);
@@ -383,14 +382,15 @@ void PmMatchConfigWidget::onCaptureBeginReleased()
     emit sigCaptureStateChanged(PmCaptureState::Activated);
 }
 
-void PmMatchConfigWidget::onCaptureAutomaskPressed()
-{
-    emit sigCaptureStateChanged(PmCaptureState::Automask);
-}
-
 void PmMatchConfigWidget::onCaptureAutomaskReleased()
 {
-    emit sigCaptureStateChanged(PmCaptureState::Accepted);
+    auto capState = m_core->captureState();
+    if (capState == PmCaptureState::SelectFinished) {
+        emit sigCaptureStateChanged(PmCaptureState::Automask);
+    }
+    else if (capState == PmCaptureState::Automask) {
+        emit sigCaptureStateChanged(PmCaptureState::Accepted);
+    }
 }
 
 void PmMatchConfigWidget::onCaptureAcceptReleased()
@@ -503,6 +503,16 @@ void PmMatchConfigWidget::onCaptureStateChanged(
         m_captureAutomaskButton->setEnabled(true);
         m_captureCancelButton->setEnabled(true);
         break;
+    }
+
+    if (capState == PmCaptureState::Automask) {
+        m_captureAutomaskButton->setChecked(true);
+        m_captureAutomaskButton->setText(
+            obs_module_text("Auto-mask: Active"));
+    } else {
+        m_captureAutomaskButton->setChecked(false);
+        m_captureAutomaskButton->setText(
+            obs_module_text("Auto-mask"));
     }
 }
 
