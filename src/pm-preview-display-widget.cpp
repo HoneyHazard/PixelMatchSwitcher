@@ -125,7 +125,6 @@ bool PmPreviewDisplayWidget::eventFilter(QObject* obj, QEvent* event)
 void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
     m_previewCfg = cfg;
-    fixGeometry();
 
     if (cfg.previewMode == PmPreviewMode::MatchImage) {
         auto img = m_core->matchImage(m_matchIndex);
@@ -134,6 +133,8 @@ void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
     } else {
         m_displayStack->setCurrentWidget(m_filterDisplay);
     }
+
+    fixGeometry();
 }
 
 void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
@@ -424,9 +425,12 @@ void PmPreviewDisplayWidget::fixGeometry()
 {
     int displayWidth, displayHeight;
     getDisplaySize(displayWidth, displayHeight);
-    m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
-    m_imageView->setMaximumSize(displayWidth, displayHeight);
-    m_imageView->fixGeometry();
+    if (m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
+        m_imageView->setMaximumSize(displayWidth, displayHeight);
+        m_imageView->fixGeometry();
+    } else {
+        m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
+    }
 }
 
 void PmPreviewDisplayWidget::getImageXY(QMouseEvent *e, int& imgX, int& imgY)

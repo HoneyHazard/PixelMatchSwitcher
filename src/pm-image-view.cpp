@@ -33,11 +33,12 @@ void PmImageView::showImage(const QImage& image)
     viewScene->addItem(imageItem);
 
     m_activeItem = imageItem;
+    setRenderHints(0); // no-antialiasing
 }
 
 void PmImageView::fixGeometry()
 {
-    if (m_activeItem) {
+    if (m_activeItem ) {
         fitInView(m_activeItem);
     }
 }
@@ -46,9 +47,4 @@ void PmImageView::resizeEvent(QResizeEvent* resizeEvent)
 {
     if (isVisible())
         fixGeometry();
-}
-
-void PmImageView::showEvent(QShowEvent* se)
-{
-    fixGeometry();
 }

@@ -23,7 +23,6 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent* resizeEvent) override;
-    void showEvent(QShowEvent* se) override;
 
     QGraphicsView* m_view;
     QGraphicsItem* m_activeItem = nullptr;
