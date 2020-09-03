@@ -17,8 +17,6 @@
 #include <QTextStream>
 #include <QSet>
 
-//#include <QDebug>
-
 PmCore* PmCore::m_instance = nullptr;
 
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)

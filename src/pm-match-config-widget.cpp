@@ -367,7 +367,6 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 void PmMatchConfigWidget::onPickColorButtonReleased()
 {
     QColor startColor = toQColor(m_customColor);
-    //uint32_t newColor = toUInt32(QColorDialog::getColor(startColor, this));
     vec3 newColor = toVec3(QColorDialog::getColor(startColor, this));
     if (m_customColor.x != newColor.x 
      || m_customColor.y != newColor.y
@@ -379,7 +378,19 @@ void PmMatchConfigWidget::onPickColorButtonReleased()
 
 void PmMatchConfigWidget::onCaptureBeginReleased()
 {
-    emit sigCaptureStateChanged(PmCaptureState::Activated);
+    auto img = m_core->matchImage(m_matchIndex);
+    if (!img.isNull()) {
+        // use existing image geometry for the new capture
+        auto cfg = m_core->matchConfig(m_matchIndex);
+        int begX = cfg.filterCfg.roi_left;
+        int begY = cfg.filterCfg.roi_bottom;
+        int endX = begX + img.width();
+        int endY = begY + img.height();
+        emit sigCaptureStateChanged(PmCaptureState::SelectBegin, begX, begY);
+        emit sigCaptureStateChanged(PmCaptureState::SelectFinished, endX, endY);
+    } else {
+        emit sigCaptureStateChanged(PmCaptureState::Activated);
+    }
 }
 
 void PmMatchConfigWidget::onCaptureAutomaskReleased()
@@ -512,7 +523,7 @@ void PmMatchConfigWidget::onCaptureStateChanged(
     } else {
         m_captureAutomaskButton->setChecked(false);
         m_captureAutomaskButton->setText(
-            obs_module_text("Auto-mask"));
+            obs_module_text("Begin Auto-mask"));
     }
 }
 
@@ -550,7 +561,6 @@ void PmMatchConfigWidget::onNewMatchResults(
      || m_prevResults.matchImgHeight != results.matchImgHeight) {
         roiRangesChanged(results.baseWidth, results.baseHeight);
     }
-
 
     m_prevResults = results;
 }
