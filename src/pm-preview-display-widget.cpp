@@ -4,6 +4,7 @@
 #include <qt-display.hpp>
 #include <display-helpers.hpp>
 
+#include <QStackedWidget>
 #include <QVBoxLayout>
 
 #include <QThread> // sleep
@@ -25,11 +26,15 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     connect(m_filterDisplay, &OBSQTDisplay::destroyed,
         this, &PmPreviewDisplayWidget::onDestroy, Qt::DirectConnection);
    
+    // stack
+    m_displayStack = new QStackedWidget(this);
+    m_displayStack->addWidget(m_filterDisplay);
+
     // main layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addWidget(m_filterDisplay);
-    mainLayout->setStretchFactor(m_filterDisplay, 1000);
+    mainLayout->addWidget(m_displayStack);
+    mainLayout->setStretchFactor(m_displayStack, 1000);
     mainLayout->addStretch(1);
     setLayout(mainLayout);
 

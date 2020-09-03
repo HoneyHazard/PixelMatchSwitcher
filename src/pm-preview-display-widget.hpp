@@ -8,6 +8,7 @@
 #include "pm-filter-ref.hpp"
 
 class OBSQTDisplay;
+class QStackedWidget;
 
 class PmCore;
 
@@ -58,6 +59,7 @@ protected:
 
     bool eventFilter(QObject* obj, QEvent* event) override; // for display events
 
+    QStackedWidget* m_displayStack;
     OBSQTDisplay* m_filterDisplay;
 
     PmCore* m_core;
