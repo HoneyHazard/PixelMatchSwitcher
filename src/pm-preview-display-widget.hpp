@@ -9,8 +9,8 @@
 
 class OBSQTDisplay;
 class QStackedWidget;
-
 class PmCore;
+class PmImageView;
 
 /**
  * @brief Provides a preview of filter's visualization output and match image
@@ -61,6 +61,7 @@ protected:
 
     QStackedWidget* m_displayStack;
     OBSQTDisplay* m_filterDisplay;
+    PmImageView* m_imageView;
 
     PmCore* m_core;
     
@@ -71,7 +72,6 @@ protected:
     int m_baseWidth = 0, m_baseHeight = 0;
     int m_matchImgWidth = 0, m_matchImgHeight = 0;
 
-    //QMutex m_filterMutex;
     PmFilterRef m_activeFilter;
 
     bool m_rendering = false; // safeguard against deletion while rendering in obs render thread

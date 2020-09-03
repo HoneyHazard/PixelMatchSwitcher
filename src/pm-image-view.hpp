@@ -4,9 +4,9 @@
 
 /**
  * @brief Viewer widget for displaying simple graphics scenes containing match 
- *        image or hints for user
+ *        image or messages for user
  * 
- *  In the future can get expanded to also be a simple match image editor
+ *  In the future can be expanded to also be a simple match image editor
  */
 class PmImageView : public QGraphicsView
 {

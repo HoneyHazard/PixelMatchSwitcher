@@ -1,4 +1,5 @@
 #include "pm-preview-display-widget.hpp"
+#include "pm-image-view.hpp"
 #include "pm-core.hpp"
 
 #include <qt-display.hpp>
@@ -14,7 +15,7 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
 {
-    // image/match display area
+    // match display area
     m_filterDisplay = new OBSQTDisplay(this);
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(m_filterDisplay->GetDisplay(),
@@ -25,10 +26,14 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
             addDrawCallback);
     connect(m_filterDisplay, &OBSQTDisplay::destroyed,
         this, &PmPreviewDisplayWidget::onDestroy, Qt::DirectConnection);
+
+    // view for displaying match image and messages
+    m_imageView = new PmImageView(this);
    
-    // stack
+    // display stack
     m_displayStack = new QStackedWidget(this);
     m_displayStack->addWidget(m_filterDisplay);
+    m_displayStack->addWidget(m_imageView);
 
     // main layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -121,6 +126,14 @@ void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
     m_previewCfg = cfg;
     fixGeometry();
+
+    if (cfg.previewMode == PmPreviewMode::MatchImage) {
+        auto img = m_core->matchImage(m_matchIndex);
+        m_imageView->showImage(img);
+        m_displayStack->setCurrentWidget(m_imageView);
+    } else {
+        m_displayStack->setCurrentWidget(m_filterDisplay);
+    }
 }
 
 void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
