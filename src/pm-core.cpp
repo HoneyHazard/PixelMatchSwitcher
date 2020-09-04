@@ -154,6 +154,10 @@ void PmCore::activate()
 
 void PmCore::deactivate()
 {
+    auto previewCfg = previewConfig();
+    previewCfg.previewMode = PmPreviewMode::Video;
+    emit sigPreviewConfigChanged(previewCfg);
+
     m_runningEnabled = false;
     m_periodicUpdateTimer->stop();
 

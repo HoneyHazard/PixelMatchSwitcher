@@ -108,6 +108,8 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
         this, &PmPreviewConfigWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewActiveFilter,
         this, &PmPreviewConfigWidget::onNewActiveFilter, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigRunningEnabledChanged,
+        this, &PmPreviewConfigWidget::onRunningEnabledChanged, Qt::QueuedConnection);
 
     // events sent to core
     connect(this, &PmPreviewConfigWidget::sigPreviewConfigChanged,
@@ -157,21 +159,19 @@ void PmPreviewConfigWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 
 void PmPreviewConfigWidget::onNewActiveFilter(PmFilterRef ref)
 {
-    //QMutexLocker locker(&m_filterMutex);
-    //m_activeFilter = ref;
-    //setEnabled(ref.isValid() && m_core->runningEnabled());
 }
 
 void PmPreviewConfigWidget::onRunningEnabledChanged(bool enable)
 {
     //setEnabled(enable && m_core->activeFilterRef().isValid());
+    enableRegionViews(enable && m_core->matchImageLoaded(m_matchIndex));
 }
 
 void PmPreviewConfigWidget::onImgSuccess(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
 
-    enableRegionViews(true);
+    enableRegionViews(m_core->runningEnabled());
 }
 
 void PmPreviewConfigWidget::onImgFailed(size_t matchIndex)

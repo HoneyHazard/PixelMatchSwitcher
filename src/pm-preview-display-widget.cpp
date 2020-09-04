@@ -313,7 +313,8 @@ void PmPreviewDisplayWidget::updateDisplayState(
     if (cfg.previewMode == PmPreviewMode::MatchImage) {
         QImage matchImg = m_core->matchImage(matchIndex);
         if (matchImg.isNull()) {
-            m_imageView->showDisabled(obs_module_text("No Image."));
+            m_imageView->showDisabled(obs_module_text(
+                "No Match Image Loaded."));
         } else {
             m_imageView->showImage(matchImg);
         }
@@ -343,11 +344,18 @@ void PmPreviewDisplayWidget::getDisplaySize(
     if (m_previewCfg.previewMode == PmPreviewMode::Video) {
         cx = m_baseWidth;
         cy = m_baseHeight;
-    } else { // PmPreviewMode::MatchImage or PmPreviewMode::Region
+    } else if (m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
         cx = m_matchImgWidth;
         cy = m_matchImgHeight;
+    } else {
+        // region mode has match image dimmensions but only has anything
+        // to show when a filter is active
+        if (m_activeFilter.isActive()) {
+            cx = m_matchImgWidth;
+            cy = m_matchImgHeight;
+        }
     }
-
+ 
     if (cx == 0 || cy == 0) {
         cx = width();
         cy = height();
