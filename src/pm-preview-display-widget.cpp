@@ -313,19 +313,20 @@ void PmPreviewDisplayWidget::updateDisplayState(
     if (cfg.previewMode == PmPreviewMode::MatchImage) {
         QImage matchImg = m_core->matchImage(matchIndex);
         if (matchImg.isNull()) {
-            m_imageView->showDisabled(obs_module_text(
+            m_imageView->showMessage(obs_module_text(
                 "No Match Image Loaded."));
         } else {
             m_imageView->showImage(matchImg);
         }
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!runningEnabled) {
-        m_imageView->showDisabled(obs_module_text(
+        m_imageView->showMessage(obs_module_text(
             "Check \"Enable Matching\" to connect to Pixel Match filters"));
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!activeFilter.isValid() || !activeFilter.isActive()) {
-        m_imageView->showDisabled(obs_module_text(
-            "Add Pixel Match filters to your video sources"));
+        m_imageView->showMessage(obs_module_text(
+            "Right click an OBS video source. Select Filters.<br />"
+            "Add Pixel Match filter to the Effect Filters list."));
         m_displayStack->setCurrentWidget(m_imageView);
     } else {
         m_displayStack->setCurrentWidget(m_filterDisplay);
@@ -348,8 +349,8 @@ void PmPreviewDisplayWidget::getDisplaySize(
         cx = m_matchImgWidth;
         cy = m_matchImgHeight;
     } else {
-        // region mode has match image dimmensions but only has anything
-        // to show when a filter is active
+        // region mode should have match image dimmensions but only has anything
+        // actual to show when a filter is active
         if (m_activeFilter.isActive()) {
             cx = m_matchImgWidth;
             cy = m_matchImgHeight;

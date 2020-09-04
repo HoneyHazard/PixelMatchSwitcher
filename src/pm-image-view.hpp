@@ -24,6 +24,7 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent* resizeEvent) override;
+    void wheelEvent(QWheelEvent* wheelEvent) override;
 
     QGraphicsView* m_view;
     QGraphicsItem* m_activeItem = nullptr;

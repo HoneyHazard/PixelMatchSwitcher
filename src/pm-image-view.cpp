@@ -55,12 +55,12 @@ void PmImageView::showDisabled(const QString &message)
     backdropItem->setPos(imageItem->boundingRect().center() 
                        - backdropItem->boundingRect().center());
 
-    QGraphicsTextItem* textItem = new QGraphicsTextItem(
-        message, imageItem);
+    QGraphicsTextItem* textItem = new QGraphicsTextItem(imageItem);
+    textItem->setHtml(QString("<center>") + message + QString("</center>"));
     float fontSz = backdropHeight * 0.2f;
-    textItem->setFont(QFont("", fontSz));
+    textItem->setFont(QFont(parentWidget()->font().family(), fontSz));
+    textItem->setTextWidth(backdropWidth);
     textItem->setDefaultTextColor(Qt::yellow);
-    //textItem->setTextWidth(backdropWidth);
     textItem->setPos(imageItem->boundingRect().center()
                    - textItem->boundingRect().center());
 
@@ -79,4 +79,10 @@ void PmImageView::resizeEvent(QResizeEvent* resizeEvent)
 {
     if (isVisible())
         fixGeometry();
+    QGraphicsView::resizeEvent(resizeEvent);
+}
+
+void PmImageView::wheelEvent(QWheelEvent* wheelEvent)
+{
+    // override to do nothing to block the wheel scrolling
 }
