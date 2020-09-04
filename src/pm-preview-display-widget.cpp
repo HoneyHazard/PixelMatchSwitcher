@@ -158,9 +158,6 @@ void PmPreviewDisplayWidget::onImgSuccess(
 {
     if (matchIndex != m_matchIndex) return;
 
-    m_matchImgWidth = img.width();
-    m_matchImgHeight = img.height();
-
     updateDisplayState(
         m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
@@ -168,10 +165,7 @@ void PmPreviewDisplayWidget::onImgSuccess(
 void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
-
-    m_matchImgWidth = 0;
-    m_matchImgHeight = 0;
-
+    
     updateDisplayState(
         m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
@@ -188,9 +182,6 @@ void PmPreviewDisplayWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig
 {
     m_matchIndex = matchIndex;
     onChangedMatchConfig(matchIndex, cfg);
-
-    updateDisplayState(
-        m_previewCfg, matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
 void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
@@ -199,6 +190,17 @@ void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConf
 
     m_roiLeft = cfg.filterCfg.roi_left;
     m_roiBottom = cfg.filterCfg.roi_bottom;
+    
+#if 0
+    if (m_core->matchImageLoaded(matchIndex)) {
+        onImgSuccess(matchIndex,
+            m_core->matchImgFilename(matchIndex),
+            m_core->matchImage(matchIndex));
+    }
+    else {
+        onImgFailed(matchIndex);
+    }
+#endif
 
     updateDisplayState(
         m_previewCfg, matchIndex, m_core->runningEnabled(), m_activeFilter);
@@ -299,12 +301,21 @@ void PmPreviewDisplayWidget::updateDisplayState(
     PmPreviewConfig cfg, size_t matchIndex, 
     bool runningEnabled, PmFilterRef activeFilter)
 {
+    QImage matchImg = m_core->matchImage(matchIndex);
+    if (matchImg.isNull()) {
+        m_matchImgWidth = 0;
+        m_matchImgHeight = 0;
+    } else {
+        m_matchImgWidth = matchImg.width();
+        m_matchImgHeight = matchImg.height();
+    }
+
     if (cfg.previewMode == PmPreviewMode::MatchImage) {
-        auto img = m_core->matchImage(matchIndex);
-        if (img.isNull()) {
+        QImage matchImg = m_core->matchImage(matchIndex);
+        if (matchImg.isNull()) {
             m_imageView->showDisabled(obs_module_text("No Image."));
         } else {
-            m_imageView->showImage(img);
+            m_imageView->showImage(matchImg);
         }
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!runningEnabled) {
@@ -329,8 +340,7 @@ void PmPreviewDisplayWidget::getDisplaySize(
     auto filterData = filterRef.filterData();
 
     int cx = 0, cy = 0;
-    if (m_previewCfg.previewMode == PmPreviewMode::Video
-     || m_matchImgWidth == 0 || m_matchImgHeight == 0) {
+    if (m_previewCfg.previewMode == PmPreviewMode::Video) {
         cx = m_baseWidth;
         cy = m_baseHeight;
     } else { // PmPreviewMode::MatchImage or PmPreviewMode::Region
@@ -362,12 +372,9 @@ void PmPreviewDisplayWidget::fixGeometry()
 {
     int displayWidth, displayHeight;
     getDisplaySize(displayWidth, displayHeight);
-    if (m_previewCfg.previewMode == PmPreviewMode::MatchImage) {
-        m_imageView->setMaximumSize(displayWidth, displayHeight);
-        m_imageView->fixGeometry();
-    } else {
-        m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
-    }
+    m_imageView->setMaximumSize(displayWidth, displayHeight);
+    m_imageView->fixGeometry();
+    m_filterDisplay->setMaximumSize(displayWidth, displayHeight);
 }
 
 void PmPreviewDisplayWidget::getImageXY(QMouseEvent *e, int& imgX, int& imgY)

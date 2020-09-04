@@ -34,8 +34,6 @@ void PmImageView::showImage(const QImage& image)
 
     m_activeItem = imageItem;
     setRenderHints(0); // no-antialiasing
-
-    fixGeometry();
 }
 
 void PmImageView::showDisabled(const QString &message)
@@ -53,7 +51,7 @@ void PmImageView::showDisabled(const QString &message)
 
     QGraphicsRectItem* backdropItem = new QGraphicsRectItem(
         0, 0, backdropWidth, backdropHeight, imageItem);
-    backdropItem->setBrush(Qt::darkGray);
+    backdropItem->setBrush(palette().background());
     backdropItem->setPos(imageItem->boundingRect().center() 
                        - backdropItem->boundingRect().center());
 
@@ -65,18 +63,15 @@ void PmImageView::showDisabled(const QString &message)
     //textItem->setTextWidth(backdropWidth);
     textItem->setPos(imageItem->boundingRect().center()
                    - textItem->boundingRect().center());
-    
 
     m_activeItem = imageItem;
     setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
-
-    fixGeometry();
 }
 
 void PmImageView::fixGeometry()
 {
     if (m_activeItem) {
-        fitInView(m_activeItem);
+        fitInView(m_activeItem, Qt::AspectRatioMode::KeepAspectRatio);
     }
 }
 
