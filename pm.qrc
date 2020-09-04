@@ -5,5 +5,6 @@
     <file>images/icons8-save-as-32.png</file>
     <file>images/icons8-trash.svg</file>
     <file>images/tile.png</file>
+	<file>images/SMPTE_Color_Bars.png</file>
   </qresource>
 </RCC>

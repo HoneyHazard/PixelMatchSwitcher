@@ -47,12 +47,13 @@ protected:
 
     // draw helpers
     void drawFilter();
-    void drawMatchImage();
 
-    // display size related
+    // display configuration related
+    void updateDisplayState(PmPreviewConfig cfg, size_t matchIndex,
+                            bool runningEnabled, PmFilterRef activeFilter);
     void getDisplaySize(int& displayWidth, int& displayHeight);
-    void fixGeometry();
     void getImageXY(QMouseEvent *mouseEvent, int &imgX, int &imgY);
+    void fixGeometry();
 
     void resizeEvent(QResizeEvent* e) override;    
     void closeEvent(QCloseEvent* e) override; // todo: maybe not needed or useful
@@ -75,7 +76,4 @@ protected:
     PmFilterRef m_activeFilter;
 
     bool m_renderingFilter = false; // safeguard against deletion while rendering in obs render thread
-    QMutex m_matchImgLock;
-    QImage m_matchImg;
-    gs_texture_t* m_matchImgTex = nullptr;
 };

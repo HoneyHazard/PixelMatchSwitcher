@@ -20,8 +20,8 @@ PmImageView::PmImageView(const QImage& image, QWidget* parent)
 void PmImageView::showImage(const QImage& image)
 {
     auto viewScene = scene();
-
     viewScene->clear();
+
     QImage tileImage(":/res/images/tile.png");
     QGraphicsRectItem* bgItem = new QGraphicsRectItem(
         0, 0, image.width(), image.height());
@@ -34,11 +34,48 @@ void PmImageView::showImage(const QImage& image)
 
     m_activeItem = imageItem;
     setRenderHints(0); // no-antialiasing
+
+    fixGeometry();
+}
+
+void PmImageView::showDisabled(const QString &message)
+{
+    auto viewScene = scene();
+    viewScene->clear();
+
+    QImage colorBarsImage(":/res/images/SMPTE_Color_Bars.png");
+    QPixmap pixMap = QPixmap::fromImage(colorBarsImage);
+    auto* imageItem = new QGraphicsPixmapItem(pixMap);
+    viewScene->addItem(imageItem);
+
+    int backdropWidth = colorBarsImage.width() * 0.8f;
+    int backdropHeight = colorBarsImage.height() * 0.2f;
+
+    QGraphicsRectItem* backdropItem = new QGraphicsRectItem(
+        0, 0, backdropWidth, backdropHeight, imageItem);
+    backdropItem->setBrush(Qt::darkGray);
+    backdropItem->setPos(imageItem->boundingRect().center() 
+                       - backdropItem->boundingRect().center());
+
+    QGraphicsTextItem* textItem = new QGraphicsTextItem(
+        message, imageItem);
+    float fontSz = backdropHeight * 0.2f;
+    textItem->setFont(QFont("", fontSz));
+    textItem->setDefaultTextColor(Qt::yellow);
+    //textItem->setTextWidth(backdropWidth);
+    textItem->setPos(imageItem->boundingRect().center()
+                   - textItem->boundingRect().center());
+    
+
+    m_activeItem = imageItem;
+    setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+
+    fixGeometry();
 }
 
 void PmImageView::fixGeometry()
 {
-    if (m_activeItem ) {
+    if (m_activeItem) {
         fitInView(m_activeItem);
     }
 }

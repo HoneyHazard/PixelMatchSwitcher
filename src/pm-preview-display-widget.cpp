@@ -74,9 +74,6 @@ PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
     while (m_renderingFilter) {
         QThread::sleep(1);
     }
-    if (m_matchImgTex) {
-        gs_texture_destroy(m_matchImgTex);
-    }
 }
 
 void PmPreviewDisplayWidget::resizeEvent(QResizeEvent* e)
@@ -126,22 +123,15 @@ void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
     m_previewCfg = cfg;
 
-    if (cfg.previewMode == PmPreviewMode::MatchImage) {
-        auto img = m_core->matchImage(m_matchIndex);
-        m_imageView->showImage(img);
-        m_displayStack->setCurrentWidget(m_imageView);
-    } else {
-        m_displayStack->setCurrentWidget(m_filterDisplay);
-    }
-
-    fixGeometry();
+    updateDisplayState(
+        cfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
 void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
 {
     //QMutexLocker locker(&m_filterMutex);
     m_activeFilter = ref;
-    setEnabled(m_activeFilter.isValid() && m_core->runningEnabled());
+    //setEnabled(m_activeFilter.isValid() && m_core->runningEnabled());
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         m_activeFilter.lockData();
@@ -152,12 +142,15 @@ void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
         m_baseWidth = 0;
         m_baseHeight = 0;
     }
-    fixGeometry();
+    updateDisplayState(
+        m_previewCfg, m_matchIndex, m_core->runningEnabled(), ref);
 }
 
 void PmPreviewDisplayWidget::onRunningEnabledChanged(bool enable)
 {
-    setEnabled(m_activeFilter.isValid() && enable);
+    //setEnabled(m_activeFilter.isValid() && enable);
+    updateDisplayState(
+        m_previewCfg, m_matchIndex, enable, m_activeFilter);
 }
 
 void PmPreviewDisplayWidget::onImgSuccess(
@@ -168,23 +161,19 @@ void PmPreviewDisplayWidget::onImgSuccess(
     m_matchImgWidth = img.width();
     m_matchImgHeight = img.height();
 
-    fixGeometry();
-
-    QMutexLocker locker(&m_matchImgLock);
-    m_matchImg = img;
+    updateDisplayState(
+        m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
 void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
 
-    QMutexLocker locker(&m_matchImgLock);
-    if (m_matchImgTex) {
-        obs_enter_graphics();
-        gs_texture_destroy(m_matchImgTex);
-        obs_leave_graphics();
-        m_matchImgTex = nullptr;
-    }
+    m_matchImgWidth = 0;
+    m_matchImgHeight = 0;
+
+    updateDisplayState(
+        m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
 void PmPreviewDisplayWidget::onDestroy(QObject* obj)
@@ -200,20 +189,8 @@ void PmPreviewDisplayWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig
     m_matchIndex = matchIndex;
     onChangedMatchConfig(matchIndex, cfg);
 
-    if (m_matchImgTex) {
-        obs_enter_graphics();
-        gs_texture_destroy(m_matchImgTex);
-        obs_leave_graphics();
-        m_matchImgTex = nullptr;
-    }
-
-    if (m_core->matchImageLoaded(matchIndex)) {
-        std::string matchImgFilename = m_core->matchImgFilename(m_matchIndex);
-        QImage matchImg = m_core->matchImage(m_matchIndex);
-        onImgSuccess(m_matchIndex, matchImgFilename, matchImg);
-    } else {
-        onImgFailed(m_matchIndex);
-    }
+    updateDisplayState(
+        m_previewCfg, matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
 void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
@@ -222,6 +199,9 @@ void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConf
 
     m_roiLeft = cfg.filterCfg.roi_left;
     m_roiBottom = cfg.filterCfg.roi_bottom;
+
+    updateDisplayState(
+        m_previewCfg, matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
 void PmPreviewDisplayWidget::drawFilter(void* data, uint32_t cx, uint32_t cy)
@@ -315,6 +295,33 @@ void PmPreviewDisplayWidget::drawFilter()
     gs_viewport_pop();
 }
 
+void PmPreviewDisplayWidget::updateDisplayState(
+    PmPreviewConfig cfg, size_t matchIndex, 
+    bool runningEnabled, PmFilterRef activeFilter)
+{
+    if (cfg.previewMode == PmPreviewMode::MatchImage) {
+        auto img = m_core->matchImage(matchIndex);
+        if (img.isNull()) {
+            m_imageView->showDisabled(obs_module_text("No Image."));
+        } else {
+            m_imageView->showImage(img);
+        }
+        m_displayStack->setCurrentWidget(m_imageView);
+    } else if (!runningEnabled) {
+        m_imageView->showDisabled(obs_module_text(
+            "Check \"Enable Matching\" to connect to Pixel Match filters"));
+        m_displayStack->setCurrentWidget(m_imageView);
+    } else if (!activeFilter.isValid() || !activeFilter.isActive()) {
+        m_imageView->showDisabled(obs_module_text(
+            "Add Pixel Match filters to your video sources"));
+        m_displayStack->setCurrentWidget(m_imageView);
+    } else {
+        m_displayStack->setCurrentWidget(m_filterDisplay);
+    }
+
+    fixGeometry();
+}
+
 void PmPreviewDisplayWidget::getDisplaySize(
     int& displayWidth, int& displayHeight)
 {
@@ -322,12 +329,18 @@ void PmPreviewDisplayWidget::getDisplaySize(
     auto filterData = filterRef.filterData();
 
     int cx = 0, cy = 0;
-    if (m_previewCfg.previewMode == PmPreviewMode::Video) {
+    if (m_previewCfg.previewMode == PmPreviewMode::Video
+     || m_matchImgWidth == 0 || m_matchImgHeight == 0) {
         cx = m_baseWidth;
         cy = m_baseHeight;
     } else { // PmPreviewMode::MatchImage or PmPreviewMode::Region
         cx = m_matchImgWidth;
         cy = m_matchImgHeight;
+    }
+
+    if (cx == 0 || cy == 0) {
+        cx = width();
+        cy = height();
     }
 
     // https://stackoverflow.com/questions/6565703/math-algorithm-fit-image-to-screen-retain-aspect-ratio

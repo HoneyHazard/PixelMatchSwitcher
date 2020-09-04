@@ -159,12 +159,12 @@ void PmPreviewConfigWidget::onNewActiveFilter(PmFilterRef ref)
 {
     //QMutexLocker locker(&m_filterMutex);
     //m_activeFilter = ref;
-    setEnabled(ref.isValid() && m_core->runningEnabled());
+    //setEnabled(ref.isValid() && m_core->runningEnabled());
 }
 
 void PmPreviewConfigWidget::onRunningEnabledChanged(bool enable)
 {
-    setEnabled(enable && m_core->activeFilterRef().isValid());
+    //setEnabled(enable && m_core->activeFilterRef().isValid());
 }
 
 void PmPreviewConfigWidget::onImgSuccess(size_t matchIndex)
