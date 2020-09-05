@@ -36,7 +36,7 @@ void PmImageView::showImage(const QImage& image)
     setRenderHints(0); // no-antialiasing
 }
 
-void PmImageView::showDisabled(const QString &message)
+void PmImageView::showMessage(const QString &message)
 {
     auto viewScene = scene();
     viewScene->clear();

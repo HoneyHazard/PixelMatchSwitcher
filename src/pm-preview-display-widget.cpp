@@ -313,18 +313,18 @@ void PmPreviewDisplayWidget::updateDisplayState(
     if (cfg.previewMode == PmPreviewMode::MatchImage) {
         QImage matchImg = m_core->matchImage(matchIndex);
         if (matchImg.isNull()) {
-            m_imageView->showDisabled(obs_module_text(
+            m_imageView->showMessage(obs_module_text(
                 "No Match Image Loaded."));
         } else {
             m_imageView->showImage(matchImg);
         }
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!runningEnabled) {
-        m_imageView->showDisabled(obs_module_text(
+        m_imageView->showMessage(obs_module_text(
             "Check \"Enable Matching\" to connect to Pixel Match filters"));
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!activeFilter.isValid() || !activeFilter.isActive()) {
-        m_imageView->showDisabled(obs_module_text(
+        m_imageView->showMessage(obs_module_text(
             "Right click an OBS video source. Select Filters.<br />"
             "Add Pixel Match filter to the Effect Filters list."));
         m_displayStack->setCurrentWidget(m_imageView);
