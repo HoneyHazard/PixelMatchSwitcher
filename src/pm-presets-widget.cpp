@@ -152,14 +152,8 @@ void PmPresetsWidget::onPresetSelected()
 
     if (activePreset.size() && selPreset != activePreset
      && m_core->matchConfigDirty()) {
-        int ret = QMessageBox::warning(this,
-            obs_module_text("Unsaved changes"),
-            obs_module_text("Unsaved changes will be lost.\nProceed?"),
-            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
-        if (ret != QMessageBox::Yes) {
-            m_presetCombo->setCurrentText(activePreset.data());
+        if (!promptUnsavedProceed())
             return;
-        }
     }
 
     emit sigSelectActiveMatchPreset(selPreset);
@@ -213,11 +207,7 @@ void PmPresetsWidget::onPresetSaveAs()
 void PmPresetsWidget::onConfigReset()
 {
     if (m_core->matchConfigDirty()) {
-        int ret = QMessageBox::warning(this, 
-            obs_module_text("Unsaved changes"),
-            obs_module_text("Unsaved changes will be lost.\nProceed?"),
-            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
-        if (ret != QMessageBox::Yes)
+        if (!promptUnsavedProceed())
             return;
     }
 
@@ -242,4 +232,29 @@ void PmPresetsWidget::onPresetRemove()
             return;
     }
     emit sigRemoveMatchPreset(oldPreset);
+}
+
+bool PmPresetsWidget::promptUnsavedProceed()
+{
+    int ret = QMessageBox::warning(this,
+        obs_module_text("Unsaved changes"),
+        obs_module_text("Unsaved changes will be lost.\nProceed?"),
+        QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+    return (ret == QMessageBox::Yes);
+}
+
+bool PmPresetsWidget::proceedWithExit()
+{
+    auto activePresetName = m_core->activeMatchPresetName();
+    if (activePresetName.size() && m_core->matchConfigDirty()) {
+        if (!promptUnsavedProceed()) {
+            return false;
+        }
+        else {
+            // reset the active preset
+            emit sigSelectActiveMatchPreset("");
+            emit sigSelectActiveMatchPreset(activePresetName);
+        }
+    }
+    return true;
 }

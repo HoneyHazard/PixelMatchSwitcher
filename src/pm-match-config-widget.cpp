@@ -13,7 +13,6 @@
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QInputDialog>
-#include <QMessageBox>
 #include <QColorDialog>
 #include <QStackedWidget>
 #include <QProcess>

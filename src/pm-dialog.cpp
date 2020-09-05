@@ -14,6 +14,7 @@
 #include <QVBoxLayout>
 #include <QTabWidget>
 #include <QSplitter>
+#include <QCloseEvent>
 
 #include <obs-module.h>
 #include <obs-frontend-api.h>
@@ -28,7 +29,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 
     // UI modules
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
-    PmPresetsWidget* presetsWidget = new PmPresetsWidget(core, this);
+    m_presetsWidget = new PmPresetsWidget(core, this);
     PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
     PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
     PmMatchResultsWidget* resultsWidget = new PmMatchResultsWidget(core, this);
@@ -39,7 +40,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // left pane
     QVBoxLayout* leftLayout = new QVBoxLayout;
     leftLayout->setContentsMargins(0, 0, 0, 0);
-    leftLayout->addWidget(presetsWidget);
+    leftLayout->addWidget(m_presetsWidget);
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
     leftLayout->addWidget(resultsWidget);
@@ -132,9 +133,14 @@ void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
     }
 }
 
-void PmDialog::closeEvent(QCloseEvent*)
+void PmDialog::closeEvent(QCloseEvent *closeEvent)
 {
     emit sigCaptureStateChanged(PmCaptureState::Inactive);
+    
+    if (!m_presetsWidget->proceedWithExit()) {
+        closeEvent->ignore();
+        return;
+    }
 
     obs_frontend_save();
 }

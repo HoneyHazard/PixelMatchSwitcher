@@ -85,4 +85,5 @@ void PmImageView::resizeEvent(QResizeEvent* resizeEvent)
 void PmImageView::wheelEvent(QWheelEvent* wheelEvent)
 {
     // override to do nothing to block the wheel scrolling
+    wheelEvent->accept();
 }

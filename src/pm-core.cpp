@@ -1192,7 +1192,7 @@ void PmCore::pmSave(obs_data_t *saveData)
 
         // active match config/preset
         obs_data_t *activeCfgObj;
-        if (m_activeMatchPreset.empty() || matchConfigDirty()) {
+        if (m_activeMatchPreset.empty()) {
             activeCfgObj = m_multiMatchConfig.save("");
         } else {
             PmMultiMatchConfig presetCfg = m_matchPresets[m_activeMatchPreset];

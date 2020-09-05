@@ -13,6 +13,7 @@ class PmPresetsWidget : public QGroupBox
 
 public:
     PmPresetsWidget(PmCore* core, QWidget* parent);
+    bool proceedWithExit();
 
 signals:
     void sigSelectActiveMatchPreset(std::string name);
@@ -35,6 +36,8 @@ protected slots:
     void onActivePresetDirtyStateChanged();
 
 protected:
+    bool promptUnsavedProceed();
+
     static const char* k_unsavedPresetStr;
 
     QPushButton* prepareButton(const char* tooltip, const char* icoPath);

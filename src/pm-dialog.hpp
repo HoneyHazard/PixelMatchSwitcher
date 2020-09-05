@@ -7,6 +7,7 @@
 #include "pm-structs.hpp"
 
 class PmCore;
+class PmPresetsWidget;
 
 /**
  * @brief Top-level aggregate module of all UI elements used by the plugin
@@ -27,7 +28,8 @@ protected slots:
     void onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom);
 
 protected:
-    void closeEvent(QCloseEvent*) override;
+    void closeEvent(QCloseEvent* closeEvent) override;
 
-    QPointer<PmCore> m_core;
+    PmCore* m_core;
+    PmPresetsWidget* m_presetsWidget;
 };
