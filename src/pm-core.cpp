@@ -126,7 +126,7 @@ PmCore::PmCore()
 PmCore::~PmCore()
 {
     m_thread->exit();
-    while (m_thread->isRunning()) {
+    while (m_thread->isRunning() || m_periodicUpdateActive) {
         QThread::msleep(1);
     }
 
@@ -516,7 +516,10 @@ bool PmCore::matchConfigDirty() const
                 return true;
             }
         }
-        return false;
+        return m_multiMatchConfig.noMatchScene 
+                   != PmMultiMatchConfig::k_defaultNoMatchScene
+            || m_multiMatchConfig.noMatchTransition
+                   != PmMultiMatchConfig::k_defaultNoMatchTransition;
     } else {
         const PmMultiMatchConfig& presetCfg 
             = m_matchPresets[m_activeMatchPreset];
@@ -1005,6 +1008,7 @@ void PmCore::onMenuAction()
 
 void PmCore::onPeriodicUpdate()
 {
+    m_periodicUpdateActive = true;
     if (m_availableTransitions.empty()) {
         m_availableTransitions = getAvailableTransitions();
     }
@@ -1015,6 +1019,7 @@ void PmCore::onPeriodicUpdate()
     } else if (m_availableTransitions.size()) {
         m_periodicUpdateTimer->stop();
     }
+    m_periodicUpdateActive = false;
 }
 
 void PmCore::onFrameProcessed()

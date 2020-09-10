@@ -79,6 +79,9 @@ struct PmMatchConfig
 class PmMultiMatchConfig : public std::vector<PmMatchConfig>
 {
 public:
+    static const std::string k_defaultNoMatchScene;
+    static const std::string k_defaultNoMatchTransition;
+
     PmMultiMatchConfig() {}
     PmMultiMatchConfig(obs_data_t* data);
     obs_data_t* save(const std::string& presetName);
@@ -87,8 +90,8 @@ public:
     bool operator!=(const PmMultiMatchConfig& other) const
         { return !operator==(other); }
 
-    std::string noMatchScene;
-    std::string noMatchTransition = "Cut";
+    std::string noMatchScene = k_defaultNoMatchScene;
+    std::string noMatchTransition = k_defaultNoMatchTransition;
 };
 
 typedef QMap<std::string, PmMultiMatchConfig> PmMatchPresets;

@@ -148,6 +148,7 @@ protected:
 
     static PmCore *m_instance;
     QPointer<QThread> m_thread;
+    bool m_periodicUpdateActive = false;
     QPointer<PmDialog> m_dialog;
     QPointer<QTimer> m_periodicUpdateTimer;
 

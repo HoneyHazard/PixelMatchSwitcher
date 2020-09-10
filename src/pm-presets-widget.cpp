@@ -150,10 +150,14 @@ void PmPresetsWidget::onPresetSelected()
     std::string selPreset = m_presetCombo->currentText().toUtf8().data();
     std::string activePreset = m_core->activeMatchPresetName();
 
-    if (activePreset.size() && selPreset != activePreset
-     && m_core->matchConfigDirty()) {
-        if (!promptUnsavedProceed())
+    if (selPreset != activePreset && m_core->matchConfigDirty()) {
+        if (!promptUnsavedProceed()) {
+            m_presetCombo->blockSignals(true);
+            m_presetCombo->setCurrentText(
+                activePreset.size() ? activePreset.data() : k_unsavedPresetStr);
+            m_presetCombo->blockSignals(false);
             return;
+        }
     }
 
     emit sigSelectActiveMatchPreset(selPreset);

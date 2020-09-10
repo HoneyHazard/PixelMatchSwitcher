@@ -136,6 +136,9 @@ obs_data_t* PmMatchConfig::save() const
     return ret;
 }
 
+const std::string PmMultiMatchConfig::k_defaultNoMatchScene = "";
+const std::string PmMultiMatchConfig::k_defaultNoMatchTransition = "Cut";
+
 PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
 {
     obs_data_array_t* matchEntriesArray
