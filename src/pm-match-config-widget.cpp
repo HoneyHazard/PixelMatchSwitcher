@@ -230,6 +230,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
     connect(this, &PmMatchConfigWidget::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
+    connect(this, &PmMatchConfigWidget::sigRefreshMatchImage,
+            m_core, &PmCore::onRefreshMatchImage, Qt::QueuedConnection);
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
@@ -461,14 +463,7 @@ void PmMatchConfigWidget::onOpenFolderButtonReleased()
 
 void PmMatchConfigWidget::onRefreshButtonReleased()
 {
-    // TODO: make less hacky
-    std::string filename;
-    auto cfg = m_core->matchConfig(m_matchIndex);
-    filename = cfg.matchImgFilename;
-    cfg.matchImgFilename = "";
-    emit sigChangedMatchConfig(m_matchIndex, cfg);
-    cfg.matchImgFilename = filename;
-    emit sigChangedMatchConfig(m_matchIndex, cfg);
+    emit sigRefreshMatchImage(m_matchIndex);
 }
 
 void PmMatchConfigWidget::onImgSuccess(

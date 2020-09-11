@@ -110,6 +110,7 @@ public slots:
     void onNoMatchSceneChanged(std::string sceneName);
     void onNoMatchTransitionChanged(std::string transName);
     void onPreviewConfigChanged(PmPreviewConfig cfg);
+    void onRefreshMatchImage(size_t matchIndex);
 
     void onSelectActiveMatchPreset(std::string name);
     void onSaveMatchPreset(std::string name);
@@ -137,6 +138,7 @@ protected:
     void scanScenes();
     void updateActiveFilter();
     void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg);
+    void loadImage(size_t matchIndex);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
     void activeFilterChanged();
 
