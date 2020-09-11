@@ -49,11 +49,11 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onPresetRevert, Qt::QueuedConnection);
     presetLayout->addWidget(m_presetRevertButton);
 
-    m_presetResetButton = prepareButton(obs_module_text("New Configuration"),
+    m_newConfigButton = prepareButton(obs_module_text("New Configuration"),
         ":/res/images/icons8-file.svg");
-    connect(m_presetResetButton, &QPushButton::released,
-        this, &PmPresetsWidget::onConfigReset, Qt::QueuedConnection);
-    presetLayout->addWidget(m_presetResetButton);
+    connect(m_newConfigButton, &QPushButton::released,
+        this, &PmPresetsWidget::onNewConfig, Qt::QueuedConnection);
+    presetLayout->addWidget(m_newConfigButton);
 
     m_presetRemoveButton = prepareButton(obs_module_text("Remove Preset"),
         ":/res/images/icons8-trash.svg");
@@ -122,7 +122,8 @@ void PmPresetsWidget::onActivePresetChanged()
 void PmPresetsWidget::onActivePresetDirtyStateChanged()
 {
     bool dirty = m_core->matchConfigDirty();
-    m_presetRevertButton->setEnabled(dirty);
+    std::string activePreset = m_core->activeMatchPresetName();
+    m_presetRevertButton->setEnabled(dirty && !activePreset.empty());
     m_presetSaveButton->setEnabled(dirty);
     setTitle(dirty ? obs_module_text("Preset (*)") : obs_module_text("Preset"));
 }
@@ -208,7 +209,7 @@ void PmPresetsWidget::onPresetSaveAs()
     emit sigSaveMatchPreset(presetName);
 }
 
-void PmPresetsWidget::onConfigReset()
+void PmPresetsWidget::onNewConfig()
 {
     if (m_core->matchConfigDirty()) {
         if (!promptUnsavedProceed())

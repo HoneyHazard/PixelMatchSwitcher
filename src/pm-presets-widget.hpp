@@ -27,7 +27,7 @@ protected slots:
     void onPresetRevert();
     void onPresetSave();
     void onPresetSaveAs();
-    void onConfigReset();
+    void onNewConfig();
     void onPresetRemove();
 
     // core events handlers
@@ -48,6 +48,6 @@ protected:
     QPushButton* m_presetRevertButton;
     QPushButton* m_presetSaveButton;
     QPushButton* m_presetSaveAsButton;
-    QPushButton* m_presetResetButton;
+    QPushButton* m_newConfigButton;
     QPushButton* m_presetRemoveButton;
 };
