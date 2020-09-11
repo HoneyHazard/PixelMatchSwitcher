@@ -111,9 +111,9 @@ void PmDebugTab::periodicUpdate()
 
     oss.str("");
     auto fi = m_core->activeFilterRef();
-    if (fi.isActive()) {
-        oss << obs_source_get_name(fi.sceneSrc()) << " -> "
-            << obs_source_get_name(fi.itemSrc()) << " -> "
+    if (fi.isValid()) {
+        oss //<< obs_source_get_name(fi.sceneSrc()) << " -> "
+            //<< obs_source_get_name(fi.itemSrc()) << " -> "
             << obs_source_get_name(fi.filter());
     } else {
         oss << "no filter is active.";

@@ -778,26 +778,36 @@ void PmCore::scanScenes()
         auto ws = OBSWeakSource(obs_source_get_weak_source(sceneSrc));
         auto sceneName = obs_source_get_name(sceneSrc);
         newScenes.insert(ws, sceneName);
-        fi.setScene(sceneSrc);
+        //fi.setScene(sceneSrc);
         obs_scene_enum_items(
             obs_scene_from_source(sceneSrc),
             [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
                 auto &filters = *static_cast<vector<PmFilterRef>*>(p);
                 auto &fi = filters.back();
-                fi.setItem(item);
-                obs_source_enum_filters(
-                    fi.itemSrc(),
-                    [](obs_source_t *, obs_source_t *filter, void *p) {
-                    auto &filters = *static_cast<vector<PmFilterRef>*>(p);
-                        auto id = obs_source_get_id(filter);
-                        if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
-                            auto copy = filters.back();
-                            filters.back().setFilter(filter);
-                            filters.push_back(copy);
-                        }
-                    },
-                    &filters
-                );
+                //fi.setItem(item);
+                obs_source_t* sceneItemSrc = obs_sceneitem_get_source(item);
+                if (obs_source_active(sceneItemSrc)) {
+                    obs_source_enum_filters(
+                        sceneItemSrc,
+                        [](obs_source_t*, obs_source_t* filter, void* p) {
+                            auto& filters = *static_cast<vector<PmFilterRef>*>(p);
+                            auto id = obs_source_get_id(filter);
+                            if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
+                                if (filters.size() > 1) {
+                                    for (size_t i = 0; i < filters.size() - 1; i++) {
+                                        auto& f = filters[i];
+                                        if (f.filter() == filter)
+                                            return;
+                                    }
+                                }
+                                auto copy = filters.back();
+                                filters.back().setFilter(filter);
+                                filters.push_back(copy);
+                            }
+                        },
+                        &filters
+                            );
+                }
                 return true;
             },
             &filters
@@ -866,7 +876,7 @@ void PmCore::updateActiveFilter()
         if (m_activeFilter.isValid()) {
             bool found = false;
             for (const auto& fi : m_filters) {
-                if (fi.filter() == m_activeFilter.filter() && fi.isActive()) {
+                if (fi.filter() == m_activeFilter.filter() && fi.isValid()) {
                     found = true;
                     break;
                 }
@@ -877,7 +887,7 @@ void PmCore::updateActiveFilter()
             m_activeFilter.reset();
         }
         for (const auto& fi : m_filters) {
-            if (fi.isActive()) {
+            if (fi.isValid()) {
                 newFilt = m_activeFilter = fi;
                 break;
             }

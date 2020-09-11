@@ -1,17 +1,6 @@
 #include "pm-filter-ref.hpp"
 #include "pm-filter.h"
 
-void PmFilterRef::setScene(obs_source_t* sceneSrc)
-{
-    m_sceneSrc = obs_source_get_weak_source(sceneSrc);
-}
-
-void PmFilterRef::setItem(obs_scene_item *item)
-{
-    auto itemSrc = obs_sceneitem_get_source(item);
-    m_itemSrc = obs_source_get_weak_source(itemSrc);
-}
-
 void PmFilterRef::setFilter(obs_source_t *filter)
 {
     m_filter = obs_source_get_weak_source(filter);
@@ -31,30 +20,13 @@ void PmFilterRef::unlockData() const
         pthread_mutex_unlock(&data->mutex);
 }
 
-obs_scene* PmFilterRef::scene() const 
-{ 
-    return obs_scene_from_source(sceneSrc());
-}
-
-obs_source_t* PmFilterRef::sceneSrc() const
-{ 
-    return obs_weak_source_get_source(m_sceneSrc); 
-}
-
-obs_source_t* PmFilterRef::itemSrc() const 
-{ 
-    return obs_weak_source_get_source(m_itemSrc); 
-}
-
-obs_source_t* PmFilterRef::filter() const 
+obs_source_t* PmFilterRef::filter() const
 { 
     return obs_weak_source_get_source(m_filter); 
 }
 
 void PmFilterRef::reset()
 {
-    m_sceneSrc = nullptr;
-    m_itemSrc = nullptr;
     m_filter = nullptr;
 }
 
@@ -67,12 +39,6 @@ pm_filter_data *PmFilterRef::filterData() const
         return static_cast<pm_filter_data*>(
             obs_obj_get_data(filter));
     }
-}
-
-bool PmFilterRef::isActive() const
-{ 
-    auto itemSrc = obs_weak_source_get_source(m_itemSrc);
-    return itemSrc != nullptr && obs_source_active(itemSrc);
 }
 
 uint32_t PmFilterRef::filterSrcWidth() const

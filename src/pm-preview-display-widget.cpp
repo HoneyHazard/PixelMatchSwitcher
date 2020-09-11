@@ -323,7 +323,7 @@ void PmPreviewDisplayWidget::updateDisplayState(
         m_imageView->showMessage(obs_module_text(
             "Check \"Enable Matching\" to connect to Pixel Match filters"));
         m_displayStack->setCurrentWidget(m_imageView);
-    } else if (!activeFilter.isValid() || !activeFilter.isActive()) {
+    } else if (!activeFilter.isValid()) {
         m_imageView->showMessage(obs_module_text(
             "Right click an OBS video source. Select Filters.<br />"
             "Add Pixel Match filter to the Effect Filters list."));
@@ -351,7 +351,7 @@ void PmPreviewDisplayWidget::getDisplaySize(
     } else {
         // region mode should have match image dimmensions but only has anything
         // actual to show when a filter is active
-        if (m_activeFilter.isActive()) {
+        if (m_activeFilter.isValid()) {
             cx = m_matchImgWidth;
             cy = m_matchImgHeight;
         }
