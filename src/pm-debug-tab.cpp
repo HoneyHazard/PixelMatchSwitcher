@@ -101,6 +101,8 @@ void PmDebugTab::periodicUpdate()
     if (!isVisible()) return;
 
     std::ostringstream oss;
+
+#if 0
     auto filters = m_core->filters();
     if (filters.empty()) {
         oss << "no filters found.";
@@ -108,6 +110,7 @@ void PmDebugTab::periodicUpdate()
         oss << filters.size() << " filter(s) available.";
     }
     m_filtersStatusDisplay->setText(oss.str().data());
+#endif
 
     oss.str("");
     auto fi = m_core->activeFilterRef();

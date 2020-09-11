@@ -166,7 +166,6 @@ void PmCore::deactivate()
         QMutexLocker locker(&m_filtersMutex);
         oldAfr = m_activeFilter;
         m_activeFilter.reset();
-        m_filters.clear();
         activeFilterChanged();
     }
     if (oldAfr.isValid()) {
@@ -195,13 +194,6 @@ void PmCore::deactivate()
 
     moveToThread(QApplication::instance()->thread());
     m_thread->exit();
-}
-
-
-std::vector<PmFilterRef> PmCore::filters() const
-{
-    QMutexLocker locker(&m_filtersMutex);
-    return m_filters;
 }
 
 PmFilterRef PmCore::activeFilterRef() const
@@ -769,58 +761,42 @@ void PmCore::scanScenes()
     obs_frontend_get_scenes(&scenesInput);
 
     PmScenes newScenes;
-    vector<PmFilterRef> filters;
-    filters.push_back(PmFilterRef());
+    unordered_set<obs_source_t*> filters;
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
-        auto &fi = filters.back();
         auto &sceneSrc = scenesInput.sources.array[i];
         auto ws = OBSWeakSource(obs_source_get_weak_source(sceneSrc));
         auto sceneName = obs_source_get_name(sceneSrc);
         newScenes.insert(ws, sceneName);
-        //fi.setScene(sceneSrc);
         obs_scene_enum_items(
             obs_scene_from_source(sceneSrc),
             [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
-                auto &filters = *static_cast<vector<PmFilterRef>*>(p);
-                auto &fi = filters.back();
-                //fi.setItem(item);
+
                 obs_source_t* sceneItemSrc = obs_sceneitem_get_source(item);
                 if (obs_source_active(sceneItemSrc)) {
                     obs_source_enum_filters(
                         sceneItemSrc,
                         [](obs_source_t*, obs_source_t* filter, void* p) {
-                            auto& filters = *static_cast<vector<PmFilterRef>*>(p);
                             auto id = obs_source_get_id(filter);
                             if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
-                                if (filters.size() > 1) {
-                                    for (size_t i = 0; i < filters.size() - 1; i++) {
-                                        auto& f = filters[i];
-                                        if (f.filter() == filter)
-                                            return;
-                                    }
+                                if (obs_obj_get_data(filter)) {
+                                    auto filters
+                                        = (unordered_set<obs_source_t*>*)(p);
+                                    filters->insert(filter);
                                 }
-                                auto copy = filters.back();
-                                filters.back().setFilter(filter);
-                                filters.push_back(copy);
                             }
                         },
-                        &filters
-                            );
+                        p
+                    );
                 }
                 return true;
             },
             &filters
         );
     }
-    filters.pop_back();
     obs_frontend_source_list_free(&scenesInput);
 
-    {
-        QMutexLocker locker(&m_filtersMutex);
-        m_filters = filters;
-    }
-
+    updateActiveFilter(filters);
 
     bool scenesChanged = false;
     QSet<std::string> oldNames;
@@ -868,52 +844,40 @@ void PmCore::scanScenes()
     }
 }
 
-void PmCore::updateActiveFilter()
+void PmCore::updateActiveFilter(
+    const std::unordered_set<obs_source_t*> &activeFilters)
 {
-    PmFilterRef oldFilt, newFilt;
-    {
-        QMutexLocker locker(&m_filtersMutex);
-        if (m_activeFilter.isValid()) {
-            bool found = false;
-            for (const auto& fi : m_filters) {
-                if (fi.filter() == m_activeFilter.filter() && fi.isValid()) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found) return;
+    using namespace std;
+    bool changed = false;
 
-            oldFilt = m_activeFilter;
+    QMutexLocker locker(&m_filtersMutex);
+    if (m_activeFilter.isValid()) {
+        if (activeFilters.count(m_activeFilter.filter()) > 0) {
+            return;
+        } else {
+            auto data = m_activeFilter.filterData();
+            if (data) {
+                m_activeFilter.lockData();
+                data->on_frame_processed = nullptr;
+                data->on_region_captured = nullptr;
+                m_activeFilter.unlockData();
+                pm_resize_match_entries(data, 0);
+            }
             m_activeFilter.reset();
-        }
-        for (const auto& fi : m_filters) {
-            if (fi.isValid()) {
-                newFilt = m_activeFilter = fi;
-                break;
-            }
-        }
-        activeFilterChanged();
-    }
-
-    if (oldFilt.isValid()) {
-        auto data = oldFilt.filterData();
-        if (data) {
-            oldFilt.lockData();
-            data->on_frame_processed = nullptr;
-            data->on_region_captured = nullptr;
-            oldFilt.unlockData();
-            pm_resize_match_entries(data, 0);
+            changed = true;
         }
     }
-    if (newFilt.isValid()) {
-        size_t cfgSize = multiMatchConfigSize();
-        auto data = newFilt.filterData();
+    if (activeFilters.size() > 0) {
+        auto newFilter = *activeFilters.begin();
+        m_activeFilter.setFilter(newFilter);
+        auto data = m_activeFilter.filterData();
         if (data) {
-            newFilt.lockData();
+            size_t cfgSize = multiMatchConfigSize();
+            m_activeFilter.lockData();
             data->on_frame_processed = on_frame_processed;
             data->on_region_captured = on_snapshot_available;
             data->selected_match_index = m_selectedMatchIndex;
-            newFilt.unlockData();
+            m_activeFilter.unlockData();
             pm_resize_match_entries(data, cfgSize);
             for (size_t i = 0; i < cfgSize; ++i) {
                 auto cfg = matchConfig(i).filterCfg;
@@ -921,6 +885,11 @@ void PmCore::updateActiveFilter()
                 supplyImageToFilter(data, i, matchImage(i));
             }
         }
+        changed = true;
+    }
+
+    if (changed) {
+        emit activeFilterChanged();
     }
 }
 
@@ -1036,9 +1005,7 @@ void PmCore::onPeriodicUpdate()
     }
     scanScenes();
     
-    if (m_runningEnabled) {
-        updateActiveFilter();
-    } else if (m_availableTransitions.size()) {
+    if (!m_runningEnabled && m_availableTransitions.size()) {
         m_periodicUpdateTimer->stop();
     }
     m_periodicUpdateActive = false;

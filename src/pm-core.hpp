@@ -10,6 +10,7 @@ extern "C" void free_pixel_match_switcher();
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include <obs.hpp>
 
@@ -37,7 +38,6 @@ public:
     PmCore();
     ~PmCore();
 
-    std::vector<PmFilterRef> filters() const;
     PmFilterRef activeFilterRef() const;
     std::string scenesInfo() const;
 
@@ -136,7 +136,7 @@ protected:
     void switchScene(
         const std::string& scene, const std::string &transition);
     void scanScenes();
-    void updateActiveFilter();
+    void updateActiveFilter(const std::unordered_set<obs_source_t*> &filters);
     void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg);
     void loadImage(size_t matchIndex);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
@@ -155,7 +155,6 @@ protected:
     QPointer<QTimer> m_periodicUpdateTimer;
 
     mutable QMutex m_filtersMutex;
-    std::vector<PmFilterRef> m_filters;
     PmFilterRef m_activeFilter;
 
     mutable QMutex m_scenesMutex;
