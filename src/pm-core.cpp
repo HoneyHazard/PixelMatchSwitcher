@@ -37,6 +37,8 @@ void init_pixel_match_switcher()
 
     obs_frontend_add_save_callback(
         pm_save_load_callback, static_cast<void*>(PmCore::m_instance));
+    obs_frontend_add_event_callback(
+        obs_event, nullptr);
 }
 
 void free_pixel_match_switcher()
@@ -58,6 +60,14 @@ void on_snapshot_available()
     auto core = PmCore::m_instance;
     if (core) {
         emit core->sigSnapshotAvailable();
+    }
+}
+
+void obs_event(enum obs_frontend_event event, void*)
+{
+    if (event == OBS_FRONTEND_EVENT_EXIT) {
+        auto core = PmCore::m_instance;
+        emit core->sigFrontendExiting();
     }
 }
 
@@ -102,6 +112,8 @@ PmCore::PmCore()
             this, &PmCore::onFrameProcessed, Qt::QueuedConnection);
     connect(this, &PmCore::sigSnapshotAvailable,
             this, &PmCore::onSnapshotAvailable, Qt::QueuedConnection);
+    connect(this, &PmCore::sigFrontendExiting,
+            this, &PmCore::onFrontendExiting, Qt::QueuedConnection);
 
     // basically the default effect except sampler is made Point instead of Linear
     obs_enter_graphics();
@@ -1094,6 +1106,11 @@ void PmCore::onSnapshotAvailable()
         }
         fr.unlockData();
     }
+}
+
+void PmCore::onFrontendExiting()
+{
+    deactivate();
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:
