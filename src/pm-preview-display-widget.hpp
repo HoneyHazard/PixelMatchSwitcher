@@ -19,6 +19,8 @@ class PmPreviewDisplayWidget : public QWidget
 {
     Q_OBJECT
 
+    friend void obs_event_display(enum obs_frontend_event event, void* data);
+
 public:
     PmPreviewDisplayWidget(PmCore* core, QWidget *parent);
     ~PmPreviewDisplayWidget();
@@ -39,6 +41,7 @@ protected slots:
     void onImgFailed(size_t matchIndex);
 
     // shutdown safety
+    void onFrontendExiting();
     void onDestroy(QObject* obj); // todo: maybe not needed or useful
 
 protected:

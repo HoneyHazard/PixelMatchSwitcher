@@ -38,7 +38,7 @@ void init_pixel_match_switcher()
     obs_frontend_add_save_callback(
         pm_save_load_callback, static_cast<void*>(PmCore::m_instance));
     obs_frontend_add_event_callback(
-        obs_event, nullptr);
+        obs_event_core, nullptr);
 }
 
 void free_pixel_match_switcher()
@@ -63,11 +63,11 @@ void on_snapshot_available()
     }
 }
 
-void obs_event(enum obs_frontend_event event, void*)
+void obs_event_core(enum obs_frontend_event event, void*)
 {
     if (event == OBS_FRONTEND_EVENT_EXIT) {
         auto core = PmCore::m_instance;
-        emit core->sigFrontendExiting();
+        core->deactivate();
     }
 }
 
@@ -112,8 +112,6 @@ PmCore::PmCore()
             this, &PmCore::onFrameProcessed, Qt::QueuedConnection);
     connect(this, &PmCore::sigSnapshotAvailable,
             this, &PmCore::onSnapshotAvailable, Qt::QueuedConnection);
-    connect(this, &PmCore::sigFrontendExiting,
-            this, &PmCore::onFrontendExiting, Qt::QueuedConnection);
 
     // basically the default effect except sampler is made Point instead of Linear
     obs_enter_graphics();
@@ -1015,9 +1013,9 @@ void PmCore::onPeriodicUpdate()
     if (m_availableTransitions.empty()) {
         m_availableTransitions = getAvailableTransitions();
     }
-    scanScenes();
-    
-    if (!m_runningEnabled && m_availableTransitions.size()) {
+    if (m_runningEnabled) {
+        scanScenes();
+    } else if (m_availableTransitions.size()) {
         m_periodicUpdateTimer->stop();
     }
     m_periodicUpdateActive = false;

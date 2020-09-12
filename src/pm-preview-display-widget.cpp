@@ -1,6 +1,7 @@
 #include "pm-preview-display-widget.hpp"
 #include "pm-image-view.hpp"
 #include "pm-core.hpp"
+#include "obs-frontend-api.h"
 
 #include <qt-display.hpp>
 #include <display-helpers.hpp>
@@ -10,6 +11,14 @@
 
 #include <QThread> // sleep
 #include <QMouseEvent>
+
+void obs_event_display(enum obs_frontend_event event, void *data)
+{
+    if (event == OBS_FRONTEND_EVENT_EXIT) {
+        auto widget = (PmPreviewDisplayWidget*)data;
+        widget->onFrontendExiting();
+    }
+}
 
 PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
@@ -56,10 +65,15 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
             this, &PmPreviewDisplayWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewActiveFilter,
             this, &PmPreviewDisplayWidget::onNewActiveFilter, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigFrontendExiting,
+            this, &PmPreviewDisplayWidget::onFrontendExiting, Qt::QueuedConnection);
 
     // signals sent to the core
     connect(this, &PmPreviewDisplayWidget::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
+
+    // OBS event
+    obs_frontend_add_event_callback(obs_event_display, this);
 
     // finish init
     onNewActiveFilter(m_core->activeFilterRef());
@@ -168,6 +182,11 @@ void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
     
     updateDisplayState(
         m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
+}
+
+void PmPreviewDisplayWidget::onFrontendExiting()
+{
+    m_activeFilter.reset();
 }
 
 void PmPreviewDisplayWidget::onDestroy(QObject* obj)

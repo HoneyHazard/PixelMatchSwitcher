@@ -33,7 +33,7 @@ class PmCore : public QObject
     friend void on_snapshot_available();
     friend void pm_save_load_callback(
         obs_data_t *save_data, bool saving, void *corePtr);
-    friend void obs_event(enum obs_frontend_event event, void*);
+    friend void obs_event_core(enum obs_frontend_event event, void*);
 
 public:
     PmCore();
