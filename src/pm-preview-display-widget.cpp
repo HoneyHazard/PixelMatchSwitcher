@@ -65,8 +65,6 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
             this, &PmPreviewDisplayWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewActiveFilter,
             this, &PmPreviewDisplayWidget::onNewActiveFilter, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigFrontendExiting,
-            this, &PmPreviewDisplayWidget::onFrontendExiting, Qt::QueuedConnection);
 
     // signals sent to the core
     connect(this, &PmPreviewDisplayWidget::sigCaptureStateChanged,

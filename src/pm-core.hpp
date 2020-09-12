@@ -77,7 +77,6 @@ public:
 signals:
     void sigFrameProcessed();
     void sigSnapshotAvailable();
-    void sigFrontendExiting();
 
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
     void sigChangedMatchConfig(size_t matchIndex, PmMatchConfig config);
