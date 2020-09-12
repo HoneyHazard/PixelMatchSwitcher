@@ -21,7 +21,6 @@ private slots:
 private:
     PmCore *m_core;
 
-    QLabel *m_filtersStatusDisplay;
     QLabel* m_filterModeDisplay;
     QLabel *m_activeFilterDisplay;
     QLabel *m_sourceResDisplay;

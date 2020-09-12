@@ -23,11 +23,6 @@ PmDebugTab::PmDebugTab(
     QSizePolicy fixedPolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     QSizePolicy minimumPolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    // filters
-    m_filtersStatusDisplay = new QLabel("--", this);
-    m_filtersStatusDisplay->setSizePolicy(minimumPolicy);
-    mainLayout->addRow("Filters: ", m_filtersStatusDisplay);
-
     // active filter
     m_activeFilterDisplay = new QLabel("--", this);
     m_activeFilterDisplay->setSizePolicy(minimumPolicy);
@@ -101,23 +96,10 @@ void PmDebugTab::periodicUpdate()
     if (!isVisible()) return;
 
     std::ostringstream oss;
-
-#if 0
-    auto filters = m_core->filters();
-    if (filters.empty()) {
-        oss << "no filters found.";
-    } else {
-        oss << filters.size() << " filter(s) available.";
-    }
-    m_filtersStatusDisplay->setText(oss.str().data());
-#endif
-
     oss.str("");
     auto fi = m_core->activeFilterRef();
     if (fi.isValid()) {
-        oss //<< obs_source_get_name(fi.sceneSrc()) << " -> "
-            //<< obs_source_get_name(fi.itemSrc()) << " -> "
-            << obs_source_get_name(fi.filter());
+        oss << obs_source_get_name(fi.filter());
     } else {
         oss << "no filter is active.";
     }
