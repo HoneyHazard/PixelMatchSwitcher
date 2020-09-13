@@ -3,7 +3,7 @@
 
 void PmFilterRef::setFilter(obs_source_t *filter)
 {
-    m_filter = obs_source_get_weak_source(filter);
+    m_filter = OBSGetWeakRef(filter);
 }
 
 void PmFilterRef::lockData() const
