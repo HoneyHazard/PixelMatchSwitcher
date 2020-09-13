@@ -113,13 +113,6 @@ PmCore::PmCore()
     connect(this, &PmCore::sigSnapshotAvailable,
             this, &PmCore::onSnapshotAvailable, Qt::QueuedConnection);
 
-    // basically the default effect except sampler is made Point instead of Linear
-    obs_enter_graphics();
-    char *effect_path = obs_module_file("draw_match_image.effect");
-    m_drawMatchImageEffect
-        = gs_effect_create_from_file(effect_path, nullptr);
-    obs_leave_graphics();
-
     // move to own thread
     m_thread = new QThread(this);
     m_thread->setObjectName("pixel match core thread");
@@ -142,10 +135,6 @@ PmCore::~PmCore()
 
     if (m_dialog) {
         m_dialog->deleteLater();
-    }
-
-    if (m_drawMatchImageEffect) {
-        gs_effect_destroy(m_drawMatchImageEffect);
     }
 }
 

@@ -65,7 +65,6 @@ public:
     PmScenes scenes() const;
     QList<std::string> availableTransitions() const 
         { return m_availableTransitions.keys(); }
-    gs_effect_t *drawMatchImageEffect() const { return m_drawMatchImageEffect; }
     QImage matchImage(size_t matchIdx) const;
     bool matchImageLoaded(size_t matchIdx) const;
 
@@ -186,5 +185,4 @@ protected:
 
     mutable QMutex m_matchImagesMutex;
     std::vector<QImage> m_matchImages;
-    gs_effect *m_drawMatchImageEffect = nullptr;
 };
