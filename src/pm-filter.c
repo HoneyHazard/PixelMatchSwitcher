@@ -41,11 +41,7 @@ static void *pixel_match_filter_create(
 {
     struct pm_filter_data *filter = bzalloc(sizeof(*filter));
     char *effect_path = obs_module_file("pixel_match.effect");
-
-    memset(filter, 0, sizeof(struct pm_filter_data));
     filter->context = context;
-    //filter->settings = settings;
-    //filter->visualize = true;
 
 #if 1
     // recursive mutex
