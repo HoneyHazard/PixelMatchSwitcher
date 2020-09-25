@@ -1,5 +1,5 @@
-layout (binding = 0) uniform atomic_uint compare_counter;
-layout (binding = 1) uniform atomic_uint match_counter;
+uniform atomic_uint compare_counter;
+uniform atomic_uint match_counter;
 
 uniform texture2d image;
 uniform float4x4 ViewProj;
