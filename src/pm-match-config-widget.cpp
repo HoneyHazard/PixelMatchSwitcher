@@ -31,14 +31,6 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
-    // index and label
-#if 0
-    m_labelEdit = new QLineEdit(this);   
-    connect(m_labelEdit, &QLineEdit::textEdited,
-            this, &PmMatchConfigWidget::onConfigUiChanged, Qt::QueuedConnection);
-    mainLayout->addRow(obs_module_text("Label:"), m_labelEdit);
-#endif
-
     // image control buttons: when not capturing
     QHBoxLayout *imgControlLayout0 = new QHBoxLayout;
     imgControlLayout0->setContentsMargins(0, 0, 0, 0);
@@ -325,12 +317,6 @@ void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cf
 {
     if (matchIdx != m_matchIndex) return;
 
-#if 0
-    m_labelEdit->blockSignals(true);
-    m_labelEdit->setText(cfg.label.data());
-    m_labelEdit->blockSignals(false);
-#endif
-
     m_imgPathEdit->blockSignals(true);
     m_imgPathEdit->setText(cfg.matchImgFilename.data());
     m_imgPathEdit->blockSignals(false);
@@ -458,7 +444,6 @@ void PmMatchConfigWidget::onOpenFolderButtonReleased()
     args << path;
     QProcess::startDetached("xdg-open", args);
 #endif
-
 }
 
 void PmMatchConfigWidget::onRefreshButtonReleased()
@@ -563,15 +548,12 @@ void PmMatchConfigWidget::onConfigUiChanged()
 {
     PmMatchConfig config = m_core->matchConfig(m_matchIndex);
     
-    //std::string label = m_labelEdit->text().toUtf8().data();
-
     std::string filename = m_imgPathEdit->text().toUtf8().data();
     size_t failedMarker = filename.find(k_failedImgStr);
     if (failedMarker == 0) {
         filename.erase(failedMarker, strlen(k_failedImgStr)+1);
     }
     
-    //config.label = label;
     config.matchImgFilename = filename;
     config.filterCfg.roi_left = m_posXBox->value();
     config.filterCfg.roi_bottom = m_posYBox->value();

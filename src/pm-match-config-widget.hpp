@@ -83,7 +83,6 @@ protected:
     QPushButton* m_captureAutomaskButton;
     QPushButton* m_captureCancelButton;
 
-    QLineEdit* m_labelEdit;
     QLineEdit* m_imgPathEdit;
     QComboBox *m_maskModeCombo;
     QPushButton *m_pickColorButton;
