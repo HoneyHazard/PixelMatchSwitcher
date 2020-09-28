@@ -19,8 +19,6 @@ class PmPreviewDisplayWidget : public QWidget
 {
     Q_OBJECT
 
-    friend void obs_event_display(enum obs_frontend_event event, void* data);
-
 public:
     PmPreviewDisplayWidget(PmCore* core, QWidget *parent);
     ~PmPreviewDisplayWidget();

@@ -12,14 +12,6 @@
 #include <QThread> // sleep
 #include <QMouseEvent>
 
-void obs_event_display(enum obs_frontend_event event, void *data)
-{
-    if (event == OBS_FRONTEND_EVENT_EXIT) {
-        auto widget = (PmPreviewDisplayWidget*)data;
-        widget->onFrontendExiting();
-    }
-}
-
 PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
@@ -69,9 +61,6 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     // signals sent to the core
     connect(this, &PmPreviewDisplayWidget::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
-
-    // OBS event
-    obs_frontend_add_event_callback(obs_event_display, this);
 
     // finish init
     onNewActiveFilter(m_core->activeFilterRef());
@@ -177,7 +166,7 @@ void PmPreviewDisplayWidget::onImgSuccess(
 void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
-    
+
     updateDisplayState(
         m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
@@ -185,6 +174,9 @@ void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
 void PmPreviewDisplayWidget::onFrontendExiting()
 {
     m_activeFilter.reset();
+
+    obs_display_remove_draw_callback(m_filterDisplay->GetDisplay(),
+        PmPreviewDisplayWidget::drawFilter, this);
 }
 
 void PmPreviewDisplayWidget::onDestroy(QObject* obj)
