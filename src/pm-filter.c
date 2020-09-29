@@ -39,7 +39,7 @@ static void pixel_match_filter_destroy(void *data)
 static void *pixel_match_filter_create(
     obs_data_t *settings, obs_source_t *context)
 {
-    struct pm_filter_data *filter = bzalloc(sizeof(*filter));
+    struct pm_filter_data *filter = bzalloc(sizeof(struct pm_filter_data));
     char *effect_path = obs_module_file("pixel_match.effect");
     filter->context = context;
 
