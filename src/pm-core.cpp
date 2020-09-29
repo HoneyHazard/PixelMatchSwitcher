@@ -136,6 +136,9 @@ PmCore::~PmCore()
     if (m_dialog) {
         m_dialog->deleteLater();
     }
+    if (m_periodicUpdateTimer) {
+        m_periodicUpdateTimer->deleteLater();
+    }
 }
 
 void PmCore::activate()

@@ -5,8 +5,8 @@ extern "C" void free_pixel_match_switcher();
 
 #include <QObject>
 #include <QMutex>
-#include <QImage>
 #include <QPointer>
+#include <QImage>
 
 #include <string>
 #include <vector>
@@ -150,10 +150,10 @@ protected:
     void pmLoad(obs_data_t *data);
 
     static PmCore *m_instance;
-    QPointer<QThread> m_thread;
+    QThread* m_thread = nullptr;
     bool m_periodicUpdateActive = false;
-    QPointer<PmDialog> m_dialog;
-    QPointer<QTimer> m_periodicUpdateTimer;
+    QPointer<PmDialog> m_dialog = nullptr;
+    QTimer* m_periodicUpdateTimer = nullptr;
 
     mutable QMutex m_filtersMutex;
     PmFilterRef m_activeFilter;
