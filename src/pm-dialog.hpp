@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QDialog>
-#include <QPointer>
 #include <QImage>
 
 #include "pm-structs.hpp"

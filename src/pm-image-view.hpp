@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QGraphicsView>
-#include <QPointer>
 
 class QGraphicsItem;
 

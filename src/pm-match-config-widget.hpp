@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QGroupBox>
-#include <QPointer>
 
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"

@@ -2,7 +2,6 @@
 
 #include <QWidget>
 #include <QMutex>
-#include <QPointer>
 
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"
