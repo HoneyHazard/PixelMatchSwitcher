@@ -3,11 +3,8 @@
 #include <stdint.h>
 #include <utility>
 #include <qmetatype.h>
-//#include <unordered_map>
-//#include <unordered_set>
 #include <QMap>
 #include <QSet>
-//#include <QHash>
 
 #include <obs.h>
 #include <obs.hpp>

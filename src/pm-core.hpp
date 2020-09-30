@@ -119,7 +119,7 @@ public slots:
     void onRunningEnabledChanged(bool enable);
     void onSwitchingEnabledChanged(bool enable);
 
-    void onCaptureStateChanged(PmCaptureState capMode, int x=0, int y=0);
+    void onCaptureStateChanged(PmCaptureState capMode, int x=-1, int y=-1);
 
 protected slots:
     void onMenuAction();
