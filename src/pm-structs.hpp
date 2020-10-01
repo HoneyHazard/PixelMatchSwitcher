@@ -11,8 +11,10 @@
 
 #include "pm-filter.h"
 
-// TODO: organize and add comments
-
+/**
+ * @brief Describes strategies for how regions of the match image will be masked 
+ *        out based on color or alpha channels of the image.
+ */
 enum class PmMaskMode : int {
     AlphaMode=0,
     GreenMode=1,
@@ -21,22 +23,35 @@ enum class PmMaskMode : int {
     CustomClrMode=4
 };
 
+/**
+ * @brief Preview region of the dialog will have these preview modes
+ */
 enum class PmPreviewMode : int {
     Video=0,
     Region=1,
     MatchImage=2
 };
 
+/**
+ * @brief Describes states of the state machine for capturing match images from
+ *        video.
+ */
 enum class PmCaptureState : unsigned char {
-    Inactive=0,
-    Activated=1,
-    SelectBegin=2,
-    SelectMoved=3,
-    SelectFinished=4,
-    Accepted=5,
-    Automask=6,
+    Inactive=0,       /**< No capture is active                               */
+    Activated=1,      /**< Capture activated and waiting for user action      */
+    SelectBegin=2,    /**< Mouse pressed to begin selection of a region       */
+    SelectMoved=3,    /**< Mouse movign as the region is being selected       */
+    SelectFinished=4, /**< Mouse released to end selection of a region        */
+    Accepted=5,       /**< Image extracted and being reviewed by user         */
+    Automask=6,       /**< Automask mode is active and dynamic portions of 
+                           the image are becoming part of the generated mask  */
 };
 
+/**
+ * @brief Information describing results of processing an indivisual match
+ *        entry. Constructed from the filter's output by PmCore and sent to 
+ *        other modules.
+ */
 struct PmMatchResults
 {
     uint32_t matchImgWidth = 0, matchImgHeight = 0;
@@ -47,8 +62,15 @@ struct PmMatchResults
     uint32_t baseWidth = 0, baseHeight = 0;
 };
 
+/**
+ * @briefs Contains results for several match entries
+ */
 typedef std::vector<PmMatchResults> PmMultiMatchResults;
 
+/**
+ * @brief Describes matching configuration of an individual match entry, 
+ *        as well as switching behavior in case of a match
+ */
 struct PmMatchConfig
 {
     PmMatchConfig();
@@ -63,8 +85,6 @@ struct PmMatchConfig
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
 
-    //OBSWeakSource matchScene;
-    //OBSWeakSource transition;
     std::string matchScene;
     std::string matchTransition = "Cut";
 
@@ -73,6 +93,10 @@ struct PmMatchConfig
         { return !operator==(other); }
 };
 
+/**
+ * @brief Describes matching and switching configuration of several match 
+ *        entries, as well as switching behavior for when there is no match
+ */
 class PmMultiMatchConfig : public std::vector<PmMatchConfig>
 {
 public:
@@ -91,6 +115,10 @@ public:
     std::string noMatchTransition = k_defaultNoMatchTransition;
 };
 
+/**
+ * @bries Stores multiple PmMultiMatchConfig that are easily referenced by a
+ *        preset name
+ */
 typedef QMap<std::string, PmMultiMatchConfig> PmMatchPresets;
 
 class PmScenes : public QMap<OBSWeakSource, std::string>
@@ -102,6 +130,12 @@ public:
     QSet<std::string> sceneNames() const;
 };
 
+/**
+ * @brief Configuration for the preview state of the dialog.
+ * 
+ * Note the class used to have more members in the past, and may have more in
+ * the future. Hence this wrapper class is retained.
+ */
 struct PmPreviewConfig
 {
     PmPreviewConfig() {};
@@ -112,23 +146,27 @@ struct PmPreviewConfig
     bool operator!=(const PmPreviewConfig& other) const
         { return !operator==(other); }
 
-    // TODO: consider permanent cleanup of the parameters below
     PmPreviewMode previewMode = PmPreviewMode::Video;
-    float previewVideoScale = 0.5f;
-    float previewRegionScale = 0.5f;
-    float previewMatchImageScale = 0.5f;
 };
 
+/**
+ * @brief A namespace where commonly used constants can be placed
+ */
 namespace PmConstants
 {
     const QString k_imageFilenameFilter 
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
 };
 
-
+/**
+ * @brief Allows our data structures to be propagated through signals and slots.
+ */
 void pmRegisterMetaTypes();
 
+/** @brief Allow OBSWeakSource be a key index into QMap */
 uint qHash(const OBSWeakSource& ws);
+
+/** @brief Allow std::string to be a key index into QMap */
 uint qHash(const std::string& str);
 
 #ifdef _MSC_VER

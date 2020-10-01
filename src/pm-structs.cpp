@@ -129,9 +129,7 @@ obs_data_t* PmMatchConfig::save() const
 
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
     obs_data_set_string(ret, "match_scene", matchScene.data());
-        //obs_source_get_name(obs_weak_source_get_source(matchScene)));
     obs_data_set_string(ret, "match_transition", matchTransition.data());
-        //obs_source_get_name(obs_weak_source_get_source(transition)));
 
     return ret;
 }
@@ -209,24 +207,6 @@ PmPreviewConfig::PmPreviewConfig(obs_data_t* data)
 {
     obs_data_set_default_int(data, "preview_mode", int(previewMode));
     previewMode = PmPreviewMode(obs_data_get_int(data, "preview_mode"));
-
-    obs_data_set_default_double(
-        data, "preview_video_scale", double(previewVideoScale));
-    float val = float(obs_data_get_double(data, "preview_video_scale"));
-    if (val > 0.f) 
-        previewVideoScale = val;
-        
-    obs_data_set_default_double(
-        data, "preview_region_scale", double(previewRegionScale));
-    val = float(obs_data_get_double(data, "preview_region_scale"));
-    if (val > 0.f)
-        previewRegionScale = val;
-
-    obs_data_set_default_double(
-        data, "preview_match_image_scale", double(previewMatchImageScale));
-    val = float(obs_data_get_double(data, "preview_match_image_scale"));
-    if (val > 0.f)
-        previewMatchImageScale = val;
 }
 
 obs_data_t* PmPreviewConfig::save() const
@@ -234,23 +214,13 @@ obs_data_t* PmPreviewConfig::save() const
     obs_data_t* ret = obs_data_create();
 
     obs_data_set_int(ret, "preview_mode", int(previewMode));
-    obs_data_set_double(
-        ret, "preview_video_scale", double(previewVideoScale));
-    obs_data_set_double(
-        ret, "preview_region_scale", double(previewRegionScale));
-    obs_data_set_double(
-        ret, "preview_match_image_scale", double(previewMatchImageScale));
 
     return ret;
 }
 
 bool PmPreviewConfig::operator==(const PmPreviewConfig& other) const
 {
-    return previewMode == other.previewMode
-    //    && previewVideoScale == other.previewVideoScale
-    //    && previewRegionScale == other.previewRegionScale
-    //    && previewMatchImageScale == other.previewMatchImageScale
-    ;
+    return previewMode == other.previewMode;
 }
 
 void pmRegisterMetaTypes()
