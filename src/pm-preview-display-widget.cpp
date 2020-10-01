@@ -49,10 +49,10 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
             this, &PmPreviewDisplayWidget::onMatchConfigSelect, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigMatchConfigChanged,
         this, &PmPreviewDisplayWidget::onMatchConfigChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigImgSuccess,
-            this, &PmPreviewDisplayWidget::onImgSuccess, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigImgFailed,
-            this, &PmPreviewDisplayWidget::onImgFailed, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchImageLoadSuccess,
+            this, &PmPreviewDisplayWidget::onMatchImageLoadSuccess, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchImageLoadFailed,
+            this, &PmPreviewDisplayWidget::onMatchImageLoadFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigPreviewConfigChanged,
             this, &PmPreviewDisplayWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigActiveFilterChanged,
@@ -154,7 +154,7 @@ void PmPreviewDisplayWidget::onRunningEnabledChanged(bool enable)
         m_previewCfg, m_matchIndex, enable, m_activeFilter);
 }
 
-void PmPreviewDisplayWidget::onImgSuccess(
+void PmPreviewDisplayWidget::onMatchImageLoadSuccess(
     size_t matchIndex, std::string filename, QImage img)
 {
     if (matchIndex != m_matchIndex) return;
@@ -163,7 +163,7 @@ void PmPreviewDisplayWidget::onImgSuccess(
         m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
-void PmPreviewDisplayWidget::onImgFailed(size_t matchIndex)
+void PmPreviewDisplayWidget::onMatchImageLoadFailed(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
 
@@ -202,12 +202,12 @@ void PmPreviewDisplayWidget::onMatchConfigChanged(size_t matchIndex, PmMatchConf
     
 #if 0
     if (m_core->matchImageLoaded(matchIndex)) {
-        onImgSuccess(matchIndex,
+        onMatchImageLoadSuccess(matchIndex,
             m_core->matchImgFilename(matchIndex),
             m_core->matchImage(matchIndex));
     }
     else {
-        onImgFailed(matchIndex);
+        onMatchImageLoadFailed(matchIndex);
     }
 #endif
 

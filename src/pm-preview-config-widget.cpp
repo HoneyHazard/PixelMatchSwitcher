@@ -100,10 +100,10 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
         this, &PmPreviewConfigWidget::onMatchConfigSelect, Qt::QueuedConnection);
     //connect(m_core, &PmCore::sigMatchConfigChanged,
     //    this, &PmPreviewConfigWidget::onMatchConfigChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigImgSuccess,
-        this, &PmPreviewConfigWidget::onImgSuccess, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigImgFailed,
-        this, &PmPreviewConfigWidget::onImgFailed, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchImageLoadSuccess,
+        this, &PmPreviewConfigWidget::onMatchImageLoadSuccess, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchImageLoadFailed,
+        this, &PmPreviewConfigWidget::onMatchImageLoadFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigPreviewConfigChanged,
         this, &PmPreviewConfigWidget::onPreviewConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigActiveFilterChanged,
@@ -167,14 +167,14 @@ void PmPreviewConfigWidget::onRunningEnabledChanged(bool enable)
     enableRegionViews(enable && m_core->matchImageLoaded(m_matchIndex));
 }
 
-void PmPreviewConfigWidget::onImgSuccess(size_t matchIndex)
+void PmPreviewConfigWidget::onMatchImageLoadSuccess(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
 
     enableRegionViews(m_core->runningEnabled());
 }
 
-void PmPreviewConfigWidget::onImgFailed(size_t matchIndex)
+void PmPreviewConfigWidget::onMatchImageLoadFailed(size_t matchIndex)
 {
     if (matchIndex != m_matchIndex) return;
 
@@ -212,9 +212,9 @@ void PmPreviewConfigWidget::onMatchConfigSelect(size_t matchIndex, PmMatchConfig
     m_matchIndex = matchIndex;
     //onMatchConfigChanged(matchIndex, cfg);
     if (m_core->matchImageLoaded(matchIndex)) {
-        onImgSuccess(m_matchIndex);
+        onMatchImageLoadSuccess(m_matchIndex);
     } else {
-        onImgFailed(m_matchIndex);
+        onMatchImageLoadFailed(m_matchIndex);
     }
 }
 

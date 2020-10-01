@@ -200,10 +200,10 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     setLayout(mainLayout);
 
     // core signals -> local slots
-    connect(m_core, &PmCore::sigImgSuccess,
-            this, &PmMatchConfigWidget::onImgSuccess, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigImgFailed,
-            this, &PmMatchConfigWidget::onImgFailed, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchImageLoadSuccess,
+            this, &PmMatchConfigWidget::onMatchImageLoadSuccess, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchImageLoadFailed,
+            this, &PmMatchConfigWidget::onMatchImageLoadFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
             this, &PmMatchConfigWidget::onNewMatchResults, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigMatchConfigChanged,
@@ -223,7 +223,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     connect(this, &PmMatchConfigWidget::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
     connect(this, &PmMatchConfigWidget::sigRefreshMatchImage,
-            m_core, &PmCore::onRefreshMatchImage, Qt::QueuedConnection);
+            m_core, &PmCore::onMatchImageRefresh, Qt::QueuedConnection);
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
@@ -247,10 +247,10 @@ void PmMatchConfigWidget::onMatchConfigSelect(
     if (m_core->hasFilename(matchIndex) && m_core->runningEnabled()) {
         std::string matchImgFilename = m_core->matchImgFilename(matchIndex);
         if (m_core->matchImageLoaded(matchIndex)) {
-            onImgSuccess(matchIndex, matchImgFilename,
+            onMatchImageLoadSuccess(matchIndex, matchImgFilename,
                          m_core->matchImage(matchIndex));
         } else {
-            onImgFailed(matchIndex, matchImgFilename);
+            onMatchImageLoadFailed(matchIndex, matchImgFilename);
         }
     } else {
         m_imgPathEdit->setStyleSheet("");
@@ -451,7 +451,7 @@ void PmMatchConfigWidget::onRefreshButtonReleased()
     emit sigRefreshMatchImage(m_matchIndex);
 }
 
-void PmMatchConfigWidget::onImgSuccess(
+void PmMatchConfigWidget::onMatchImageLoadSuccess(
     size_t matchIndex, std::string filename, QImage img)
 {   
     if (matchIndex != m_matchIndex) return;
@@ -460,7 +460,7 @@ void PmMatchConfigWidget::onImgSuccess(
     m_imgPathEdit->setStyleSheet("");
 }
 
-void PmMatchConfigWidget::onImgFailed(size_t matchIndex, std::string filename)
+void PmMatchConfigWidget::onMatchImageLoadFailed(size_t matchIndex, std::string filename)
 {
     if (matchIndex != m_matchIndex) return;
 

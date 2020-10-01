@@ -30,8 +30,8 @@ protected slots:
     void onPreviewConfigChanged(PmPreviewConfig cfg);
     void onMatchConfigSelect(size_t matchindex, PmMatchConfig cfg);
     //void onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg);
-    void onImgSuccess(size_t matchIndex);
-    void onImgFailed(size_t matchIndex);
+    void onMatchImageLoadSuccess(size_t matchIndex);
+    void onMatchImageLoadFailed(size_t matchIndex);
     void onActiveFilterChanged(PmFilterRef ref);
     void onRunningEnabledChanged(bool enable);
 

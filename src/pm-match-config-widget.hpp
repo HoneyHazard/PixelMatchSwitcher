@@ -40,8 +40,8 @@ protected slots:
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onActiveFilterChanged(PmFilterRef newAf);
 
-    void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
-    void onImgFailed(size_t matchIndex, std::string filename);
+    void onMatchImageLoadSuccess(size_t matchIndex, std::string filename, QImage img);
+    void onMatchImageLoadFailed(size_t matchIndex, std::string filename);
     void onCaptureStateChanged(PmCaptureState capState, int x, int y);
 
     // UI element handlers

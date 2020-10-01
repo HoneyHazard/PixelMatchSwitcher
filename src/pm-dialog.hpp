@@ -24,7 +24,7 @@ signals:
 
 protected slots:
     void onCaptureStateChanged(PmCaptureState state, int x, int y);
-    void onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom);
+    void onMatchImageCaptured(QImage matchImg, int roiLeft, int roiBottom);
 
 protected:
     void closeEvent(QCloseEvent* closeEvent) override;

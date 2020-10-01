@@ -88,8 +88,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // connections
     connect(m_core, &PmCore::sigCaptureStateChanged,
             this, &PmDialog::onCaptureStateChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigCapturedMatchImage,
-            this, &PmDialog::onCapturedMatchImage, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchImageCaptured,
+            this, &PmDialog::onMatchImageCaptured, Qt::QueuedConnection);
 
     connect(this, &PmDialog::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
@@ -106,7 +106,7 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
     }
 }
 
-void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
+void PmDialog::onMatchImageCaptured(QImage matchImg, int roiLeft, int roiBottom)
 {
     PmMatchImageDialog* mid = new PmMatchImageDialog(matchImg, this);
     mid->exec();

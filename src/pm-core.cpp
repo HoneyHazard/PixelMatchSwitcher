@@ -290,7 +290,7 @@ void PmCore::onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg)
     if (matchIndex > oldSz) matchIndex = oldSz;
     size_t newSz = oldSz + 1;
     
-    // notify other modules
+    // notify other modules about the new size
     emit sigMultiMatchConfigSizeChanged(newSz);
     
     // reconfigure the filter
@@ -357,7 +357,11 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
 
 void PmCore::onMultiMatchConfigReset()
 {
-    // notify other modules
+    // reset no-match scene and transition
+    onNoMatchSceneChanged("");
+    onNoMatchTransitionChanged("Cut");
+
+    // notify other modules about changing size
     emit sigMultiMatchConfigSizeChanged(0);
 
     // reconfigure the filter
@@ -466,7 +470,7 @@ void PmCore::onPreviewConfigChanged(PmPreviewConfig cfg)
     emit sigPreviewConfigChanged(cfg);
 }
 
-void PmCore::onRefreshMatchImage(size_t matchIndex)
+void PmCore::onMatchImageRefresh(size_t matchIndex)
 {
     loadImage(matchIndex);
 }
@@ -932,7 +936,7 @@ void PmCore::loadImage(size_t matchIdx)
     QImage img(filename);
     if (img.isNull()) {
         blog(LOG_WARNING, "Unable to open filename: %s", filename);
-        emit sigImgFailed(matchIdx, filename);
+        emit sigMatchImageLoadFailed(matchIdx, filename);
         img = QImage();
 
         if (matchIdx == m_selectedMatchIndex) {
@@ -947,11 +951,11 @@ void PmCore::loadImage(size_t matchIdx)
         img = img.convertToFormat(QImage::Format_ARGB32);
         if (img.isNull()) {
             blog(LOG_WARNING, "Image conversion failed: %s", filename);
-            emit sigImgFailed(matchIdx, filename);
+            emit sigMatchImageLoadFailed(matchIdx, filename);
             img = QImage();
         }
         else {
-            emit sigImgSuccess(matchIdx, filename, img);
+            emit sigMatchImageLoadSuccess(matchIdx, filename, img);
         }
     }
     {
@@ -1089,7 +1093,7 @@ void PmCore::onSnapshotAvailable()
                 roiTop - roiBottom + 1,
                 QImage::Format_RGBA8888);
 
-            emit sigCapturedMatchImage(snapshotImg.copy(), roiLeft, roiBottom);
+            emit sigMatchImageCaptured(snapshotImg.copy(), roiLeft, roiBottom);
             bfree(filterData->captured_region_data);
             filterData->captured_region_data = nullptr;
             filterData->filter_mode = PM_MATCH;

@@ -34,8 +34,8 @@ protected slots:
 
     void onActiveFilterChanged(PmFilterRef ref);
     void onRunningEnabledChanged(bool enable);
-    void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
-    void onImgFailed(size_t matchIndex);
+    void onMatchImageLoadSuccess(size_t matchIndex, std::string filename, QImage img);
+    void onMatchImageLoadFailed(size_t matchIndex);
 
     // shutdown safety
     void onFrontendExiting();
