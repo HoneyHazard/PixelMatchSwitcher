@@ -1020,7 +1020,7 @@ void PmCore::onFrameProcessed()
 {
     PmMultiMatchResults newResults;
 
-    // fetch new results and possible snapshots
+    // fetch new results
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
     if (filterData) {
@@ -1054,6 +1054,7 @@ void PmCore::onFrameProcessed()
          emit sigNewMatchResults(i, newResults[i]);
     }
 
+    // test and react to conditions for switching
     if (m_switchingEnabled) {
         for (size_t i = 0; i < m_results.size(); ++i) {
             const auto& resEntry = newResults[i];
