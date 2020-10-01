@@ -271,7 +271,7 @@ bool PmCore::hasFilename(size_t matchIdx) const
         return m_multiMatchConfig[matchIdx].matchImgFilename.size() > 0;
 }
 
-void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
+void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
 {
     size_t sz = multiMatchConfigSize();
 
@@ -284,14 +284,14 @@ void PmCore::onChangedMatchConfig(size_t matchIdx, PmMatchConfig newCfg)
     activateMatchConfig(matchIdx, newCfg);
 }
 
-void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
+void PmCore::onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg)
 {
     size_t oldSz = multiMatchConfigSize();
     if (matchIndex > oldSz) matchIndex = oldSz;
     size_t newSz = oldSz + 1;
     
     // notify other modules
-    emit sigNewMultiMatchConfigSize(newSz);
+    emit sigMultiMatchConfigSizeChanged(newSz);
     
     // reconfigure the filter
     if (m_runningEnabled) {
@@ -321,14 +321,14 @@ void PmCore::onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg)
     emit sigActivePresetDirtyChanged();
 }
 
-void PmCore::onRemoveMatchConfig(size_t matchIndex)
+void PmCore::onMatchConfigRemove(size_t matchIndex)
 {
     size_t oldSz = multiMatchConfigSize();
     if (matchIndex >= oldSz) return;
     size_t newSz = oldSz - 1;
 
     // notify other modules
-    emit sigNewMultiMatchConfigSize(newSz);
+    emit sigMultiMatchConfigSizeChanged(newSz);
 
     // reconfigure the filter
     auto fr = activeFilterRef();
@@ -345,20 +345,20 @@ void PmCore::onRemoveMatchConfig(size_t matchIndex)
 
     // finish updating state and notifying
     for (size_t i = matchIndex; i < newSz; ++i) {
-        onChangedMatchConfig(i, matchConfig(i + 1));
+        onMatchConfigChanged(i, matchConfig(i + 1));
     }
     {
         QMutexLocker locker(&m_matchConfigMutex);
         m_multiMatchConfig.resize(newSz);
         emit sigActivePresetDirtyChanged();
     }
-    onSelectMatchIndex(matchIndex);
+    onMatchConfigSelect(matchIndex);
 }
 
 void PmCore::onResetMatchConfigs()
 {
     // notify other modules
-    emit sigNewMultiMatchConfigSize(0);
+    emit sigMultiMatchConfigSizeChanged(0);
 
     // reconfigure the filter
     auto fr = activeFilterRef();
@@ -377,36 +377,36 @@ void PmCore::onResetMatchConfigs()
         QMutexLocker locker(&m_matchImagesMutex);
         m_matchImages.clear();
     }
-    onSelectMatchIndex(0);
+    onMatchConfigSelect(0);
 }
 
-void PmCore::onMoveMatchConfigUp(size_t matchIndex)
+void PmCore::onMatchConfigMoveUp(size_t matchIndex)
 {
     if (matchIndex < 1 || matchIndex >= multiMatchConfigSize()) return;
 
     PmMatchConfig oldAbove = matchConfig(matchIndex - 1);
     PmMatchConfig oldBelow = matchConfig(matchIndex);
-    onChangedMatchConfig(matchIndex - 1, oldBelow);
-    onChangedMatchConfig(matchIndex, oldAbove);
+    onMatchConfigChanged(matchIndex - 1, oldBelow);
+    onMatchConfigChanged(matchIndex, oldAbove);
 
     if (matchIndex == m_selectedMatchIndex)
-        onSelectMatchIndex(matchIndex - 1);
+        onMatchConfigSelect(matchIndex - 1);
 }
 
-void PmCore::onMoveMatchConfigDown(size_t matchIndex)
+void PmCore::onMatchConfigMoveDown(size_t matchIndex)
 {
     if (matchIndex >= multiMatchConfigSize() - 1) return;
 
     PmMatchConfig oldAbove = matchConfig(matchIndex);
     PmMatchConfig oldBelow = matchConfig(matchIndex + 1);
-    onChangedMatchConfig(matchIndex + 1, oldAbove);
-    onChangedMatchConfig(matchIndex, oldBelow);
+    onMatchConfigChanged(matchIndex + 1, oldAbove);
+    onMatchConfigChanged(matchIndex, oldBelow);
 
     if (matchIndex == m_selectedMatchIndex)
-        onSelectMatchIndex(matchIndex + 1);
+        onMatchConfigSelect(matchIndex + 1);
 }
 
-void PmCore::onSelectMatchIndex(size_t matchIndex)
+void PmCore::onMatchConfigSelect(size_t matchIndex)
 {   
     onCaptureStateChanged(PmCaptureState::Inactive);
 
@@ -427,7 +427,7 @@ void PmCore::onSelectMatchIndex(size_t matchIndex)
     }
 
     auto selCfg = matchConfig(matchIndex);
-    emit sigSelectMatchIndex(matchIndex, selCfg);
+    emit sigMatchConfigSelect(matchIndex, selCfg);
 }
 
 void PmCore::onNoMatchSceneChanged(std::string sceneName)
@@ -824,7 +824,7 @@ void PmCore::scanScenes()
                 } else {
                     matchSceneName.clear();
                 }
-                onChangedMatchConfig(i, cfgCpy);
+                onMatchConfigChanged(i, cfgCpy);
             }
         }
         {
@@ -900,7 +900,7 @@ void PmCore::activateMatchConfig(size_t matchIdx, const PmMatchConfig& newCfg)
     auto oldCfg = matchConfig(matchIdx);
 
     // notify other modules
-    emit sigChangedMatchConfig(matchIdx, newCfg);
+    emit sigMatchConfigChanged(matchIdx, newCfg);
 
     // store the new config
     {
@@ -971,11 +971,11 @@ void PmCore::activateMultiMatchConfig(const PmMultiMatchConfig& mCfg)
 {
     onResetMatchConfigs();
     for (size_t i = 0; i < mCfg.size(); ++i) {
-        onInsertMatchConfig(i, mCfg[i]);
+        onMatchConfigInsert(i, mCfg[i]);
     }
     onNoMatchSceneChanged(mCfg.noMatchScene);
     onNoMatchTransitionChanged(mCfg.noMatchTransition);
-    onSelectMatchIndex(0);
+    onMatchConfigSelect(0);
 }
 
 void PmCore::activeFilterChanged()
@@ -983,7 +983,7 @@ void PmCore::activeFilterChanged()
     if (!m_activeFilter.isValid()) {
         onCaptureStateChanged(PmCaptureState::Inactive);
     }
-    emit sigNewActiveFilter(m_activeFilter);
+    emit sigActiveFilterChanged(m_activeFilter);
 }
 
 void PmCore::onMenuAction()

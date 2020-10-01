@@ -206,20 +206,20 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, &PmMatchConfigWidget::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
             this, &PmMatchConfigWidget::onNewMatchResults, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigChangedMatchConfig,
-            this, &PmMatchConfigWidget::onChangedMatchConfig, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigSelectMatchIndex,
-            this, &PmMatchConfigWidget::onSelectMatchIndex, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewMultiMatchConfigSize,
-            this, &PmMatchConfigWidget::onNewMultiMatchConfigSize, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchConfigChanged,
+            this, &PmMatchConfigWidget::onMatchConfigChanged, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchConfigSelect,
+            this, &PmMatchConfigWidget::onMatchConfigSelect, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMultiMatchConfigSizeChanged,
+            this, &PmMatchConfigWidget::onMultiMatchConfigSizeChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigCaptureStateChanged,
             this, &PmMatchConfigWidget::onCaptureStateChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewActiveFilter,
-            this, &PmMatchConfigWidget::onNewActiveFilter, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigActiveFilterChanged,
+            this, &PmMatchConfigWidget::onActiveFilterChanged, Qt::QueuedConnection);
 
     // local signals -> core
-    connect(this, &PmMatchConfigWidget::sigChangedMatchConfig,
-            m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmMatchConfigWidget::sigMatchConfigChanged,
+            m_core, &PmCore::onMatchConfigChanged, Qt::QueuedConnection);
     connect(this, &PmMatchConfigWidget::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
     connect(this, &PmMatchConfigWidget::sigRefreshMatchImage,
@@ -227,20 +227,20 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
-    onNewMultiMatchConfigSize(m_core->multiMatchConfigSize());
-    onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
+    onMultiMatchConfigSizeChanged(m_core->multiMatchConfigSize());
+    onMatchConfigSelect(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onCaptureStateChanged(m_core->captureState(), 0, 0);
-    onNewActiveFilter(m_core->activeFilterRef());
+    onActiveFilterChanged(m_core->activeFilterRef());
 }
 
-void PmMatchConfigWidget::onSelectMatchIndex(
+void PmMatchConfigWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
     setTitle(QString(obs_module_text("Match Config #%1")).arg(matchIndex+1));
 
-    onChangedMatchConfig(matchIndex, cfg);
+    onMatchConfigChanged(matchIndex, cfg);
     bool existingSelected = matchIndex < m_multiConfigSz;
     setEnabled(existingSelected);
 
@@ -259,13 +259,13 @@ void PmMatchConfigWidget::onSelectMatchIndex(
     //onConfigUiChanged();
 }
 
-void PmMatchConfigWidget::onNewMultiMatchConfigSize(size_t sz)
+void PmMatchConfigWidget::onMultiMatchConfigSizeChanged(size_t sz)
 {
     m_multiConfigSz = sz;
     setEnabled(m_matchIndex < m_multiConfigSz);
 }
 
-void PmMatchConfigWidget::onNewActiveFilter(PmFilterRef newAf)
+void PmMatchConfigWidget::onActiveFilterChanged(PmFilterRef newAf)
 {
     m_captureBeginButton->setEnabled(newAf.isValid());
 }
@@ -313,7 +313,7 @@ void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
     m_maskModeDisplay->setText(color.name(QColor::HexArgb));
 }
 
-void PmMatchConfigWidget::onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg)
+void PmMatchConfigWidget::onMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg)
 {
     if (matchIdx != m_matchIndex) return;
 
@@ -413,7 +413,7 @@ void PmMatchConfigWidget::onOpenFileButtonReleased()
         PmConstants::k_imageFilenameFilter);
     if (!path.isEmpty()) {
         config.matchImgFilename = path.toUtf8().data();
-        emit sigChangedMatchConfig(m_matchIndex, config);
+        emit sigMatchConfigChanged(m_matchIndex, config);
     }
 }
 
@@ -585,7 +585,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
     }
 
     maskModeChanged(config.maskMode, config.filterCfg.mask_color);
-    emit sigChangedMatchConfig(m_matchIndex, config);
+    emit sigMatchConfigChanged(m_matchIndex, config);
 }
 
 #if 0

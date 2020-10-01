@@ -16,14 +16,14 @@ PmMatchResultsWidget::PmMatchResultsWidget(PmCore* core, QWidget* parent)
     setLayout(mainLayout);
 
     // core event handlers
-    connect(m_core, &PmCore::sigSelectMatchIndex,
-        this, &PmMatchResultsWidget::onSelectMatchIndex, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchConfigSelect,
+        this, &PmMatchResultsWidget::onMatchConfigSelect, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
         this, &PmMatchResultsWidget::onNewMatchResults, Qt::QueuedConnection);
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
-    onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
+    onMatchConfigSelect(selIdx, m_core->matchConfig(selIdx));
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
 }
 
@@ -52,7 +52,7 @@ void PmMatchResultsWidget::onNewMatchResults(
     m_matchResultDisplay->setText(resultStr);
 }
 
-void PmMatchResultsWidget::onSelectMatchIndex(
+void PmMatchResultsWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;

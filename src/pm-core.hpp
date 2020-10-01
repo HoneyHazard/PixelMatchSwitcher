@@ -78,9 +78,9 @@ signals:
     void sigSnapshotAvailable();
 
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
-    void sigChangedMatchConfig(size_t matchIndex, PmMatchConfig config);
-    void sigNewMultiMatchConfigSize(size_t sz);
-    void sigSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
+    void sigMatchConfigChanged(size_t matchIndex, PmMatchConfig config);
+    void sigMultiMatchConfigSizeChanged(size_t sz);
+    void sigMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
     void sigNoMatchSceneChanged(std::string sceneName);
     void sigNoMatchTransitionChanged(std::string transName);
     void sigPreviewConfigChanged(PmPreviewConfig cfg);
@@ -94,19 +94,21 @@ signals:
 
     void sigRunningEnabledChanged(bool enable);
     void sigSwitchingEnabledChanged(bool enable);
-    void sigNewActiveFilter(PmFilterRef newAf);
+    void sigActiveFilterChanged(PmFilterRef newAf);
 
     void sigCaptureStateChanged(PmCaptureState capMode, int x=-1, int y=-1);
     void sigCapturedMatchImage(QImage img, int roiLeft, int roiBottom);
 
 public slots:
-    void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);
-    void onInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
-    void onRemoveMatchConfig(size_t matchIndex);
-    void onMoveMatchConfigUp(size_t matchIndex);
-    void onMoveMatchConfigDown(size_t matchIndex);
+    void onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg);
+    void onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
+    void onMatchConfigRemove(size_t matchIndex);
+    void onMatchConfigMoveUp(size_t matchIndex);
+    void onMatchConfigMoveDown(size_t matchIndex);
+    void onMatchConfigSelect(size_t matchIndex);
+
+
     void onResetMatchConfigs();
-    void onSelectMatchIndex(size_t matchIndex);
     void onNoMatchSceneChanged(std::string sceneName);
     void onNoMatchTransitionChanged(std::string transName);
     void onPreviewConfigChanged(PmPreviewConfig cfg);

@@ -45,29 +45,29 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     setLayout(mainLayout);
 
     // core event handlers
-    connect(m_core, &PmCore::sigSelectMatchIndex,
-            this, &PmPreviewDisplayWidget::onSelectMatchIndex, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigChangedMatchConfig,
-        this, &PmPreviewDisplayWidget::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchConfigSelect,
+            this, &PmPreviewDisplayWidget::onMatchConfigSelect, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchConfigChanged,
+        this, &PmPreviewDisplayWidget::onMatchConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgSuccess,
             this, &PmPreviewDisplayWidget::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
             this, &PmPreviewDisplayWidget::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigPreviewConfigChanged,
             this, &PmPreviewDisplayWidget::onPreviewConfigChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewActiveFilter,
-            this, &PmPreviewDisplayWidget::onNewActiveFilter, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigActiveFilterChanged,
+            this, &PmPreviewDisplayWidget::onActiveFilterChanged, Qt::QueuedConnection);
 
     // signals sent to the core
     connect(this, &PmPreviewDisplayWidget::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
 
     // finish init
-    onNewActiveFilter(m_core->activeFilterRef());
+    onActiveFilterChanged(m_core->activeFilterRef());
     onRunningEnabledChanged(m_core->runningEnabled());
     onPreviewConfigChanged(m_core->previewConfig());
     size_t selIdx = m_core->selectedConfigIndex();
-    onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
+    onMatchConfigSelect(selIdx, m_core->matchConfig(selIdx));
 }
 
 PmPreviewDisplayWidget::~PmPreviewDisplayWidget()
@@ -128,7 +128,7 @@ void PmPreviewDisplayWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
         cfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
 }
 
-void PmPreviewDisplayWidget::onNewActiveFilter(PmFilterRef ref)
+void PmPreviewDisplayWidget::onActiveFilterChanged(PmFilterRef ref)
 {
     //QMutexLocker locker(&m_filterMutex);
     m_activeFilter = ref;
@@ -187,13 +187,13 @@ void PmPreviewDisplayWidget::onDestroy(QObject* obj)
     UNUSED_PARAMETER(obj);
 }
 
-void PmPreviewDisplayWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewDisplayWidget::onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    onChangedMatchConfig(matchIndex, cfg);
+    onMatchConfigChanged(matchIndex, cfg);
 }
 
-void PmPreviewDisplayWidget::onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewDisplayWidget::onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg)
 {
     if (matchIndex != m_matchIndex) return;
 

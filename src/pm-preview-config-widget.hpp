@@ -28,11 +28,11 @@ protected slots:
     // reaction to core events
 
     void onPreviewConfigChanged(PmPreviewConfig cfg);
-    void onSelectMatchIndex(size_t matchindex, PmMatchConfig cfg);
-    //void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);
+    void onMatchConfigSelect(size_t matchindex, PmMatchConfig cfg);
+    //void onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg);
     void onImgSuccess(size_t matchIndex);
     void onImgFailed(size_t matchIndex);
-    void onNewActiveFilter(PmFilterRef ref);
+    void onActiveFilterChanged(PmFilterRef ref);
     void onRunningEnabledChanged(bool enable);
 
     // parse UI state into config

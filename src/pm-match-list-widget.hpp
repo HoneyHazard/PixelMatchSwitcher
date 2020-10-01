@@ -25,13 +25,13 @@ public:
     int currentIndex() const;
 
 signals:
-    void sigChangedMatchConfig(size_t idx, PmMatchConfig cfg);
+    void sigMatchConfigChanged(size_t idx, PmMatchConfig cfg);
     
-    void sigSelectMatchIndex(size_t matchIndex);
-    void sigMoveMatchConfigUp(size_t matchIndex);
-    void sigMoveMatchConfigDown(size_t matchIndex);
-    void sigInsertMatchConfig(size_t matchIndex, PmMatchConfig cfg);
-    void sigRemoveMatchConfig(size_t matchIndex);
+    void sigMatchConfigSelect(size_t matchIndex);
+    void sigMatchConfigMoveUp(size_t matchIndex);
+    void sigMatchConfigMoveDown(size_t matchIndex);
+    void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
+    void sigMatchConfigRemove(size_t matchIndex);
     void sigResetMatchConfigs();
     void sigNoMatchSceneChanged(std::string noMatchScene);
     void sigNoMatchTransitionChanged(std::string transName);
@@ -40,11 +40,11 @@ protected slots:
     // core event handlers
     void onScenesChanged(PmScenes);
     void onNewMatchResults(size_t idx, PmMatchResults results);
-    void onNewMultiMatchConfigSize(size_t sz);
-    void onChangedMatchConfig(size_t idx, PmMatchConfig cfg);
+    void onMultiMatchConfigSizeChanged(size_t sz);
+    void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
     void onNoMatchSceneChanged(std::string sceneName);
     void onNoMatchTransitionChanged(std::string transName);
-    void onSelectMatchIndex(size_t matchIndex, PmMatchConfig config);
+    void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers
     void onRowSelected();

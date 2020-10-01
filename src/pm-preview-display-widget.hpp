@@ -29,10 +29,10 @@ protected slots:
     // reaction to core events
     void onPreviewConfigChanged(PmPreviewConfig cfg);
 
-    void onSelectMatchIndex(size_t matchindex, PmMatchConfig cfg);
-    void onChangedMatchConfig(size_t matchIndex, PmMatchConfig cfg);
+    void onMatchConfigSelect(size_t matchindex, PmMatchConfig cfg);
+    void onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg);
 
-    void onNewActiveFilter(PmFilterRef ref);
+    void onActiveFilterChanged(PmFilterRef ref);
     void onRunningEnabledChanged(bool enable);
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex);

@@ -93,8 +93,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
 
     connect(this, &PmDialog::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
-    connect(this, &PmDialog::sigChangedMatchConfig,
-            m_core, &PmCore::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(this, &PmDialog::sigMatchConfigChanged,
+            m_core, &PmCore::onMatchConfigChanged, Qt::QueuedConnection);
 }
 
 void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
@@ -118,12 +118,12 @@ void PmDialog::onCapturedMatchImage(QImage matchImg, int roiLeft, int roiBottom)
 
         // force image reload in case filenames are same:
         matchCfg.matchImgFilename = "";
-        emit sigChangedMatchConfig(matchIndex, matchCfg);
+        emit sigMatchConfigChanged(matchIndex, matchCfg);
 
         matchCfg.matchImgFilename = filename;
         matchCfg.filterCfg.roi_left = roiLeft;
         matchCfg.filterCfg.roi_bottom = roiBottom;
-        emit sigChangedMatchConfig(matchIndex, matchCfg);
+        emit sigMatchConfigChanged(matchIndex, matchCfg);
         emit sigCaptureStateChanged(PmCaptureState::Inactive);
     } else {
         // fallback to SelectFinished state

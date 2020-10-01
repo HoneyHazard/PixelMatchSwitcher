@@ -28,17 +28,17 @@ public:
     size_t matchIndex() const { return m_matchIndex; }
 
 signals:
-    void sigChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
+    void sigMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
     void sigCaptureStateChanged(PmCaptureState capState, int x=-1, int y=-1);
     void sigRefreshMatchImage(size_t matchIdx);
 
 protected slots:
     // core interaction
     void onNewMatchResults(size_t matchIdx, PmMatchResults results);
-    void onChangedMatchConfig(size_t matchIdx, PmMatchConfig cfg);
-    void onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg);
-    void onNewMultiMatchConfigSize(size_t sz);
-    void onNewActiveFilter(PmFilterRef newAf);
+    void onMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
+    void onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg);
+    void onMultiMatchConfigSizeChanged(size_t sz);
+    void onActiveFilterChanged(PmFilterRef newAf);
 
     void onImgSuccess(size_t matchIndex, std::string filename, QImage img);
     void onImgFailed(size_t matchIndex, std::string filename);

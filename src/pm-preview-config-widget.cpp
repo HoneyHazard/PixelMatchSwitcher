@@ -96,18 +96,18 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
 #endif
 
     // core event handlers
-    connect(m_core, &PmCore::sigSelectMatchIndex,
-        this, &PmPreviewConfigWidget::onSelectMatchIndex, Qt::QueuedConnection);
-    //connect(m_core, &PmCore::sigChangedMatchConfig,
-    //    this, &PmPreviewConfigWidget::onChangedMatchConfig, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchConfigSelect,
+        this, &PmPreviewConfigWidget::onMatchConfigSelect, Qt::QueuedConnection);
+    //connect(m_core, &PmCore::sigMatchConfigChanged,
+    //    this, &PmPreviewConfigWidget::onMatchConfigChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgSuccess,
         this, &PmPreviewConfigWidget::onImgSuccess, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigImgFailed,
         this, &PmPreviewConfigWidget::onImgFailed, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigPreviewConfigChanged,
         this, &PmPreviewConfigWidget::onPreviewConfigChanged, Qt::QueuedConnection);
-    connect(m_core, &PmCore::sigNewActiveFilter,
-        this, &PmPreviewConfigWidget::onNewActiveFilter, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigActiveFilterChanged,
+        this, &PmPreviewConfigWidget::onActiveFilterChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigRunningEnabledChanged,
         this, &PmPreviewConfigWidget::onRunningEnabledChanged, Qt::QueuedConnection);
 
@@ -116,11 +116,11 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onPreviewConfigChanged, Qt::QueuedConnection);
 
     // finish init
-    onNewActiveFilter(m_core->activeFilterRef());
+    onActiveFilterChanged(m_core->activeFilterRef());
     onRunningEnabledChanged(m_core->runningEnabled());
     onPreviewConfigChanged(m_core->previewConfig());
     size_t selIdx = m_core->selectedConfigIndex();
-    onSelectMatchIndex(selIdx, m_core->matchConfig(selIdx));
+    onMatchConfigSelect(selIdx, m_core->matchConfig(selIdx));
 
     onConfigUiChanged();
 }
@@ -157,7 +157,7 @@ void PmPreviewConfigWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 #endif
 }
 
-void PmPreviewConfigWidget::onNewActiveFilter(PmFilterRef ref)
+void PmPreviewConfigWidget::onActiveFilterChanged(PmFilterRef ref)
 {
 }
 
@@ -207,10 +207,10 @@ void PmPreviewConfigWidget::onConfigUiChanged()
     emit sigPreviewConfigChanged(config);
 }
 
-void PmPreviewConfigWidget::onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewConfigWidget::onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    //onChangedMatchConfig(matchIndex, cfg);
+    //onMatchConfigChanged(matchIndex, cfg);
     if (m_core->matchImageLoaded(matchIndex)) {
         onImgSuccess(m_matchIndex);
     } else {

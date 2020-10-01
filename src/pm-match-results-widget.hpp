@@ -17,7 +17,7 @@ public:
 protected slots:
     // core interaction
     void onNewMatchResults(size_t matchIdx, PmMatchResults results);
-    void onSelectMatchIndex(size_t matchIndex, PmMatchConfig cfg);
+    void onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg);
 
 protected:
     PmCore* m_core;

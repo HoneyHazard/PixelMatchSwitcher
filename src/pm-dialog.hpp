@@ -20,7 +20,7 @@ public:
 
 signals:
     void sigCaptureStateChanged(PmCaptureState state, int x=-1, int y=-1);
-    void sigChangedMatchConfig(size_t matchIndex, PmMatchConfig config);
+    void sigMatchConfigChanged(size_t matchIndex, PmMatchConfig config);
 
 protected slots:
     void onCaptureStateChanged(PmCaptureState state, int x, int y);
