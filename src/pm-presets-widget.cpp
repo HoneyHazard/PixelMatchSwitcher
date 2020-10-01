@@ -70,14 +70,14 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onActivePresetDirtyStateChanged, Qt::QueuedConnection);
 
     // local signals -> core slots
-    connect(this, &PmPresetsWidget::sigSaveMatchPreset,
-        m_core, &PmCore::onSaveMatchPreset, Qt::QueuedConnection);
-    connect(this, &PmPresetsWidget::sigSelectActiveMatchPreset,
-        m_core, &PmCore::onSelectActiveMatchPreset, Qt::QueuedConnection);
-    connect(this, &PmPresetsWidget::sigRemoveMatchPreset,
-        m_core, &PmCore::onRemoveMatchPreset, Qt::QueuedConnection);
-    connect(this, &PmPresetsWidget::sigResetMatchConfigs,
-        m_core, &PmCore::onResetMatchConfigs, Qt::QueuedConnection);
+    connect(this, &PmPresetsWidget::sigMatchPresetSave,
+        m_core, &PmCore::onMatchPresetSave, Qt::QueuedConnection);
+    connect(this, &PmPresetsWidget::sigMatchPresetSelect,
+        m_core, &PmCore::onMatchPresetSelect, Qt::QueuedConnection);
+    connect(this, &PmPresetsWidget::sigMatchPresetRemove,
+        m_core, &PmCore::onMatchPresetRemove, Qt::QueuedConnection);
+    connect(this, &PmPresetsWidget::sigMultiMatchConfigReset,
+        m_core, &PmCore::onMultiMatchConfigReset, Qt::QueuedConnection);
 
 
     // finish init state
@@ -161,7 +161,7 @@ void PmPresetsWidget::onPresetSelected()
         }
     }
 
-    emit sigSelectActiveMatchPreset(selPreset);
+    emit sigMatchPresetSelect(selPreset);
 }
 
 void PmPresetsWidget::onPresetRevert()
@@ -169,8 +169,8 @@ void PmPresetsWidget::onPresetRevert()
     // TODO: make less hacky
     std::string presetName = m_core->activeMatchPresetName();
     if (presetName.size() && m_core->matchConfigDirty()) {
-        emit sigSelectActiveMatchPreset("");
-        emit sigSelectActiveMatchPreset(presetName);
+        emit sigMatchPresetSelect("");
+        emit sigMatchPresetSelect(presetName);
     }
 }
 
@@ -180,7 +180,7 @@ void PmPresetsWidget::onPresetSave()
     if (presetName.empty()) {
         onPresetSaveAs();
     } else {
-        emit sigSaveMatchPreset(presetName);
+        emit sigMatchPresetSave(presetName);
     }
 }
 
@@ -206,7 +206,7 @@ void PmPresetsWidget::onPresetSaveAs()
         if (ret != QMessageBox::Yes) return;
     }
 
-    emit sigSaveMatchPreset(presetName);
+    emit sigMatchPresetSave(presetName);
 }
 
 void PmPresetsWidget::onNewConfig()
@@ -218,9 +218,9 @@ void PmPresetsWidget::onNewConfig()
 
     std::string activePreset = m_core->activeMatchPresetName();
     if (activePreset.empty()) {
-        emit sigResetMatchConfigs();
+        emit sigMultiMatchConfigReset();
     } else {
-        emit sigSelectActiveMatchPreset("");
+        emit sigMatchPresetSelect("");
     }
 }
 
@@ -236,7 +236,7 @@ void PmPresetsWidget::onPresetRemove()
         if (ret != QMessageBox::Yes)
             return;
     }
-    emit sigRemoveMatchPreset(oldPreset);
+    emit sigMatchPresetRemove(oldPreset);
 }
 
 bool PmPresetsWidget::promptUnsavedProceed()
@@ -257,8 +257,8 @@ bool PmPresetsWidget::proceedWithExit()
         }
         else {
             // reset the active preset
-            emit sigSelectActiveMatchPreset("");
-            emit sigSelectActiveMatchPreset(activePresetName);
+            emit sigMatchPresetSelect("");
+            emit sigMatchPresetSelect(activePresetName);
         }
     }
     return true;

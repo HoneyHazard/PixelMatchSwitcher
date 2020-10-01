@@ -16,10 +16,10 @@ public:
     bool proceedWithExit();
 
 signals:
-    void sigSelectActiveMatchPreset(std::string name);
-    void sigSaveMatchPreset(std::string name);
-    void sigRemoveMatchPreset(std::string name);
-    void sigResetMatchConfigs();
+    void sigMatchPresetSelect(std::string name);
+    void sigMatchPresetSave(std::string name);
+    void sigMatchPresetRemove(std::string name);
+    void sigMultiMatchConfigReset();
 
 protected slots:
     // local UI handlers

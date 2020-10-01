@@ -355,7 +355,7 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
     onMatchConfigSelect(matchIndex);
 }
 
-void PmCore::onResetMatchConfigs()
+void PmCore::onMultiMatchConfigReset()
 {
     // notify other modules
     emit sigMultiMatchConfigSizeChanged(0);
@@ -526,7 +526,7 @@ bool PmCore::matchConfigDirty() const
     }
 }
 
-void PmCore::onSaveMatchPreset(std::string name)
+void PmCore::onMatchPresetSave(std::string name)
 {
     bool isNew = !matchPresetExists(name);
     {
@@ -536,14 +536,14 @@ void PmCore::onSaveMatchPreset(std::string name)
     if (isNew) {
         emit sigAvailablePresetsChanged();
     }
-    onSelectActiveMatchPreset(name);
+    onMatchPresetSelect(name);
     emit sigActivePresetDirtyChanged();
 
     obs_frontend_save();
 }
 
 
-void PmCore::onSelectActiveMatchPreset(std::string name)
+void PmCore::onMatchPresetSelect(std::string name)
 {
     PmMultiMatchConfig multiConfig;
     {
@@ -557,7 +557,7 @@ void PmCore::onSelectActiveMatchPreset(std::string name)
     activateMultiMatchConfig(multiConfig);
 }
 
-void PmCore::onRemoveMatchPreset(std::string name)
+void PmCore::onMatchPresetRemove(std::string name)
 {
     std::string selOther;
     {
@@ -572,7 +572,7 @@ void PmCore::onRemoveMatchPreset(std::string name)
         m_matchPresets = newPresets;
     }
     emit sigAvailablePresetsChanged();
-    onSelectActiveMatchPreset(selOther);
+    onMatchPresetSelect(selOther);
 }
 
 void PmCore::onRunningEnabledChanged(bool enable)
@@ -969,7 +969,7 @@ void PmCore::loadImage(size_t matchIdx)
 
 void PmCore::activateMultiMatchConfig(const PmMultiMatchConfig& mCfg)
 {
-    onResetMatchConfigs();
+    onMultiMatchConfigReset();
     for (size_t i = 0; i < mCfg.size(); ++i) {
         onMatchConfigInsert(i, mCfg[i]);
     }
@@ -1251,7 +1251,7 @@ void PmCore::pmLoad(obs_data_t *data)
         std::string activePresetName 
             = obs_data_get_string(activeCfgObj, "name");
         if (activePresetName.size()) {
-            onSelectActiveMatchPreset(activePresetName);
+            onMatchPresetSelect(activePresetName);
         } else {
             PmMultiMatchConfig activeCfg(activeCfgObj);
             activateMultiMatchConfig(activeCfg);
