@@ -994,8 +994,7 @@ void PmCore::onMenuAction()
 {
     // main UI dialog
     if (!m_dialog) {
-        // parent a dialog parented to the main window;
-        // make sure it is destroyed once closed
+        // make the dialog parented to the main window
         auto mainWindow
             = static_cast<QMainWindow*>(obs_frontend_get_main_window());
         m_dialog = new PmDialog(this, mainWindow);
