@@ -17,7 +17,9 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 : QGroupBox(obs_module_text("Presets"), parent)
 , m_core(core)
 
-{   
+{
+    const Qt::ConnectionType qc = Qt::QueuedConnection;
+
     // top level layout
     QHBoxLayout* presetLayout = new QHBoxLayout;
     setLayout(presetLayout);
@@ -33,51 +35,51 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     m_presetSaveButton = prepareButton(obs_module_text("Save Preset"),
         ":/res/images/icons8-save-32.png");
     connect(m_presetSaveButton, &QPushButton::released,
-        this, &PmPresetsWidget::onPresetSave, Qt::QueuedConnection);
+            this, &PmPresetsWidget::onPresetSave, qc);
     presetLayout->addWidget(m_presetSaveButton);
 
     m_presetSaveAsButton = prepareButton(obs_module_text("Save Preset As"),
         ":/res/images/icons8-save-as-32.png");
     connect(m_presetSaveAsButton, &QPushButton::released,
-        this, &PmPresetsWidget::onPresetSaveAs, Qt::QueuedConnection);
+        this, &PmPresetsWidget::onPresetSaveAs, qc);
     presetLayout->addWidget(m_presetSaveAsButton);
 
     m_presetRevertButton = prepareButton(obs_module_text("Revert Changes"),
         ":/res/images/revert.svg");
     m_presetRevertButton->setProperty("themeID", QVariant("revertIcon"));
     connect(m_presetRevertButton, &QPushButton::released,
-        this, &PmPresetsWidget::onPresetRevert, Qt::QueuedConnection);
+            this, &PmPresetsWidget::onPresetRevert, qc);
     presetLayout->addWidget(m_presetRevertButton);
 
     m_newConfigButton = prepareButton(obs_module_text("New Configuration"),
         ":/res/images/icons8-file.svg");
     connect(m_newConfigButton, &QPushButton::released,
-        this, &PmPresetsWidget::onNewConfig, Qt::QueuedConnection);
+            this, &PmPresetsWidget::onNewConfig, qc);
     presetLayout->addWidget(m_newConfigButton);
 
     m_presetRemoveButton = prepareButton(obs_module_text("Remove Preset"),
         ":/res/images/icons8-trash.svg");
     connect(m_presetRemoveButton, &QPushButton::released,
-        this, &PmPresetsWidget::onPresetRemove, Qt::QueuedConnection);
+        this, &PmPresetsWidget::onPresetRemove, qc);
     presetLayout->addWidget(m_presetRemoveButton);
     
     // core event handlers
     connect(m_core, &PmCore::sigAvailablePresetsChanged,
-        this, &PmPresetsWidget::onAvailablePresetsChanged, Qt::QueuedConnection);
+            this, &PmPresetsWidget::onAvailablePresetsChanged, qc);
     connect(m_core, &PmCore::sigActivePresetChanged,
-        this, &PmPresetsWidget::onActivePresetChanged, Qt::QueuedConnection);
+            this, &PmPresetsWidget::onActivePresetChanged, qc);
     connect(m_core, &PmCore::sigActivePresetDirtyChanged,
-        this, &PmPresetsWidget::onActivePresetDirtyStateChanged, Qt::QueuedConnection);
+            this, &PmPresetsWidget::onActivePresetDirtyStateChanged, qc);
 
     // local signals -> core slots
     connect(this, &PmPresetsWidget::sigMatchPresetSave,
-        m_core, &PmCore::onMatchPresetSave, Qt::QueuedConnection);
+            m_core, &PmCore::onMatchPresetSave, qc);
     connect(this, &PmPresetsWidget::sigMatchPresetSelect,
-        m_core, &PmCore::onMatchPresetSelect, Qt::QueuedConnection);
+            m_core, &PmCore::onMatchPresetSelect, qc);
     connect(this, &PmPresetsWidget::sigMatchPresetRemove,
-        m_core, &PmCore::onMatchPresetRemove, Qt::QueuedConnection);
+            m_core, &PmCore::onMatchPresetRemove, qc);
     connect(this, &PmPresetsWidget::sigMultiMatchConfigReset,
-        m_core, &PmCore::onMultiMatchConfigReset, Qt::QueuedConnection);
+            m_core, &PmCore::onMultiMatchConfigReset, qc);
 
 
     // finish init state

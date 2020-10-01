@@ -50,10 +50,10 @@ protected slots:
     void onRefreshButtonReleased();
 
     void onPickColorButtonReleased();
-    void onCaptureBeginReleased();
-    void onCaptureAutomaskReleased();
-    void onCaptureAcceptReleased();
-    void onCaptureCancelReleased();
+    void onCaptureBeginButtonReleased();
+    void onCaptureAutomaskButtonReleased();
+    void onCaptureAcceptButtonReleased();
+    void onCaptureCancelButtonReleased();
 
     // parse UI state into config
     void onConfigUiChanged();

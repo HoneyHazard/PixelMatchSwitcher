@@ -27,6 +27,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 : QGroupBox(parent)
 , m_core(pixelMatcher)
 {   
+    const Qt::ConnectionType qc = Qt::QueuedConnection;
+
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
@@ -38,7 +40,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_captureBeginButton = new QPushButton(obs_module_text("Capture"), this);
     m_captureBeginButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureBeginButton, &QPushButton::released,
-            this, &PmMatchConfigWidget::onCaptureBeginReleased);
+            this, &PmMatchConfigWidget::onCaptureBeginButtonReleased);
     imgControlLayout0->addWidget(m_captureBeginButton);
 
     m_openFileButton = new QPushButton(obs_module_text("Open File"), this);
@@ -76,7 +78,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
         obs_module_text("Accept Capture"), this);
     m_captureAcceptButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureAcceptButton, &QPushButton::released,
-            this, &PmMatchConfigWidget::onCaptureAcceptReleased);
+            this, &PmMatchConfigWidget::onCaptureAcceptButtonReleased);
     imgControlLayout1->addWidget(m_captureAcceptButton);
 
     m_captureAutomaskButton = new QPushButton(
@@ -84,14 +86,14 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_captureAutomaskButton->setCheckable(true);
     m_captureAutomaskButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureAutomaskButton, &QPushButton::released,
-            this, &PmMatchConfigWidget::onCaptureAutomaskReleased);
+            this, &PmMatchConfigWidget::onCaptureAutomaskButtonReleased);
     imgControlLayout1->addWidget(m_captureAutomaskButton);
 
     m_captureCancelButton = new QPushButton(
         obs_module_text("Cancel Capture"), this);
     m_captureCancelButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureCancelButton, &QPushButton::released,
-            this, &PmMatchConfigWidget::onCaptureCancelReleased);
+            this, &PmMatchConfigWidget::onCaptureCancelButtonReleased);
     imgControlLayout1->addWidget(m_captureCancelButton);
 
     // finish image controls widgets and stack
@@ -132,7 +134,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_maskModeCombo->insertItem(
         int(PmMaskMode::CustomClrMode), obs_module_text("Custom"));
     connect(m_maskModeCombo, SIGNAL(currentIndexChanged(int)),
-        this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+        this, SLOT(onConfigUiChanged()), qc);
     colorSubLayout->addWidget(m_maskModeCombo);
 
     m_maskModeDisplay = new QLabel(this);
@@ -141,7 +143,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     m_pickColorButton = new QPushButton(obs_module_text("Pick"), this);
     connect(m_pickColorButton, &QPushButton::released,
-            this, &PmMatchConfigWidget::onPickColorButtonReleased, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onPickColorButtonReleased, qc);
     colorSubLayout->addWidget(m_pickColorButton);
 
     mainLayout->addRow(obs_module_text("Mask Mode: "), colorSubLayout);
@@ -157,7 +159,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_posXBox->setRange(0, std::numeric_limits<int>::max());
     m_posXBox->setSingleStep(1);
     connect(m_posXBox, SIGNAL(valueChanged(int)),
-            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+            this, SLOT(onConfigUiChanged()), qc);
     matchLocSubLayout->addWidget(m_posXBox);
     matchLocSubLayout->addItem(new QSpacerItem(10, 1));
 
@@ -168,7 +170,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_posYBox->setRange(0, std::numeric_limits<int>::max());
     m_posYBox->setSingleStep(1);
     connect(m_posYBox, SIGNAL(valueChanged(int)),
-        this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+        this, SLOT(onConfigUiChanged()), qc);
     matchLocSubLayout->addWidget(m_posYBox);
 
     mainLayout->addRow(obs_module_text("Location: "), matchLocSubLayout);
@@ -180,7 +182,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_perPixelErrorBox->setSingleStep(1.0);
     m_perPixelErrorBox->setDecimals(1);
     connect(m_perPixelErrorBox, SIGNAL(valueChanged(double)),
-            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+            this, SLOT(onConfigUiChanged()), qc);
 
     mainLayout->addRow(
         obs_module_text("Allowed Pixel Error: "), m_perPixelErrorBox);
@@ -192,7 +194,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_totalMatchThreshBox->setSingleStep(1.0);
     m_totalMatchThreshBox->setDecimals(1);
     connect(m_totalMatchThreshBox, SIGNAL(valueChanged(double)),
-            this, SLOT(onConfigUiChanged()), Qt::QueuedConnection);
+            this, SLOT(onConfigUiChanged()), qc);
 
     mainLayout->addRow(
         obs_module_text("Global Match Threshold: "), m_totalMatchThreshBox);
@@ -201,29 +203,29 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     // core signals -> local slots
     connect(m_core, &PmCore::sigMatchImageLoadSuccess,
-            this, &PmMatchConfigWidget::onMatchImageLoadSuccess, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onMatchImageLoadSuccess, qc);
     connect(m_core, &PmCore::sigMatchImageLoadFailed,
-            this, &PmMatchConfigWidget::onMatchImageLoadFailed, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onMatchImageLoadFailed, qc);
     connect(m_core, &PmCore::sigNewMatchResults,
-            this, &PmMatchConfigWidget::onNewMatchResults, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMatchConfigChanged,
-            this, &PmMatchConfigWidget::onMatchConfigChanged, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onMatchConfigChanged, qc);
     connect(m_core, &PmCore::sigMatchConfigSelect,
-            this, &PmMatchConfigWidget::onMatchConfigSelect, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onMatchConfigSelect, qc);
     connect(m_core, &PmCore::sigMultiMatchConfigSizeChanged,
-            this, &PmMatchConfigWidget::onMultiMatchConfigSizeChanged, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onMultiMatchConfigSizeChanged, qc);
     connect(m_core, &PmCore::sigCaptureStateChanged,
-            this, &PmMatchConfigWidget::onCaptureStateChanged, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onCaptureStateChanged, qc);
     connect(m_core, &PmCore::sigActiveFilterChanged,
-            this, &PmMatchConfigWidget::onActiveFilterChanged, Qt::QueuedConnection);
+            this, &PmMatchConfigWidget::onActiveFilterChanged, qc);
 
     // local signals -> core
     connect(this, &PmMatchConfigWidget::sigMatchConfigChanged,
-            m_core, &PmCore::onMatchConfigChanged, Qt::QueuedConnection);
+            m_core, &PmCore::onMatchConfigChanged, qc);
     connect(this, &PmMatchConfigWidget::sigCaptureStateChanged,
-            m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
+            m_core, &PmCore::onCaptureStateChanged, qc);
     connect(this, &PmMatchConfigWidget::sigRefreshMatchImage,
-            m_core, &PmCore::onMatchImageRefresh, Qt::QueuedConnection);
+            m_core, &PmCore::onMatchImageRefresh, qc);
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
@@ -255,8 +257,6 @@ void PmMatchConfigWidget::onMatchConfigSelect(
     } else {
         m_imgPathEdit->setStyleSheet("");
     }
-
-    //onConfigUiChanged();
 }
 
 void PmMatchConfigWidget::onMultiMatchConfigSizeChanged(size_t sz)
@@ -363,7 +363,7 @@ void PmMatchConfigWidget::onPickColorButtonReleased()
     }
 }
 
-void PmMatchConfigWidget::onCaptureBeginReleased()
+void PmMatchConfigWidget::onCaptureBeginButtonReleased()
 {
     auto img = m_core->matchImage(m_matchIndex);
     if (!img.isNull()) {
@@ -380,7 +380,7 @@ void PmMatchConfigWidget::onCaptureBeginReleased()
     }
 }
 
-void PmMatchConfigWidget::onCaptureAutomaskReleased()
+void PmMatchConfigWidget::onCaptureAutomaskButtonReleased()
 {
     auto capState = m_core->captureState();
     if (capState == PmCaptureState::SelectFinished) {
@@ -391,12 +391,12 @@ void PmMatchConfigWidget::onCaptureAutomaskReleased()
     }
 }
 
-void PmMatchConfigWidget::onCaptureAcceptReleased()
+void PmMatchConfigWidget::onCaptureAcceptButtonReleased()
 {
     emit sigCaptureStateChanged(PmCaptureState::Accepted);
 }
 
-void PmMatchConfigWidget::onCaptureCancelReleased()
+void PmMatchConfigWidget::onCaptureCancelButtonReleased()
 {
     emit sigCaptureStateChanged(PmCaptureState::Inactive);
 }

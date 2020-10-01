@@ -48,10 +48,10 @@ protected slots:
     // local UI handlers
     void onRowSelected();
     void onItemChanged(QTableWidgetItem* item);
-    void onConfigInsertReleased();
-    void onConfigRemoveReleased();
-    void onConfigMoveUpReleased();
-    void onConfigMoveDownReleased();
+    void onConfigInsertButtonReleased();
+    void onConfigRemoveButtonReleased();
+    void onConfigMoveUpButtonReleased();
+    void onConfigMoveDownButtonReleased();
     void onNoMatchSceneSelected(QString str);
     void onNoMatchTransitionSelected(QString str);
 

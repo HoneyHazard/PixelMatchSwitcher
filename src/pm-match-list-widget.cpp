@@ -124,60 +124,62 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     for (size_t i = 0; i < multiResults.size(); ++i) {
         onNewMatchResults(i, multiResults[i]);
     }
+    
+    const Qt::ConnectionType qc = Qt::QueuedConnection;
 
     // connections: core -> this
     connect(m_core, &PmCore::sigNewMatchResults,
-        this, &PmMatchListWidget::onNewMatchResults, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMultiMatchConfigSizeChanged,
-        this, &PmMatchListWidget::onMultiMatchConfigSizeChanged, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onMultiMatchConfigSizeChanged, qc);
     connect(m_core, &PmCore::sigMatchConfigChanged,
-        this, &PmMatchListWidget::onMatchConfigChanged, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onMatchConfigChanged, qc);
     connect(m_core, &PmCore::sigNewMatchResults,
-        this, &PmMatchListWidget::onNewMatchResults, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMatchConfigSelect,
-        this, &PmMatchListWidget::onMatchConfigSelect, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onMatchConfigSelect, qc);
     connect(m_core, &PmCore::sigScenesChanged,
-        this, &PmMatchListWidget::onScenesChanged, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onScenesChanged, qc);
     connect(m_core, &PmCore::sigNoMatchSceneChanged,
-        this, &PmMatchListWidget::onNoMatchSceneChanged, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onNoMatchSceneChanged, qc);
     connect(m_core, &PmCore::sigNoMatchTransitionChanged,
         this, &PmMatchListWidget::onNoMatchTransitionChanged);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
-        m_core, &PmCore::onMatchConfigChanged, Qt::QueuedConnection);
+        m_core, &PmCore::onMatchConfigChanged, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigSelect,
-        m_core, &PmCore::onMatchConfigSelect, Qt::QueuedConnection);
+        m_core, &PmCore::onMatchConfigSelect, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigMoveUp,
-        m_core, &PmCore::onMatchConfigMoveUp, Qt::QueuedConnection);
+        m_core, &PmCore::onMatchConfigMoveUp, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigMoveDown,
-        m_core, &PmCore::onMatchConfigMoveDown, Qt::QueuedConnection);
+        m_core, &PmCore::onMatchConfigMoveDown, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigInsert,
-        m_core, &PmCore::onMatchConfigInsert, Qt::QueuedConnection);
+        m_core, &PmCore::onMatchConfigInsert, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigRemove,
-        m_core, &PmCore::onMatchConfigRemove, Qt::QueuedConnection);
+        m_core, &PmCore::onMatchConfigRemove, qc);
     connect(this, &PmMatchListWidget::sigNoMatchSceneChanged,
-        m_core, &PmCore::onNoMatchSceneChanged, Qt::QueuedConnection);
+        m_core, &PmCore::onNoMatchSceneChanged, qc);
     connect(this, &PmMatchListWidget::sigNoMatchTransitionChanged,
-        m_core, &PmCore::onNoMatchTransitionChanged, Qt::QueuedConnection);
+        m_core, &PmCore::onNoMatchTransitionChanged, qc);
 
     // connections: local ui
     connect(m_tableWidget, &QTableWidget::itemChanged,
-        this, &PmMatchListWidget::onItemChanged, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onItemChanged, qc);
     connect(m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
-        this, &PmMatchListWidget::onRowSelected, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onRowSelected, qc);
     connect(m_cfgMoveUpBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigMoveUpReleased, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onConfigMoveUpButtonReleased, qc);
     connect(m_cfgMoveDownBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigMoveDownReleased, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onConfigMoveDownButtonReleased, qc);
     connect(m_cfgInsertBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigInsertReleased, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onConfigInsertButtonReleased, qc);
     connect(m_cfgRemoveBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigRemoveReleased, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onConfigRemoveButtonReleased, qc);
     connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
-        this, &PmMatchListWidget::onNoMatchSceneSelected, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onNoMatchSceneSelected, qc);
     connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
-        this, &PmMatchListWidget::onNoMatchTransitionSelected, Qt::QueuedConnection);
+        this, &PmMatchListWidget::onNoMatchTransitionSelected, qc);
 }
 
 void PmMatchListWidget::onScenesChanged(PmScenes scenes)
@@ -329,7 +331,7 @@ void PmMatchListWidget::onRowSelected()
     }
 }
 
-void PmMatchListWidget::onConfigInsertReleased()
+void PmMatchListWidget::onConfigInsertButtonReleased()
 {
     int idx = currentIndex();
     PmMatchConfig newCfg = PmMatchConfig();
@@ -337,19 +339,19 @@ void PmMatchListWidget::onConfigInsertReleased()
     emit sigMatchConfigSelect(idx);
 }
 
-void PmMatchListWidget::onConfigRemoveReleased()
+void PmMatchListWidget::onConfigRemoveButtonReleased()
 {
     int idx = currentIndex();
     emit sigMatchConfigRemove(idx);
 }
 
-void PmMatchListWidget::onConfigMoveUpReleased()
+void PmMatchListWidget::onConfigMoveUpButtonReleased()
 {
     int idx = currentIndex();
     emit sigMatchConfigMoveUp(idx);
 }
 
-void PmMatchListWidget::onConfigMoveDownReleased()
+void PmMatchListWidget::onConfigMoveDownButtonReleased()
 {
     int idx = currentIndex();
     emit sigMatchConfigMoveDown(idx);

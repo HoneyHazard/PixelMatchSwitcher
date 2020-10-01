@@ -44,23 +44,25 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     mainLayout->addStretch(1);
     setLayout(mainLayout);
 
+    const Qt::ConnectionType qc = Qt::QueuedConnection;
+
     // core event handlers
     connect(m_core, &PmCore::sigMatchConfigSelect,
-            this, &PmPreviewDisplayWidget::onMatchConfigSelect, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onMatchConfigSelect, qc);
     connect(m_core, &PmCore::sigMatchConfigChanged,
-        this, &PmPreviewDisplayWidget::onMatchConfigChanged, Qt::QueuedConnection);
+        this, &PmPreviewDisplayWidget::onMatchConfigChanged, qc);
     connect(m_core, &PmCore::sigMatchImageLoadSuccess,
-            this, &PmPreviewDisplayWidget::onMatchImageLoadSuccess, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onMatchImageLoadSuccess, qc);
     connect(m_core, &PmCore::sigMatchImageLoadFailed,
-            this, &PmPreviewDisplayWidget::onMatchImageLoadFailed, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onMatchImageLoadFailed, qc);
     connect(m_core, &PmCore::sigPreviewConfigChanged,
-            this, &PmPreviewDisplayWidget::onPreviewConfigChanged, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onPreviewConfigChanged, qc);
     connect(m_core, &PmCore::sigActiveFilterChanged,
-            this, &PmPreviewDisplayWidget::onActiveFilterChanged, Qt::QueuedConnection);
+            this, &PmPreviewDisplayWidget::onActiveFilterChanged, qc);
 
     // signals sent to the core
     connect(this, &PmPreviewDisplayWidget::sigCaptureStateChanged,
-            m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
+            m_core, &PmCore::onCaptureStateChanged, qc);
 
     // finish init
     onActiveFilterChanged(m_core->activeFilterRef());
