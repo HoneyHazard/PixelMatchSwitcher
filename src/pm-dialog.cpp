@@ -30,12 +30,18 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // UI modules
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
     m_presetsWidget = new PmPresetsWidget(core, this);
-    PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
-    PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
-    PmMatchResultsWidget* resultsWidget = new PmMatchResultsWidget(core, this);
-    PmPreviewConfigWidget* previewCfgWidget = new PmPreviewConfigWidget(core, this);
-    PmPreviewDisplayWidget* previewWidget = new PmPreviewDisplayWidget(core, this);
-    PmHelpWidget* helpWidget = new PmHelpWidget(core, this);
+    PmMatchListWidget *listWidget 
+        = new PmMatchListWidget(core, this);
+    PmMatchConfigWidget *configWidget 
+        = new PmMatchConfigWidget(core, this);
+    PmMatchResultsWidget* resultsWidget 
+        = new PmMatchResultsWidget(core, this);
+    PmPreviewConfigWidget* previewCfgWidget 
+        = new PmPreviewConfigWidget(core, this);
+    PmPreviewDisplayWidget* previewWidget 
+        = new PmPreviewDisplayWidget(core, this);
+    PmHelpWidget* helpWidget 
+        = new PmHelpWidget(core, this);
 
     // left pane
     QVBoxLayout* leftLayout = new QVBoxLayout;
