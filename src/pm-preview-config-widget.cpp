@@ -23,21 +23,24 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
     m_previewModeButtons = new QButtonGroup(this);
     m_previewModeButtons->setExclusive(true);
     connect(m_previewModeButtons, SIGNAL(buttonReleased(int)),
-        this, SLOT(onConfigUiChanged()), qc);
+        this, SLOT(onPreviewModeRadioChanged()), qc);
 
     QRadioButton* videoModeRadio
         = new QRadioButton(obs_module_text("Video"), this);
-    m_previewModeButtons->addButton(videoModeRadio, int(PmPreviewMode::Video));
+    m_previewModeButtons->addButton(
+        videoModeRadio, int(PmPreviewMode::Video));
     mainLayout->addWidget(videoModeRadio);
 
     QRadioButton* regionModeRadio
         = new QRadioButton(obs_module_text("Region"), this);
-    m_previewModeButtons->addButton(regionModeRadio, int(PmPreviewMode::Region));
+    m_previewModeButtons->addButton(
+        regionModeRadio, int(PmPreviewMode::Region));
     mainLayout->addWidget(regionModeRadio);
 
     QRadioButton* matchImgRadio
         = new QRadioButton(obs_module_text("Match Image"), this);
-    m_previewModeButtons->addButton(matchImgRadio, int(PmPreviewMode::MatchImage));
+    m_previewModeButtons->addButton(
+        matchImgRadio, int(PmPreviewMode::MatchImage));
     mainLayout->addWidget(matchImgRadio);
 
     // core event handlers
@@ -61,17 +64,13 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
     // finish init
     onActiveFilterChanged(m_core->activeFilterRef());
     onRunningEnabledChanged(m_core->runningEnabled());
-    onPreviewConfigChanged(m_core->previewConfig());
     size_t selIdx = m_core->selectedConfigIndex();
     onMatchConfigSelect(selIdx, m_core->matchConfig(selIdx));
-
-    onConfigUiChanged();
+    onPreviewConfigChanged(m_core->previewConfig());
 }
 
 void PmPreviewConfigWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
 {
-    //m_previewCfg = cfg;
-
     int previewModeIdx = int(cfg.previewMode);
 
     m_previewModeButtons->blockSignals(true);
@@ -102,7 +101,7 @@ void PmPreviewConfigWidget::onMatchImageLoadFailed(size_t matchIndex)
     enableRegionViews(false);
 }
 
-void PmPreviewConfigWidget::onConfigUiChanged()
+void PmPreviewConfigWidget::onPreviewModeRadioChanged()
 {
     PmPreviewConfig config = m_core->previewConfig();
 
@@ -112,10 +111,10 @@ void PmPreviewConfigWidget::onConfigUiChanged()
     emit sigPreviewConfigChanged(config);
 }
 
-void PmPreviewConfigWidget::onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewConfigWidget::onMatchConfigSelect(
+    size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    //onMatchConfigChanged(matchIndex, cfg);
     if (m_core->matchImageLoaded(matchIndex)) {
         onMatchImageLoadSuccess(m_matchIndex);
     } else {
@@ -128,7 +127,8 @@ void PmPreviewConfigWidget::enableRegionViews(bool enable)
     auto regButton = m_previewModeButtons->button((int)PmPreviewMode::Region);
     regButton->setVisible(enable);
     regButton->setEnabled(enable);
-    auto imgButton = m_previewModeButtons->button((int)PmPreviewMode::MatchImage);
+    auto imgButton 
+        = m_previewModeButtons->button((int)PmPreviewMode::MatchImage);
     imgButton->setVisible(enable);
     imgButton->setEnabled(enable);
 }

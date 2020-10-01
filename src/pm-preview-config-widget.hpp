@@ -35,18 +35,12 @@ protected slots:
     void onRunningEnabledChanged(bool enable);
 
     // parse UI state into config
-    void onConfigUiChanged();
+    void onPreviewModeRadioChanged();
 
 protected:
     void enableRegionViews(bool enable);
 
     QButtonGroup* m_previewModeButtons;
-#if 0
-    QStackedWidget* m_previewScaleStack;
-    QComboBox* m_videoScaleCombo;
-    QComboBox* m_regionScaleCombo;
-    QComboBox* m_matchImgScaleCombo;
-#endif
 
     PmCore* m_core;
     size_t m_matchIndex = 0;
