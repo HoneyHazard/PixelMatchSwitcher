@@ -156,8 +156,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onMatchConfigInsert, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigMatchConfigRemove,
         m_core, &PmCore::onMatchConfigRemove, Qt::QueuedConnection);
-    connect(this, &PmMatchListWidget::sigResetMatchConfigs,
-        m_core, &PmCore::onResetMatchConfigs, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigNoMatchSceneChanged,
         m_core, &PmCore::onNoMatchSceneChanged, Qt::QueuedConnection);
     connect(this, &PmMatchListWidget::sigNoMatchTransitionChanged,
@@ -176,8 +174,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onConfigInsertReleased, Qt::QueuedConnection);
     connect(m_cfgRemoveBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigRemoveReleased, Qt::QueuedConnection);
-    //connect(m_cfgClearBtn, &QPushButton::released,
-    //    this, &PmMatchListWidget::onConfigClearReleased, Qt::QueuedConnection);
     connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
         this, &PmMatchListWidget::onNoMatchSceneSelected, Qt::QueuedConnection);
     connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
@@ -357,11 +353,6 @@ void PmMatchListWidget::onConfigMoveDownReleased()
 {
     int idx = currentIndex();
     emit sigMatchConfigMoveDown(idx);
-}
-
-void PmMatchListWidget::onConfigClearReleased()
-{
-    emit sigResetMatchConfigs();
 }
 
 void PmMatchListWidget::onNoMatchSceneSelected(QString scene)

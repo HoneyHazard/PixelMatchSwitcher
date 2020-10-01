@@ -32,7 +32,6 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
-    void sigResetMatchConfigs();
     void sigNoMatchSceneChanged(std::string noMatchScene);
     void sigNoMatchTransitionChanged(std::string transName);
 
@@ -53,7 +52,6 @@ protected slots:
     void onConfigRemoveReleased();
     void onConfigMoveUpReleased();
     void onConfigMoveDownReleased();
-    void onConfigClearReleased();
     void onNoMatchSceneSelected(QString str);
     void onNoMatchTransitionSelected(QString str);
 
