@@ -121,6 +121,10 @@ public:
  */
 typedef QMap<std::string, PmMultiMatchConfig> PmMatchPresets;
 
+/*
+ * @brief Represents a set of weak source references to available scenes, that
+ *        also allows matching each source to a scene name
+ */
 class PmScenes : public QMap<OBSWeakSource, std::string>
 {
 public:

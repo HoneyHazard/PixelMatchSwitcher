@@ -125,7 +125,6 @@ PmCore::PmCore()
     }
 }
 
-
 PmCore::~PmCore()
 {
     m_thread->exit();
