@@ -12,6 +12,7 @@ class PmFilterRef
 public:
     PmFilterRef() {}
 
+    OBSWeakSource filterWeakSource() const { return m_filter; }
     obs_source_t* filter() const;
     pm_filter_data *filterData() const;
 
@@ -23,7 +24,7 @@ public:
     uint32_t numMatched(size_t matchIndex) const;
 
     void reset();
-    void setFilter(obs_source_t *filter);
+    void setFilter(OBSWeakSource filter);
     void lockData() const;
     void unlockData() const;
 

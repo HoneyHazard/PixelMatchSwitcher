@@ -1,9 +1,9 @@
 #include "pm-filter-ref.hpp"
 #include "pm-filter.h"
 
-void PmFilterRef::setFilter(obs_source_t *filter)
+void PmFilterRef::setFilter(OBSWeakSource filter)
 {
-    m_filter = OBSGetWeakRef(filter);
+    m_filter = filter;
 }
 
 void PmFilterRef::lockData() const

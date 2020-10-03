@@ -15,7 +15,6 @@
 #include <QTimer>
 #include <QThread>
 #include <QTextStream>
-#include <QSet>
 
 PmCore* PmCore::m_instance = nullptr;
 
@@ -766,7 +765,7 @@ void PmCore::scanScenes()
     obs_frontend_get_scenes(&scenesInput);
 
     PmScenes newScenes;
-    unordered_set<obs_source_t*> filters;
+    QSet<OBSWeakSource> filters;
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &sceneSrc = scenesInput.sources.array[i];
@@ -786,8 +785,9 @@ void PmCore::scanScenes()
                             if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
                                 if (obs_obj_get_data(filter)) {
                                     auto filters
-                                        = (unordered_set<obs_source_t*>*)(p);
-                                    filters->insert(filter);
+                                        = (QSet<OBSWeakSource>*)(p);
+                                    filters->insert(
+                                        obs_source_get_weak_source(filter));
                                 }
                             }
                         },
@@ -799,8 +799,9 @@ void PmCore::scanScenes()
             &filters
         );
     }
-    updateActiveFilter(filters);
     obs_frontend_source_list_free(&scenesInput);
+
+    updateActiveFilter(filters);
 
     bool scenesChanged = false;
     QSet<std::string> oldNames;
@@ -849,14 +850,14 @@ void PmCore::scanScenes()
 }
 
 void PmCore::updateActiveFilter(
-    const std::unordered_set<obs_source_t*> &activeFilters)
+    const QSet<OBSWeakSource> &activeFilters)
 {
     using namespace std;
     bool changed = false;
 
     QMutexLocker locker(&m_filtersMutex);
     if (m_activeFilter.isValid()) {
-        if (activeFilters.count(m_activeFilter.filter()) > 0) {
+        if (activeFilters.contains(m_activeFilter.filterWeakSource())) {
             return;
         } else {
             auto data = m_activeFilter.filterData();
@@ -872,7 +873,7 @@ void PmCore::updateActiveFilter(
         }
     }
     if (activeFilters.size() > 0) {
-        auto newFilter = *activeFilters.begin();
+        OBSWeakSource newFilter = *(activeFilters.begin());
         m_activeFilter.setFilter(newFilter);
         auto data = m_activeFilter.filterData();
         if (data) {

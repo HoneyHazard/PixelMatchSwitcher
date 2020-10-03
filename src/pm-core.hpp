@@ -10,7 +10,7 @@ extern "C" void free_pixel_match_switcher();
 
 #include <string>
 #include <vector>
-#include <unordered_set>
+#include <QSet>
 
 #include <obs.hpp>
 
@@ -139,7 +139,7 @@ protected:
     void switchScene(
         const std::string& scene, const std::string &transition);
     void scanScenes();
-    void updateActiveFilter(const std::unordered_set<obs_source_t*> &filters);
+    void updateActiveFilter(const QSet<OBSWeakSource> &filters);
     void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg);
     void loadImage(size_t matchIndex);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
