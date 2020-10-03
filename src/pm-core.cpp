@@ -1135,7 +1135,7 @@ void PmCore::switchScene(
                 auto weakTransSrc = *find;
                 transitionSrc = obs_weak_source_get_source(weakTransSrc);
             }
-            //obs_source_release(transitionSrc);
+            obs_source_release(transitionSrc);
         }
         if (transitionSrc) {
             obs_frontend_set_current_transition(transitionSrc);
@@ -1144,8 +1144,8 @@ void PmCore::switchScene(
             obs_frontend_set_current_scene(targetSceneSrc);
         }
     }
-    //obs_source_release(currSceneSrc);
-    //obs_source_release(targetSceneSrc);
+    obs_source_release(currSceneSrc);
+    obs_source_release(targetSceneSrc);
 }
 
 void PmCore::supplyImageToFilter(
