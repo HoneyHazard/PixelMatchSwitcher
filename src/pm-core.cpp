@@ -799,9 +799,8 @@ void PmCore::scanScenes()
             &filters
         );
     }
-    obs_frontend_source_list_free(&scenesInput);
-
     updateActiveFilter(filters);
+    obs_frontend_source_list_free(&scenesInput);
 
     bool scenesChanged = false;
     QSet<std::string> oldNames;
