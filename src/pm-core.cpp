@@ -60,14 +60,6 @@ void on_snapshot_available()
     }
 }
 
-void obs_event_core(enum obs_frontend_event event, void*)
-{
-    if (event == OBS_FRONTEND_EVENT_EXIT) {
-        auto core = PmCore::m_instance;
-        core->deactivate();
-    }
-}
-
 //------------------------------------
 
 QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
@@ -647,10 +639,14 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
                 y = std::min(y, (int)filterData->base_height - 1);
                 m_captureEndX = x;
                 m_captureEndY = y;
-                filterData->select_left = std::min(m_captureStartX, m_captureEndX);
-                filterData->select_bottom = std::min(m_captureStartY, m_captureEndY);
-                filterData->select_right = std::max(m_captureStartX, m_captureEndX);
-                filterData->select_top = std::max(m_captureStartY, m_captureEndY);
+                filterData->select_left 
+                    = std::min(m_captureStartX, m_captureEndX);
+                filterData->select_bottom 
+                    = std::min(m_captureStartY, m_captureEndY);
+                filterData->select_right 
+                    = std::max(m_captureStartX, m_captureEndX);
+                filterData->select_top 
+                    = std::max(m_captureStartY, m_captureEndY);
                 filter.unlockData();
             }
         }

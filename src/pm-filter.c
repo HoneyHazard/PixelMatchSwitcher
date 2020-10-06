@@ -315,8 +315,8 @@ void copy_region_from_stagerender(
     uint8_t *dstPtr, uint32_t dstStride)
 {
     const size_t pixSz = 4;
-    size_t width = filter->select_right - filter->select_left + 1;
-    size_t height = filter->select_top - filter->select_bottom + 1;
+    size_t height 
+        = (size_t)filter->select_top - (size_t)filter->select_bottom + 1;
 
     gs_texture_t* tex = gs_texrender_get_texture(stx);
     gs_stage_texture(sss, tex);
@@ -328,7 +328,8 @@ void copy_region_from_stagerender(
     }
 
     uint8_t* srcPtr = stageSurfData
-        + filter->select_bottom * srcStride + filter->select_left * pixSz;
+        + (size_t)(filter->select_bottom) * srcStride 
+        + (size_t)(filter->select_left) * pixSz;
     size_t lineWidth = min(srcStride, dstStride);
     for (size_t i = 0; i < height; ++i) {
         memcpy(dstPtr, srcPtr, lineWidth);
@@ -367,7 +368,8 @@ void capture_region_from_stagerender(
 
     if (filter->captured_region_data)
         bfree(filter->captured_region_data);
-    filter->captured_region_data = (uint8_t*)bmalloc(dst_stride * height);
+    filter->captured_region_data 
+        = (uint8_t*)bmalloc((size_t)dst_stride * (size_t)height);
     dst_ptr = filter->captured_region_data;
 
     copy_region_from_stagerender(

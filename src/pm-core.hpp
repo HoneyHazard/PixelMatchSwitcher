@@ -181,8 +181,8 @@ protected:
     bool m_switchingEnabled = true;
     
     PmCaptureState m_captureState = PmCaptureState::Inactive;
-    int m_captureStartX, m_captureStartY;
-    int m_captureEndX, m_captureEndY;
+    int m_captureStartX = 0, m_captureStartY = 0;
+    int m_captureEndX = 0, m_captureEndY = 0;
 
     mutable QMutex m_matchImagesMutex;
     std::vector<QImage> m_matchImages;
