@@ -128,7 +128,6 @@ protected slots:
     void onPeriodicUpdate();
     void onFrameProcessed();
     void onSnapshotAvailable();
-    void onFrontendExiting();
 
 protected:
     static QHash<std::string, OBSWeakSource> getAvailableTransitions();
