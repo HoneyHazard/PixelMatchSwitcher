@@ -150,7 +150,7 @@ else()
 				obs-frontend-api
 		)
 
-		install_external_plugin_with_data(advanced-scene-switcher data)
+		install_obs_plugin(pixel-match-switcher data)
 endif()
 
 target_compile_options(pixel-match-switcher PRIVATE
