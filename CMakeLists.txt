@@ -37,9 +37,17 @@ if(BUILD_OUT_OF_TREE)
 	)
 	endif()
 
+	if(MSVC)
+			include_directories("${W32_PTHREADS_INCLUDE_DIR}")
+	endif()
+	
 	find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
 	find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
 	find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
+else()
+	# for qt-display.hpp:
+	set(LIBOBS_UI_DIR "../..")
+	include_directories("${LIBOBS_UI_DIR}")
 endif()
 
 set(pixel-match-switcher_HEADERS
@@ -60,6 +68,8 @@ set(pixel-match-switcher_HEADERS
         src/pm-about-box.hpp
         src/pm-structs.hpp
         src/pm-debug-tab.hpp
+		${LIBOBS_UI_DIR}/qt-display.hpp
+		${LIBOBS_UI_DIR}/qt-wrappers.hpp
 )
 
 set(pixel-match-switcher_SOURCES
@@ -81,38 +91,21 @@ set(pixel-match-switcher_SOURCES
         src/pm-dialog.cpp
         src/pm-about-box.cpp
         src/pm-structs.cpp
+		${LIBOBS_UI_DIR}/qt-display.cpp
+		${LIBOBS_UI_DIR}/qt-wrappers.cpp
 )
 
 qt5_add_resources(pixel-match-switcher_SOURCES 
         pm.qrc)
 		
-		
+
 if(BUILD_OUT_OF_TREE)
-		set(pixel-match-switcher_HEADERS
-				${pixel-match-switcher_HEADERS}
-				${LIBOBS_UI_DIR}/qt-display.hpp
-				${LIBOBS_UI_DIR}/qt-wrappers.hpp
-		)
-
-		set(pixel-match-switcher_SOURCES
-				${pixel-match-switcher_SOURCES}
-				${LIBOBS_UI_DIR}/qt-display.cpp
-				${LIBOBS_UI_DIR}/qt-wrappers.cpp
-		)
-
 		include_directories(
 				"${LIBOBS_INCLUDE_DIR}"
 				"${LIBOBS_FRONTEND_INCLUDE_DIR}"
-				"${LIBOBS_UI_DIR}"
 				${Qt5Core_INCLUDES}
 				${Qt5Widgets_INCLUDES}
-		)
-		
-
-		if(MSVC)
-				set(libobs_PLATFORM_DEPS ${libobs_PLATFORM_DEPS} w32-pthreads)
-				include_directories("${W32_PTHREADS_INCLUDE_DIR}")
-		endif()
+		)	
 endif()
 
 add_library(pixel-match-switcher MODULE
@@ -135,7 +128,6 @@ if(BUILD_OUT_OF_TREE)
 		if (MSVC)
 				target_link_libraries(pixel-match-switcher "${W32_PTHREADS_LIB}")
 		endif()
-
 		if (UNIX AND NOT APPLE)
 			file(GLOB EFFECT_FILES
 				data/*.effect)
@@ -149,8 +141,11 @@ else()
 				libobs
 				obs-frontend-api
 		)
-
-		install_obs_plugin(pixel-match-switcher data)
+		if(MSVC)
+				target_link_libraries(pixel-match-switcher w32-pthreads)
+		endif()
+		set_target_properties(pixel-match-switcher PROPERTIES FOLDER "plugins")
+		install_obs_plugin_with_data(pixel-match-switcher data)
 endif()
 
 target_compile_options(pixel-match-switcher PRIVATE
