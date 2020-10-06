@@ -330,7 +330,7 @@ void copy_region_from_stagerender(
     uint8_t* srcPtr = stageSurfData
         + (size_t)(filter->select_bottom) * srcStride 
         + (size_t)(filter->select_left) * pixSz;
-    size_t lineWidth = min(srcStride, dstStride);
+    size_t lineWidth = srcStride < dstStride ? srcStride : dstStride;
     for (size_t i = 0; i < height; ++i) {
         memcpy(dstPtr, srcPtr, lineWidth);
         dstPtr += dstStride;

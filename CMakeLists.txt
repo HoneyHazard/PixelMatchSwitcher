@@ -29,26 +29,33 @@ if(BUILD_OUT_OF_TREE)
 	find_package(Qt5Core REQUIRED)
 	find_package(Qt5Widgets REQUIRED)
 
-	if(UNIX AND NOT APPLE)
-	find_package(Qt5X11Extras REQUIRED)
-	include_directories(       
-			"${Qt5X11Extras_DIR}"
-			"${Qt5X11Extras_INCLUDE_DIRS}"
+	find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
+	find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
+	find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
+	
+	include_directories(
+			"${LIBOBS_INCLUDE_DIR}"
+			"${LIBOBS_FRONTEND_INCLUDE_DIR}"
+			${Qt5Core_INCLUDES}
+			${Qt5Widgets_INCLUDES}
 	)
+	if(UNIX AND NOT APPLE)
+			find_package(Qt5X11Extras REQUIRED)
+			include_directories(       
+					"${Qt5X11Extras_DIR}"
+					"${Qt5X11Extras_INCLUDE_DIRS}"
+			)
 	endif()
 
 	if(MSVC)
 			include_directories("${W32_PTHREADS_INCLUDE_DIR}")
 	endif()
-	
-	find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
-	find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
-	find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
 else()
 	# for qt-display.hpp:
 	set(LIBOBS_UI_DIR "../..")
-	include_directories("${LIBOBS_UI_DIR}")
 endif()
+
+include_directories("${LIBOBS_UI_DIR}")
 
 set(pixel-match-switcher_HEADERS
         src/pm-filter.h
@@ -98,16 +105,6 @@ set(pixel-match-switcher_SOURCES
 qt5_add_resources(pixel-match-switcher_SOURCES 
         pm.qrc)
 		
-
-if(BUILD_OUT_OF_TREE)
-		include_directories(
-				"${LIBOBS_INCLUDE_DIR}"
-				"${LIBOBS_FRONTEND_INCLUDE_DIR}"
-				${Qt5Core_INCLUDES}
-				${Qt5Widgets_INCLUDES}
-		)	
-endif()
-
 add_library(pixel-match-switcher MODULE
         ${pixel-match-switcher_HEADERS}
         ${pixel-match-switcher_SOURCES}
