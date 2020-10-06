@@ -111,7 +111,7 @@ find_package(Qt5X11Extras REQUIRED)
 include_directories(       
         "${Qt5X11Extras_DIR}"
         "${Qt5X11Extras_INCLUDE_DIRS}"
-)# TODO conditional?
+)
 endif()
 
       
@@ -126,10 +126,12 @@ install(TARGETS pixel-match-switcher
 install(FILES ${EFFECT_FILES}
     DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher")
 
-if(UNIX)
-       set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-old-style-cast")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-old-style-cast")
-endif()
+target_compile_options(pixel-match-switcher PRIVATE
+     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+          -Wno-old-style-cast>
+     $<$<CXX_COMPILER_ID:MSVC>:
+          /wd26812>)
+
 
 #install_external_plugin_with_data(pixel-match-switcher "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/")
 
