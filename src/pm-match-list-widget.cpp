@@ -398,20 +398,10 @@ void PmMatchListWidget::constructRow(int idx)
     m_tableWidget->setCellWidget(idx, (int)RowOrder::EnableBox, enableBox);
 
     QString placeholderName = QString("placeholder %1").arg(idx);
-#if 0
-    QLineEdit* nameEdit = new QLineEdit(parent);
-    nameEdit->setEnabled(false);
-    nameEdit->setStyleSheet(k_transpBgStyle);
-    nameEdit->setText(placeholderName);
-    connect(nameEdit, &QLineEdit::textChanged,
-        [this, idx](const QString& str) { configRenamed(idx, str); });
-    m_tableWidget->setCellWidget(idx, (int)RowOrder::ConfigName, nameEdit);
-#else
     auto labelItem = new QTableWidgetItem(placeholderName);
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
     m_tableWidget->setItem(
         idx, (int)RowOrder::ConfigName, labelItem);
-#endif
 
     QComboBox* sceneCombo = new QComboBox(parent);
     sceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);

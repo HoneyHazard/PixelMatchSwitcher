@@ -134,7 +134,6 @@ void PmPreviewDisplayWidget::onActiveFilterChanged(PmFilterRef ref)
 {
     //QMutexLocker locker(&m_filterMutex);
     m_activeFilter = ref;
-    //setEnabled(m_activeFilter.isValid() && m_core->runningEnabled());
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         m_activeFilter.lockData();
@@ -151,7 +150,6 @@ void PmPreviewDisplayWidget::onActiveFilterChanged(PmFilterRef ref)
 
 void PmPreviewDisplayWidget::onRunningEnabledChanged(bool enable)
 {
-    //setEnabled(m_activeFilter.isValid() && enable);
     updateDisplayState(
         m_previewCfg, m_matchIndex, enable, m_activeFilter);
 }
@@ -189,29 +187,20 @@ void PmPreviewDisplayWidget::onDestroy(QObject* obj)
     UNUSED_PARAMETER(obj);
 }
 
-void PmPreviewDisplayWidget::onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewDisplayWidget::onMatchConfigSelect(
+    size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
     onMatchConfigChanged(matchIndex, cfg);
 }
 
-void PmPreviewDisplayWidget::onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg)
+void PmPreviewDisplayWidget::onMatchConfigChanged(
+    size_t matchIndex, PmMatchConfig cfg)
 {
     if (matchIndex != m_matchIndex) return;
 
     m_roiLeft = cfg.filterCfg.roi_left;
     m_roiBottom = cfg.filterCfg.roi_bottom;
-    
-#if 0
-    if (m_core->matchImageLoaded(matchIndex)) {
-        onMatchImageLoadSuccess(matchIndex,
-            m_core->matchImgFilename(matchIndex),
-            m_core->matchImage(matchIndex));
-    }
-    else {
-        onMatchImageLoadFailed(matchIndex);
-    }
-#endif
 
     updateDisplayState(
         m_previewCfg, matchIndex, m_core->runningEnabled(), m_activeFilter);

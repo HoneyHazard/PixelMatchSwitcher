@@ -440,12 +440,6 @@ void configure_mask(struct pm_filter_data* filter)
         PM_AUTOMASK_BORDER_THICKNESS / (float)(filter->base_width));
     gs_effect_set_float(filter->param_border_px_height,
         PM_AUTOMASK_BORDER_THICKNESS / (float)(filter->base_height));
-
-#if 0
-    while (gs_effect_loop(filter->effect, "Draw")) {
-        gs_draw_sprite(tex, 0, 0, 0);
-}
-#endif
 }
 
 void render_mask_visualization(struct pm_filter_data* filter)
