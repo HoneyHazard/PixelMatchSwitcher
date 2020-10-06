@@ -136,7 +136,7 @@ void PmDebugTab::periodicUpdate()
             switch (filterMode) {
             case PM_MATCH: filterModeStr = "PM_MATCH"; break;
             case PM_MATCH_VISUALIZE: filterModeStr = "PM_MATCH_VISUALIZE"; break;
-            case PM_SELECT_REGION: filterModeStr = "PM_SELECT_REGION"; break;
+            case PM_SELECT_REGION_VISUALIZE: filterModeStr = "PM_SELECT_REGION"; break;
             case PM_MASK: filterModeStr = "PM_MASK"; break;
             case PM_MASK_VISUALIZE: filterModeStr = "PM_MASK_VISUALIZE"; break;
             default: 

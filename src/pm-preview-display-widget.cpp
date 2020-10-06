@@ -276,7 +276,7 @@ void PmPreviewDisplayWidget::drawFilter()
         case PmCaptureState::SelectMoved:
         case PmCaptureState::SelectFinished:
         case PmCaptureState::Accepted:
-            filterMode = PM_SELECT_REGION; break;
+            filterMode = PM_SELECT_REGION_VISUALIZE; break;
         default: 
             filterMode = filterData->filter_mode; break;
         }

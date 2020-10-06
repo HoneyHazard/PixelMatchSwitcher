@@ -564,7 +564,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
         goto done;
     }
 
-    if (filter->filter_mode == PM_SELECT_REGION) {
+    if (filter->filter_mode == PM_SELECT_REGION_VISUALIZE) {
         render_select_region(filter);
         goto done;
     }
@@ -580,7 +580,7 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
 done:
     if (filter->filter_mode == PM_MATCH_VISUALIZE
-     || filter->filter_mode == PM_SELECT_REGION)
+     || filter->filter_mode == PM_SELECT_REGION_VISUALIZE)
         filter->filter_mode = PM_MATCH;
     else if (filter->filter_mode == PM_MASK_VISUALIZE
           || filter->filter_mode == PM_MASK_BEGIN)
