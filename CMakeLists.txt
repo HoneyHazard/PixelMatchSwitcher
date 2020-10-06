@@ -132,9 +132,7 @@ target_compile_options(pixel-match-switcher PRIVATE
      $<$<CXX_COMPILER_ID:MSVC>:
           /wd26812>)
 
-
 #install_external_plugin_with_data(pixel-match-switcher "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/")
-
 
 # Linux
 #if(UNIX AND NOT APPLE)
