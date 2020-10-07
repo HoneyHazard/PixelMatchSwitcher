@@ -16,6 +16,7 @@ extern "C" void free_pixel_match_switcher();
 
 #include "pm-filter-ref.hpp"
 #include "pm-structs.hpp"
+#include "pm-dialog.hpp"
 
 struct obs_scene_item;
 struct obs_scene;

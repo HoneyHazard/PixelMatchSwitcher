@@ -1,5 +1,4 @@
 #include "pm-core.hpp"
-#include "pm-dialog.hpp"
 #include "pm-filter.h"
 
 #include <ostream>
