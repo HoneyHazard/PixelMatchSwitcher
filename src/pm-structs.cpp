@@ -237,6 +237,6 @@ void pmRegisterMetaTypes()
 }
 
 PmScenes::PmScenes(const PmScenes& other)
-: QMap<OBSWeakSource, std::string>(other)
+: QHash<OBSWeakSource, std::string>(other)
 {
 }

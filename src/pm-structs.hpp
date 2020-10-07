@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <utility>
 #include <qmetatype.h>
-#include <QMap>
+#include <QHash>
 #include <QSet>
 
 #include <obs.h>
@@ -119,13 +119,13 @@ public:
  * @bries Stores multiple PmMultiMatchConfig that are easily referenced by a
  *        preset name
  */
-typedef QMap<std::string, PmMultiMatchConfig> PmMatchPresets;
+typedef QHash<std::string, PmMultiMatchConfig> PmMatchPresets;
 
 /*
  * @brief Represents a set of weak source references to available scenes, that
  *        also allows matching each source to a scene name
  */
-class PmScenes : public QMap<OBSWeakSource, std::string>
+class PmScenes : public QHash<OBSWeakSource, std::string>
 {
 public:
     PmScenes() {}
@@ -167,11 +167,13 @@ namespace PmConstants
  */
 void pmRegisterMetaTypes();
 
-/** @brief Allow OBSWeakSource be a key index into QMap */
+/** @brief Allow OBSWeakSource be a key index into QHash or QSet */
 uint qHash(const OBSWeakSource& ws);
 
-/** @brief Allow std::string to be a key index into QMap */
+namespace std {
+/** @brief Allow std::string to be a key index into QHash or QSet */
 uint qHash(const std::string& str);
+}
 
 #ifdef _MSC_VER
     #define PM_LITTLE_ENDIAN (REG_DWORD == REG_DWORD_LITTLE_ENDIAN)
