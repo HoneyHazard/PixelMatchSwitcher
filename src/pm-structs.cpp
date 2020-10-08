@@ -1,17 +1,6 @@
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"
 
-uint qHash(const OBSWeakSource &ws)
-{
-    obs_source_t* source = obs_weak_source_get_source(ws);
-    return qHash(source);
-}
-
-uint qHash(const std::string& str)
-{
-    return (uint)std::hash<std::string>()(str);
-}
-
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
 {

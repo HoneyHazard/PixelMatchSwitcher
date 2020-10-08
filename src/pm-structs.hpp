@@ -168,11 +168,18 @@ namespace PmConstants
 void pmRegisterMetaTypes();
 
 /** @brief Allow OBSWeakSource be a key index into QHash or QSet */
-uint qHash(const OBSWeakSource& ws);
+inline uint qHash(const OBSWeakSource& ws)
+{
+    obs_source_t* source = obs_weak_source_get_source(ws);
+    return qHash(source);
+}
 
 namespace std {
-/** @brief Allow std::string to be a key index into QHash or QSet */
-uint qHash(const std::string& str);
+    /** @brief Allow std::string to be a key index into QHash or QSet */
+    inline uint qHash(const std::string& str)
+    {
+        return (uint)std::hash<std::string>()(str);
+    }
 }
 
 #ifdef _MSC_VER
