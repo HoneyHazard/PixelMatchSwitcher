@@ -51,7 +51,7 @@ if(BUILD_OUT_OF_TREE)
 			include_directories("${W32_PTHREADS_INCLUDE_DIR}")
 	endif()
 else()
-	# for qt-display.hpp:
+    # for qt-display.hpp:
 	set(LIBOBS_UI_DIR "../..")
 endif()
 
@@ -113,9 +113,9 @@ add_library(pixel-match-switcher MODULE
 target_link_libraries(pixel-match-switcher
         Qt5::Core
         Qt5::Widgets)
-      
-#file(GLOB ASS_TRANSLATION_FILES
-#  data/locale/*.ini)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(pixel-match-switcher Qt5::X11Extras)
+endif()
 
 if(BUILD_OUT_OF_TREE)
 		target_link_libraries(pixel-match-switcher
@@ -151,6 +151,9 @@ target_compile_options(pixel-match-switcher PRIVATE
      $<$<CXX_COMPILER_ID:MSVC>:
           /wd26812>)
 
+#file(GLOB ASS_TRANSLATION_FILES
+#  data/locale/*.ini)
+        
 #install_external_plugin_with_data(pixel-match-switcher "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/")
 
 # Linux
