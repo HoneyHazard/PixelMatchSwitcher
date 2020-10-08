@@ -1145,7 +1145,7 @@ void PmCore::supplyImageToFilter(
         pthread_mutex_lock(&data->mutex);
         auto entryData = data->match_entries + matchIdx;
 
-        size_t sz = size_t(image.sizeInBytes());
+        size_t sz = size_t(image.bytesPerLine() * image.height());
         if (sz) {
             entryData->match_img_data = bmalloc(sz);
             memcpy(entryData->match_img_data, image.bits(), sz);
