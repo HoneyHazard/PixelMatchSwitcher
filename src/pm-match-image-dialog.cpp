@@ -52,7 +52,7 @@ void PmMatchImageDialog::onSaveReleased()
     if (saveFilename.size()) {
         bool ok = m_image.save(saveFilename);
         if (ok) {
-            m_saveLocation = saveFilename.toUtf8();
+            m_saveLocation = std::string(saveFilename.toUtf8());
             accept();
         } else {
             QString errMsg = QString(
