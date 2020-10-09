@@ -11,7 +11,6 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
-#include <QStringLiteral>
 #include <QIcon>
 
 #include <QDebug>
