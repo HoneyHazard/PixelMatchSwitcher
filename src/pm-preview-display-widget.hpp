@@ -20,7 +20,7 @@ class PmPreviewDisplayWidget : public QWidget
 
 public:
     PmPreviewDisplayWidget(PmCore* core, QWidget *parent);
-    ~PmPreviewDisplayWidget();
+    ~PmPreviewDisplayWidget() override;
 
 signals:
     void sigCaptureStateChanged(PmCaptureState state, int x=-1, int y=-1);

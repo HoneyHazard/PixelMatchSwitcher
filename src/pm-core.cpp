@@ -80,8 +80,8 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
 }
 
 PmCore::PmCore()
-: m_matchConfigMutex(QMutex::Recursive)
-, m_filtersMutex(QMutex::Recursive)
+: m_filtersMutex(QMutex::Recursive)
+, m_matchConfigMutex(QMutex::Recursive)
 {
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
@@ -293,7 +293,7 @@ void PmCore::onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg)
     // reconfigure images
     {
         QMutexLocker locker(&m_matchImagesMutex);
-        m_matchImages.insert(m_matchImages.begin() + matchIndex, QImage());
+        m_matchImages.insert(m_matchImages.begin() + int(matchIndex), QImage());
     }
     
     // finish updating state and notifying
@@ -328,7 +328,7 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
     // reconfigure images
     {
         QMutexLocker locker(&m_matchImagesMutex);
-        m_matchImages.erase(m_matchImages.begin() + matchIndex);
+        m_matchImages.erase(m_matchImages.begin() + int(matchIndex));
     }
 
     // finish updating state and notifying
@@ -623,6 +623,8 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
             filter.unlockData();
         }
         break;
+    case PmCaptureState::Activated:
+        break;
     case PmCaptureState::SelectBegin:
         m_captureStartX = x;
         m_captureStartY = y;
@@ -634,18 +636,18 @@ void PmCore::onCaptureStateChanged(PmCaptureState state, int x, int y)
             filterData = filter.filterData();
             if (filterData) {
                 filter.lockData();
-                x = std::min(x, (int)filterData->base_width - 1);
-                y = std::min(y, (int)filterData->base_height - 1);
+                x = std::min(x, int(filterData->base_width - 1));
+                y = std::min(y, int(filterData->base_height - 1));
                 m_captureEndX = x;
                 m_captureEndY = y;
-                filterData->select_left 
-                    = std::min(m_captureStartX, m_captureEndX);
-                filterData->select_bottom 
-                    = std::min(m_captureStartY, m_captureEndY);
-                filterData->select_right 
-                    = std::max(m_captureStartX, m_captureEndX);
-                filterData->select_top 
-                    = std::max(m_captureStartY, m_captureEndY);
+                filterData->select_left = (uint32_t)(
+                    std::min(m_captureStartX, m_captureEndX));
+                filterData->select_bottom = (uint32_t)(
+                    std::min(m_captureStartY, m_captureEndY));
+                filterData->select_right = (uint32_t)(
+                    std::max(m_captureStartX, m_captureEndX));
+                filterData->select_top = (uint32_t)(
+                    std::max(m_captureStartY, m_captureEndY));
                 filter.unlockData();
             }
         }
@@ -1071,7 +1073,6 @@ void PmCore::onSnapshotAvailable()
 {
     auto fr = activeFilterRef();
     auto filterData = fr.filterData();
-    auto capState = captureState();
     if (filterData) {
         fr.lockData();
         if (filterData->captured_region_data) {
@@ -1150,7 +1151,7 @@ void PmCore::supplyImageToFilter(
             entryData->match_img_data = bmalloc(sz);
             memcpy(entryData->match_img_data, image.bits(), sz);
         } else {
-            entryData->match_img_data = NULL;
+            entryData->match_img_data = nullptr;
         }
 
         entryData->match_img_width = uint32_t(image.width());

@@ -121,12 +121,8 @@ error:
     blog(LOG_ERROR, "%s", obs_module_text("filter initialization failed."));
     pixel_match_filter_destroy(filter);
     return NULL;
-}
 
-static void pixel_match_filter_defaults(obs_data_t *settings)
-{
-    //obs_data_set_default_int(settings, "per_pixel_err_thresh", 10);
-    //obs_data_set_default_int(settings, "total_match_thresh", 90);
+    UNUSED_PARAMETER(settings);
 }
 
 void render_select_region(struct pm_filter_data* filter)
@@ -381,7 +377,6 @@ void capture_mask_tex_from_stagerender(
     struct pm_filter_data* filter, gs_stagesurf_t* sss, gs_texrender_t* stx,
     bool reset)
 {
-    const uint32_t pixSz = 4;
     uint32_t width = filter->select_right - filter->select_left + 1;
     uint32_t height = filter->select_top - filter->select_bottom + 1;
     uint8_t* dst_ptr;
@@ -473,7 +468,7 @@ void mask_stagerender(
     gs_projection_push();
     gs_ortho(0.0f, (float)filter->base_width, 0.0f, (float)filter->base_height,
         -100.0f, 100.0f);
-    gs_set_viewport(0, 0, filter->base_width, filter->base_height);
+    gs_set_viewport(0, 0, (int)filter->base_width, (int)filter->base_height);
 
     gs_blend_state_push();
     gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -570,8 +565,8 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
     }
 
     if (filter->num_match_entries == 0 
-     || filter->filter_mode == PM_MATCH_VISUALIZE 
-     && filter->selected_match_index >= filter->num_match_entries) {
+     || (filter->filter_mode == PM_MATCH_VISUALIZE
+      && filter->selected_match_index >= filter->num_match_entries)) {
         render_passthrough(filter);
         goto done;
     }
@@ -593,7 +588,7 @@ done:
     }
 
     if ((prevMode == PM_MASK 
-      || prevMode == PM_MATCH && filter->num_match_entries > 0)
+      || (prevMode == PM_MATCH && filter->num_match_entries > 0))
      && filter->on_frame_processed) {
         filter->on_frame_processed();
     }
@@ -624,7 +619,7 @@ struct obs_source_info pixel_match_filter = {
     .destroy = pixel_match_filter_destroy,
     //.update = pixel_match_filter_update,
     //.get_properties = pixel_match_filter_properties,
-    .get_defaults = pixel_match_filter_defaults,
+    //.get_defaults = pixel_match_filter_defaults,
     //.video_tick = pixel_match_filter_tick,
     .video_render = pixel_match_filter_render,
     .get_width = pixel_match_filter_width,
@@ -767,4 +762,12 @@ struct obs_source_info pixel_match_filter = {
         UNUSED_PARAMETER(filter);
         // TODO: dispatch pixel processing every
     }
+#endif
+
+#if 0
+static void pixel_match_filter_defaults(obs_data_t *settings)
+{
+    obs_data_set_default_int(settings, "per_pixel_err_thresh", 10);
+    obs_data_set_default_int(settings, "total_match_thresh", 90);
+}
 #endif

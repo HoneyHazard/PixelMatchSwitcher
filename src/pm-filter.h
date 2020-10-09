@@ -10,12 +10,12 @@
 struct pm_match_entry_config
 {
     // params
-    bool is_enabled;
     int roi_left;
     int roi_bottom;
+    float per_pixel_err_thresh;
+    bool is_enabled;
     bool mask_alpha;
     struct vec3 mask_color;
-    float per_pixel_err_thresh;
 };
 
 struct pm_match_entry_data

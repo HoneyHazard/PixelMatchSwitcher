@@ -52,8 +52,6 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
             this, &PmPreviewConfigWidget::onMatchImageLoadFailed, qc);
     connect(m_core, &PmCore::sigPreviewConfigChanged,
             this, &PmPreviewConfigWidget::onPreviewConfigChanged, qc);
-    connect(m_core, &PmCore::sigActiveFilterChanged,
-            this, &PmPreviewConfigWidget::onActiveFilterChanged, qc);
     connect(m_core, &PmCore::sigRunningEnabledChanged,
             this, &PmPreviewConfigWidget::onRunningEnabledChanged, qc);
 
@@ -62,7 +60,6 @@ PmPreviewConfigWidget::PmPreviewConfigWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onPreviewConfigChanged, qc);
 
     // finish init
-    onActiveFilterChanged(m_core->activeFilterRef());
     onRunningEnabledChanged(m_core->runningEnabled());
     size_t selIdx = m_core->selectedConfigIndex();
     onMatchConfigSelect(selIdx, m_core->matchConfig(selIdx));
@@ -76,10 +73,6 @@ void PmPreviewConfigWidget::onPreviewConfigChanged(PmPreviewConfig cfg)
     m_previewModeButtons->blockSignals(true);
     m_previewModeButtons->button(previewModeIdx)->setChecked(true);
     m_previewModeButtons->blockSignals(false);
-}
-
-void PmPreviewConfigWidget::onActiveFilterChanged(PmFilterRef ref)
-{
 }
 
 void PmPreviewConfigWidget::onRunningEnabledChanged(bool enable)
@@ -120,6 +113,8 @@ void PmPreviewConfigWidget::onMatchConfigSelect(
     } else {
         onMatchImageLoadFailed(m_matchIndex);
     }
+
+    UNUSED_PARAMETER(cfg);
 }
 
 void PmPreviewConfigWidget::enableRegionViews(bool enable)

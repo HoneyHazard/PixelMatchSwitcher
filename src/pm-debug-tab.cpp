@@ -18,9 +18,7 @@ PmDebugTab::PmDebugTab(
 {
     setWindowTitle(obs_module_text("Pixel Match Switcher: Debug"));
     QFormLayout *mainLayout = new QFormLayout;
-    int row = 0;
 
-    QSizePolicy fixedPolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     QSizePolicy minimumPolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     // active filter
@@ -157,7 +155,6 @@ void PmDebugTab::periodicUpdate()
         case PmCaptureState::SelectFinished: capStr = "SelectFinished"; break;
         case PmCaptureState::Accepted: capStr = "Accepted"; break;
         case PmCaptureState::Automask: capStr = "Automask"; break;
-        default: capStr = QString("Unknown (%1)").arg((int)capState);
         }
         m_captureStateDisplay->setText(capStr);
     }
@@ -169,7 +166,6 @@ void PmDebugTab::periodicUpdate()
         case PmPreviewMode::Video: previewModeStr = "Video"; break;
         case PmPreviewMode::Region: previewModeStr = "Region"; break;
         case PmPreviewMode::MatchImage: previewModeStr = "Match Image"; break;
-        default: previewModeStr = QString("Unknown (%1)").arg((int)previewMode);
         }
         m_previewModeDisplay->setText(previewModeStr);
     }

@@ -151,7 +151,7 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
 {
     obs_data_t* ret = obs_data_create();
     obs_data_set_string(ret, "name", presetName.data());
-    obs_data_set_int(ret, "num_entries", size());
+    obs_data_set_int(ret, "num_entries", int(size()));
 
     obs_data_array_t* matchEntriesArray = obs_data_array_create();
     for (const auto& entry : *this) {

@@ -142,7 +142,7 @@ public:
  */
 struct PmPreviewConfig
 {
-    PmPreviewConfig() {};
+    PmPreviewConfig() {}
     PmPreviewConfig(obs_data_t* data);
     obs_data_t* save() const;
 

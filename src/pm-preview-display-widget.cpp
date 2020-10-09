@@ -137,8 +137,8 @@ void PmPreviewDisplayWidget::onActiveFilterChanged(PmFilterRef ref)
     auto filterData = m_activeFilter.filterData();
     if (filterData) {
         m_activeFilter.lockData();
-        m_baseWidth = filterData->base_width;
-        m_baseHeight = filterData->base_height;
+        m_baseWidth = int(filterData->base_width);
+        m_baseHeight = int(filterData->base_height);
         m_activeFilter.unlockData();
     } else {
         m_baseWidth = 0;
@@ -161,6 +161,9 @@ void PmPreviewDisplayWidget::onMatchImageLoadSuccess(
 
     updateDisplayState(
         m_previewCfg, m_matchIndex, m_core->runningEnabled(), m_activeFilter);
+
+    UNUSED_PARAMETER(filename);
+    UNUSED_PARAMETER(img);
 }
 
 void PmPreviewDisplayWidget::onMatchImageLoadFailed(size_t matchIndex)
@@ -229,8 +232,8 @@ void PmPreviewDisplayWidget::drawFilter()
     if (!renderSrc || !filterData) return;
 
     filterRef.lockData();
-    m_baseWidth = filterData->base_width;
-    m_baseHeight = filterData->base_height;
+    m_baseWidth = int(filterData->base_width);
+    m_baseHeight = int(filterData->base_height);
     filterRef.unlockData();
 
     float orthoLeft, orthoBottom, orthoRight, orthoTop;
@@ -264,23 +267,18 @@ void PmPreviewDisplayWidget::drawFilter()
         // don't mess with these
         skip = true;
     } else {
-
-        enum pm_filter_mode filterMode;
         switch (captureState) {
         case PmCaptureState::Inactive:
-            filterMode = PM_MATCH_VISUALIZE; break;
+            filterData->filter_mode = PM_MATCH_VISUALIZE; break;
         case PmCaptureState::Automask:
-            filterMode = PM_MASK_VISUALIZE; break;
+            filterData->filter_mode = PM_MASK_VISUALIZE; break;
         case PmCaptureState::Activated:
         case PmCaptureState::SelectBegin:
         case PmCaptureState::SelectMoved:
         case PmCaptureState::SelectFinished:
         case PmCaptureState::Accepted:
-            filterMode = PM_SELECT_REGION_VISUALIZE; break;
-        default: 
-            filterMode = filterData->filter_mode; break;
+            filterData->filter_mode = PM_SELECT_REGION_VISUALIZE; break;
         }
-        filterData->filter_mode = filterMode;
     }
     filterRef.unlockData();
 
@@ -338,9 +336,6 @@ void PmPreviewDisplayWidget::updateDisplayState(
 void PmPreviewDisplayWidget::getDisplaySize(
     int& displayWidth, int& displayHeight)
 {
-    auto filterRef = m_core->activeFilterRef();
-    auto filterData = filterRef.filterData();
-
     int cx = 0, cy = 0;
     if (m_previewCfg.previewMode == PmPreviewMode::Video) {
         cx = m_baseWidth;

@@ -31,7 +31,6 @@ protected slots:
     void onMatchConfigSelect(size_t matchindex, PmMatchConfig cfg);
     void onMatchImageLoadSuccess(size_t matchIndex);
     void onMatchImageLoadFailed(size_t matchIndex);
-    void onActiveFilterChanged(PmFilterRef ref);
     void onRunningEnabledChanged(bool enable);
 
     // parse UI state into config

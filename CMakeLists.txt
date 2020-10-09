@@ -114,7 +114,9 @@ target_link_libraries(pixel-match-switcher
         Qt5::Core
         Qt5::Widgets)
 if(UNIX AND NOT APPLE)
-    target_link_libraries(pixel-match-switcher Qt5::X11Extras)
+        target_link_libraries(pixel-match-switcher Qt5::X11Extras)
+        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-old-style-cast")
+        #set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-old-style-cast")
 endif()
 
 if(BUILD_OUT_OF_TREE)
@@ -145,8 +147,8 @@ else()
         install_obs_plugin_with_data(pixel-match-switcher data)
 endif()
 
-target_compile_options(pixel-match-switcher PRIVATE
-     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+target_compile_options(pixel-match-switcher PUBLIC
+     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<C_COMPILER_ID:GNU>>:
           -Wno-old-style-cast>
      $<$<CXX_COMPILER_ID:MSVC>:
           /wd26812>)

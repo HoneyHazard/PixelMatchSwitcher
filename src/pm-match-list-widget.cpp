@@ -197,7 +197,7 @@ void PmMatchListWidget::onScenesChanged(PmScenes scenes)
 
 void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 {
-    size_t oldSz = m_tableWidget->rowCount();
+    size_t oldSz = size_t(m_tableWidget->rowCount());
     m_tableWidget->setRowCount((int)sz + 1);
     // widgets in the new rows are constructed, when necessary
     for (size_t i = oldSz ? oldSz-1 : 0; i < sz; ++i) {
@@ -298,7 +298,7 @@ void PmMatchListWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig config)
 {
     size_t mmSz = m_core->multiMatchConfigSize();
-    if (m_prevMatchIndex < mmSz) {
+    if (size_t(m_prevMatchIndex) < mmSz) {
         QLabel* prevLabel = (QLabel*)m_tableWidget->cellWidget(
             m_prevMatchIndex, int(RowOrder::Result));
         if (prevLabel) {
@@ -317,22 +317,24 @@ void PmMatchListWidget::onMatchConfigSelect(
     m_tableWidget->selectRow((int)matchIndex);
 
     updateAvailableButtons(matchIndex, mmSz);
+
+    UNUSED_PARAMETER(config);
 }
 
 void PmMatchListWidget::onRowSelected()
 {
     int idx = currentIndex();
     if (idx == -1) {
-        int prevIdx = (int)m_core->selectedConfigIndex();
+        size_t prevIdx = (size_t)(m_core->selectedConfigIndex());
         onMatchConfigSelect(prevIdx, m_core->matchConfig(prevIdx));
     } else {
-        emit sigMatchConfigSelect(idx);
+        emit sigMatchConfigSelect(size_t(idx));
     }
 }
 
 void PmMatchListWidget::onConfigInsertButtonReleased()
 {
-    int idx = currentIndex();
+    size_t idx = (size_t)(currentIndex());
     PmMatchConfig newCfg = PmMatchConfig();
     emit sigMatchConfigInsert(idx, newCfg);
     emit sigMatchConfigSelect(idx);
@@ -340,19 +342,19 @@ void PmMatchListWidget::onConfigInsertButtonReleased()
 
 void PmMatchListWidget::onConfigRemoveButtonReleased()
 {
-    int idx = currentIndex();
+    size_t idx = (size_t)(currentIndex());
     emit sigMatchConfigRemove(idx);
 }
 
 void PmMatchListWidget::onConfigMoveUpButtonReleased()
 {
-    int idx = currentIndex();
+    size_t idx = (size_t)(currentIndex());
     emit sigMatchConfigMoveUp(idx);
 }
 
 void PmMatchListWidget::onConfigMoveDownButtonReleased()
 {
-    int idx = currentIndex();
+    size_t idx = (size_t)(currentIndex());
     emit sigMatchConfigMoveDown(idx);
 }
 
@@ -486,25 +488,28 @@ void PmMatchListWidget::onItemChanged(QTableWidgetItem* item)
 
 void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
 {
-    PmMatchConfig cfg = m_core->matchConfig(idx);
+    size_t index = (size_t)(idx);
+    PmMatchConfig cfg = m_core->matchConfig(index);
     cfg.filterCfg.is_enabled = enable;
-    emit sigMatchConfigChanged(idx, cfg);
+    emit sigMatchConfigChanged(index, cfg);
 
     m_tableWidget->selectRow(idx);
 }
 
 void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
 {
-    PmMatchConfig cfg = m_core->matchConfig(idx);
+    size_t index = (size_t)(idx);
+    PmMatchConfig cfg = m_core->matchConfig(index);
     cfg.matchScene = (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
-    emit sigMatchConfigChanged(idx, cfg);
+    emit sigMatchConfigChanged(index, cfg);
 }
 
 void PmMatchListWidget::matchTransitionSelected(int idx, const QString& name)
 {
-    PmMatchConfig cfg = m_core->matchConfig(idx);
+    size_t index = (size_t)(idx);
+    PmMatchConfig cfg = m_core->matchConfig(index);
     cfg.matchTransition = name.toUtf8().data();
-    emit sigMatchConfigChanged(idx, cfg);
+    emit sigMatchConfigChanged(index, cfg);
 }
 
 

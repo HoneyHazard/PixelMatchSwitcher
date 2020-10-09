@@ -110,6 +110,9 @@ void PmDialog::onCaptureStateChanged(PmCaptureState state, int x, int y)
     } else {
         setCursor(Qt::CrossCursor);
     }
+
+    UNUSED_PARAMETER(x);
+    UNUSED_PARAMETER(y);
 }
 
 void PmDialog::onMatchImageCaptured(QImage matchImg, int roiLeft, int roiBottom)

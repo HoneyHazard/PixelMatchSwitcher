@@ -86,11 +86,12 @@ protected:
     QComboBox *m_maskModeCombo;
     QPushButton *m_pickColorButton;
     QLabel *m_maskModeDisplay;
-    vec3 m_customColor;
     QSpinBox *m_posXBox, *m_posYBox;
     QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
 
     PmCore *m_core;
     PmMatchResults m_prevResults;
+
+    vec3 m_customColor;
 };

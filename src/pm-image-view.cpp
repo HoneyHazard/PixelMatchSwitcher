@@ -46,8 +46,8 @@ void PmImageView::showMessage(const QString &message)
     auto* imageItem = new QGraphicsPixmapItem(pixMap);
     viewScene->addItem(imageItem);
 
-    int backdropWidth = colorBarsImage.width() * 0.8f;
-    int backdropHeight = colorBarsImage.height() * 0.2f;
+    int backdropWidth = int(colorBarsImage.width() * 0.8f);
+    int backdropHeight = int(colorBarsImage.height() * 0.2f);
 
     QGraphicsRectItem* backdropItem = new QGraphicsRectItem(
         0, 0, backdropWidth, backdropHeight, imageItem);
@@ -57,7 +57,7 @@ void PmImageView::showMessage(const QString &message)
 
     QGraphicsTextItem* textItem = new QGraphicsTextItem(imageItem);
     textItem->setHtml(QString("<center>") + message + QString("</center>"));
-    float fontSz = backdropHeight * 0.2f;
+    int fontSz = int(backdropHeight * 0.2f);
     textItem->setFont(QFont(parentWidget()->font().family(), fontSz));
     textItem->setTextWidth(backdropWidth);
     textItem->setDefaultTextColor(Qt::yellow);

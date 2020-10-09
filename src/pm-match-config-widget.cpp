@@ -458,9 +458,12 @@ void PmMatchConfigWidget::onMatchImageLoadSuccess(
 
     m_imgPathEdit->setText(filename.data());
     m_imgPathEdit->setStyleSheet("");
+
+    UNUSED_PARAMETER(img);
 }
 
-void PmMatchConfigWidget::onMatchImageLoadFailed(size_t matchIndex, std::string filename)
+void PmMatchConfigWidget::onMatchImageLoadFailed(
+    size_t matchIndex, std::string filename)
 {
     if (matchIndex != m_matchIndex) return;
 
@@ -493,6 +496,9 @@ void PmMatchConfigWidget::onCaptureStateChanged(
         m_captureAutomaskButton->setEnabled(true);
         m_captureCancelButton->setEnabled(true);
         break;
+    case PmCaptureState::Accepted:
+    case PmCaptureState::Automask:
+        break;
     }
 
     if (capState == PmCaptureState::Automask) {
@@ -504,6 +510,9 @@ void PmMatchConfigWidget::onCaptureStateChanged(
         m_captureAutomaskButton->setText(
             obs_module_text("Begin Auto-mask"));
     }
+
+    UNUSED_PARAMETER(x);
+    UNUSED_PARAMETER(y);
 }
 
 QColor PmMatchConfigWidget::toQColor(vec3 val)
@@ -564,19 +573,19 @@ void PmMatchConfigWidget::onConfigUiChanged()
     switch (config.maskMode) {
     case PmMaskMode::AlphaMode:
         config.filterCfg.mask_alpha = true;
-        config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
+        config.filterCfg.mask_color = { 0.f, 0.f, 0.f, 0.f };
         break;
     case PmMaskMode::BlackMode:
         config.filterCfg.mask_alpha = false;
-        config.filterCfg.mask_color = { 0.f, 0.f, 0.f };
+        config.filterCfg.mask_color = { 0.f, 0.f, 0.f, 0.f };
         break;
     case PmMaskMode::GreenMode:
         config.filterCfg.mask_alpha = false;
-        config.filterCfg.mask_color = { 0.f, 1.f, 0.f };
+        config.filterCfg.mask_color = { 0.f, 1.f, 0.f, 0.f };
         break;
     case PmMaskMode::MagentaMode:
         config.filterCfg.mask_alpha = false;
-        config.filterCfg.mask_color = { 1.f, 0.f, 1.f };
+        config.filterCfg.mask_color = { 1.f, 0.f, 1.f, 0.f };
         break;
     case PmMaskMode::CustomClrMode:
         config.filterCfg.mask_alpha = false;

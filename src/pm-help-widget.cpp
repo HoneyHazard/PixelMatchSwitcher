@@ -43,5 +43,5 @@ void PmHelpWidget::onShowDebug()
 
 void PmHelpWidget::onShowAbout()
 {
-    PmAboutBox* box = new PmAboutBox(this);
+    new PmAboutBox(this);
 }
