@@ -186,14 +186,26 @@ void render_passthrough(struct pm_filter_data* filter)
 
 void render_match_entries(struct pm_filter_data* filter)
 {
+    bool nothing_rendered = true;
+
     for (size_t i = 0; i < filter->num_match_entries; ++i) {
         struct pm_match_entry_data* entry = filter->match_entries + i;
 
-        if (filter->filter_mode == PM_MATCH_VISUALIZE
-            && i != filter->selected_match_index) {
-            // visualize mode only renders the selected match entry
-            continue;
+        if (filter->filter_mode == PM_MATCH_VISUALIZE) {
+            if (i != filter->selected_match_index) {
+                // visualize mode only renders the selected match entry
+                continue;
+            }
+        } else {
+            if (!entry->cfg.is_enabled) {
+                entry->num_compared = 0;
+                entry->num_matched = 0;
+                // disable entries are skipped in matching
+                continue;
+            }
         }
+
+        nothing_rendered = false;
 
         if (entry->match_img_data
             && entry->match_img_width
@@ -253,6 +265,10 @@ void render_match_entries(struct pm_filter_data* filter)
             entry->num_matched =
                 gs_effect_get_atomic_uint_result(filter->result_match_counter);
         }
+    }
+
+    if (nothing_rendered) {
+        render_passthrough(filter);
     }
 }
 
@@ -561,13 +577,6 @@ static void pixel_match_filter_render(void *data, gs_effect_t *effect)
 
     if (filter->filter_mode == PM_SELECT_REGION_VISUALIZE) {
         render_select_region(filter);
-        goto done;
-    }
-
-    if (filter->num_match_entries == 0 
-     || (filter->filter_mode == PM_MATCH_VISUALIZE
-      && filter->selected_match_index >= filter->num_match_entries)) {
-        render_passthrough(filter);
         goto done;
     }
 
