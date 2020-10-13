@@ -97,7 +97,7 @@ struct PmMatchConfig
  * @brief Describes matching and switching configuration of several match 
  *        entries, as well as switching behavior for when there is no match
  */
-class PmMultiMatchConfig : public std::vector<PmMatchConfig>
+class PmMultiMatchConfig final : public std::vector<PmMatchConfig>
 {
 public:
     static const std::string k_defaultNoMatchScene;
@@ -125,7 +125,7 @@ typedef QHash<std::string, PmMultiMatchConfig> PmMatchPresets;
  * @brief Represents a set of weak source references to available scenes, that
  *        also allows matching each source to a scene name
  */
-class PmScenes : public QHash<OBSWeakSource, std::string>
+class PmScenes final : public QHash<OBSWeakSource, std::string>
 {
 public:
     PmScenes() {}
