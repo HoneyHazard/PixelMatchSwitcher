@@ -73,6 +73,7 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
             auto weakSrc = obs_source_get_weak_source(src);
             auto name = obs_source_get_name(src);
             ret.insert(name, weakSrc);
+            obs_weak_source_release(weakSrc);
         }
     }
     obs_frontend_source_list_free(&transitionList);
@@ -765,9 +766,11 @@ void PmCore::scanScenes()
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &sceneSrc = scenesInput.sources.array[i];
-        auto ws = OBSWeakSource(obs_source_get_weak_source(sceneSrc));
+	    auto sceneWs = obs_source_get_weak_source(sceneSrc);
         auto sceneName = obs_source_get_name(sceneSrc);
-        newScenes.insert(ws, sceneName);
+        newScenes.insert(sceneWs, sceneName);
+        obs_weak_source_release(sceneWs);
+
         obs_scene_enum_items(
             obs_scene_from_source(sceneSrc),
             [](obs_scene_t*, obs_sceneitem_t *item, void* p) {
@@ -782,8 +785,10 @@ void PmCore::scanScenes()
                                 if (obs_obj_get_data(filter)) {
                                     auto filters
                                         = (QSet<OBSWeakSource>*)(p);
-                                    filters->insert(
-                                        obs_source_get_weak_source(filter));
+                                    auto filterWs
+                                        = obs_source_get_weak_source(filter);
+                                    filters->insert(filterWs);
+                                    obs_weak_source_release(filterWs);
                                 }
                             }
                         },
@@ -1132,11 +1137,9 @@ void PmCore::switchScene(
         if (targetSceneSrc) {
             obs_frontend_set_current_scene(targetSceneSrc);
         }
-        obs_source_release(transitionSrc);
     }
 
     obs_source_release(currSceneSrc);
-    obs_source_release(targetSceneSrc);
 }
 
 void PmCore::supplyImageToFilter(
