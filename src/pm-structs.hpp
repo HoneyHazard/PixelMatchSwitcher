@@ -176,15 +176,6 @@ inline uint qHash(const OBSWeakSource& ws)
     return ret;
 }
 
-/** @brief Allow obs_weak_source_t* be a key index into QHash or QSet */
-inline uint qHash(obs_weak_source_t* ws)
-{
-	obs_source_t *source = obs_weak_source_get_source(ws);
-	uint ret = qHash(source);
-	obs_source_release(source);
-	return ret;
-}
-
 namespace std {
     /** @brief Allow std::string to be a key index into QHash or QSet */
     inline uint qHash(const std::string& str)
