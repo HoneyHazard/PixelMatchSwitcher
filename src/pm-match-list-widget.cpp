@@ -43,7 +43,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setHorizontalHeaderLabels(QStringList() 
         << obs_module_text("Enable")
         << obs_module_text("Match Config") 
-        << obs_module_text("Match Scene")
+        << obs_module_text("Target Scene")
         << obs_module_text("Transition")
         << obs_module_text("Result"));
 
@@ -56,9 +56,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         ":/res/images/down.png", "downArrowIconSmall");
     m_cfgRemoveBtn = prepareButton(obs_module_text("Remove Match Entry"),
         ":/res/images/list_remove.png", "removeIconSmall");
-
-    //m_cfgClearBtn = new QPushButton(obs_module_text("Clear All"), this);
-    //m_cfgClearBtn->setFocusPolicy(Qt::NoFocus);
 
     QSpacerItem* buttonSpacer1 = new QSpacerItem(0, 0, QSizePolicy::Expanding);
     QSpacerItem* buttonSpacer2 = new QSpacerItem(0, 0, QSizePolicy::Expanding);

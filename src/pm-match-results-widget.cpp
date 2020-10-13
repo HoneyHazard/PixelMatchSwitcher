@@ -56,8 +56,8 @@ void PmMatchResultsWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    setTitle(
-        QString(obs_module_text("Match Result #%1")).arg(matchIndex + 1));
+    setTitle(QString(obs_module_text("Match Result #%1: %2"))
+        .arg(matchIndex + 1).arg(cfg.label.data()));
     m_matchResultDisplay->setText(obs_module_text("N/A"));
 
     UNUSED_PARAMETER(cfg);
