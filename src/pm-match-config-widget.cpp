@@ -197,7 +197,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             this, SLOT(onConfigUiChanged()), qc);
 
     mainLayout->addRow(
-        obs_module_text("Global Match Threshold: "), m_totalMatchThreshBox);
+        obs_module_text("Match Threshold: "), m_totalMatchThreshBox);
 
     setLayout(mainLayout);
 
