@@ -229,7 +229,8 @@ void PmPreviewDisplayWidget::drawFilter()
     auto renderSrc = filterRef.filter();
     auto filterData = filterRef.filterData();
 
-    if (!renderSrc || !filterData) return;
+    if (!renderSrc || !filterData)
+	    goto done;
 
     filterRef.lockData();
     m_baseWidth = int(filterData->base_width);
@@ -282,7 +283,7 @@ void PmPreviewDisplayWidget::drawFilter()
     }
     filterRef.unlockData();
 
-    if (skip) return;
+    if (skip) goto done;
 
     gs_viewport_push();
     gs_projection_push();
@@ -293,6 +294,9 @@ void PmPreviewDisplayWidget::drawFilter()
 
     gs_projection_pop();
     gs_viewport_pop();
+
+done:
+    obs_source_release(renderSrc);
 }
 
 void PmPreviewDisplayWidget::updateDisplayState(

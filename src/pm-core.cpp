@@ -766,10 +766,10 @@ void PmCore::scanScenes()
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &sceneSrc = scenesInput.sources.array[i];
-	    auto sceneWs = obs_source_get_weak_source(sceneSrc);
         auto sceneName = obs_source_get_name(sceneSrc);
+
+        obs_weak_source_t* sceneWs = obs_source_get_weak_source(sceneSrc);
         newScenes.insert(sceneWs, sceneName);
-        obs_weak_source_release(sceneWs);
 
         obs_scene_enum_items(
             obs_scene_from_source(sceneSrc),
@@ -785,9 +785,12 @@ void PmCore::scanScenes()
                                 if (obs_obj_get_data(filter)) {
                                     auto filters
                                         = (QSet<OBSWeakSource>*)(p);
-                                    auto filterWs
+                                    obs_weak_source_t* filterWs
                                         = obs_source_get_weak_source(filter);
-                                    filters->insert(filterWs);
+                                    OBSWeakSource filterWsWs(filterWs);
+                                    if (!filters->contains(filterWsWs)) {
+                                        filters->insert(filterWsWs);
+                                    }
                                     obs_weak_source_release(filterWs);
                                 }
                             }
@@ -809,7 +812,7 @@ void PmCore::scanScenes()
     {
         QMutexLocker locker(&m_scenesMutex);
         if (m_scenes != newScenes) {
-            emit sigScenesChanged(newScenes);
+            //emit sigScenesChanged(newScenes);
             oldNames = m_scenes.sceneNames();
             scenesChanged = true;
         }
@@ -1133,9 +1136,11 @@ void PmCore::switchScene(
         }
         if (transitionSrc) {
             obs_frontend_set_current_transition(transitionSrc);
+            obs_source_release(transitionSrc);
         }
         if (targetSceneSrc) {
             obs_frontend_set_current_scene(targetSceneSrc);
+            obs_source_release(targetSceneSrc);
         }
     }
 

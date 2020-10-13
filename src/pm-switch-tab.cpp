@@ -67,6 +67,7 @@ void PmSwitchTab::onScenesChanged(PmScenes scenes)
         auto name = obs_source_get_name(src);
         m_matchSceneCombo->addItem(name);
         m_noMatchSceneCombo->addItem(name);
+        obs_source_release(src);
     }
 
     OBSWeakSource matchScene = sceneConfig.matchScene;
@@ -141,11 +142,13 @@ void PmSwitchTab::setSelectedScene(QComboBox *combo, OBSWeakSource &scene)
         auto src = obs_weak_source_get_source(scene);
         const char* name = obs_source_get_name(src);
         combo->setCurrentText(name);
+        obs_source_release(src);
     }
     combo->blockSignals(false);
 }
 
-OBSWeakSource PmSwitchTab::findScene(const PmScenes &scenes, const QString &name)
+OBSWeakSource PmSwitchTab::findScene(
+    const PmScenes &scenes, const QString &name)
 {
     if (name == k_dontSwitchName) {
         return nullptr;
@@ -154,8 +157,10 @@ OBSWeakSource PmSwitchTab::findScene(const PmScenes &scenes, const QString &name
     for (auto scene: scenes) {
         auto src = obs_weak_source_get_source(scene);
         if (obs_source_get_name(src) == name) {
+            obs_source_release(src);
             return scene;
         }
+        obs_source_release(src);
     }
     return nullptr;
 }

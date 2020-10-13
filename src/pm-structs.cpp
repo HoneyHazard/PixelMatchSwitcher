@@ -192,6 +192,24 @@ QSet<std::string> PmScenes::sceneNames() const
     return ret;
 }
 
+PmScenes::PmScenes(const PmScenes &other)
+	: QHash<obs_weak_source_t *, std::string>(other)
+{
+	auto k = keys();
+	for (auto val : k) {
+		obs_weak_source_addref(val);
+	}
+}
+
+PmScenes::~PmScenes()
+{
+    auto k = keys();
+    for (auto val : k) {
+	    obs_weak_source_release(val);
+    }
+}
+
+
 PmPreviewConfig::PmPreviewConfig(obs_data_t* data)
 {
     obs_data_set_default_int(data, "preview_mode", int(previewMode));
@@ -223,9 +241,4 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmScenes>("PmScenes");
     qRegisterMetaType<PmFilterRef>("PmFilterRef");
     qRegisterMetaType<PmCaptureState>("PmCaptureState");
-}
-
-PmScenes::PmScenes(const PmScenes& other)
-: QHash<OBSWeakSource, std::string>(other)
-{
 }

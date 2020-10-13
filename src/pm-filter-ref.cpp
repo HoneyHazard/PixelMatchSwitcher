@@ -21,7 +21,7 @@ void PmFilterRef::unlockData() const
 }
 
 obs_source_t* PmFilterRef::filter() const
-{ 
+{
     return obs_weak_source_get_source(m_filter); 
 }
 
@@ -32,25 +32,31 @@ void PmFilterRef::reset()
 
 pm_filter_data *PmFilterRef::filterData() const
 {
-    auto filter = obs_weak_source_get_source(m_filter);
-    if (!filter) {
+    if (!m_filter) {
         return nullptr;
     } else {
-        return static_cast<pm_filter_data*>(
+        auto filter = obs_weak_source_get_source(m_filter);
+        auto ret = static_cast<pm_filter_data*>(
             obs_obj_get_data(filter));
+        obs_source_release(filter);
+        return ret;
     }
 }
 
 uint32_t PmFilterRef::filterSrcWidth() const
 {
     auto filter = obs_weak_source_get_source(m_filter);
-    return filter ? obs_source_get_width(filter) : 0;
+    uint32_t ret = filter ? obs_source_get_width(filter) : 0;
+    obs_source_release(filter);
+    return ret;
 }
 
 uint32_t PmFilterRef::filterSrcHeight() const
 {
     auto filter = obs_weak_source_get_source(m_filter);
-    return filter ? obs_source_get_height(filter) : 0;
+    uint32_t ret = filter ? obs_source_get_height(filter) : 0;
+    obs_source_release(filter);
+    return ret;
 }
 
 uint32_t PmFilterRef::filterDataWidth() const
