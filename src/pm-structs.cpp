@@ -193,22 +193,9 @@ QSet<std::string> PmScenes::sceneNames() const
 }
 
 PmScenes::PmScenes(const PmScenes &other)
-	: QHash<obs_weak_source_t *, std::string>(other)
+    : QHash<OBSWeakSource, std::string>(other)
 {
-	auto k = keys();
-	for (auto val : k) {
-		obs_weak_source_addref(val);
-	}
 }
-
-PmScenes::~PmScenes()
-{
-    auto k = keys();
-    for (auto val : k) {
-	    obs_weak_source_release(val);
-    }
-}
-
 
 PmPreviewConfig::PmPreviewConfig(obs_data_t* data)
 {

@@ -769,7 +769,10 @@ void PmCore::scanScenes()
         auto sceneName = obs_source_get_name(sceneSrc);
 
         obs_weak_source_t* sceneWs = obs_source_get_weak_source(sceneSrc);
-        newScenes.insert(sceneWs, sceneName);
+        OBSWeakSource sceneWsWs(sceneWs);
+	    obs_weak_source_release(sceneWs);
+
+        newScenes.insert(sceneWsWs, sceneName);
 
         obs_scene_enum_items(
             obs_scene_from_source(sceneSrc),
@@ -785,13 +788,13 @@ void PmCore::scanScenes()
                                 if (obs_obj_get_data(filter)) {
                                     auto filters
                                         = (QSet<OBSWeakSource>*)(p);
+
                                     obs_weak_source_t* filterWs
                                         = obs_source_get_weak_source(filter);
                                     OBSWeakSource filterWsWs(filterWs);
-                                    if (!filters->contains(filterWsWs)) {
-                                        filters->insert(filterWsWs);
-                                    }
                                     obs_weak_source_release(filterWs);
+
+                                    filters->insert(filterWsWs);
                                 }
                             }
                         },

@@ -125,12 +125,11 @@ typedef QHash<std::string, PmMultiMatchConfig> PmMatchPresets;
  * @brief Represents a set of weak source references to available scenes, that
  *        also allows matching each source to a scene name
  */
-class PmScenes : public QHash<obs_weak_source_t*, std::string>
+class PmScenes : public QHash<OBSWeakSource, std::string>
 {
 public:
     PmScenes() {}
     PmScenes(const PmScenes& other);
-    ~PmScenes();
 
     QSet<std::string> sceneNames() const;
 };
