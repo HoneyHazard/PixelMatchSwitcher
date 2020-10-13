@@ -229,6 +229,11 @@ void PmPreviewDisplayWidget::drawFilter()
     auto renderSrc = filterRef.filter();
     auto filterData = filterRef.filterData();
 
+    float orthoLeft, orthoBottom, orthoRight, orthoTop;
+    int vpLeft = 0, vpBottom = 0, vpWidth, vpHeight;
+    bool skip = false;
+    auto captureState = m_core->captureState();
+
     if (!renderSrc || !filterData)
 	    goto done;
 
@@ -236,9 +241,6 @@ void PmPreviewDisplayWidget::drawFilter()
     m_baseWidth = int(filterData->base_width);
     m_baseHeight = int(filterData->base_height);
     filterRef.unlockData();
-
-    float orthoLeft, orthoBottom, orthoRight, orthoTop;
-    int vpLeft = 0, vpBottom = 0, vpWidth, vpHeight;
 
     getDisplaySize(vpWidth, vpHeight);
 
@@ -258,9 +260,6 @@ void PmPreviewDisplayWidget::drawFilter()
         vpBottom = 0.0f;
     }
 
-    bool skip = false;
-    auto captureState = m_core->captureState();
-    
     filterRef.lockData();
     if (filterData->filter_mode == PM_MASK_BEGIN
      || filterData->filter_mode == PM_MASK_END
