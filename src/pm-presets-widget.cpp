@@ -7,7 +7,6 @@
 #include <QLabel>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QMessageBox>
 #include <QInputDialog>
 
 const char* PmPresetsWidget::k_unsavedPresetStr
@@ -154,15 +153,23 @@ void PmPresetsWidget::onPresetSelected()
     std::string activePreset = m_core->activeMatchPresetName();
 
     if (selPreset != activePreset && m_core->matchConfigDirty()) {
-        if (!promptUnsavedProceed()) {
-            m_presetCombo->blockSignals(true);
-            m_presetCombo->setCurrentText(
+	    auto role = promptUnsavedProceed();
+	    if (role == QMessageBox::RejectRole) {
+		    m_presetCombo->blockSignals(true);
+		    m_presetCombo->setCurrentText(
                 activePreset.size() ? activePreset.data() : k_unsavedPresetStr);
-            m_presetCombo->blockSignals(false);
-            return;
+		    m_presetCombo->blockSignals(false);
+		    return;
+        } else {
+		    if (role == QMessageBox::YesRole) {
+			    if (activePreset.empty()) {
+				    onPresetSaveAs();
+			    } else {
+				    emit sigMatchPresetSave(activePreset);
+			    }
+		    }
         }
     }
-
     emit sigMatchPresetSelect(selPreset);
 }
 
@@ -213,12 +220,23 @@ void PmPresetsWidget::onPresetSaveAs()
 
 void PmPresetsWidget::onNewConfig()
 {
+	std::string activePreset = m_core->activeMatchPresetName();
+
     if (m_core->matchConfigDirty()) {
-        if (!promptUnsavedProceed())
-            return;
+		auto role = promptUnsavedProceed();
+		if (role == QMessageBox::RejectRole) {
+			return;
+		} else {
+			if (role == QMessageBox::YesRole) {
+				if (activePreset.empty()) {
+					onPresetSaveAs();
+				} else {
+					emit sigMatchPresetSave(activePreset);
+				}
+			}
+		}
     }
 
-    std::string activePreset = m_core->activeMatchPresetName();
     if (activePreset.empty()) {
         emit sigMultiMatchConfigReset();
     } else {
@@ -241,27 +259,40 @@ void PmPresetsWidget::onPresetRemove()
     emit sigMatchPresetRemove(oldPreset);
 }
 
-bool PmPresetsWidget::promptUnsavedProceed()
+QMessageBox::ButtonRole PmPresetsWidget::promptUnsavedProceed()
 {
-    int ret = QMessageBox::warning(this,
-        obs_module_text("Unsaved changes"),
-        obs_module_text("Unsaved changes will be lost.\nProceed?"),
-        QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
-    return (ret == QMessageBox::Yes);
+	QMessageBox msgBox;
+	msgBox.setWindowTitle(obs_module_text("Unsaved changes"));
+	msgBox.setText(obs_module_text(
+        "What would you like to do with unsaved changes?"));
+	msgBox.addButton(obs_module_text("Save"), QMessageBox::YesRole);
+	msgBox.addButton(obs_module_text("Discard"), QMessageBox::NoRole);
+	msgBox.addButton(obs_module_text("Cancel"), QMessageBox::RejectRole);
+
+    msgBox.exec();
+
+    return msgBox.buttonRole(msgBox.clickedButton());
 }
 
 bool PmPresetsWidget::proceedWithExit()
 {
-    auto activePresetName = m_core->activeMatchPresetName();
-    if (activePresetName.size() && m_core->matchConfigDirty()) {
-        if (!promptUnsavedProceed()) {
-            return false;
-        }
-        else {
-            // reset the active preset
-            emit sigMatchPresetSelect("");
-            emit sigMatchPresetSelect(activePresetName);
-        }
+    auto activePreset = m_core->activeMatchPresetName();
+
+    if (m_core->matchConfigDirty()) {
+	    auto role = promptUnsavedProceed();
+	    if (role == QMessageBox::RejectRole) {
+			return false;
+	    } else {
+		    if (role == QMessageBox::YesRole) {
+			    if (activePreset.empty()) {
+				    onPresetSaveAs();
+			    } else {
+				    emit sigMatchPresetSave(activePreset);
+			    }
+		    } else {
+			    onPresetRevert();
+		    }
+		    return true;
+	    }
     }
-    return true;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QGroupBox>
+#include <QMessageBox>
 
 class QComboBox;
 class QPushButton;
@@ -36,7 +37,7 @@ protected slots:
     void onActivePresetDirtyStateChanged();
 
 protected:
-    bool promptUnsavedProceed();
+    QMessageBox::ButtonRole promptUnsavedProceed();
 
     static const char* k_unsavedPresetStr;
 
