@@ -55,7 +55,8 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && maskMode == other.maskMode
         && filterCfg == other.filterCfg
         && targetScene == other.targetScene
-        && targetTransition == other.targetTransition;
+        && targetTransition == other.targetTransition
+        && lingerMs == other.lingerMs;
 }
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
