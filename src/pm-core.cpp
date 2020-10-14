@@ -922,6 +922,9 @@ void PmCore::updateActiveFilter(
 
 void PmCore::activateMatchConfig(size_t matchIdx, const PmMatchConfig& newCfg)
 {
+    // clean linger delay, for safety
+	m_lingerQueue.removeAll();
+
     auto oldCfg = matchConfig(matchIdx);
 
     // notify other modules

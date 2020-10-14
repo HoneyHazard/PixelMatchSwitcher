@@ -168,6 +168,7 @@ public:
 	//LingerInfo * find(size_t matchIndex);
 	void removeExpired(const QTime &currTime);
 	void removeByMatchIndex(size_t matchIndex);
+	void removeAll();
 };
 
 /**
