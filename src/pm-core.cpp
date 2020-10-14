@@ -1090,8 +1090,9 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         m_results = newResults;
     }
 
-    // test and react to conditions for switching
     if (m_switchingEnabled) {
+	    // test and react to conditions for switching
+
         for (size_t matchIndex = 0; matchIndex < m_results.size(); ++matchIndex) {
             const auto& resEntry = newResults[matchIndex];
             if (resEntry.isMatched) {
@@ -1116,9 +1117,9 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 
         if (m_lingerQueue.size()) {
     		// a lingering match entry takes precedence
-		    const auto &li = m_lingerQueue.top();
-		    auto cfg = matchConfig(li.matchIndex);
-		    switchScene(cfg.targetScene, cfg.targetTransition);
+		    const auto &lingerInfo = m_lingerQueue.top();
+		    auto lingCfg = matchConfig(lingerInfo.matchIndex);
+		    switchScene(lingCfg.targetScene, lingCfg.targetTransition);
 		    return;
 	    }
 
