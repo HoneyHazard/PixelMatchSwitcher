@@ -142,8 +142,9 @@ public:
 /**
  * @brief Decribes an active linger information for a match entry
  */
-struct LingerInfo {
-	uint32_t matchIndex = 0;
+struct LingerInfo
+{
+	size_t matchIndex = 0;
 	QTime endTime;
 };
 
@@ -158,8 +159,16 @@ struct LingerCompare
 /**
  * @brief Manages linger information for multiple entries; sorted by match index
  */
-typedef std::priority_queue<
-    LingerInfo, std::deque<LingerInfo>, LingerCompare> LingerQueue;
+// TODO: maybe move to the core
+class LingerQueue final : public std::priority_queue<
+    LingerInfo, std::deque<LingerInfo>, LingerCompare>
+{
+public:
+	LingerQueue() {}
+	//LingerInfo * find(size_t matchIndex);
+	void removeExpired(const QTime &currTime);
+	void removeByMatchIndex(size_t matchIndex);
+};
 
 /**
  * @brief Configuration for the preview state of the dialog.
