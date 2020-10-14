@@ -554,5 +554,3 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
 	cfg.lingerMs = lingerMs;
 	emit sigMatchConfigChanged(index, cfg);
 }
-
-
