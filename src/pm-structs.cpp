@@ -197,8 +197,8 @@ PmScenes::PmScenes(const PmScenes &other)
 {
 }
 
-bool LingerStateLessThan::operator()(
-    const LingerState &left, const LingerState &right) const
+bool LingerCompare::operator()(
+    const LingerInfo &left, const LingerInfo &right) const
 {
 	return left.matchIndex < right.matchIndex;
 }

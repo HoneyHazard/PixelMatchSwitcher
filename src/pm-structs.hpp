@@ -9,6 +9,7 @@
 #include <obs.h>
 #include <obs.hpp>
 #include <queue>
+#include <list>
 
 #include "pm-filter.h"
 
@@ -136,21 +137,26 @@ public:
 };
 
 /**
- * @brief Decribes a linger state for a match entry
+ * @brief Decribes an active linger information for a match entry
  */
-struct LingerState {
+struct LingerInfo {
 	uint32_t matchIndex = 0;
 	int msLeft = 0;
 };
 
-struct LingerStateLessThan
+/**
+ * @brief So we can order LingerInfo in the order of matchIndex
+ */
+struct LingerCompare
 {
-	bool operator()(const LingerState &left, const LingerState &right) const;
+	bool operator()(const LingerInfo &left, const LingerInfo &right) const;
 };
 
-typedef std::priority_queue<LingerState, std::queue<LingerState>,
-			    LingerStateLessThan>
-	LingerQueue;
+/**
+ * @brief Manages linger information for multiple entries; sorted by match index
+ */
+typedef std::priority_queue<
+    LingerInfo, std::list<LingerInfo>, LingerCompare> LingerQueue;
 
 /**
  * @brief Configuration for the preview state of the dialog.
