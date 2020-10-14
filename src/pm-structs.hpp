@@ -8,6 +8,7 @@
 
 #include <obs.h>
 #include <obs.hpp>
+#include <queue>
 
 #include "pm-filter.h"
 
@@ -133,6 +134,23 @@ public:
 
     QSet<std::string> sceneNames() const;
 };
+
+/**
+ * @brief Decribes a linger state for a match entry
+ */
+struct LingerState {
+	uint32_t matchIndex = 0;
+	int msLeft = 0;
+};
+
+struct LingerStateLessThan
+{
+	bool operator()(const LingerState &left, const LingerState &right) const;
+};
+
+typedef std::priority_queue<LingerState, std::queue<LingerState>,
+			    LingerStateLessThan>
+	LingerQueue;
 
 /**
  * @brief Configuration for the preview state of the dialog.

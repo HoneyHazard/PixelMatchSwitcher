@@ -197,6 +197,13 @@ PmScenes::PmScenes(const PmScenes &other)
 {
 }
 
+bool LingerStateLessThan::operator()(
+    const LingerState &left, const LingerState &right) const
+{
+	return left.matchIndex < right.matchIndex;
+}
+
+
 PmPreviewConfig::PmPreviewConfig(obs_data_t* data)
 {
     obs_data_set_default_int(data, "preview_mode", int(previewMode));
@@ -229,3 +236,4 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmFilterRef>("PmFilterRef");
     qRegisterMetaType<PmCaptureState>("PmCaptureState");
 }
+
