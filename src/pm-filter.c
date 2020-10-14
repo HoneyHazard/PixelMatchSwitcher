@@ -599,7 +599,7 @@ done:
     if ((prevMode == PM_MASK 
       || (prevMode == PM_MATCH && filter->num_match_entries > 0))
      && filter->on_frame_processed) {
-        filter->on_frame_processed();
+        filter->on_frame_processed(filter);
     }
 
     UNUSED_PARAMETER(effect);

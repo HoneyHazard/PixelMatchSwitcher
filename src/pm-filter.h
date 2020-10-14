@@ -90,7 +90,7 @@ struct pm_filter_data
 
     // callbacks for fast reactions
     void (*on_region_captured)();
-    void (*on_frame_processed)();
+    void (*on_frame_processed)(struct pm_filter_data* filter_data);
 };
 
 static void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data)

@@ -204,7 +204,7 @@ PmScenes::PmScenes(const PmScenes &other)
 bool LingerCompare::operator()(
     const LingerInfo &left, const LingerInfo &right) const
 {
-	return left.matchIndex < right.matchIndex;
+	return left.matchIndex > right.matchIndex;
 }
 
 
@@ -239,5 +239,6 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmScenes>("PmScenes");
     qRegisterMetaType<PmFilterRef>("PmFilterRef");
     qRegisterMetaType<PmCaptureState>("PmCaptureState");
+    qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
 }
 

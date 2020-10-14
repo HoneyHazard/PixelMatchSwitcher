@@ -43,16 +43,31 @@ void free_pixel_match_switcher()
     PmCore::m_instance = nullptr;
 }
 
-void on_frame_processed()
+void on_frame_processed(pm_filter_data *filterData)
 {
     auto core = PmCore::m_instance;
     if (core) {
-        emit core->sigFrameProcessed();
+	    PmMultiMatchResults newResults;
+	    pthread_mutex_lock(&filterData->mutex);
+	    newResults.resize(filterData->num_match_entries);
+	    for (size_t i = 0; i < newResults.size(); ++i) {
+		    auto &newResult = newResults[i];
+		    const auto &filterEntry = filterData->match_entries + i;
+		    newResult.baseWidth = filterData->base_width;
+		    newResult.baseHeight = filterData->base_height;
+		    newResult.matchImgWidth = filterEntry->match_img_width;
+		    newResult.matchImgHeight = filterEntry->match_img_height;
+		    newResult.numCompared = filterEntry->num_compared;
+		    newResult.numMatched = filterEntry->num_matched;
+	    }
+	    pthread_mutex_unlock(&filterData->mutex);
+        emit core->sigFrameProcessed(newResults);
     }
 }
 
 void on_snapshot_available()
 {
+    // TODO: make similar to on_frame_processed()
     auto core = PmCore::m_instance;
     if (core) {
         emit core->sigSnapshotAvailable();
@@ -1022,32 +1037,15 @@ void PmCore::onPeriodicUpdate()
     m_periodicUpdateActive = false;
 }
 
-void PmCore::onFrameProcessed()
+void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 {
-    PmMultiMatchResults newResults;
-
-    // fetch new results
-    auto fr = activeFilterRef();
-    auto filterData = fr.filterData();
-    if (filterData) {
-        fr.lockData();
-        newResults.resize(filterData->num_match_entries);
-        for (size_t i = 0; i < newResults.size(); ++i) {
-            auto& newResult = newResults[i];
-            const auto& filterEntry = filterData->match_entries + i;
-            newResult.baseWidth = filterData->base_width;
-            newResult.baseHeight = filterData->base_height;
-            newResult.matchImgWidth = filterEntry->match_img_width;
-            newResult.matchImgHeight = filterEntry->match_img_height;
-            newResult.numCompared = filterEntry->num_compared;
-            newResult.numMatched = filterEntry->num_matched;
-            newResult.percentageMatched
-                = float(newResult.numMatched) / float(newResult.numCompared) * 100.0f;
-            newResult.isMatched
-                = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
-        }
-
-        fr.unlockData();
+    // assign match state
+	for (size_t i = 0; i < newResults.size(); ++i) {
+	    auto &newResult = newResults[i];
+		newResult.percentageMatched
+            = float(newResult.numMatched) / float(newResult.numCompared) * 100.f;
+		newResult.isMatched
+            = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
     }
 
     // store new results
@@ -1065,14 +1063,29 @@ void PmCore::onFrameProcessed()
         for (size_t i = 0; i < m_results.size(); ++i) {
             const auto& resEntry = newResults[i];
             if (resEntry.isMatched) {
+                // we have a result that matched
                 auto cfg = matchConfig(i);
                 if (cfg.filterCfg.is_enabled && cfg.matchScene.size()) {
+                    // this match entry is enabled and configured for switching
+                    if (m_lingerQueue.size()
+                     && m_lingerQueue.top().matchIndex <= i) {
+                        // there is a lingering entry of equal or higer priority
+			            return;
+                    }
+
+                    // switch to the matching scene
                     switchScene(cfg.matchScene, cfg.matchTransition);
                     return;
                 }
             }
         }
 
+        if (m_lingerQueue.size()) {
+		    // there is a lingering entry that would stop a no-match fallback
+		    return;
+	    }
+
+        // nothing matched so we fall back to a no-match scene
         std::string nms = noMatchScene();
         if (nms.size()) {
             switchScene(nms, noMatchTransition());

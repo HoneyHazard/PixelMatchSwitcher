@@ -30,7 +30,7 @@ class PmCore : public QObject
     // interactions with OBS C components
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
-    friend void on_frame_processed();
+    friend void on_frame_processed(pm_filter_data *filterData);
     friend void on_snapshot_available();
     friend void pm_save_load_callback(
         obs_data_t *save_data, bool saving, void *corePtr);
@@ -77,7 +77,7 @@ signals:
     void sigActiveFilterChanged(PmFilterRef newAf);
     void sigScenesChanged(PmScenes);
 
-    void sigFrameProcessed();
+    void sigFrameProcessed(PmMultiMatchResults);
     void sigSnapshotAvailable();
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
 
@@ -126,7 +126,7 @@ public slots:
 protected slots:
     void onMenuAction();
     void onPeriodicUpdate();
-    void onFrameProcessed();
+    void onFrameProcessed(PmMultiMatchResults newResults);
     void onSnapshotAvailable();
 
 protected:
@@ -161,6 +161,8 @@ protected:
 
     mutable QMutex m_scenesMutex;
     PmScenes m_scenes;
+
+    LingerQueue m_lingerQueue;
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;
 
