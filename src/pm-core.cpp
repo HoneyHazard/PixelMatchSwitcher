@@ -47,20 +47,20 @@ void on_frame_processed(pm_filter_data *filterData)
 {
     auto core = PmCore::m_instance;
     if (core) {
-	    PmMultiMatchResults newResults;
-	    pthread_mutex_lock(&filterData->mutex);
-	    newResults.resize(filterData->num_match_entries);
-	    for (size_t i = 0; i < newResults.size(); ++i) {
-		    auto &newResult = newResults[i];
-		    const auto &filterEntry = filterData->match_entries + i;
-		    newResult.baseWidth = filterData->base_width;
-		    newResult.baseHeight = filterData->base_height;
-		    newResult.matchImgWidth = filterEntry->match_img_width;
-		    newResult.matchImgHeight = filterEntry->match_img_height;
-		    newResult.numCompared = filterEntry->num_compared;
-		    newResult.numMatched = filterEntry->num_matched;
-	    }
-	    pthread_mutex_unlock(&filterData->mutex);
+        PmMultiMatchResults newResults;
+        pthread_mutex_lock(&filterData->mutex);
+        newResults.resize(filterData->num_match_entries);
+        for (size_t i = 0; i < newResults.size(); ++i) {
+            auto &newResult = newResults[i];
+            const auto &filterEntry = filterData->match_entries + i;
+            newResult.baseWidth = filterData->base_width;
+            newResult.baseHeight = filterData->base_height;
+            newResult.matchImgWidth = filterEntry->match_img_width;
+            newResult.matchImgHeight = filterEntry->match_img_height;
+            newResult.numCompared = filterEntry->num_compared;
+            newResult.numMatched = filterEntry->num_matched;
+        }
+        pthread_mutex_unlock(&filterData->mutex);
         emit core->sigFrameProcessed(newResults);
     }
 }
@@ -785,7 +785,7 @@ void PmCore::scanScenes()
 
         obs_weak_source_t* sceneWs = obs_source_get_weak_source(sceneSrc);
         OBSWeakSource sceneWsWs(sceneWs);
-	    obs_weak_source_release(sceneWs);
+        obs_weak_source_release(sceneWs);
 
         newScenes.insert(sceneWsWs, sceneName);
 
@@ -923,7 +923,7 @@ void PmCore::updateActiveFilter(
 void PmCore::activateMatchConfig(size_t matchIdx, const PmMatchConfig& newCfg)
 {
     // clean linger delay, for safety
-	m_lingerQueue.removeAll();
+    m_lingerQueue.removeAll();
 
     auto oldCfg = matchConfig(matchIdx);
 
@@ -1045,46 +1045,35 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     QTime currTime = QTime::currentTime();
 
     // expired lingers will disappear
-	m_lingerQueue.removeExpired(currTime);
+    m_lingerQueue.removeExpired(currTime);
 
-	for (size_t matchIndex = 0; matchIndex < newResults.size(); matchIndex++) {
-		// assign match state
-	    auto &newResult = newResults[matchIndex];
-		auto cfg = matchConfig(matchIndex);
-		newResult.percentageMatched
+    for (size_t matchIndex = 0; matchIndex < newResults.size(); matchIndex++) {
+        // assign match state
+        auto &newResult = newResults[matchIndex];
+        auto cfg = matchConfig(matchIndex);
+        newResult.percentageMatched
             = float(newResult.numMatched) / float(newResult.numCompared) * 100.f;
-		newResult.isMatched
+        newResult.isMatched
             = newResult.percentageMatched >= cfg.totalMatchThresh;
 
         // notify other modules of the result and match state
         emit sigNewMatchResults(matchIndex, newResults[matchIndex]);
         
-		if (newResult.isMatched) {
-			if (cfg.lingerMs > 0) {
-				// unlinger, if this matching entry was previously lingering
-				m_lingerQueue.removeByMatchIndex(matchIndex);
-			}
-		} else {
-			// no match; lets check if linger activation is needed
-			if (m_switchingEnabled && cfg.filterCfg.is_enabled
+        if (newResult.isMatched) {
+            if (cfg.lingerMs > 0) {
+                // unlinger, if this matching entry was previously lingering
+                m_lingerQueue.removeByMatchIndex(matchIndex);
+            }
+        } else {
+            // no match; lets check if linger activation is needed
+            if (m_switchingEnabled && cfg.filterCfg.is_enabled
              && cfg.lingerMs > 0 && cfg.targetScene.size()
              && matchResults(matchIndex).isMatched) {
-				// a lingering entry just switched from match to no-match
-				auto endTime = currTime.addMSecs(cfg.lingerMs);
-#if 0
-                LingerInfo *find = m_lingerQueue.find(matchIndex);
-		        if (find) {
-                    // extend existing linger
-				    find->endTime = endTime;
-		        } else {
-                    // activate linger
-    			    m_lingerQueue.push(LingerInfo{matchIndex, endTime});
-                }
-#else
-				m_lingerQueue.push(LingerInfo{matchIndex, endTime});
-#endif
-			}
-		}
+                // a lingering entry just switched from match to no-match
+                auto endTime = currTime.addMSecs(cfg.lingerMs);
+                m_lingerQueue.push(LingerInfo{matchIndex, endTime});
+            }
+        }
     }
 
     // store new results
@@ -1094,7 +1083,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     }
 
     if (m_switchingEnabled) {
-	    // test and react to conditions for switching
+        // test and react to conditions for switching
 
         for (size_t matchIndex = 0; matchIndex < m_results.size(); ++matchIndex) {
             const auto& resEntry = newResults[matchIndex];
@@ -1108,7 +1097,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
                     if (m_lingerQueue.size()
                      && m_lingerQueue.top().matchIndex < matchIndex) {
                         // there is a lingering entry of higher priority
-			            break;
+                        break;
                     }
 
                     // switch to the matching scene
@@ -1119,12 +1108,12 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         }
 
         if (m_lingerQueue.size()) {
-    		// a lingering match entry takes precedence
-		    const auto &lingerInfo = m_lingerQueue.top();
-		    auto lingCfg = matchConfig(lingerInfo.matchIndex);
-		    switchScene(lingCfg.targetScene, lingCfg.targetTransition);
-		    return;
-	    }
+            // a lingering match entry takes precedence
+            const auto &lingerInfo = m_lingerQueue.top();
+            auto lingCfg = matchConfig(lingerInfo.matchIndex);
+            switchScene(lingCfg.targetScene, lingCfg.targetTransition);
+            return;
+        }
 
         // nothing matched so we fall back to a no-match scene
         std::string nms = noMatchScene();
@@ -1179,21 +1168,23 @@ void PmCore::switchScene(
         }
      }
 
-    if (targetSceneSrc && targetSceneSrc != currSceneSrc) {
-        obs_source_t* transitionSrc = nullptr;
-        if (!transitionName.empty()) {
-            auto find = m_availableTransitions.find(transitionName);
-            if (find == m_availableTransitions.end()) {
-                find = m_availableTransitions.find("Cut");
+    if (targetSceneSrc) {
+        if (targetSceneSrc != currSceneSrc) {
+            obs_source_t* transitionSrc = nullptr;
+            if (!transitionName.empty()) {
+                auto find = m_availableTransitions.find(transitionName);
+                if (find == m_availableTransitions.end()) {
+                    find = m_availableTransitions.find("Cut");
+                }
+                if (find != m_availableTransitions.end()) {
+                    auto weakTransSrc = *find;
+                    transitionSrc = obs_weak_source_get_source(weakTransSrc);
+                }
             }
-            if (find != m_availableTransitions.end()) {
-                auto weakTransSrc = *find;
-                transitionSrc = obs_weak_source_get_source(weakTransSrc);
+            if (transitionSrc) {
+                obs_frontend_set_current_transition(transitionSrc);
+                obs_source_release(transitionSrc);
             }
-        }
-        if (transitionSrc) {
-            obs_frontend_set_current_transition(transitionSrc);
-            obs_source_release(transitionSrc);
         }
         if (targetSceneSrc) {
             obs_frontend_set_current_scene(targetSceneSrc);

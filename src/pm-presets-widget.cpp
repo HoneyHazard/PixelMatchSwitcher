@@ -153,21 +153,21 @@ void PmPresetsWidget::onPresetSelected()
     std::string activePreset = m_core->activeMatchPresetName();
 
     if (selPreset != activePreset && m_core->matchConfigDirty()) {
-	    auto role = promptUnsavedProceed();
-	    if (role == QMessageBox::RejectRole) {
-		    m_presetCombo->blockSignals(true);
-		    m_presetCombo->setCurrentText(
+        auto role = promptUnsavedProceed();
+        if (role == QMessageBox::RejectRole) {
+            m_presetCombo->blockSignals(true);
+            m_presetCombo->setCurrentText(
                 activePreset.size() ? activePreset.data() : k_unsavedPresetStr);
-		    m_presetCombo->blockSignals(false);
-		    return;
+            m_presetCombo->blockSignals(false);
+            return;
         } else {
-		    if (role == QMessageBox::YesRole) {
-			    if (activePreset.empty()) {
-				    onPresetSaveAs();
-			    } else {
-				    emit sigMatchPresetSave(activePreset);
-			    }
-		    }
+            if (role == QMessageBox::YesRole) {
+                if (activePreset.empty()) {
+                    onPresetSaveAs();
+                } else {
+                    emit sigMatchPresetSave(activePreset);
+                }
+            }
         }
     }
     emit sigMatchPresetSelect(selPreset);
@@ -220,21 +220,21 @@ void PmPresetsWidget::onPresetSaveAs()
 
 void PmPresetsWidget::onNewConfig()
 {
-	std::string activePreset = m_core->activeMatchPresetName();
+    std::string activePreset = m_core->activeMatchPresetName();
 
     if (m_core->matchConfigDirty()) {
-		auto role = promptUnsavedProceed();
-		if (role == QMessageBox::RejectRole) {
-			return;
-		} else {
-			if (role == QMessageBox::YesRole) {
-				if (activePreset.empty()) {
-					onPresetSaveAs();
-				} else {
-					emit sigMatchPresetSave(activePreset);
-				}
-			}
-		}
+        auto role = promptUnsavedProceed();
+        if (role == QMessageBox::RejectRole) {
+            return;
+        } else {
+            if (role == QMessageBox::YesRole) {
+                if (activePreset.empty()) {
+                    onPresetSaveAs();
+                } else {
+                    emit sigMatchPresetSave(activePreset);
+                }
+            }
+        }
     }
 
     if (activePreset.empty()) {
@@ -261,13 +261,13 @@ void PmPresetsWidget::onPresetRemove()
 
 QMessageBox::ButtonRole PmPresetsWidget::promptUnsavedProceed()
 {
-	QMessageBox msgBox;
-	msgBox.setWindowTitle(obs_module_text("Unsaved changes"));
-	msgBox.setText(obs_module_text(
+    QMessageBox msgBox;
+    msgBox.setWindowTitle(obs_module_text("Unsaved changes"));
+    msgBox.setText(obs_module_text(
         "What would you like to do with unsaved changes?"));
-	msgBox.addButton(obs_module_text("Save"), QMessageBox::YesRole);
-	msgBox.addButton(obs_module_text("Discard"), QMessageBox::NoRole);
-	msgBox.addButton(obs_module_text("Cancel"), QMessageBox::RejectRole);
+    msgBox.addButton(obs_module_text("Save"), QMessageBox::YesRole);
+    msgBox.addButton(obs_module_text("Discard"), QMessageBox::NoRole);
+    msgBox.addButton(obs_module_text("Cancel"), QMessageBox::RejectRole);
 
     msgBox.exec();
 
@@ -279,20 +279,20 @@ bool PmPresetsWidget::proceedWithExit()
     auto activePreset = m_core->activeMatchPresetName();
 
     if (m_core->matchConfigDirty()) {
-	    auto role = promptUnsavedProceed();
-	    if (role == QMessageBox::RejectRole) {
-			return false;
-	    } else {
-		    if (role == QMessageBox::YesRole) {
-			    if (activePreset.empty()) {
-				    onPresetSaveAs();
-			    } else {
-				    emit sigMatchPresetSave(activePreset);
-			    }
-		    } else {
-			    onPresetRevert();
-		    }
-		    return true;
-	    }
+        auto role = promptUnsavedProceed();
+        if (role == QMessageBox::RejectRole) {
+            return false;
+        } else {
+            if (role == QMessageBox::YesRole) {
+                if (activePreset.empty()) {
+                    onPresetSaveAs();
+                } else {
+                    emit sigMatchPresetSave(activePreset);
+                }
+            } else {
+                onPresetRevert();
+            }
+            return true;
+        }
     }
 }

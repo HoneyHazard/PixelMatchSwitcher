@@ -207,45 +207,45 @@ PmScenes::PmScenes(const PmScenes &other)
 bool LingerCompare::operator()(
     const LingerInfo &left, const LingerInfo &right) const
 {
-	return left.matchIndex > right.matchIndex;
+    return left.matchIndex > right.matchIndex;
 }
 
 #if 0
 LingerInfo* LingerQueue::find(size_t matchIndex)
 {
-	for (auto &itr : c) {
-		if (itr.matchIndex == matchIndex)
-			return &itr;
+    for (auto &itr : c) {
+        if (itr.matchIndex == matchIndex)
+            return &itr;
     }
 
-	return nullptr;
+    return nullptr;
 }
 #endif
 
 void LingerQueue::removeExpired(const QTime &currTime)
 {
-	for (auto itr = c.begin(); itr != c.end();) {
-		if (currTime > itr->endTime) {
-			itr = c.erase(itr);
-		} else {
-			itr++;
-		}
-	}
+    for (auto itr = c.begin(); itr != c.end();) {
+        if (currTime > itr->endTime) {
+            itr = c.erase(itr);
+        } else {
+            itr++;
+        }
+    }
 }
 
 void LingerQueue::removeByMatchIndex(size_t matchIndex)
 {
-	for (auto itr = c.begin(); itr != c.end(); itr++) {
-		if (itr->matchIndex == matchIndex) {
-			c.erase(itr);
-			return;
-		}
-	}
+    for (auto itr = c.begin(); itr != c.end(); itr++) {
+        if (itr->matchIndex == matchIndex) {
+            c.erase(itr);
+            return;
+        }
+    }
 }
 
 void LingerQueue::removeAll()
 {
-	c.clear();
+    c.clear();
 }
 
 //--------------------------------------

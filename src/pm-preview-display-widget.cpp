@@ -235,7 +235,7 @@ void PmPreviewDisplayWidget::drawFilter()
     auto captureState = m_core->captureState();
 
     if (!renderSrc || !filterData)
-	    goto done;
+        goto done;
 
     filterRef.lockData();
     m_baseWidth = int(filterData->base_width);

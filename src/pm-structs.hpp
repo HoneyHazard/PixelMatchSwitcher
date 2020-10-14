@@ -144,8 +144,8 @@ public:
  */
 struct LingerInfo
 {
-	size_t matchIndex = 0;
-	QTime endTime;
+    size_t matchIndex = 0;
+    QTime endTime;
 };
 
 /**
@@ -153,7 +153,7 @@ struct LingerInfo
  */
 struct LingerCompare
 {
-	bool operator()(const LingerInfo &left, const LingerInfo &right) const;
+    bool operator()(const LingerInfo &left, const LingerInfo &right) const;
 };
 
 /**
@@ -164,11 +164,11 @@ class LingerQueue final : public std::priority_queue<
     LingerInfo, std::deque<LingerInfo>, LingerCompare>
 {
 public:
-	LingerQueue() {}
-	//LingerInfo * find(size_t matchIndex);
-	void removeExpired(const QTime &currTime);
-	void removeByMatchIndex(size_t matchIndex);
-	void removeAll();
+    LingerQueue() {}
+    //LingerInfo * find(size_t matchIndex);
+    void removeExpired(const QTime &currTime);
+    void removeByMatchIndex(size_t matchIndex);
+    void removeAll();
 };
 
 /**

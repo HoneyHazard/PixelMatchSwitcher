@@ -57,7 +57,7 @@ protected slots:
 
 protected:
     enum class RowOrder;
-	static const QStringList k_columnLabels;
+    static const QStringList k_columnLabels;
     static const QString k_dontSwitchStr;
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;

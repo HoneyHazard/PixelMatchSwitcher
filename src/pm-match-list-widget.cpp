@@ -19,20 +19,20 @@
 using namespace std;
 
 enum class PmMatchListWidget::RowOrder : int {
-	EnableBox = 0,
-	ConfigName = 1,
-	SceneCombo = 2,
-	TransitionCombo = 3,
-	LingerDelay = 4,
-	Result = 5,
-	NumRows = 6,
+    EnableBox = 0,
+    ConfigName = 1,
+    SceneCombo = 2,
+    TransitionCombo = 3,
+    LingerDelay = 4,
+    Result = 5,
+    NumRows = 6,
 };
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
     obs_module_text("Match Config"),
     obs_module_text("Target Scene"),
     obs_module_text("Transition"),
-	obs_module_text("Linger ms"),
+    obs_module_text("Linger ms"),
     obs_module_text("Result")
 };
 
@@ -233,46 +233,46 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::EnableBox);
     if (enableBox) {
-	    enableBox->blockSignals(true);
-	    enableBox->setChecked(cfg.filterCfg.is_enabled);
-	    enableBox->blockSignals(false);
+        enableBox->blockSignals(true);
+        enableBox->setChecked(cfg.filterCfg.is_enabled);
+        enableBox->blockSignals(false);
     }
     
     auto nameItem = m_tableWidget->item(idx, (int)RowOrder::ConfigName);
     if (nameItem) {
-	    m_tableWidget->blockSignals(true);
-	    nameItem->setText(cfg.label.data());
-	    nameItem->setToolTip(cfg.label.data());
-	    m_tableWidget->blockSignals(false);
+        m_tableWidget->blockSignals(true);
+        nameItem->setText(cfg.label.data());
+        nameItem->setToolTip(cfg.label.data());
+        m_tableWidget->blockSignals(false);
     }
 
     auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::SceneCombo);
     if (sceneCombo) {
-	    sceneCombo->blockSignals(true);
-	    if (cfg.targetScene.size()) {
-		    sceneCombo->setCurrentText(cfg.targetScene.data());
-	    } else {
-		    sceneCombo->setCurrentText(k_dontSwitchStr);
-	    }
-	    sceneCombo->setToolTip(sceneCombo->currentText());
-	    sceneCombo->blockSignals(false);
+        sceneCombo->blockSignals(true);
+        if (cfg.targetScene.size()) {
+            sceneCombo->setCurrentText(cfg.targetScene.data());
+        } else {
+            sceneCombo->setCurrentText(k_dontSwitchStr);
+        }
+        sceneCombo->setToolTip(sceneCombo->currentText());
+        sceneCombo->blockSignals(false);
     }
 
     auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::TransitionCombo);
     if (transCombo) {
-	    transCombo->blockSignals(true);
-	    transCombo->setCurrentText(cfg.targetTransition.data());
-	    transCombo->setToolTip(transCombo->currentText());
-	    transCombo->blockSignals(false);
+        transCombo->blockSignals(true);
+        transCombo->setCurrentText(cfg.targetTransition.data());
+        transCombo->setToolTip(transCombo->currentText());
+        transCombo->blockSignals(false);
     }
 
     auto lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
-	    idx, (int)RowOrder::LingerDelay);
+        idx, (int)RowOrder::LingerDelay);
     if (lingerDelayBox) {
-	    lingerDelayBox->blockSignals(true);
-	    lingerDelayBox->setValue(cfg.lingerMs);
+        lingerDelayBox->blockSignals(true);
+        lingerDelayBox->setValue(cfg.lingerMs);
         lingerDelayBox->blockSignals(false);
     }
 }
@@ -453,7 +453,7 @@ void PmMatchListWidget::constructRow(int idx)
     lingerDelayBox->setSingleStep(10);
     void (QSpinBox::*sigLingerValueChanged)(int value) = &QSpinBox::valueChanged;
     connect(lingerDelayBox, sigLingerValueChanged,
-	    [this, idx](int val) { lingerDelayChanged(idx, val); });
+        [this, idx](int val) { lingerDelayChanged(idx, val); });
     m_tableWidget->setCellWidget(
         idx, (int)RowOrder::LingerDelay, lingerDelayBox);
 
@@ -549,8 +549,8 @@ void PmMatchListWidget::matchTransitionSelected(int idx, const QString& name)
 
 void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
 {
-	size_t index = (size_t)(idx);
-	PmMatchConfig cfg = m_core->matchConfig(index);
-	cfg.lingerMs = lingerMs;
-	emit sigMatchConfigChanged(index, cfg);
+    size_t index = (size_t)(idx);
+    PmMatchConfig cfg = m_core->matchConfig(index);
+    cfg.lingerMs = lingerMs;
+    emit sigMatchConfigChanged(index, cfg);
 }
