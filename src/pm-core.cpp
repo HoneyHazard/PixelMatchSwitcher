@@ -1039,10 +1039,6 @@ void PmCore::onPeriodicUpdate()
 
 void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 {
-	//obs_source_t* activeSceneSrc = obs_frontend_get_current_scene();
-	//std::string activeSceneName = obs_source_get_name(activeSceneSrc);
-	//obs_source_release(activeSceneSrc);
-
     QTime currTime = QTime::currentTime();
 
     // expired lingers will disappear
@@ -1057,36 +1053,41 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 		newResult.isMatched
             = newResult.percentageMatched >= cfg.totalMatchThresh;
 
-        // activate linger, when necessary...
-        if (m_switchingEnabled && cfg.filterCfg.is_enabled
-          && cfg.lingerMs > 0 && cfg.targetScene.size()
-          && !newResult.isMatched && matchResults(matchIndex).isMatched) {
-            // lingering entry just switched from match to no-match
-			auto endTime = currTime.addMSecs(cfg.lingerMs);
-            #if 0
-            LingerInfo *find = m_lingerQueue.find(matchIndex);
-		    if (find) {
-                // extend existing linger
-				find->endTime = endTime;
-		    } else {
-                // activate linger
-    			m_lingerQueue.push(LingerInfo{matchIndex, endTime});
-            }
-            #else
-			m_lingerQueue.push(LingerInfo{matchIndex, endTime});
-            #endif
-        }
+        // notify other modules of the result and match state
+        emit sigNewMatchResults(matchIndex, newResults[matchIndex]);
+        
+		if (newResult.isMatched) {
+			if (cfg.lingerMs > 0) {
+				// unlinger, if this matching entry was previously lingering
+				m_lingerQueue.removeByMatchIndex(matchIndex);
+			}
+		} else {
+			// no match; lets check if linger activation is needed
+			if (m_switchingEnabled && cfg.filterCfg.is_enabled
+             && cfg.lingerMs > 0 && cfg.targetScene.size()
+             && matchResults(matchIndex).isMatched) {
+				// a lingering entry just switched from match to no-match
+				auto endTime = currTime.addMSecs(cfg.lingerMs);
+#if 0
+                LingerInfo *find = m_lingerQueue.find(matchIndex);
+		        if (find) {
+                    // extend existing linger
+				    find->endTime = endTime;
+		        } else {
+                    // activate linger
+    			    m_lingerQueue.push(LingerInfo{matchIndex, endTime});
+                }
+#else
+				m_lingerQueue.push(LingerInfo{matchIndex, endTime});
+#endif
+			}
+		}
     }
 
     // store new results
     {
         QMutexLocker resLocker(&m_resultsMutex);
         m_results = newResults;
-    }
-
-    // notify other modules of the results
-    for (size_t matchIndex = 0; matchIndex < newResults.size(); ++matchIndex) {
-         emit sigNewMatchResults(matchIndex, newResults[matchIndex]);
     }
 
     // test and react to conditions for switching
@@ -1098,11 +1099,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
                 auto cfg = matchConfig(matchIndex);
 
                 if (cfg.filterCfg.is_enabled && cfg.targetScene.size()) {
-                    // this match entry is enabled and configured for switching
-
-                    // unlinger, if this entry was previously lingering
-		            if (cfg.lingerMs > 0)
-		                m_lingerQueue.removeByMatchIndex(matchIndex);
+                    // this matching entry is enabled and configured for switching
 
                     if (m_lingerQueue.size()
                      && m_lingerQueue.top().matchIndex < matchIndex) {
