@@ -99,6 +99,9 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 
     obs_data_set_default_string(data, "match_transition", matchTransition.data());
     matchTransition = obs_data_get_string(data, "match_transition");
+
+    obs_data_set_default_int(data, "linger_ms", (int)lingerMs);
+    lingerMs = obs_data_get_int(data, "linger_ms");
 }
 
 obs_data_t* PmMatchConfig::save() const
@@ -119,6 +122,7 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
     obs_data_set_string(ret, "match_scene", matchScene.data());
     obs_data_set_string(ret, "match_transition", matchTransition.data());
+    obs_data_set_int(ret, "linger_ms", (int)lingerMs);
 
     return ret;
 }

@@ -89,6 +89,7 @@ struct PmMatchConfig
 
     std::string matchScene;
     std::string matchTransition = "Cut";
+    uint32_t lingerMs = 0;
 
     bool operator==(const PmMatchConfig&) const;
     bool operator!=(const PmMatchConfig& other) const
