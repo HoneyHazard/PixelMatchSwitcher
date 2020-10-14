@@ -56,16 +56,8 @@ protected slots:
     void onNoMatchTransitionSelected(QString str);
 
 protected:
-    enum class RowOrder : int { 
-        EnableBox = 0, 
-        ConfigName = 1, 
-        SceneCombo = 2, 
-        TransitionCombo = 3,
-
-        Result = 4,
-        NumRows = 5,
-    };
-
+    enum class RowOrder;
+	static const QStringList k_columnLabels;
     static const QString k_dontSwitchStr;
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;
@@ -80,6 +72,7 @@ protected:
     void enableConfigToggled(int idx, bool enable);
     void matchSceneSelected(int idx, const QString &scene);
     void matchTransitionSelected(int idx, const QString& transName);
+    void lingerDelayChanged(int idx, int lingerMs);
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;
