@@ -5,11 +5,13 @@
 #include <qmetatype.h>
 #include <QHash>
 #include <QSet>
+#include <QTime>
 
 #include <obs.h>
 #include <obs.hpp>
 #include <queue>
-#include <list>
+#include <deque>
+#include <forward_list>
 
 #include "pm-filter.h"
 
@@ -87,8 +89,8 @@ struct PmMatchConfig
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
 
-    std::string matchScene;
-    std::string matchTransition = "Cut";
+    std::string targetScene;
+    std::string targetTransition = "Cut";
     uint32_t lingerMs = 0;
 
     bool operator==(const PmMatchConfig&) const;
@@ -142,7 +144,7 @@ public:
  */
 struct LingerInfo {
 	uint32_t matchIndex = 0;
-	int msLeft = 0;
+	QTime endTime;
 };
 
 /**
@@ -157,7 +159,7 @@ struct LingerCompare
  * @brief Manages linger information for multiple entries; sorted by match index
  */
 typedef std::priority_queue<
-    LingerInfo, std::list<LingerInfo>, LingerCompare> LingerQueue;
+    LingerInfo, std::deque<LingerInfo>, LingerCompare> LingerQueue;
 
 /**
  * @brief Configuration for the preview state of the dialog.

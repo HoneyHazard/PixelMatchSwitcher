@@ -841,7 +841,7 @@ void PmCore::scanScenes()
         auto newNames = newScenes.sceneNames();
         for (size_t i = 0; i < cfgSize; ++i) {
             auto cfgCpy = matchConfig(i);
-            auto& matchSceneName = cfgCpy.matchScene;
+            auto& matchSceneName = cfgCpy.targetScene;
             if (matchSceneName.size() && !newNames.contains(matchSceneName)) {
                 if (oldNames.contains(matchSceneName)) {
                     auto ws = m_scenes.key(matchSceneName);
@@ -1039,13 +1039,25 @@ void PmCore::onPeriodicUpdate()
 
 void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 {
+	obs_source_t* activeSceneSrc = obs_frontend_get_current_scene();
+	std::string activeSceneName = obs_source_get_name(activeSceneSrc);
+	obs_source_release(activeSceneSrc);
+
     // assign match state
 	for (size_t i = 0; i < newResults.size(); ++i) {
 	    auto &newResult = newResults[i];
+		auto cfg = matchConfig(i);
 		newResult.percentageMatched
             = float(newResult.numMatched) / float(newResult.numCompared) * 100.f;
 		newResult.isMatched
-            = newResult.percentageMatched >= matchConfig(i).totalMatchThresh;
+            = newResult.percentageMatched >= cfg.totalMatchThresh;
+
+        if (m_switchingEnabled && cfg.lingerMs > 0 && !newResult.isMatched
+         && cfg.targetScene.size() && cfg.targetScene == activeSceneName) {
+			auto endTime = QTime::currentTime().addMSecs(cfg.lingerMs);
+			LingerInfo li = {i, endTime};
+			m_lingerQueue.push(li);
+        }
     }
 
     // store new results
@@ -1053,7 +1065,8 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         QMutexLocker resLocker(&m_resultsMutex);
         m_results = newResults;
     }
-    
+
+    // notify other modules of the results
     for (size_t i = 0; i < newResults.size(); ++i) {
          emit sigNewMatchResults(i, newResults[i]);
     }
@@ -1065,23 +1078,28 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             if (resEntry.isMatched) {
                 // we have a result that matched
                 auto cfg = matchConfig(i);
-                if (cfg.filterCfg.is_enabled && cfg.matchScene.size()) {
+
+                if (cfg.filterCfg.is_enabled && cfg.targetScene.size()) {
                     // this match entry is enabled and configured for switching
+
                     if (m_lingerQueue.size()
                      && m_lingerQueue.top().matchIndex <= i) {
-                        // there is a lingering entry of equal or higer priority
-			            return;
+                        // there is a lingering entry of equal or higher priority
+			            break;
                     }
 
                     // switch to the matching scene
-                    switchScene(cfg.matchScene, cfg.matchTransition);
+                    switchScene(cfg.targetScene, cfg.targetTransition);
                     return;
                 }
             }
         }
 
         if (m_lingerQueue.size()) {
-		    // there is a lingering entry that would stop a no-match fallback
+    		// a lingering match entry takes precedence
+		    const auto &li = m_lingerQueue.top();
+		    auto cfg = matchConfig(li.matchIndex);
+		    switchScene(cfg.targetScene, cfg.targetTransition);
 		    return;
 	    }
 

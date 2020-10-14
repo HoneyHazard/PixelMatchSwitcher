@@ -232,8 +232,8 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::SceneCombo);
     sceneCombo->blockSignals(true);
-    if (cfg.matchScene.size()) {
-        sceneCombo->setCurrentText(cfg.matchScene.data());
+    if (cfg.targetScene.size()) {
+        sceneCombo->setCurrentText(cfg.targetScene.data());
     } else {
         sceneCombo->setCurrentText(k_dontSwitchStr);
     }
@@ -243,7 +243,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)RowOrder::TransitionCombo);
     transCombo->blockSignals(true);
-    transCombo->setCurrentText(cfg.matchTransition.data());
+    transCombo->setCurrentText(cfg.targetTransition.data());
     transCombo->setToolTip(transCombo->currentText());
     transCombo->blockSignals(false);
 }
@@ -497,7 +497,7 @@ void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.matchScene = (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
+    cfg.targetScene = (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
     emit sigMatchConfigChanged(index, cfg);
 }
 
@@ -505,7 +505,7 @@ void PmMatchListWidget::matchTransitionSelected(int idx, const QString& name)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.matchTransition = name.toUtf8().data();
+    cfg.targetTransition = name.toUtf8().data();
     emit sigMatchConfigChanged(index, cfg);
 }
 

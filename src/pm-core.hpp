@@ -126,7 +126,7 @@ public slots:
 protected slots:
     void onMenuAction();
     void onPeriodicUpdate();
-    void onFrameProcessed(PmMultiMatchResults newResults);
+    void onFrameProcessed(PmMultiMatchResults);
     void onSnapshotAvailable();
 
 protected:

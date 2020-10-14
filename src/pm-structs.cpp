@@ -54,8 +54,8 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && totalMatchThresh == other.totalMatchThresh
         && maskMode == other.maskMode
         && filterCfg == other.filterCfg
-        && matchScene == other.matchScene
-        && matchTransition == other.matchTransition;
+        && targetScene == other.targetScene
+        && targetTransition == other.targetTransition;
 }
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
@@ -95,10 +95,10 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     obs_data_set_default_bool(data, "is_enabled", filterCfg.is_enabled);
     filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
     
-    matchScene = obs_data_get_string(data, "match_scene");
+    targetScene = obs_data_get_string(data, "match_scene");
 
-    obs_data_set_default_string(data, "match_transition", matchTransition.data());
-    matchTransition = obs_data_get_string(data, "match_transition");
+    obs_data_set_default_string(data, "match_transition", targetTransition.data());
+    targetTransition = obs_data_get_string(data, "match_transition");
 
     obs_data_set_default_int(data, "linger_ms", (int)lingerMs);
     lingerMs = obs_data_get_int(data, "linger_ms");
@@ -120,8 +120,8 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
 
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
-    obs_data_set_string(ret, "match_scene", matchScene.data());
-    obs_data_set_string(ret, "match_transition", matchTransition.data());
+    obs_data_set_string(ret, "match_scene", targetScene.data());
+    obs_data_set_string(ret, "match_transition", targetTransition.data());
     obs_data_set_int(ret, "linger_ms", (int)lingerMs);
 
     return ret;
