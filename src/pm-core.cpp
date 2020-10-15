@@ -1071,7 +1071,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
              && matchResults(matchIndex).isMatched) {
                 // a lingering entry just switched from match to no-match
                 auto endTime = currTime.addMSecs(cfg.lingerMs);
-                m_lingerQueue.push(LingerInfo{matchIndex, endTime});
+                m_lingerQueue.push(PmLingerInfo{matchIndex, endTime});
             }
         }
     }

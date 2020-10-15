@@ -74,6 +74,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-dialog.hpp
         src/pm-about-box.hpp
         src/pm-structs.hpp
+        src/pm-linger-queue.hpp
         src/pm-debug-tab.hpp
         ${LIBOBS_UI_DIR}/qt-display.hpp
         ${LIBOBS_UI_DIR}/qt-wrappers.hpp
@@ -98,11 +99,12 @@ set(pixel-match-switcher_SOURCES
         src/pm-dialog.cpp
         src/pm-about-box.cpp
         src/pm-structs.cpp
+        src/pm-linger-queue.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
         ${LIBOBS_UI_DIR}/qt-wrappers.cpp
 )
 
-qt5_add_resources(pixel-match-switcher_SOURCES 
+qt5_add_resources(pixel-match-switcher_SOURCES
         pm.qrc)
 
 add_library(pixel-match-switcher MODULE
@@ -155,7 +157,7 @@ target_compile_options(pixel-match-switcher PUBLIC
 
 #file(GLOB ASS_TRANSLATION_FILES
 #  data/locale/*.ini)
-        
+
 #install_external_plugin_with_data(pixel-match-switcher "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/")
 
 # Linux

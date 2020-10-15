@@ -16,6 +16,7 @@ extern "C" void free_pixel_match_switcher();
 
 #include "pm-filter-ref.hpp"
 #include "pm-structs.hpp"
+#include "pm-linger-queue.hpp"
 #include "pm-dialog.hpp"
 
 struct obs_scene_item;
@@ -162,7 +163,7 @@ protected:
     mutable QMutex m_scenesMutex;
     PmScenes m_scenes;
 
-    LingerQueue m_lingerQueue;
+    PmLingerQueue m_lingerQueue;
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;
 

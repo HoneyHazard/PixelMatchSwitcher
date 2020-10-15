@@ -5,13 +5,9 @@
 #include <qmetatype.h>
 #include <QHash>
 #include <QSet>
-#include <QTime>
 
 #include <obs.h>
 #include <obs.hpp>
-#include <queue>
-#include <deque>
-#include <forward_list>
 
 #include "pm-filter.h"
 
@@ -137,38 +133,6 @@ public:
     PmScenes(const PmScenes& other);
 
     QSet<std::string> sceneNames() const;
-};
-
-/**
- * @brief Decribes an active linger information for a match entry
- */
-struct LingerInfo
-{
-    size_t matchIndex = 0;
-    QTime endTime;
-};
-
-/**
- * @brief So we can order LingerInfo in the order of matchIndex
- */
-struct LingerCompare
-{
-    bool operator()(const LingerInfo &left, const LingerInfo &right) const;
-};
-
-/**
- * @brief Manages linger information for multiple entries; sorted by match index
- */
-// TODO: maybe move to the core
-class LingerQueue final : public std::priority_queue<
-    LingerInfo, std::deque<LingerInfo>, LingerCompare>
-{
-public:
-    LingerQueue() {}
-    //LingerInfo * find(size_t matchIndex);
-    void removeExpired(const QTime &currTime);
-    void removeByMatchIndex(size_t matchIndex);
-    void removeAll();
 };
 
 /**
