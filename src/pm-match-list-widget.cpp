@@ -58,7 +58,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setColumnCount((int)RowOrder::NumRows);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
-    m_tableWidget->horizontalHeader()->setResizeContentsPrecision(-1);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
 
     // config editing buttons
@@ -111,6 +110,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     mainLayout->addWidget(m_tableWidget);
     mainLayout->addLayout(noMatchLayout);
     setLayout(mainLayout);
+    mainLayout->getContentsMargins(
+        &m_leftMargin, nullptr, &m_rightMargin, nullptr);
 
     // init state
     auto multiConfig = m_core->multiMatchConfig();
@@ -275,6 +276,8 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         lingerDelayBox->setValue(cfg.lingerMs);
         lingerDelayBox->blockSignals(false);
     }
+
+    setMinWidth();
 }
 
 void PmMatchListWidget::onNoMatchSceneChanged(std::string sceneName)
@@ -553,4 +556,12 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
     PmMatchConfig cfg = m_core->matchConfig(index);
     cfg.lingerMs = lingerMs;
     emit sigMatchConfigChanged(index, cfg);
+}
+
+void PmMatchListWidget::setMinWidth()
+{
+	int width
+        = m_tableWidget->horizontalHeader()->length()
+        + (m_leftMargin + m_rightMargin)*2;
+	setMinimumWidth(width);
 }

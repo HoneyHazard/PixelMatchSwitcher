@@ -74,6 +74,8 @@ protected:
     void matchTransitionSelected(int idx, const QString& transName);
     void lingerDelayChanged(int idx, int lingerMs);
 
+    void setMinWidth();
+
     PmCore* m_core;
     QTableWidget *m_tableWidget;
 
@@ -88,4 +90,6 @@ protected:
 
     QSet<std::string> m_sceneNames;
     int m_prevMatchIndex = 0;
+
+    int m_leftMargin, m_rightMargin;
 };
