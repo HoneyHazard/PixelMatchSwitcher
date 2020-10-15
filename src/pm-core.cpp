@@ -1,5 +1,4 @@
 #include "pm-core.hpp"
-#include "pm-filter.h"
 
 #include <ostream>
 #include <sstream>
@@ -17,16 +16,6 @@
 
 PmCore* PmCore::m_instance = nullptr;
 
-void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)
-{
-    PmCore *core = static_cast<PmCore*>(corePtr);
-    if (saving) {
-        core->pmSave(save_data);
-    } else {
-        core->pmLoad(save_data);
-    }
-}
-
 void init_pixel_match_switcher()
 {
     pmRegisterMetaTypes();
@@ -41,6 +30,17 @@ void free_pixel_match_switcher()
 {
     delete PmCore::m_instance;
     PmCore::m_instance = nullptr;
+}
+
+
+void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)
+{
+	PmCore *core = static_cast<PmCore *>(corePtr);
+	if (saving) {
+		core->pmSave(save_data);
+	} else {
+		core->pmLoad(save_data);
+	}
 }
 
 void on_frame_processed(pm_filter_data *filterData)
@@ -1187,7 +1187,7 @@ void PmCore::supplyImageToFilter(
         pthread_mutex_lock(&data->mutex);
         auto entryData = data->match_entries + matchIdx;
 
-        size_t sz = size_t(image.bytesPerLine() * image.height());
+        size_t sz = (size_t)(image.bytesPerLine()) * (size_t)(image.height());
         if (sz) {
             entryData->match_img_data = bmalloc(sz);
             memcpy(entryData->match_img_data, image.bits(), sz);

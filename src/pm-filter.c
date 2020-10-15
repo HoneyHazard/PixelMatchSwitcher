@@ -635,6 +635,73 @@ struct obs_source_info pixel_match_filter = {
     .get_height = pixel_match_filter_height,
 };
 
+//---------------------------------------
+
+void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data)
+{
+    if (tex) {
+        obs_enter_graphics();
+        gs_texture_destroy(tex);
+        obs_leave_graphics();
+    }
+    if (img_data) {
+        bfree(img_data);
+    }
+}
+
+void pm_supply_match_entry_config(struct pm_filter_data *filter,
+    size_t match_idx, const struct pm_match_entry_config *cfg)
+{
+    pthread_mutex_lock(&filter->mutex);
+    if (match_idx >= filter->num_match_entries) {
+        pthread_mutex_unlock(&filter->mutex);
+        return;
+    }
+
+    struct pm_match_entry_data *entry = filter->match_entries + match_idx;
+    memcpy(&entry->cfg, cfg, sizeof(struct pm_match_entry_config));
+    pthread_mutex_unlock(&filter->mutex);
+}
+
+void pm_resize_match_entries(struct pm_filter_data *filter, size_t new_size)
+{
+    pthread_mutex_lock(&filter->mutex);
+    if (new_size == filter->num_match_entries) {
+        pthread_mutex_unlock(&filter->mutex);
+        return;
+    }
+
+    size_t old_size = filter->num_match_entries;
+    struct pm_match_entry_data *old_entries = filter->match_entries;
+    if (new_size > 0) {
+        filter->match_entries = (struct pm_match_entry_data *)bmalloc(
+            sizeof(struct pm_match_entry_data) * new_size);
+        for (size_t i = 0; i < new_size; ++i) {
+            if (i < old_size) {
+                memcpy((void *)(filter->match_entries + i),
+                       (void *)(old_entries + i),
+                       sizeof(struct pm_match_entry_data));
+            } else {
+                memset((void *)(filter->match_entries + i), 0,
+                       sizeof(struct pm_match_entry_data));
+            }
+        }
+    } else {
+        filter->match_entries = NULL;
+    }
+    filter->num_match_entries = new_size;
+    pthread_mutex_unlock(&filter->mutex);
+
+    for (size_t i = new_size; i < old_size; i++) {
+        struct pm_match_entry_data *old_entry = old_entries + i;
+        pm_destroy_match_gfx(old_entry->match_img_tex,
+                     old_entry->match_img_data);
+    }
+    if (old_entries)
+        bfree(old_entries);
+}
+
+
 #if 0
     // passthrough
     obs_source_skip_video_filter(filter->context);

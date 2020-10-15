@@ -292,7 +292,7 @@ bool PmPresetsWidget::proceedWithExit()
             } else {
                 onPresetRevert();
             }
-            return true;
         }
     }
+    return true;
 }

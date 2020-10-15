@@ -13,7 +13,7 @@ struct PmLingerInfo {
 };
 
 /**
- * @brief So we can order LingerInfo in the order of matchIndex
+ * @brief So we can order PmLingerInfo in the order of matchIndex
  */
 struct PmLingerCompare {
     bool operator()(const PmLingerInfo &left, const PmLingerInfo &right) const;

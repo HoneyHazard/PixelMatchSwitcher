@@ -1,10 +1,5 @@
 #pragma once
 
-extern "C" void init_pixel_match_switcher();
-extern "C" void free_pixel_match_switcher();
-extern "C" void on_frame_processed(struct pm_filter_data *filterData);
-extern "C" void on_match_image_captured(struct pm_filter_data *filterData);
-
 #include <QObject>
 #include <QMutex>
 #include <QPointer>
@@ -20,12 +15,26 @@ extern "C" void on_match_image_captured(struct pm_filter_data *filterData);
 #include "pm-structs.hpp"
 #include "pm-linger-queue.hpp"
 #include "pm-dialog.hpp"
+#include "pm-filter.h"
 
 struct obs_scene_item;
 struct obs_scene;
 struct pm_filter_data;
 class PmDialog;
 
+// plugin's C functions
+extern "C" void init_pixel_match_switcher();
+extern "C" void free_pixel_match_switcher();
+
+// event handlers for OBS and filter events
+void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr);
+void on_frame_processed(struct pm_filter_data *filterData);
+void on_match_image_captured(struct pm_filter_data *filterData);
+
+/**
+ * @brief The core interacts with the filter, UI, activates scene transitions,
+ *        and more
+ */
 class PmCore : public QObject   
 {
     Q_OBJECT
