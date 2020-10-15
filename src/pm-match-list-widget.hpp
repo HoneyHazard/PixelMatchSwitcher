@@ -56,7 +56,7 @@ protected slots:
     void onNoMatchTransitionSelected(QString str);
 
 protected:
-    enum class RowOrder;
+    enum class ColOrder;
     static const QStringList k_columnLabels;
     static const QString k_dontSwitchStr;
     static const QString k_transpBgStyle;
@@ -76,7 +76,6 @@ protected:
 
     void setMinWidth();
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
-
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;

@@ -19,14 +19,14 @@
 
 using namespace std;
 
-enum class PmMatchListWidget::RowOrder : int {
+enum class PmMatchListWidget::ColOrder : int {
     EnableBox = 0,
     ConfigName = 1,
     SceneCombo = 2,
     TransitionCombo = 3,
     LingerDelay = 4,
     Result = 5,
-    NumRows = 6,
+    NumCols = 6,
 };
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
@@ -56,7 +56,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
                                  | QAbstractItemView::SelectedClicked);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
-    m_tableWidget->setColumnCount((int)RowOrder::NumRows);
+    m_tableWidget->setColumnCount((int)ColOrder::NumCols);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
@@ -200,7 +200,7 @@ void PmMatchListWidget::onScenesChanged(PmScenes scenes)
     int sz = (int)m_core->multiMatchConfigSize();
     for (int i = 0; i < sz; ++i) {
         QComboBox* sceneBox = (QComboBox*)m_tableWidget->cellWidget(
-            i, (int)RowOrder::SceneCombo);
+            i, (int)ColOrder::SceneCombo);
         updateSceneChoices(sceneBox);
     }
 
@@ -216,7 +216,7 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
         constructRow((int)i);
     }
     // last row below is empty (for insertion)
-    for (int c = 0; c < (int)RowOrder::NumRows; ++c) {
+    for (int c = 0; c < (int)ColOrder::NumCols; ++c) {
         m_tableWidget->setCellWidget((int)sz, c, nullptr);
         m_tableWidget->setItem((int)sz, c, nullptr);
     }
@@ -233,14 +233,14 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     int idx = (int)index;
 
     auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
-        idx, (int)RowOrder::EnableBox);
+        idx, (int)ColOrder::EnableBox);
     if (enableBox) {
         enableBox->blockSignals(true);
         enableBox->setChecked(cfg.filterCfg.is_enabled);
         enableBox->blockSignals(false);
     }
     
-    auto nameItem = m_tableWidget->item(idx, (int)RowOrder::ConfigName);
+    auto nameItem = m_tableWidget->item(idx, (int)ColOrder::ConfigName);
     if (nameItem) {
         m_tableWidget->blockSignals(true);
         nameItem->setText(cfg.label.data());
@@ -249,7 +249,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     }
 
     auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
-        idx, (int)RowOrder::SceneCombo);
+        idx, (int)ColOrder::SceneCombo);
     if (sceneCombo) {
         sceneCombo->blockSignals(true);
         if (cfg.targetScene.size()) {
@@ -262,7 +262,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     }
 
     auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
-        idx, (int)RowOrder::TransitionCombo);
+        idx, (int)ColOrder::TransitionCombo);
     if (transCombo) {
         transCombo->blockSignals(true);
         transCombo->setCurrentText(cfg.targetTransition.data());
@@ -271,7 +271,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     }
 
     auto lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
-        idx, (int)RowOrder::LingerDelay);
+        idx, (int)ColOrder::LingerDelay);
     if (lingerDelayBox) {
         lingerDelayBox->blockSignals(true);
         lingerDelayBox->setValue(cfg.lingerMs);
@@ -307,7 +307,7 @@ void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
     int idx = (int)index;
 
     auto resultLabel = (QLabel*)m_tableWidget->cellWidget(
-        idx, (int)RowOrder::Result);
+        idx, (int)ColOrder::Result);
     if (!resultLabel) return;
 
     float percentage = results.percentageMatched;
@@ -330,14 +330,14 @@ void PmMatchListWidget::onMatchConfigSelect(
     size_t mmSz = m_core->multiMatchConfigSize();
     if (size_t(m_prevMatchIndex) < mmSz) {
         QLabel* prevLabel = (QLabel*)m_tableWidget->cellWidget(
-            m_prevMatchIndex, int(RowOrder::Result));
+            m_prevMatchIndex, int(ColOrder::Result));
         if (prevLabel) {
             prevLabel->setStyleSheet(k_transpBgStyle);
         }
     }
     if (matchIndex < mmSz) {
         QLabel* resLabel = (QLabel*)m_tableWidget->cellWidget(
-            int(matchIndex), int(RowOrder::Result));
+            int(matchIndex), int(ColOrder::Result));
         if (resLabel) {
             resLabel->setStyleSheet(k_semiTranspBgStyle);
         }
@@ -426,13 +426,13 @@ void PmMatchListWidget::constructRow(int idx)
     enableBox->setStyleSheet(k_transpBgStyle);
     connect(enableBox, &QCheckBox::toggled,
         [this, idx](bool checked) { enableConfigToggled(idx, checked); });
-    m_tableWidget->setCellWidget(idx, (int)RowOrder::EnableBox, enableBox);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::EnableBox, enableBox);
 
     QString placeholderName = QString("placeholder %1").arg(idx);
     auto labelItem = new QTableWidgetItem(placeholderName);
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
     m_tableWidget->setItem(
-        idx, (int)RowOrder::ConfigName, labelItem);
+        idx, (int)ColOrder::ConfigName, labelItem);
 
     QComboBox* sceneCombo = new QComboBox(parent);
     sceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
@@ -441,7 +441,7 @@ void PmMatchListWidget::constructRow(int idx)
     updateSceneChoices(sceneCombo);
     connect(sceneCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchSceneSelected(idx, str); });
-    m_tableWidget->setCellWidget(idx, (int)RowOrder::SceneCombo, sceneCombo);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::SceneCombo, sceneCombo);
 
     QComboBox* transitionCombo = new QComboBox(parent);
     transitionCombo->setStyleSheet(k_transpBgStyle);
@@ -450,7 +450,7 @@ void PmMatchListWidget::constructRow(int idx)
     connect(transitionCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchTransitionSelected(idx, str); });
     m_tableWidget->setCellWidget(
-        idx, (int)RowOrder::TransitionCombo, transitionCombo);
+        idx, (int)ColOrder::TransitionCombo, transitionCombo);
 
     QSpinBox *lingerDelayBox = new QSpinBox();
     lingerDelayBox->setStyleSheet(k_transpBgStyle);
@@ -462,14 +462,14 @@ void PmMatchListWidget::constructRow(int idx)
         [this, idx](int val) { lingerDelayChanged(idx, val); });
 
     m_tableWidget->setCellWidget(
-        idx, (int)RowOrder::LingerDelay, lingerDelayBox);
+        idx, (int)ColOrder::LingerDelay, lingerDelayBox);
 
     QLabel* resultLabel = new QLabel("--", parent);
     resultLabel->setStyleSheet(k_transpBgStyle);
     resultLabel->setTextFormat(Qt::RichText);
     resultLabel->setAlignment(Qt::AlignCenter);
     m_tableWidget->setCellWidget(
-        idx, (int)RowOrder::Result, resultLabel);
+        idx, (int)ColOrder::Result, resultLabel);
 
     // do this every time a row is added; otherwise new rows dont look correct
     m_tableWidget->setStyleSheet("QTableWidget::item { padding: 1px };");
@@ -520,7 +520,7 @@ int PmMatchListWidget::currentIndex() const
 
 void PmMatchListWidget::onItemChanged(QTableWidgetItem* item)
 {
-    if (item->column() != (int)RowOrder::ConfigName) return;
+    if (item->column() != (int)ColOrder::ConfigName) return;
 
     size_t matchIndex = (size_t)item->row();
     PmMatchConfig cfg = m_core->matchConfig(matchIndex);
