@@ -75,6 +75,8 @@ protected:
     void lingerDelayChanged(int idx, int lingerMs);
 
     void setMinWidth();
+    bool eventFilter(QObject *obj, QEvent *event) override; // for display events
+
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;
@@ -83,7 +85,6 @@ protected:
     QPushButton* m_cfgMoveDownBtn;
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
-    //QPushButton* m_cfgClearBtn;
 
     QComboBox* m_noMatchSceneCombo;
     QComboBox* m_noMatchTransitionCombo;

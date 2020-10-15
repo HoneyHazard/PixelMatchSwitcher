@@ -13,6 +13,7 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QIcon>
+#include <QEvent>
 
 #include <QDebug>
 
@@ -452,11 +453,14 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)RowOrder::TransitionCombo, transitionCombo);
 
     QSpinBox *lingerDelayBox = new QSpinBox();
+    lingerDelayBox->setStyleSheet(k_transpBgStyle);
     lingerDelayBox->setRange(0, 10000);
     lingerDelayBox->setSingleStep(10);
+    lingerDelayBox->installEventFilter(this);
     void (QSpinBox::*sigLingerValueChanged)(int value) = &QSpinBox::valueChanged;
     connect(lingerDelayBox, sigLingerValueChanged,
         [this, idx](int val) { lingerDelayChanged(idx, val); });
+
     m_tableWidget->setCellWidget(
         idx, (int)RowOrder::LingerDelay, lingerDelayBox);
 
@@ -564,4 +568,16 @@ void PmMatchListWidget::setMinWidth()
         = m_tableWidget->horizontalHeader()->length()
         + (m_leftMargin + m_rightMargin)*2;
 	setMinimumWidth(width);
+}
+
+bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    // event filter handles change of background in the spin box
+    if (event->type() == QEvent::FocusIn) {
+		((QWidget *)obj)->setStyleSheet("");
+    } else if (event->type() == QEvent::FocusOut) {
+	    ((QWidget *)obj)->setStyleSheet(k_transpBgStyle);
+    }
+
+	return QObject::eventFilter(obj, event);
 }
