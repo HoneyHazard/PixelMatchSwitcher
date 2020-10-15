@@ -89,7 +89,7 @@ struct pm_filter_data
     gs_texture_t* mask_region_texture;
 
     // callbacks for fast reactions
-    void (*on_region_captured)();
+    void (*on_match_image_captured)(struct pm_filter_data *data);
     void (*on_frame_processed)(struct pm_filter_data* filter_data);
 };
 

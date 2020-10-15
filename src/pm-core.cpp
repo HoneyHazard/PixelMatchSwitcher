@@ -65,12 +65,26 @@ void on_frame_processed(pm_filter_data *filterData)
     }
 }
 
-void on_snapshot_available()
+void on_match_image_captured(pm_filter_data *filterData)
 {
-    // TODO: make similar to on_frame_processed()
     auto core = PmCore::m_instance;
     if (core) {
-        emit core->sigSnapshotAvailable();
+        pthread_mutex_lock(&filterData->mutex);
+        int roiLeft = std::min(core->m_captureStartX, core->m_captureEndX);
+        int roiBottom = std::min(core->m_captureStartY, core->m_captureEndY);
+        int roiRight = std::max(core->m_captureStartX, core->m_captureEndX);
+        int roiTop = std::max(core->m_captureStartY, core->m_captureEndY);
+
+        QImage matchImg(filterData->captured_region_data,
+                   roiRight - roiLeft + 1, roiTop - roiBottom + 1,
+                   QImage::Format_RGBA8888);
+
+        emit core->sigMatchImageCaptured(matchImg.copy(), roiLeft, roiBottom);
+        bfree(filterData->captured_region_data);
+        filterData->captured_region_data = nullptr;
+        filterData->filter_mode = PM_MATCH;
+
+        pthread_mutex_unlock(&filterData->mutex);
     }
 }
 
@@ -114,8 +128,6 @@ PmCore::PmCore()
     // fast reaction signal/slot: process in the core's thread
     connect(this, &PmCore::sigFrameProcessed,
             this, &PmCore::onFrameProcessed, Qt::QueuedConnection);
-    connect(this, &PmCore::sigSnapshotAvailable,
-            this, &PmCore::onSnapshotAvailable, Qt::QueuedConnection);
 
     // move to own thread
     m_thread = new QThread(this);
@@ -180,7 +192,7 @@ void PmCore::deactivate()
             pm_resize_match_entries(data, 0);
             oldAfr.lockData();
             data->on_frame_processed = nullptr;
-            data->on_region_captured = nullptr;
+            data->on_match_image_captured = nullptr;
             oldAfr.unlockData();
         }
     }
@@ -886,7 +898,7 @@ void PmCore::updateActiveFilter(
             if (data) {
                 m_activeFilter.lockData();
                 data->on_frame_processed = nullptr;
-                data->on_region_captured = nullptr;
+                data->on_match_image_captured = nullptr;
                 m_activeFilter.unlockData();
                 pm_resize_match_entries(data, 0);
             }
@@ -902,7 +914,7 @@ void PmCore::updateActiveFilter(
             size_t cfgSize = multiMatchConfigSize();
             m_activeFilter.lockData();
             data->on_frame_processed = on_frame_processed;
-            data->on_region_captured = on_snapshot_available;
+            data->on_match_image_captured = on_match_image_captured;
             data->selected_match_index = m_selectedMatchIndex;
             m_activeFilter.unlockData();
             pm_resize_match_entries(data, cfgSize);
@@ -1120,33 +1132,6 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         if (nms.size()) {
             switchScene(nms, noMatchTransition());
         }
-    }
-}
-
-void PmCore::onSnapshotAvailable()
-{
-    auto fr = activeFilterRef();
-    auto filterData = fr.filterData();
-    if (filterData) {
-        fr.lockData();
-        if (filterData->captured_region_data) {
-            int roiLeft = std::min(m_captureStartX, m_captureEndX);
-            int roiBottom = std::min(m_captureStartY, m_captureEndY);
-            int roiRight = std::max(m_captureStartX, m_captureEndX);
-            int roiTop = std::max(m_captureStartY, m_captureEndY);
-
-            QImage snapshotImg(
-                filterData->captured_region_data,
-                roiRight - roiLeft + 1,
-                roiTop - roiBottom + 1,
-                QImage::Format_RGBA8888);
-
-            emit sigMatchImageCaptured(snapshotImg.copy(), roiLeft, roiBottom);
-            bfree(filterData->captured_region_data);
-            filterData->captured_region_data = nullptr;
-            filterData->filter_mode = PM_MATCH;
-        }
-        fr.unlockData();
     }
 }
 

@@ -2,6 +2,8 @@
 
 extern "C" void init_pixel_match_switcher();
 extern "C" void free_pixel_match_switcher();
+extern "C" void on_frame_processed(struct pm_filter_data *filterData);
+extern "C" void on_match_image_captured(struct pm_filter_data *filterData);
 
 #include <QObject>
 #include <QMutex>
@@ -32,7 +34,7 @@ class PmCore : public QObject
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
     friend void on_frame_processed(pm_filter_data *filterData);
-    friend void on_snapshot_available();
+    friend void on_match_image_captured(pm_filter_data *filterData);
     friend void pm_save_load_callback(
         obs_data_t *save_data, bool saving, void *corePtr);
 
@@ -79,7 +81,6 @@ signals:
     void sigScenesChanged(PmScenes);
 
     void sigFrameProcessed(PmMultiMatchResults);
-    void sigSnapshotAvailable();
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
 
     void sigAvailablePresetsChanged();
@@ -128,7 +129,6 @@ protected slots:
     void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed(PmMultiMatchResults);
-    void onSnapshotAvailable();
 
 protected:
     static QHash<std::string, OBSWeakSource> getAvailableTransitions();

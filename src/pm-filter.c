@@ -591,9 +591,9 @@ done:
         filter->filter_mode = PM_MASK;
     pthread_mutex_unlock(&filter->mutex);
 
-    if (filter->on_region_captured
+    if (filter->on_match_image_captured
      && (prevMode == PM_SNAPSHOT || prevMode == PM_MASK_END)) {
-        filter->on_region_captured();
+        filter->on_match_image_captured(filter);
     }
 
     if ((prevMode == PM_MASK 
