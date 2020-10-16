@@ -7,7 +7,6 @@
 #include <QVBoxLayout>
 
 #include <QCheckBox>
-#include <QLabel>
 #include <QLineEdit>
 #include <QComboBox>
 #include <QSpinBox>
@@ -462,11 +461,10 @@ void PmMatchListWidget::constructRow(int idx)
     void (QSpinBox::*sigLingerValueChanged)(int value) = &QSpinBox::valueChanged;
     connect(lingerDelayBox, sigLingerValueChanged,
         [this, idx](int val) { lingerDelayChanged(idx, val); });
-
     m_tableWidget->setCellWidget(
         idx, (int)ColOrder::LingerDelay, lingerDelayBox);
 
-    QLabel* resultLabel = new QLabel("--", parent);
+    QLabel *resultLabel = new PmResultsLabel("--", parent);
     resultLabel->setStyleSheet(k_transpBgStyle);
     resultLabel->setTextFormat(Qt::RichText);
     resultLabel->setAlignment(Qt::AlignCenter);
@@ -475,7 +473,7 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)ColOrder::Result, resultLabel);
 
     // do this every time a row is added; otherwise new rows dont look correct
-    m_tableWidget->setStyleSheet("QTableWidget::item { padding: 1px };");
+    m_tableWidget->setStyleSheet("QTableWidget::item { padding: 2px };");
 }
 
 void PmMatchListWidget::updateAvailableButtons(
@@ -565,7 +563,7 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
 
 void PmMatchListWidget::setMinWidth()
 {
-	int width = m_tableWidget->horizontalHeader()->length() + 20;
+    int width = m_tableWidget->horizontalHeader()->length() + 20;
     m_tableWidget->setMinimumWidth(width);
 }
 
@@ -615,4 +613,21 @@ bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
 
     // do not interfere with events
     return QObject::eventFilter(obj, event);
+}
+
+
+PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
+    : QLabel(text, parentWidget)
+{
+    QFontMetrics fm(font());
+    auto m = contentsMargins();
+    m_resultWidth =
+        fm.width("100.0%") + m.left() + m.right() + margin() * 2 + 10;
+};
+
+QSize PmResultsLabel::sizeHint() const
+{
+    QSize ret = QLabel::sizeHint();
+    ret.setWidth(m_resultWidth);
+    return ret;
 }

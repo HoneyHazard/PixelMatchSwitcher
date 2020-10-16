@@ -4,6 +4,7 @@
 
 #include <QGroupBox>
 #include <QSet>
+#include <QLabel>
 
 class PmCore;
 class QTableWidget;
@@ -91,4 +92,15 @@ protected:
 
     QSet<std::string> m_sceneNames;
     int m_prevMatchIndex = 0;
+};
+
+class PmResultsLabel : public QLabel {
+    Q_OBJECT
+
+public:
+    PmResultsLabel(const QString &text, QWidget *parentWidget);
+    QSize sizeHint() const override;
+
+protected:
+    int m_resultWidth;
 };
