@@ -91,6 +91,4 @@ protected:
 
     QSet<std::string> m_sceneNames;
     int m_prevMatchIndex = 0;
-
-    int m_leftMargin, m_rightMargin;
 };
