@@ -13,7 +13,8 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QIcon>
-#include <QEvent>
+#include <QMouseEvent>
+#include <QTimer> // for QTimer::singleShot()
 
 #include <QDebug>
 
@@ -426,6 +427,7 @@ void PmMatchListWidget::constructRow(int idx)
     enableBox->setStyleSheet(k_transpBgStyle);
     connect(enableBox, &QCheckBox::toggled,
         [this, idx](bool checked) { enableConfigToggled(idx, checked); });
+    enableBox->installEventFilter(this);
     m_tableWidget->setCellWidget(idx, (int)ColOrder::EnableBox, enableBox);
 
     QString placeholderName = QString("placeholder %1").arg(idx);
@@ -439,6 +441,7 @@ void PmMatchListWidget::constructRow(int idx)
     sceneCombo->setStyleSheet(k_transpBgStyle);
     sceneCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     updateSceneChoices(sceneCombo);
+    sceneCombo->installEventFilter(this);
     connect(sceneCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchSceneSelected(idx, str); });
     m_tableWidget->setCellWidget(idx, (int)ColOrder::SceneCombo, sceneCombo);
@@ -447,6 +450,7 @@ void PmMatchListWidget::constructRow(int idx)
     transitionCombo->setStyleSheet(k_transpBgStyle);
     transitionCombo->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
     updateTransitionChoices(transitionCombo);
+    transitionCombo->installEventFilter(this);
     connect(transitionCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { matchTransitionSelected(idx, str); });
     m_tableWidget->setCellWidget(
@@ -468,6 +472,7 @@ void PmMatchListWidget::constructRow(int idx)
     resultLabel->setStyleSheet(k_transpBgStyle);
     resultLabel->setTextFormat(Qt::RichText);
     resultLabel->setAlignment(Qt::AlignCenter);
+    resultLabel->installEventFilter(this);
     m_tableWidget->setCellWidget(
         idx, (int)ColOrder::Result, resultLabel);
 
@@ -534,8 +539,6 @@ void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
     PmMatchConfig cfg = m_core->matchConfig(index);
     cfg.filterCfg.is_enabled = enable;
     emit sigMatchConfigChanged(index, cfg);
-
-    m_tableWidget->selectRow(idx);
 }
 
 void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
@@ -564,20 +567,56 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
 
 void PmMatchListWidget::setMinWidth()
 {
-	int width
+    int width
         = m_tableWidget->horizontalHeader()->length()
         + (m_leftMargin + m_rightMargin)*2;
-	setMinimumWidth(width);
+    setMinimumWidth(width);
+}
+
+bool PmMatchListWidget::selectRowAtGlobalPos(QPoint globalPos)
+{
+    auto tablePos = m_tableWidget->mapFromGlobal(globalPos);
+    tablePos.setY(tablePos.y() -
+              m_tableWidget->horizontalHeader()->height());
+    auto tableIndex = m_tableWidget->indexAt(tablePos);
+    if (m_core->selectedConfigIndex() != (size_t)tableIndex.row()) {
+        m_tableWidget->selectRow(tableIndex.row());
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
 {
-    // event filter handles change of background in the spin box
+    // filter events for all of the cell widgets
     if (event->type() == QEvent::FocusIn) {
-		((QWidget *)obj)->setStyleSheet("");
+        QSpinBox* spinBox = dynamic_cast<QSpinBox *>(obj);
+        if (spinBox) {
+            // helps an active box look right in the middle of a highlited row
+            QPoint globalPos = spinBox->mapToGlobal(QPoint(1, 1));
+            if (selectRowAtGlobalPos(globalPos)) {
+                // reactivate focus after table selection causes focus loss
+                QTimer::singleShot(50, [spinBox]() {
+                    spinBox->setFocus();
+                    spinBox->setStyleSheet("");
+                });
+            } else {
+                // row already selected. just update background
+                spinBox->setStyleSheet("");
+            }
+        }
     } else if (event->type() == QEvent::FocusOut) {
-	    ((QWidget *)obj)->setStyleSheet(k_transpBgStyle);
+        // helps the spin box
+        auto spinBox = dynamic_cast<QSpinBox *>(obj);
+        if (spinBox)
+            spinBox->setStyleSheet(k_transpBgStyle);
+    } else if (event->type() == QEvent::MouseButtonPress) {
+        // clicking combo boxes and other elements should select their row
+        auto mouseEvent = (QMouseEvent *)event;
+        selectRowAtGlobalPos(mouseEvent->globalPos());
     }
 
-	return QObject::eventFilter(obj, event);
+    // do not interfere with events
+    return QObject::eventFilter(obj, event);
 }

@@ -75,6 +75,7 @@ protected:
     void lingerDelayChanged(int idx, int lingerMs);
 
     void setMinWidth();
+    bool selectRowAtGlobalPos(QPoint globalPos);
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
 
     PmCore* m_core;
