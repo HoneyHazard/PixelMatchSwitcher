@@ -26,9 +26,9 @@ static void pixel_match_filter_destroy(void *data)
     if (filter->snapshot_stagesurface)
         gs_stagesurface_destroy(filter->snapshot_stagesurface);
     if (filter->mask_texrender)
-	    gs_texrender_destroy(filter->mask_texrender);
+        gs_texrender_destroy(filter->mask_texrender);
     if (filter->mask_stagesurface)
-	    gs_stagesurface_destroy(filter->mask_stagesurface);
+        gs_stagesurface_destroy(filter->mask_stagesurface);
     if (filter->mask_region_texture)
         gs_texture_destroy(filter->mask_region_texture);
     gs_effect_destroy(filter->effect);
@@ -66,7 +66,7 @@ static void *pixel_match_filter_create(
 
     bfree(effect_path);
     if (!filter->effect)
-	    goto gfx_fail;
+        goto gfx_fail;
 
     // init filters and result handles
     filter->param_image = gs_effect_get_param_by_name(
