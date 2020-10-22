@@ -1247,6 +1247,8 @@ void PmCore::pmSave(obs_data_t *saveData)
     }
 
     obs_data_set_obj(saveData, "pixel-match-switcher", saveObj);
+
+    obs_data_release(saveObj);
 }
 
 void PmCore::pmLoad(obs_data_t *data)
