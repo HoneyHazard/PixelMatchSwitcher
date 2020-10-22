@@ -58,9 +58,11 @@ static void *pixel_match_filter_create(
     //  gfx init
     obs_enter_graphics();
     filter->effect = gs_effect_create_from_file(effect_path, NULL);
-    if (!filter->effect)
-        goto gfx_fail;
     obs_leave_graphics();
+
+    bfree(effect_path);
+    if (!filter->effect)
+	    goto gfx_fail;
 
     // init filters and result handles
     filter->param_image = gs_effect_get_param_by_name(
