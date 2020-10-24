@@ -30,7 +30,7 @@ enum class PmMatchListWidget::ColOrder : int {
 };
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
-    obs_module_text("Match Config"),
+    obs_module_text("Label"),
     obs_module_text("Target Scene"),
     obs_module_text("Transition"),
     obs_module_text("Linger ms"),
