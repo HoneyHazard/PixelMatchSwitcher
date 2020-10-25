@@ -6,7 +6,9 @@ Two reasons this are useful are. (a) streamers often like to have displays with 
 Pixel Match Switcher plugin makes this scene switching automatic.
 
 ## User manual
-::construction:: **TODO**
+Here (work in progress):
+
+https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual
 
 ## See Wiki for build instructions
 https://github.com/HoneyHazard/PixelMatchSwitcher/wiki
