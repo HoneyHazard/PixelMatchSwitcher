@@ -6,7 +6,7 @@ Two reasons this are useful are. (a) streamers often like to have displays with 
 **Pixel Match Switcher** plugin makes this scene switching automatic, by comparing match images against regions of video. Match images can be extracted by users directly from the video feed. Match regions are ordered by priority
 
 ## :construction: User Resources
-- [Installation]()
+- [Installation](#)
 - [User Manual](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual)
   - [Pixel Match Filter](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#pixel-match-filter)
   - [UI Elements Overview](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#ui-elements-overview)
@@ -25,7 +25,7 @@ Two reasons this are useful are. (a) streamers often like to have displays with 
 
 ## :construction: Build Instructions
 - [Windows: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Windows:-Standalone-Plugin)
-- [Windows: OBS In-tree]()
+- [Windows: OBS In-tree](#)
 - [Linux: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Linux:-Standalone-Plugin)
 - [Debian-based Linux: OBS In-three](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Debian-based-Linux:-OBS-In-Tree)
 
