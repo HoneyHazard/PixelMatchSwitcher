@@ -3,7 +3,7 @@ When streaming games, OBS can auto switch the scene configuration based on the c
 
 Two reasons this are useful are. (a) streamers often like to have displays with a bigger streamer-cam and/or ads when they are in a game menu, or some other “non gameplay” area of the game. (b) streamers often need to *hide* certain elements of game content, so they don’t get stream-sniped by people who want to gain an advantage by watching their stream while playing against them.  Currently, streamers handle these cases manually, by manually switching scenes everytime, either with the OBS UI or by assigning hotkeys.
 
-**Pixel Match Switcher** plugin makes this scene switching automatic, by comparing match images against regions of video. Match images can be extracted by users directly from the video feed. Match regions are ordered by priority
+**Pixel Match Switcher** plugin makes this scene switching automatic, by comparing match images against regions of video. Match images can be extracted by users directly from the video feed. Match regions are ordered by priority to produce
 
 ## :construction: User Resources
 - [Alpha Build Installers of OBS Fork + Plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/releases)
@@ -33,6 +33,8 @@ Two reasons this are useful are. (a) streamers often like to have displays with 
 ![image](https://raw.githubusercontent.com/wiki/HoneyHazard/PixelMatchSwitcher/images/readme_screenshot.png)
 
 ## Planned Features
+- Show/hide an image/mask source, in addition to scene switching
 - Automatically choose a rules preset based on which scene(s) are active
 - Save/Load presets configuration to/from XML
 - Download game presets from an online database
+- Advanced matching rules: inverse matching, AND, OR, etc
