@@ -34,7 +34,7 @@ Presently, the plugin requires a special [atomic-effects](#Atomic-Effects-Fork-o
 ## Atomic Effects Fork of OBS
 Pixel Match Switcher plugin requires **effect results** and **atomic counters** to work. These precursor features are not present in the mainline of OBS Studio at the moment of writing. We provide the [atomic-effects](https://github.com/HoneyHazard/obs-studio-atomic-effects) fork to introduce these key features into OBS and make our plugin possible. Effort is being made to keep the fork up-to-date with the latest OBS commits.
 
-We hope to see the [changes](#https://github.com/HoneyHazard/obs-studio-atomic-effects/wiki/Overview-of-the-changes-introduced-in-the-atomic-effects-fork-of-obs-studio) of the atomic-effects fork eventually integrated into OBS mainline. Perhaps, the Pixel Match Switcher itself could one day be bundled with OBS; part of the starter arsenal to make the awesome tool even more awesome. Our hearts would be filled with joy when the gift of pixel match switching becomes easily accessible to the community.
+We hope to see the [changes](https://github.com/HoneyHazard/obs-studio-atomic-effects/wiki/Overview-of-the-changes-introduced-in-the-atomic-effects-fork-of-obs-studio) of the atomic-effects fork eventually integrated into OBS mainline. Perhaps, the Pixel Match Switcher itself could one day be bundled with OBS; part of the starter arsenal to make the awesome tool even more awesome. Our hearts would be filled with joy when the gift of pixel match switching becomes easily accessible to the community.
 
 ## Planned Expansion Features
 - Allow show/hide of an image/mask source as an alternative to scene switching
