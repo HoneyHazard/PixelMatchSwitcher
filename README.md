@@ -9,7 +9,7 @@ Two reasons this are useful are. (a) streamers often like to have displays with 
 - [Alpha Build Installers of OBS Fork + Plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/releases)
 - [User Manual](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual)
   - [Pixel Match Filter](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#pixel-match-filter)
-  - [UI Elements Overview](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#ui-elements-overview)
+  - [UI Overview](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#ui-elements-overview)
   - [Basic concepts](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#basic-concepts)
       + [Match Entry](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#match-entry)
       + [Match Image](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#match-image)
