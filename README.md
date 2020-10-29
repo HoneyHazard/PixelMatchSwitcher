@@ -48,10 +48,10 @@ We hope to see the [changes](https://github.com/HoneyHazard/obs-studio-atomic-ef
 - More advanced image processing could be made available for identifying elements in the video, so long as it is fast (and should probably stick to being implemented in the shader). This could broaden possible uses of the plugin.
 
 ## :construction: Build Resources
-- [Windows: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Windows:-Standalone-Plugin)
+- [Windows: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Windows%EA%9E%89-Standalone-Plugin)
 - \[**TODO**\] Windows: OBS In-tree
-- [Linux: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Linux:-Standalone-Plugin)
-- [Debian-based Linux: OBS In-tree](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Debian-based-Linux:-OBS-In-Tree)
+- [Linux: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Linux%EA%9E%89-Standalone-Plugin)
+- [Debian-based Linux: OBS In-tree](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Debian-based-Linux%EA%9E%89-OBS-In-Tree)
 - [obs-studio-pixel-match-switcher](https://github.com/PixelMatchSwitcher/obs-studio-pixel-match-switcher) is forked from [obs-studio-atomic-effects](https://github.com/HoneyHazard/obs-studio-atomic-effects), for the sole purpose of easy, in-tree builds of the plugin. These builds become [installer releases](https://github.com/HoneyHazard/PixelMatchSwitcher/releases) of Pixel Match Switcher.
 
 ## Related Github Projects
