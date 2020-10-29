@@ -1,6 +1,6 @@
 ## Pixel Match Switcher
 
-**Pixel Match Switcher** is a plugin for [OBS Studio](https://projectobs.com/en/), which allows scene switching to be triggered by comparing match images against regions of a video frame. A matching image can trigger transition to a specific scene, and several match entries can be arranged in priority-ordered list. Considerable amount of options is available for customizing the matching parameters and the switching behavior. Significant effort has been made towards a quick and user-friendly creation of match rules.
+**Pixel Match Switcher** is an [OBS Studio](https://projectobs.com/en/) plugin that allows scene switching to be triggered by comparisons of match images against regions of a video frame. An individual matching image triggers transition to a specific scene, and several match entries (each with their own scene target) can be arranged in a priority-ordered list. Considerable amount of options is available for customizing the matching rules and the switching behavior. Significant effort has been made towards a quick and user-friendly creation of match rules.
 
 The following are some of the foreseeable use cases for the plugin:
 - Streamers often like to have displays with a bigger streamer-cam and/or ads when they are in a game menu, or some other “non gameplay” area of the game.
