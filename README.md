@@ -27,7 +27,7 @@ Two reasons this are useful are. (a) streamers often like to have displays with 
 - [Windows: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Windows:-Standalone-Plugin)
 - \[**TODO**\] Windows: OBS In-tree
 - [Linux: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Linux:-Standalone-Plugin)
-- [Debian-based Linux: OBS In-three](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Debian-based-Linux:-OBS-In-Tree)
+- [Debian-based Linux: OBS In-tree](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Debian-based-Linux:-OBS-In-Tree)
 
 ## See Wiki for build instructions
 https://github.com/HoneyHazard/PixelMatchSwitcher/wiki
