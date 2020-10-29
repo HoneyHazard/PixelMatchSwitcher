@@ -21,7 +21,7 @@ Two reasons this are useful are. (a) streamers often like to have displays with 
       + [Preset](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#preset)
       + [No-match Target](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#no-match-target)
   - [Automask Walkthrough](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#automask-walkthrough)
-  - [UI Details]
+  - [UI Details](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#ui-details)
 
 ## :construction: Build Instructions
 - [Windows: standalone plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Windows:-Standalone-Plugin)
