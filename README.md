@@ -13,7 +13,7 @@ Presently, the plugin requires a special [atomic-effects](#Atomic-Effects-Fork-o
 ## Screenshot
 ![image](https://raw.githubusercontent.com/wiki/HoneyHazard/PixelMatchSwitcher/images/readme_screenshot.png)
 
-## :construction: User Resources
+## User Resources
 - [Alpha Build Installers of OBS Fork + Plugin](https://github.com/HoneyHazard/PixelMatchSwitcher/releases)
 - [User Manual](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual)
   - [Getting Started](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#getting-started)
