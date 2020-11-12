@@ -240,8 +240,6 @@ void PmMatchConfigWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig cfg)
 {
     m_matchIndex = matchIndex;
-    setTitle(QString(obs_module_text("Match Config #%1: %2"))
-        .arg(matchIndex+1).arg(cfg.label.data()));
 
     onMatchConfigChanged(matchIndex, cfg);
     bool existingSelected = matchIndex < m_multiConfigSz;
@@ -317,6 +315,10 @@ void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
 void PmMatchConfigWidget::onMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg)
 {
     if (matchIdx != m_matchIndex) return;
+
+    setTitle(QString(obs_module_text("Match Config #%1: %2"))
+        .arg(matchIdx + 1)
+        .arg(cfg.label.data()));
 
     m_imgPathEdit->blockSignals(true);
     m_imgPathEdit->setText(cfg.matchImgFilename.data());

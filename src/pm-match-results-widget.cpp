@@ -18,6 +18,8 @@ PmMatchResultsWidget::PmMatchResultsWidget(PmCore* core, QWidget* parent)
     // core event handlers
     connect(m_core, &PmCore::sigMatchConfigSelect,
         this, &PmMatchResultsWidget::onMatchConfigSelect, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigMatchConfigChanged,
+        this, &PmMatchResultsWidget::onMatchConfigSelect, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigNewMatchResults,
         this, &PmMatchResultsWidget::onNewMatchResults, Qt::QueuedConnection);
 
