@@ -18,7 +18,7 @@ public:
     PmImageView(QWidget* parent = nullptr);
     PmImageView(const QImage& image, QWidget* parent = nullptr);
     void showImage(const QImage& image);
-    void showMessage(const QString& message);
+    void showMessage(const QString& message, QColor color);
     void fixGeometry();
 
 protected:

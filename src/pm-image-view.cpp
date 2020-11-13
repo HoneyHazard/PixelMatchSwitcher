@@ -36,7 +36,7 @@ void PmImageView::showImage(const QImage& image)
     setRenderHints(0); // no-antialiasing
 }
 
-void PmImageView::showMessage(const QString &message)
+void PmImageView::showMessage(const QString &message, QColor color)
 {
     auto viewScene = scene();
     viewScene->clear();
@@ -50,7 +50,8 @@ void PmImageView::showMessage(const QString &message)
     int backdropHeight = int(colorBarsImage.height() * 0.2f);
 
     QGraphicsRectItem* backdropItem = new QGraphicsRectItem(
-        0, 0, backdropWidth, backdropHeight, imageItem);
+        0, 0, backdropWidth, backdropHeight*2.25f, imageItem);
+    backdropItem->setPen(QPen(color, 3.f));
     backdropItem->setBrush(palette().background());
     backdropItem->setPos(imageItem->boundingRect().center() 
                        - backdropItem->boundingRect().center());
@@ -60,7 +61,7 @@ void PmImageView::showMessage(const QString &message)
     int fontSz = int(backdropHeight * 0.2f);
     textItem->setFont(QFont(parentWidget()->font().family(), fontSz));
     textItem->setTextWidth(backdropWidth);
-    textItem->setDefaultTextColor(Qt::yellow);
+    textItem->setDefaultTextColor(color);
     textItem->setPos(imageItem->boundingRect().center()
                    - textItem->boundingRect().center());
 

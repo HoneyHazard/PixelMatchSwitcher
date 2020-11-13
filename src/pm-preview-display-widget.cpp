@@ -315,19 +315,25 @@ void PmPreviewDisplayWidget::updateDisplayState(
         QImage matchImg = m_core->matchImage(matchIndex);
         if (matchImg.isNull()) {
             m_imageView->showMessage(obs_module_text(
-                "No Match Image Loaded."));
+                "No Match Image Loaded."), Qt::yellow);
         } else {
             m_imageView->showImage(matchImg);
         }
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!runningEnabled) {
         m_imageView->showMessage(obs_module_text(
-            "Check \"Enable Matching\" to connect to Pixel Match filters"));
+            "Check \"Enable Matching\" <br /><br />"
+            "to connect to Pixel Match filter(s)."), QColor(255, 127, 0));
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!activeFilter.isValid()) {
         m_imageView->showMessage(obs_module_text(
+            "Filter not found in the current scene.<br />"
+            "<br />"
             "Right click an OBS video source. Select Filters.<br />"
-            "Add Pixel Match filter to the Effect Filters list."));
+            "Add Pixel Match filter to the Effect Filters list.<br />"
+            "<br />"
+            "Filter already added? Ensure the scene is selected."),
+		    Qt::yellow);
         m_displayStack->setCurrentWidget(m_imageView);
     } else {
         m_displayStack->setCurrentWidget(m_filterDisplay);
