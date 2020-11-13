@@ -323,7 +323,7 @@ void PmPreviewDisplayWidget::updateDisplayState(
     } else if (!runningEnabled) {
         m_imageView->showMessage(obs_module_text(
             "Check \"Enable Matching\" <br /><br />"
-            "to connect to Pixel Match filter(s)."), QColor(255, 127, 0));
+            "to connect to Pixel Match filter(s)."), QColor(255, 159, 0));
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!activeFilter.isValid()) {
         m_imageView->showMessage(obs_module_text(
