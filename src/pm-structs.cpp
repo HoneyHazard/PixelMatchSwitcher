@@ -107,7 +107,65 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     lingerMs = obs_data_get_int(data, "linger_ms");
 }
 
-PmMatchConfig::PmMatchConfig(QXmlStreamReader *reader) {}
+PmMatchConfig::PmMatchConfig(QXmlStreamReader *reader)
+{
+    while (reader->readNext()) {
+		QStringRef name = reader->name();
+
+		if (reader->isEndElement()) {
+			if (name == "match_config") {
+				return;
+            }
+		} else if (reader->isStartElement()) {
+			//if (name == "preset_name") {
+			//    presetName = reader->readElementText().toUtf8();
+			if (name == "match_image_filename") {
+				matchImgFilename =
+					reader->readElementText().toUtf8();
+			} else if (name == "label") {
+				label = reader->readElementText().toUtf8();
+			} else if (name == "roi_left") {
+				filterCfg.roi_left =
+					reader->readElementText().toInt();
+			} else if (name == "roi_bottom") {
+				filterCfg.roi_bottom =
+					reader->readElementText().toInt();
+			} else if (name == "per_pixel_allowed_error") {
+				filterCfg.per_pixel_err_thresh =
+					reader->readElementText().toFloat();
+			} else if (name == "total_match_threshold") {
+				totalMatchThresh =
+					reader->readElementText().toFloat();
+			} else if (name == "mask_mode") {
+				maskMode = (PmMaskMode)reader->readElementText()
+						   .toInt();
+			} else if (name == "mask_alpha") {
+				filterCfg.mask_alpha =
+					reader->readElementText() == "true" ? true : false;
+			} else if (name == "mask_color_r") {
+				filterCfg.mask_color.x =
+					reader->readElementText().toFloat();
+			} else if (name == "mask_color_g") {
+				filterCfg.mask_color.y =
+					reader->readElementText().toFloat();
+			} else if (name == "mask_color_b") {
+				filterCfg.mask_color.z =
+					reader->readElementText().toFloat();
+			} else if (name == "is_enabled") {
+				filterCfg.mask_alpha =
+					reader->readElementText() == "true" ? true : false;
+			} else if (name == "match_scene") {
+				targetScene =
+					reader->readElementText().toUtf8();
+			} else if (name == "match_transition") {
+				targetTransition =
+					reader->readElementText().toUtf8();
+			} else if (name == "linger_ms") {
+				lingerMs = reader->readElementText().toInt();
+			}
+		}
+    }
+}
 
 obs_data_t* PmMatchConfig::save() const
 {
@@ -135,28 +193,30 @@ obs_data_t* PmMatchConfig::save() const
 void PmMatchConfig::saveXml(QXmlStreamWriter *writer) const
 {
     writer->writeStartElement("match_config");
-    writer->writeAttribute("match_image_filename", matchImgFilename.data());
-    writer->writeAttribute("label", label.data());
-    writer->writeAttribute("roi_left", QString::number(filterCfg.roi_left));
-    writer->writeAttribute("roi_bottom", QString::number(filterCfg.roi_bottom));
-    writer->writeAttribute("per_pixel_allowed_error",
+    writer->writeTextElement("match_image_filename", matchImgFilename.data());
+    writer->writeTextElement("label", label.data());
+    writer->writeTextElement("roi_left",
+        QString::number(filterCfg.roi_left));
+    writer->writeTextElement("roi_bottom",
+        QString::number(filterCfg.roi_bottom));
+    writer->writeTextElement("per_pixel_allowed_error",
         QString::number(filterCfg.per_pixel_err_thresh));
-    writer->writeAttribute("total_match_threshold",
+    writer->writeTextElement("total_match_threshold",
         QString::number(totalMatchThresh));
-    writer->writeAttribute("mask_mode", QString::number((int)maskMode));
-    writer->writeAttribute("mask_alpha",
+    writer->writeTextElement("mask_mode", QString::number((int)maskMode));
+    writer->writeTextElement("mask_alpha",
         filterCfg.mask_alpha ? "true" : "false");
-    writer->writeAttribute("mask_color_r",
+    writer->writeTextElement("mask_color_r",
         QString::number(filterCfg.mask_color.x));
-    writer->writeAttribute("mask_color_g",
+    writer->writeTextElement("mask_color_g",
         QString::number(filterCfg.mask_color.y));
-    writer->writeAttribute("mask_color_b",
+    writer->writeTextElement("mask_color_b",
         QString::number(filterCfg.mask_color.z));
-    writer->writeAttribute("is_enabled",
+    writer->writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
-    writer->writeAttribute("match_scene", targetScene.data());
-    writer->writeAttribute("match_transition", targetTransition.data());
-    writer->writeAttribute("linger_ms", QString::number((int)lingerMs));
+    writer->writeTextElement("match_scene", targetScene.data());
+    writer->writeTextElement("match_transition", targetTransition.data());
+    writer->writeTextElement("linger_ms", QString::number((int)lingerMs));
     writer->writeEndElement();
 }
 
