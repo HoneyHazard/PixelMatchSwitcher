@@ -1,7 +1,9 @@
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"
 
-#include <QXmlStreamWriter> 
+#include <QXmlStreamWriter>
+#include <QFile>
+#include <sstream>
 
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
@@ -107,58 +109,58 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     lingerMs = obs_data_get_int(data, "linger_ms");
 }
 
-PmMatchConfig::PmMatchConfig(QXmlStreamReader *reader)
+PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
 {
-    while (reader->readNext()) {
-        QStringRef name = reader->name();
-        if (reader->isEndElement()) {
+    while (reader.readNext()) {
+        QStringRef name = reader.name();
+        if (reader.isEndElement()) {
             if (name == "match_config") {
                 return;
             }
-        } else if (reader->isStartElement()) {
+        } else if (reader.isStartElement()) {
             if (name == "label") {
-                label = reader->readElementText().toUtf8();
+                label = reader.readElementText().toUtf8();
             } else if (name == "match_image_filename") {
                 matchImgFilename =
-                    reader->readElementText().toUtf8();
+                    reader.readElementText().toUtf8();
             } else if (name == "roi_left") {
                 filterCfg.roi_left =
-                    reader->readElementText().toInt();
+                    reader.readElementText().toInt();
             } else if (name == "roi_bottom") {
                 filterCfg.roi_bottom =
-                    reader->readElementText().toInt();
+                    reader.readElementText().toInt();
             } else if (name == "per_pixel_allowed_error") {
                 filterCfg.per_pixel_err_thresh =
-                    reader->readElementText().toFloat();
+                    reader.readElementText().toFloat();
             } else if (name == "total_match_threshold") {
                 totalMatchThresh =
-                    reader->readElementText().toFloat();
+                    reader.readElementText().toFloat();
             } else if (name == "mask_mode") {
-                maskMode = (PmMaskMode)reader->readElementText()
+                maskMode = (PmMaskMode)reader.readElementText()
                            .toInt();
             } else if (name == "mask_alpha") {
                 filterCfg.mask_alpha =
-                    reader->readElementText() == "true" ? true : false;
+                    reader.readElementText() == "true" ? true : false;
             } else if (name == "mask_color_r") {
                 filterCfg.mask_color.x =
-                    reader->readElementText().toFloat();
+                    reader.readElementText().toFloat();
             } else if (name == "mask_color_g") {
                 filterCfg.mask_color.y =
-                    reader->readElementText().toFloat();
+                    reader.readElementText().toFloat();
             } else if (name == "mask_color_b") {
                 filterCfg.mask_color.z =
-                    reader->readElementText().toFloat();
+                    reader.readElementText().toFloat();
             } else if (name == "is_enabled") {
                 filterCfg.mask_alpha =
-                    reader->readElementText() == "true" ? true : false;
+                    reader.readElementText() == "true" ? true : false;
             } else if (name == "target_scene") {
                 targetScene =
-                    reader->readElementText().toUtf8();
+                    reader.readElementText().toUtf8();
             } else if (name == "target_transition") {
                 targetTransition =
-                    reader->readElementText().toUtf8();
+                    reader.readElementText().toUtf8();
             } else if (name == "linger_ms") {
-                lingerMs = reader->readElementText().toInt();
+                lingerMs = reader.readElementText().toInt();
             }
         }
     }
@@ -187,34 +189,34 @@ obs_data_t* PmMatchConfig::save() const
     return ret;
 }
 
-void PmMatchConfig::saveXml(QXmlStreamWriter *writer) const
+void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
 {
-    writer->writeStartElement("match_config");
-    writer->writeTextElement("label", label.data());
-    writer->writeTextElement("match_image_filename", matchImgFilename.data());
-    writer->writeTextElement("roi_left",
+    writer.writeStartElement("match_config");
+    writer.writeTextElement("label", label.data());
+    writer.writeTextElement("match_image_filename", matchImgFilename.data());
+    writer.writeTextElement("roi_left",
         QString::number(filterCfg.roi_left));
-    writer->writeTextElement("roi_bottom",
+    writer.writeTextElement("roi_bottom",
         QString::number(filterCfg.roi_bottom));
-    writer->writeTextElement("per_pixel_allowed_error",
+    writer.writeTextElement("per_pixel_allowed_error",
         QString::number(filterCfg.per_pixel_err_thresh));
-    writer->writeTextElement("total_match_threshold",
+    writer.writeTextElement("total_match_threshold",
         QString::number(totalMatchThresh));
-    writer->writeTextElement("mask_mode", QString::number((int)maskMode));
-    writer->writeTextElement("mask_alpha",
+    writer.writeTextElement("mask_mode", QString::number((int)maskMode));
+    writer.writeTextElement("mask_alpha",
         filterCfg.mask_alpha ? "true" : "false");
-    writer->writeTextElement("mask_color_r",
+    writer.writeTextElement("mask_color_r",
         QString::number(filterCfg.mask_color.x));
-    writer->writeTextElement("mask_color_g",
+    writer.writeTextElement("mask_color_g",
         QString::number(filterCfg.mask_color.y));
-    writer->writeTextElement("mask_color_b",
+    writer.writeTextElement("mask_color_b",
         QString::number(filterCfg.mask_color.z));
-    writer->writeTextElement("is_enabled",
+    writer.writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
-    writer->writeTextElement("no_match_scene", targetScene.data());
-    writer->writeTextElement("no_match_transition", targetTransition.data());
-    writer->writeTextElement("linger_ms", QString::number((int)lingerMs));
-    writer->writeEndElement();
+    writer.writeTextElement("no_match_scene", targetScene.data());
+    writer.writeTextElement("no_match_transition", targetTransition.data());
+    writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
+    writer.writeEndElement();
 }
 
 const std::string PmMultiMatchConfig::k_defaultNoMatchScene = "";
@@ -242,24 +244,24 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
 }
 
 PmMultiMatchConfig::PmMultiMatchConfig(
-    QXmlStreamReader *reader, std::string &presetName)
+    QXmlStreamReader &reader, std::string &presetName)
 {
-	while (reader->readNext()) {
-		QStringRef name = reader->name();
-		if (reader->isEndElement()) {
-			if (name == "preset") {
-				return;
-		    }
-		} else {
+    while (reader.readNext()) {
+        QStringRef name = reader.name();
+        if (reader.isEndElement()) {
+            if (name == "preset") {
+                return;
+            }
+        } else {
             if (name == "name") {
-				presetName = reader->readElementText().toUtf8();
-	        } else if (name == "no_match_scene") {
-                noMatchScene = reader->readElementText().toUtf8();
+                presetName = reader.readElementText().toUtf8();
+            } else if (name == "no_match_scene") {
+                noMatchScene = reader.readElementText().toUtf8();
             } else if (name == "no_match_transition") {
-                noMatchTransition = reader->readElementText().toUtf8();
+                noMatchTransition = reader.readElementText().toUtf8();
             } else if (name == "multi_match_config") {
                 PmMatchConfig cfg(reader);
-		        push_back(cfg);
+                push_back(cfg);
             }
         }
     }
@@ -286,16 +288,16 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
 }
 
 void PmMultiMatchConfig::saveXml(
-    QXmlStreamWriter *writer, const std::string &presetName) const
+    QXmlStreamWriter &writer, const std::string &presetName) const
 {
-	writer->writeStartElement("preset");
-	writer->writeTextElement("name", presetName.data());
-	writer->writeTextElement("no_match_scene", noMatchScene.data());
-	writer->writeTextElement("no_match_transition", noMatchTransition.data());
-	for (const auto &cfg : *this) {
-		cfg.saveXml(writer);
+    writer.writeStartElement("preset");
+    writer.writeTextElement("name", presetName.data());
+    writer.writeTextElement("no_match_scene", noMatchScene.data());
+    writer.writeTextElement("no_match_transition", noMatchTransition.data());
+    for (const auto &cfg : *this) {
+        cfg.saveXml(writer);
     }
-    writer->writeEndElement();
+    writer.writeEndElement();
 }
 
 bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
@@ -362,3 +364,29 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
 }
 
+void PmMatchPresets::exportXml(const std::string &filename,
+                               const QSet<std::string> &selectedPresets) const
+{
+    QFile file(filename.data());
+    if (!file.isOpen()) {
+        std::stringstream oss;
+        oss << "Unable to open file: " << filename;
+        throw std::exception(oss.str().data());
+    }
+
+    QXmlStreamWriter writer(&file);
+    writer.setAutoFormatting(true);
+    writer.writeStartDocument();
+    writer.writeDTD("<!DOCTYPE pixel-match-switcher>");
+    writer.writeAttribute("obs_version", OBS_VERSION); // TODO: plugin version as well
+    writer.writeStartElement("presets");
+    for (const auto &presetName : selectedPresets) {
+        auto f = find(presetName);
+        if (f != end()) {
+            const auto &preset = *f;
+            preset.saveXml(writer, presetName);
+        }
+    }
+
+    writer.writeEndDocument();
+}

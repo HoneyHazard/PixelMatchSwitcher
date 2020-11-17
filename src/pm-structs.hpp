@@ -78,9 +78,10 @@ struct PmMatchConfig
 {
     PmMatchConfig();
     PmMatchConfig(obs_data_t* data);
-    PmMatchConfig(QXmlStreamReader *reader);
+    PmMatchConfig(QXmlStreamReader &reader);
+
     obs_data_t* save() const;
-    void saveXml(QXmlStreamWriter *writer) const;
+    void saveXml(QXmlStreamWriter &writer) const;
 
     std::string label = obs_module_text("new config");
     std::string matchImgFilename;
@@ -111,10 +112,10 @@ public:
 
     PmMultiMatchConfig() {}
     PmMultiMatchConfig(obs_data_t* data);
-    PmMultiMatchConfig(QXmlStreamReader *reader, std::string &presetName);
+    PmMultiMatchConfig(QXmlStreamReader &reader, std::string &presetName);
 
     obs_data_t* save(const std::string& presetName);
-    void saveXml(QXmlStreamWriter *writer, const std::string &presetName) const;
+    void saveXml(QXmlStreamWriter &writer, const std::string &presetName) const;
 
     bool operator==(const PmMultiMatchConfig&) const;
     bool operator!=(const PmMultiMatchConfig& other) const
@@ -128,7 +129,15 @@ public:
  * @bries Stores multiple PmMultiMatchConfig that are easily referenced by a
  *        preset name
  */
-typedef QHash<std::string, PmMultiMatchConfig> PmMatchPresets;
+class PmMatchPresets final : public QHash<std::string, PmMultiMatchConfig>
+{
+public:
+    void importXml(const std::string &filename);
+    void exportXml(const std::string &filename,
+                   const QSet<std::string> &selectedPresets) const;
+};
+
+
 
 /*
  * @brief Represents a set of weak source references to available scenes, that
