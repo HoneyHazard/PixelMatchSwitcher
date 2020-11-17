@@ -111,7 +111,10 @@ public:
 
     PmMultiMatchConfig() {}
     PmMultiMatchConfig(obs_data_t* data);
+    PmMultiMatchConfig(QXmlStreamReader *reader, std::string &presetName);
+
     obs_data_t* save(const std::string& presetName);
+    void saveXml(QXmlStreamWriter *writer, const std::string &presetName) const;
 
     bool operator==(const PmMultiMatchConfig&) const;
     bool operator!=(const PmMultiMatchConfig& other) const

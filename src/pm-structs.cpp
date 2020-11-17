@@ -111,17 +111,16 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader *reader)
 {
     while (reader->readNext()) {
         QStringRef name = reader->name();
-
         if (reader->isEndElement()) {
             if (name == "match_config") {
                 return;
             }
         } else if (reader->isStartElement()) {
-            if (name == "match_image_filename") {
+            if (name == "label") {
+                label = reader->readElementText().toUtf8();
+            } else if (name == "match_image_filename") {
                 matchImgFilename =
                     reader->readElementText().toUtf8();
-            } else if (name == "label") {
-                label = reader->readElementText().toUtf8();
             } else if (name == "roi_left") {
                 filterCfg.roi_left =
                     reader->readElementText().toInt();
@@ -191,8 +190,8 @@ obs_data_t* PmMatchConfig::save() const
 void PmMatchConfig::saveXml(QXmlStreamWriter *writer) const
 {
     writer->writeStartElement("match_config");
-    writer->writeTextElement("match_image_filename", matchImgFilename.data());
     writer->writeTextElement("label", label.data());
+    writer->writeTextElement("match_image_filename", matchImgFilename.data());
     writer->writeTextElement("roi_left",
         QString::number(filterCfg.roi_left));
     writer->writeTextElement("roi_bottom",
@@ -212,8 +211,8 @@ void PmMatchConfig::saveXml(QXmlStreamWriter *writer) const
         QString::number(filterCfg.mask_color.z));
     writer->writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
-    writer->writeTextElement("target_scene", targetScene.data());
-    writer->writeTextElement("target_transition", targetTransition.data());
+    writer->writeTextElement("no_match_scene", targetScene.data());
+    writer->writeTextElement("no_match_transition", targetTransition.data());
     writer->writeTextElement("linger_ms", QString::number((int)lingerMs));
     writer->writeEndElement();
 }
@@ -233,13 +232,37 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     }
     obs_data_array_release(matchEntriesArray);
 
-    noMatchScene = obs_data_get_string(data, "no_target_scene");
+    noMatchScene = obs_data_get_string(data, "no_match_scene");
 
     obs_data_set_default_string(
-        data, "no_target_transition", noMatchTransition.data());
-    std::string str = obs_data_get_string(data, "no_target_transition");
+        data, "no_match_transition", noMatchTransition.data());
+    std::string str = obs_data_get_string(data, "no_match_transition");
     if (str.size())
         noMatchTransition = str;
+}
+
+PmMultiMatchConfig::PmMultiMatchConfig(
+    QXmlStreamReader *reader, std::string &presetName)
+{
+	while (reader->readNext()) {
+		QStringRef name = reader->name();
+		if (reader->isEndElement()) {
+			if (name == "preset") {
+				return;
+		    }
+		} else {
+            if (name == "name") {
+				presetName = reader->readElementText().toUtf8();
+	        } else if (name == "no_match_scene") {
+                noMatchScene = reader->readElementText().toUtf8();
+            } else if (name == "no_match_transition") {
+                noMatchTransition = reader->readElementText().toUtf8();
+            } else if (name == "multi_match_config") {
+                PmMatchConfig cfg(reader);
+		        push_back(cfg);
+            }
+        }
+    }
 }
 
 obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
@@ -257,9 +280,22 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     obs_data_set_array(ret, "entries", matchEntriesArray);
     obs_data_array_release(matchEntriesArray);
     
-    obs_data_set_string(ret, "no_target_scene", noMatchScene.data());
-    obs_data_set_string(ret, "no_target_transition", noMatchTransition.data());
+    obs_data_set_string(ret, "no_match_scene", noMatchScene.data());
+    obs_data_set_string(ret, "no_match_transition", noMatchTransition.data());
     return ret;
+}
+
+void PmMultiMatchConfig::saveXml(
+    QXmlStreamWriter *writer, const std::string &presetName) const
+{
+	writer->writeStartElement("preset");
+	writer->writeTextElement("name", presetName.data());
+	writer->writeTextElement("no_match_scene", noMatchScene.data());
+	writer->writeTextElement("no_match_transition", noMatchTransition.data());
+	for (const auto &cfg : *this) {
+		cfg.saveXml(writer);
+    }
+    writer->writeEndElement();
 }
 
 bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
@@ -278,7 +314,7 @@ bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
     }
 }
 
-QSet<std::string> PmScenes::sceneNames() const
+QSet<std::string> PmScenes::sceneNames() const 
 {
     QSet<std::string> ret;
     for (const auto &name : values()) {
