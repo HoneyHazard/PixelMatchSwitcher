@@ -595,6 +595,16 @@ void PmCore::onMatchPresetRemove(std::string name)
     onMatchPresetSelect(selOther);
 }
 
+void PmCore::onMatchPresetExport(
+    std::string filename,  QList<std::string> selectedPresets)
+{
+    try {
+		m_matchPresets.exportXml(filename, selectedPresets);
+    } catch(std::exception e) {
+        // TODO?
+    }
+}
+
 void PmCore::onRunningEnabledChanged(bool enable)
 {
     if (m_runningEnabled != enable) {

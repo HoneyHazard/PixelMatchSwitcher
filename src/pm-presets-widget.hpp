@@ -2,6 +2,7 @@
 
 #include <QGroupBox>
 #include <QMessageBox>
+#include <QList>
 
 class QComboBox;
 class QPushButton;
@@ -21,6 +22,7 @@ signals:
     void sigMatchPresetSave(std::string name);
     void sigMatchPresetRemove(std::string name);
     void sigMultiMatchConfigReset();
+    void sigMatchPresetExport(std::string filename, QList<std::string> presets);
 
 protected slots:
     // local UI handlers
@@ -30,6 +32,7 @@ protected slots:
     void onPresetSaveAs();
     void onNewConfig();
     void onPresetRemove();
+    void onPresetExport();
 
     // core events handlers
     void onAvailablePresetsChanged();
@@ -51,4 +54,6 @@ protected:
     QPushButton* m_presetSaveAsButton;
     QPushButton* m_newConfigButton;
     QPushButton* m_presetRemoveButton;
+    QPushButton *m_exportButton;
+    QPushButton *m_importButton;
 };

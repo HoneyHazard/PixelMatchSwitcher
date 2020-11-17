@@ -5,6 +5,7 @@
 #include <qmetatype.h>
 #include <QHash>
 #include <QSet>
+#include <QList>
 
 #include <obs.h>
 #include <obs.hpp>
@@ -134,7 +135,7 @@ class PmMatchPresets final : public QHash<std::string, PmMultiMatchConfig>
 public:
     void importXml(const std::string &filename);
     void exportXml(const std::string &filename,
-                   const QSet<std::string> &selectedPresets) const;
+                   const QList<std::string> &selectedPresets) const;
 };
 
 
@@ -178,7 +179,9 @@ namespace PmConstants
 {
     const QString k_imageFilenameFilter 
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
-};
+    const QString k_xmlFilenameFilter
+        = "XML (*.xml);; All files (*.*)";
+    };
 
 /**
  * @brief Allows our data structures to be propagated through signals and slots.

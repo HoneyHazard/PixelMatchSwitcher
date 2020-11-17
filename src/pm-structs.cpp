@@ -213,8 +213,8 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
         QString::number(filterCfg.mask_color.z));
     writer.writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
-    writer.writeTextElement("no_match_scene", targetScene.data());
-    writer.writeTextElement("no_match_transition", targetTransition.data());
+    writer.writeTextElement("target_scene", targetScene.data());
+    writer.writeTextElement("target_transition", targetTransition.data());
     writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
     writer.writeEndElement();
 }
@@ -362,6 +362,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmFilterRef>("PmFilterRef");
     qRegisterMetaType<PmCaptureState>("PmCaptureState");
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
+    qRegisterMetaType<QList<std::string>>("QList<std::string>");
 }
 
 void PmMatchPresets::importXml(const std::string &filename)
@@ -394,9 +395,10 @@ void PmMatchPresets::importXml(const std::string &filename)
 }
 
 void PmMatchPresets::exportXml(const std::string &filename,
-                               const QSet<std::string> &selectedPresets) const
+                               const QList<std::string> &selectedPresets) const
 {
     QFile file(filename.data());
+	file.open(QIODevice::WriteOnly);
     if (!file.isOpen()) {
         std::stringstream oss;
         oss << "Unable to open file: " << filename;

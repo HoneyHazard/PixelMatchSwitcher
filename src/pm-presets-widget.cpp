@@ -8,6 +8,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QInputDialog>
+#include <QFileDialog>
 
 const char* PmPresetsWidget::k_unsavedPresetStr
     = obs_module_text("<unsaved preset>");
@@ -61,7 +62,13 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     connect(m_presetRemoveButton, &QPushButton::released,
         this, &PmPresetsWidget::onPresetRemove, qc);
     presetLayout->addWidget(m_presetRemoveButton);
-    
+
+    m_exportButton = prepareButton(obs_module_text("Export Preset(s)"),
+        ":/res/images/icons8-export-32.png");
+    connect(m_exportButton, &QPushButton::released,
+            this, &PmPresetsWidget::onPresetExport, qc);
+    presetLayout->addWidget(m_exportButton);
+
     // core event handlers
     connect(m_core, &PmCore::sigAvailablePresetsChanged,
             this, &PmPresetsWidget::onAvailablePresetsChanged, qc);
@@ -79,7 +86,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onMatchPresetRemove, qc);
     connect(this, &PmPresetsWidget::sigMultiMatchConfigReset,
             m_core, &PmCore::onMultiMatchConfigReset, qc);
-
+    connect(this, &PmPresetsWidget::sigMatchPresetExport,
+            m_core, &PmCore::onMatchPresetExport, qc);
 
     // finish init state
     onAvailablePresetsChanged();
@@ -257,6 +265,27 @@ void PmPresetsWidget::onPresetRemove()
             return;
     }
     emit sigMatchPresetRemove(oldPreset);
+}
+
+void PmPresetsWidget::onPresetExport()
+{
+	std::string activePresetName = m_core->activeMatchPresetName();
+
+	QFileDialog saveDialog(this, obs_module_text("Export Preset XML"), QString(),
+        PmConstants::k_xmlFilenameFilter);
+	saveDialog.selectFile(activePresetName.data());
+	saveDialog.setAcceptMode(QFileDialog::AcceptSave);
+	saveDialog.exec();
+
+    QStringList selectedFiles = saveDialog.selectedFiles();
+	if (selectedFiles.empty()) return;
+    QString qstrFilename = selectedFiles.first();
+    std::string filename(qstrFilename.toUtf8().data());
+
+    // TODO: allow exporting multiple presets
+
+    QList<std::string> presets { activePresetName };
+    emit sigMatchPresetExport(filename, presets);
 }
 
 QMessageBox::ButtonRole PmPresetsWidget::promptUnsavedProceed()
