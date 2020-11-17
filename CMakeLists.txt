@@ -28,6 +28,7 @@ if(BUILD_OUT_OF_TREE)
     find_package(LibObs REQUIRED)
     find_package(Qt5Core REQUIRED)
     find_package(Qt5Widgets REQUIRED)
+	find_package(Qt5Xml)
 
     find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
     find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})

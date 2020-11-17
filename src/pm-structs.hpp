@@ -11,6 +11,9 @@
 
 #include "pm-filter.h"
 
+class QXmlStreamWriter;
+class QXmlStreamReader;
+
 /**
  * @brief Describes strategies for how regions of the match image will be masked 
  *        out based on color or alpha channels of the image.
@@ -75,7 +78,9 @@ struct PmMatchConfig
 {
     PmMatchConfig();
     PmMatchConfig(obs_data_t* data);
+    PmMatchConfig(QXmlStreamReader *reader);
     obs_data_t* save() const;
+    void saveXml(QXmlStreamWriter *writer) const;
 
     std::string label = obs_module_text("new config");
     std::string matchImgFilename;

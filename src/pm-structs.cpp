@@ -1,6 +1,8 @@
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"
 
+#include <QXmlStreamWriter> 
+
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
 {
@@ -105,6 +107,8 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     lingerMs = obs_data_get_int(data, "linger_ms");
 }
 
+PmMatchConfig::PmMatchConfig(QXmlStreamReader *reader) {}
+
 obs_data_t* PmMatchConfig::save() const
 {
     obs_data_t *ret = obs_data_create();
@@ -126,6 +130,34 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_int(ret, "linger_ms", (int)lingerMs);
 
     return ret;
+}
+
+void PmMatchConfig::saveXml(QXmlStreamWriter *writer) const
+{
+    writer->writeStartElement("match_config");
+    writer->writeAttribute("match_image_filename", matchImgFilename.data());
+    writer->writeAttribute("label", label.data());
+    writer->writeAttribute("roi_left", QString::number(filterCfg.roi_left));
+    writer->writeAttribute("roi_bottom", QString::number(filterCfg.roi_bottom));
+    writer->writeAttribute("per_pixel_allowed_error",
+        QString::number(filterCfg.per_pixel_err_thresh));
+    writer->writeAttribute("total_match_threshold",
+        QString::number(totalMatchThresh));
+    writer->writeAttribute("mask_mode", QString::number((int)maskMode));
+    writer->writeAttribute("mask_alpha",
+        filterCfg.mask_alpha ? "true" : "false");
+    writer->writeAttribute("mask_color_r",
+        QString::number(filterCfg.mask_color.x));
+    writer->writeAttribute("mask_color_g",
+        QString::number(filterCfg.mask_color.y));
+    writer->writeAttribute("mask_color_b",
+        QString::number(filterCfg.mask_color.z));
+    writer->writeAttribute("is_enabled",
+        filterCfg.is_enabled ? "true" : "false" );
+    writer->writeAttribute("match_scene", targetScene.data());
+    writer->writeAttribute("match_transition", targetTransition.data());
+    writer->writeAttribute("linger_ms", QString::number((int)lingerMs));
+    writer->writeEndElement();
 }
 
 const std::string PmMultiMatchConfig::k_defaultNoMatchScene = "";
