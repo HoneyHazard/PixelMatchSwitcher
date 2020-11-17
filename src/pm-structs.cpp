@@ -98,10 +98,10 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     obs_data_set_default_bool(data, "is_enabled", filterCfg.is_enabled);
     filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
     
-    targetScene = obs_data_get_string(data, "match_scene");
+    targetScene = obs_data_get_string(data, "target_scene");
 
-    obs_data_set_default_string(data, "match_transition", targetTransition.data());
-    targetTransition = obs_data_get_string(data, "match_transition");
+    obs_data_set_default_string(data, "target_transition", targetTransition.data());
+    targetTransition = obs_data_get_string(data, "target_transition");
 
     obs_data_set_default_int(data, "linger_ms", (int)lingerMs);
     lingerMs = obs_data_get_int(data, "linger_ms");
@@ -110,60 +110,58 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 PmMatchConfig::PmMatchConfig(QXmlStreamReader *reader)
 {
     while (reader->readNext()) {
-		QStringRef name = reader->name();
+        QStringRef name = reader->name();
 
-		if (reader->isEndElement()) {
-			if (name == "match_config") {
-				return;
+        if (reader->isEndElement()) {
+            if (name == "match_config") {
+                return;
             }
-		} else if (reader->isStartElement()) {
-			//if (name == "preset_name") {
-			//    presetName = reader->readElementText().toUtf8();
-			if (name == "match_image_filename") {
-				matchImgFilename =
-					reader->readElementText().toUtf8();
-			} else if (name == "label") {
-				label = reader->readElementText().toUtf8();
-			} else if (name == "roi_left") {
-				filterCfg.roi_left =
-					reader->readElementText().toInt();
-			} else if (name == "roi_bottom") {
-				filterCfg.roi_bottom =
-					reader->readElementText().toInt();
-			} else if (name == "per_pixel_allowed_error") {
-				filterCfg.per_pixel_err_thresh =
-					reader->readElementText().toFloat();
-			} else if (name == "total_match_threshold") {
-				totalMatchThresh =
-					reader->readElementText().toFloat();
-			} else if (name == "mask_mode") {
-				maskMode = (PmMaskMode)reader->readElementText()
-						   .toInt();
-			} else if (name == "mask_alpha") {
-				filterCfg.mask_alpha =
-					reader->readElementText() == "true" ? true : false;
-			} else if (name == "mask_color_r") {
-				filterCfg.mask_color.x =
-					reader->readElementText().toFloat();
-			} else if (name == "mask_color_g") {
-				filterCfg.mask_color.y =
-					reader->readElementText().toFloat();
-			} else if (name == "mask_color_b") {
-				filterCfg.mask_color.z =
-					reader->readElementText().toFloat();
-			} else if (name == "is_enabled") {
-				filterCfg.mask_alpha =
-					reader->readElementText() == "true" ? true : false;
-			} else if (name == "match_scene") {
-				targetScene =
-					reader->readElementText().toUtf8();
-			} else if (name == "match_transition") {
-				targetTransition =
-					reader->readElementText().toUtf8();
-			} else if (name == "linger_ms") {
-				lingerMs = reader->readElementText().toInt();
-			}
-		}
+        } else if (reader->isStartElement()) {
+            if (name == "match_image_filename") {
+                matchImgFilename =
+                    reader->readElementText().toUtf8();
+            } else if (name == "label") {
+                label = reader->readElementText().toUtf8();
+            } else if (name == "roi_left") {
+                filterCfg.roi_left =
+                    reader->readElementText().toInt();
+            } else if (name == "roi_bottom") {
+                filterCfg.roi_bottom =
+                    reader->readElementText().toInt();
+            } else if (name == "per_pixel_allowed_error") {
+                filterCfg.per_pixel_err_thresh =
+                    reader->readElementText().toFloat();
+            } else if (name == "total_match_threshold") {
+                totalMatchThresh =
+                    reader->readElementText().toFloat();
+            } else if (name == "mask_mode") {
+                maskMode = (PmMaskMode)reader->readElementText()
+                           .toInt();
+            } else if (name == "mask_alpha") {
+                filterCfg.mask_alpha =
+                    reader->readElementText() == "true" ? true : false;
+            } else if (name == "mask_color_r") {
+                filterCfg.mask_color.x =
+                    reader->readElementText().toFloat();
+            } else if (name == "mask_color_g") {
+                filterCfg.mask_color.y =
+                    reader->readElementText().toFloat();
+            } else if (name == "mask_color_b") {
+                filterCfg.mask_color.z =
+                    reader->readElementText().toFloat();
+            } else if (name == "is_enabled") {
+                filterCfg.mask_alpha =
+                    reader->readElementText() == "true" ? true : false;
+            } else if (name == "target_scene") {
+                targetScene =
+                    reader->readElementText().toUtf8();
+            } else if (name == "target_transition") {
+                targetTransition =
+                    reader->readElementText().toUtf8();
+            } else if (name == "linger_ms") {
+                lingerMs = reader->readElementText().toInt();
+            }
+        }
     }
 }
 
@@ -183,8 +181,8 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
 
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
-    obs_data_set_string(ret, "match_scene", targetScene.data());
-    obs_data_set_string(ret, "match_transition", targetTransition.data());
+    obs_data_set_string(ret, "target_scene", targetScene.data());
+    obs_data_set_string(ret, "target_transition", targetTransition.data());
     obs_data_set_int(ret, "linger_ms", (int)lingerMs);
 
     return ret;
@@ -214,8 +212,8 @@ void PmMatchConfig::saveXml(QXmlStreamWriter *writer) const
         QString::number(filterCfg.mask_color.z));
     writer->writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
-    writer->writeTextElement("match_scene", targetScene.data());
-    writer->writeTextElement("match_transition", targetTransition.data());
+    writer->writeTextElement("target_scene", targetScene.data());
+    writer->writeTextElement("target_transition", targetTransition.data());
     writer->writeTextElement("linger_ms", QString::number((int)lingerMs));
     writer->writeEndElement();
 }
@@ -235,11 +233,11 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     }
     obs_data_array_release(matchEntriesArray);
 
-    noMatchScene = obs_data_get_string(data, "no_match_scene");
+    noMatchScene = obs_data_get_string(data, "no_target_scene");
 
     obs_data_set_default_string(
-        data, "no_match_transition", noMatchTransition.data());
-    std::string str = obs_data_get_string(data, "no_match_transition");
+        data, "no_target_transition", noMatchTransition.data());
+    std::string str = obs_data_get_string(data, "no_target_transition");
     if (str.size())
         noMatchTransition = str;
 }
@@ -259,8 +257,8 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     obs_data_set_array(ret, "entries", matchEntriesArray);
     obs_data_array_release(matchEntriesArray);
     
-    obs_data_set_string(ret, "no_match_scene", noMatchScene.data());
-    obs_data_set_string(ret, "no_match_transition", noMatchTransition.data());
+    obs_data_set_string(ret, "no_target_scene", noMatchScene.data());
+    obs_data_set_string(ret, "no_target_transition", noMatchTransition.data());
     return ret;
 }
 
