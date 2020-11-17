@@ -364,6 +364,35 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
 }
 
+void PmMatchPresets::importXml(const std::string &filename)
+{
+    QFile file(filename.data());
+    if (!file.isOpen()) {
+        std::stringstream oss;
+        oss << "Unable to open file: " << filename;
+        throw std::exception(oss.str().data());
+    }
+
+    QXmlStreamReader xml(&file);
+    bool readingPresets = false;
+    while (xml.readNext()) {
+        auto name = xml.name();
+        if (name == "presets") {
+            if (xml.isStartElement()) {
+                readingPresets = true;
+            } else {
+                readingPresets = false;
+            }
+        } else if (readingPresets) {
+            if (name == "preset" && xml.isStartElement()) {
+                std::string presetName;
+                PmMultiMatchConfig preset(xml, presetName);
+                insert(presetName, preset);
+            }
+        }
+    }
+}
+
 void PmMatchPresets::exportXml(const std::string &filename,
                                const QSet<std::string> &selectedPresets) const
 {
@@ -374,19 +403,19 @@ void PmMatchPresets::exportXml(const std::string &filename,
         throw std::exception(oss.str().data());
     }
 
-    QXmlStreamWriter writer(&file);
-    writer.setAutoFormatting(true);
-    writer.writeStartDocument();
-    writer.writeDTD("<!DOCTYPE pixel-match-switcher>");
-    writer.writeAttribute("obs_version", OBS_VERSION); // TODO: plugin version as well
-    writer.writeStartElement("presets");
+    QXmlStreamWriter xml(&file);
+    xml.setAutoFormatting(true);
+    xml.writeStartDocument();
+    xml.writeDTD("<!DOCTYPE pixel-match-switcher>");
+    xml.writeStartElement("presets");
+    xml.writeAttribute("obs_version", OBS_VERSION); // TODO: plugin version as well
+
     for (const auto &presetName : selectedPresets) {
         auto f = find(presetName);
         if (f != end()) {
             const auto &preset = *f;
-            preset.saveXml(writer, presetName);
+            preset.saveXml(xml, presetName);
         }
     }
-
-    writer.writeEndDocument();
+    xml.writeEndDocument();
 }
