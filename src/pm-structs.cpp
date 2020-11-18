@@ -111,7 +111,12 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 
 PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
 {
-    while (reader.readNext()) {
+    while (true) {
+        reader.readNext();
+        if (reader.atEnd() || reader.error() != QXmlStreamReader::NoError) {
+            return;
+        }
+
         QStringRef name = reader.name();
         if (reader.isEndElement()) {
             if (name == "match_config") {
@@ -246,7 +251,12 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
 PmMultiMatchConfig::PmMultiMatchConfig(
     QXmlStreamReader &reader, std::string &presetName)
 {
-    while (reader.readNext()) {
+    while (true) {
+        reader.readNext();
+        if (reader.atEnd() || reader.error() != QXmlStreamReader::NoError) {
+            return;
+        }
+
         QStringRef name = reader.name();
         if (reader.isEndElement()) {
             if (name == "preset") {
@@ -259,7 +269,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(
                 noMatchScene = reader.readElementText().toUtf8();
             } else if (name == "no_match_transition") {
                 noMatchTransition = reader.readElementText().toUtf8();
-            } else if (name == "multi_match_config") {
+            } else if (name == "match_config") {
                 PmMatchConfig cfg(reader);
                 push_back(cfg);
             }
@@ -355,6 +365,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
+    qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
@@ -365,9 +376,11 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<QList<std::string>>("QList<std::string>");
 }
 
-void PmMatchPresets::importXml(const std::string &filename)
+PmMatchPresets PmMatchPresets::importXml(const std::string &filename)
 {
+    PmMatchPresets ret;
     QFile file(filename.data());
+    file.open(QIODevice::ReadOnly);
     if (!file.isOpen()) {
         std::stringstream oss;
         oss << "Unable to open file: " << filename;
@@ -376,7 +389,12 @@ void PmMatchPresets::importXml(const std::string &filename)
 
     QXmlStreamReader xml(&file);
     bool readingPresets = false;
-    while (xml.readNext()) {
+    while (true) {
+        xml.readNext();
+        if (xml.atEnd() || xml.error() != QXmlStreamReader::NoError) {
+            break;
+        }
+
         auto name = xml.name();
         if (name == "presets") {
             if (xml.isStartElement()) {
@@ -388,17 +406,18 @@ void PmMatchPresets::importXml(const std::string &filename)
             if (name == "preset" && xml.isStartElement()) {
                 std::string presetName;
                 PmMultiMatchConfig preset(xml, presetName);
-                insert(presetName, preset);
+                ret.insert(presetName, preset);
             }
         }
     }
+    return ret;
 }
 
 void PmMatchPresets::exportXml(const std::string &filename,
                                const QList<std::string> &selectedPresets) const
 {
     QFile file(filename.data());
-	file.open(QIODevice::WriteOnly);
+    file.open(QIODevice::WriteOnly);
     if (!file.isOpen()) {
         std::stringstream oss;
         oss << "Unable to open file: " << filename;

@@ -35,12 +35,12 @@ void free_pixel_match_switcher()
 
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)
 {
-	PmCore *core = static_cast<PmCore *>(corePtr);
-	if (saving) {
-		core->pmSave(save_data);
-	} else {
-		core->pmLoad(save_data);
-	}
+    PmCore *core = static_cast<PmCore *>(corePtr);
+    if (saving) {
+        core->pmSave(save_data);
+    } else {
+        core->pmLoad(save_data);
+    }
 }
 
 void on_frame_processed(pm_filter_data *filterData)
@@ -599,10 +599,26 @@ void PmCore::onMatchPresetExport(
     std::string filename,  QList<std::string> selectedPresets)
 {
     try {
-		m_matchPresets.exportXml(filename, selectedPresets);
-    } catch(std::exception e) {
+        m_matchPresets.exportXml(filename, selectedPresets);
+    } catch (std::exception e) {
         // TODO?
     }
+}
+
+void PmCore::onMatchPresetsImport(std::string filename)
+{
+    try {
+        PmMatchPresets impPresets = PmMatchPresets::importXml(filename);
+        emit sigPresetsImportAvailable(impPresets);
+    } catch (std::exception e) {
+        // TODO
+    }
+}
+
+void PmCore::onMatchPresetAdd(std::string presetName, PmMultiMatchConfig mcfg)
+{
+    m_matchPresets.insert(presetName, mcfg);
+    emit sigAvailablePresetsChanged();
 }
 
 void PmCore::onRunningEnabledChanged(bool enable)

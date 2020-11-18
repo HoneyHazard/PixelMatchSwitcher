@@ -4,6 +4,8 @@
 #include <QMessageBox>
 #include <QList>
 
+#include "pm-structs.hpp"
+
 class QComboBox;
 class QPushButton;
 
@@ -23,6 +25,8 @@ signals:
     void sigMatchPresetRemove(std::string name);
     void sigMultiMatchConfigReset();
     void sigMatchPresetExport(std::string filename, QList<std::string> presets);
+    void sigMatchPresetsImport(std::string filename);
+    void sigMatchPresetAdd(std::string presetName, PmMultiMatchConfig mcfg);
 
 protected slots:
     // local UI handlers
@@ -33,11 +37,13 @@ protected slots:
     void onNewConfig();
     void onPresetRemove();
     void onPresetExport();
+    void onPresetImport();
 
     // core events handlers
     void onAvailablePresetsChanged();
     void onActivePresetChanged();
     void onActivePresetDirtyStateChanged();
+    void onPresetsImportAvailable(PmMatchPresets presets);
 
 protected:
     QMessageBox::ButtonRole promptUnsavedProceed();
@@ -54,6 +60,6 @@ protected:
     QPushButton* m_presetSaveAsButton;
     QPushButton* m_newConfigButton;
     QPushButton* m_presetRemoveButton;
-    QPushButton *m_exportButton;
-    QPushButton *m_importButton;
+    QPushButton *m_presetExportButton;
+    QPushButton *m_presetImportButton;
 };

@@ -63,11 +63,24 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onPresetRemove, qc);
     presetLayout->addWidget(m_presetRemoveButton);
 
-    m_exportButton = prepareButton(obs_module_text("Export Preset(s)"),
+    // divider
+    QFrame *divider = new QFrame(this);
+    divider->setFrameShape(QFrame::VLine);
+    divider->setFrameShadow(QFrame::Plain);
+    divider->setFixedWidth(1);
+    presetLayout->addWidget(divider);
+
+    m_presetImportButton = prepareButton(obs_module_text("Import Preset(s)"),
+        ":/res/images/icons8-import-32.png");
+    connect(m_presetImportButton, &QPushButton::released,
+            this, &PmPresetsWidget::onPresetImport, qc);
+    presetLayout->addWidget(m_presetImportButton);
+
+    m_presetExportButton = prepareButton(obs_module_text("Export Preset(s)"),
         ":/res/images/icons8-export-32.png");
-    connect(m_exportButton, &QPushButton::released,
+    connect(m_presetExportButton, &QPushButton::released,
             this, &PmPresetsWidget::onPresetExport, qc);
-    presetLayout->addWidget(m_exportButton);
+    presetLayout->addWidget(m_presetExportButton);
 
     // core event handlers
     connect(m_core, &PmCore::sigAvailablePresetsChanged,
@@ -76,6 +89,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
             this, &PmPresetsWidget::onActivePresetChanged, qc);
     connect(m_core, &PmCore::sigActivePresetDirtyChanged,
             this, &PmPresetsWidget::onActivePresetDirtyStateChanged, qc);
+    connect(m_core, &PmCore::sigPresetsImportAvailable,
+            this, &PmPresetsWidget::onPresetsImportAvailable, qc);
 
     // local signals -> core slots
     connect(this, &PmPresetsWidget::sigMatchPresetSave,
@@ -88,6 +103,10 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onMultiMatchConfigReset, qc);
     connect(this, &PmPresetsWidget::sigMatchPresetExport,
             m_core, &PmCore::onMatchPresetExport, qc);
+    connect(this, &PmPresetsWidget::sigMatchPresetsImport,
+            m_core, &PmCore::onMatchPresetsImport, qc);
+    connect(this, &PmPresetsWidget::sigMatchPresetAdd,
+            m_core, &PmCore::onMatchPresetAdd, qc);
 
     // finish init state
     onAvailablePresetsChanged();
@@ -126,6 +145,7 @@ void PmPresetsWidget::onActivePresetChanged()
     m_presetCombo->blockSignals(false);
 
     m_presetRemoveButton->setEnabled(!activePreset.empty());
+    m_presetExportButton->setEnabled(!activePreset.empty());
 }
 
 void PmPresetsWidget::onActivePresetDirtyStateChanged()
@@ -135,6 +155,28 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
     m_presetRevertButton->setEnabled(dirty && !activePreset.empty());
     m_presetSaveButton->setEnabled(dirty);
     setTitle(dirty ? obs_module_text("Preset (*)") : obs_module_text("Preset"));
+}
+
+void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets presets)
+{
+    QList<std::string> selectedPresets = presets.keys();
+
+    // TODO: select which presets get imported
+
+    std::string firstImported;
+    for (auto presetName : presets.keys()) {
+        while (m_core->matchPresetExists(presetName)) {
+            // TODO: prompt replace, overwrite, skip
+            break;
+        }
+        emit sigMatchPresetAdd(presetName, presets[presetName]);
+        if (firstImported.empty()) {
+            firstImported = presetName;
+        }
+    }
+    if (firstImported.size()) {
+        emit sigMatchPresetSelect(firstImported);
+    }
 }
 
 QPushButton* PmPresetsWidget::prepareButton(
@@ -269,24 +311,37 @@ void PmPresetsWidget::onPresetRemove()
 
 void PmPresetsWidget::onPresetExport()
 {
-	std::string activePresetName = m_core->activeMatchPresetName();
+    std::string activePresetName = m_core->activeMatchPresetName();
 
-	QFileDialog saveDialog(this, obs_module_text("Export Preset XML"), QString(),
+    QFileDialog saveDialog(
+        this, obs_module_text("Export Preset(s) XML"), QString(),
         PmConstants::k_xmlFilenameFilter);
-	saveDialog.selectFile(activePresetName.data());
-	saveDialog.setAcceptMode(QFileDialog::AcceptSave);
-	saveDialog.exec();
+    saveDialog.selectFile(activePresetName.data());
+    saveDialog.setAcceptMode(QFileDialog::AcceptSave);
+    saveDialog.exec();
 
     QStringList selectedFiles = saveDialog.selectedFiles();
-	if (selectedFiles.empty()) return;
+    if (selectedFiles.empty()) return;
     QString qstrFilename = selectedFiles.first();
     std::string filename(qstrFilename.toUtf8().data());
 
     // TODO: allow exporting multiple presets
 
-    QList<std::string> presets { activePresetName };
-    emit sigMatchPresetExport(filename, presets);
+    QList<std::string> selectedPresets { activePresetName };
+    emit sigMatchPresetExport(filename, selectedPresets);
 }
+
+void PmPresetsWidget::onPresetImport()
+{
+    QString qstrFilename = QFileDialog::getOpenFileName(
+        this, obs_module_text("Import Presets(s) XML"), QString(),
+        PmConstants::k_xmlFilenameFilter);
+    std::string filename = qstrFilename.toUtf8().data();
+    if (filename.size()) {
+        emit sigMatchPresetsImport(filename);
+    }
+}
+
 
 QMessageBox::ButtonRole PmPresetsWidget::promptUnsavedProceed()
 {

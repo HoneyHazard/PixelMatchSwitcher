@@ -95,6 +95,7 @@ signals:
     void sigAvailablePresetsChanged();
     void sigActivePresetChanged();
     void sigActivePresetDirtyChanged();
+    void sigPresetsImportAvailable(PmMatchPresets presets);
 
     void sigMultiMatchConfigSizeChanged(size_t sz);
     void sigMatchConfigChanged(size_t matchIndex, PmMatchConfig config);
@@ -118,6 +119,8 @@ public slots:
     void onMatchPresetRemove(std::string name);
     void onMatchPresetExport(
         std::string filename, QList<std::string> selectedPresets);
+    void onMatchPresetsImport(std::string filename);
+    void onMatchPresetAdd(std::string presetName, PmMultiMatchConfig mcfg);
 
     void onMultiMatchConfigReset();
     void onNoMatchSceneChanged(std::string sceneName);

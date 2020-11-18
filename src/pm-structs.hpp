@@ -133,12 +133,10 @@ public:
 class PmMatchPresets final : public QHash<std::string, PmMultiMatchConfig>
 {
 public:
-    void importXml(const std::string &filename);
+    static PmMatchPresets importXml(const std::string &filename);
     void exportXml(const std::string &filename,
                    const QList<std::string> &selectedPresets) const;
 };
-
-
 
 /*
  * @brief Represents a set of weak source references to available scenes, that
