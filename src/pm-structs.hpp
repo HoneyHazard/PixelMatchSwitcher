@@ -52,6 +52,17 @@ enum class PmCaptureState : unsigned char {
 };
 
 /**
+ * @brief How things should be handled when there are duplicate names
+ */
+enum class PmDuplicateNameReaction : char {
+    Undefined = 0,
+    Rename = 1,
+    Replace = 2,
+    Skip = 3,
+    Abort = 4
+};
+
+/**
  * @brief Information describing results of processing an indivisual match
  *        entry. Constructed from the filter's output by PmCore and sent to 
  *        other modules.

@@ -1,4 +1,5 @@
 #include "pm-presets-widget.hpp"
+#include "pm-preset-exists-dialog.hpp"
 #include "pm-core.hpp"
 
 #include <QCheckBox>
@@ -105,8 +106,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onMatchPresetExport, qc);
     connect(this, &PmPresetsWidget::sigMatchPresetsImport,
             m_core, &PmCore::onMatchPresetsImport, qc);
-    connect(this, &PmPresetsWidget::sigMatchPresetAdd,
-            m_core, &PmCore::onMatchPresetAdd, qc);
+    connect(this, &PmPresetsWidget::sigMatchPresetsAppend,
+            m_core, &PmCore::onMatchPresetsAppend, qc);
 
     // finish init state
     onAvailablePresetsChanged();
@@ -157,24 +158,74 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
     setTitle(dirty ? obs_module_text("Preset (*)") : obs_module_text("Preset"));
 }
 
-void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets presets)
+void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
 {
-    QList<std::string> selectedPresets = presets.keys();
+    // TODO: allow selection
+    QList<std::string> selectedPresets = availablePresets.keys();
 
-    // TODO: select which presets get imported
-
+    PmMatchPresets newPresets;
     std::string firstImported;
-    for (auto presetName : presets.keys()) {
+    PmDuplicateNameReaction defaultReaction
+        = PmDuplicateNameReaction::Undefined;
+    size_t importCountRemaining = availablePresets.count(); 
+
+    for (std::string presetName : availablePresets.keys()) {
+        --importCountRemaining;
+
         while (m_core->matchPresetExists(presetName)) {
-            // TODO: prompt replace, overwrite, skip
-            break;
+            // preset with this name exists
+            PmMultiMatchConfig checkValue = availablePresets[presetName];
+            if (checkValue == m_core->matchPresetByName(presetName)) {
+                // it's the same as in existing configuration. don't worry about it
+                break;
+            }
+            // new preset, same name, different configuration.
+            PmDuplicateNameReaction reaction;
+            if (defaultReaction != PmDuplicateNameReaction::Undefined) {
+                // user previously requested to handle all duplicates the same way
+                reaction = defaultReaction;
+            } else {
+                // user needs to make a choice to react
+                PmPresetExistsDialog* choiceDialog = new PmPresetExistsDialog(
+                    presetName, importCountRemaining > 0, this);
+                reaction = choiceDialog->choice();
+                if (choiceDialog->applyToAll()) {
+                    // user requests a default reaction for subsequent duplicates
+                    defaultReaction = reaction;
+                }
+            }
+            switch (reaction) {
+            case PmDuplicateNameReaction::Abort:
+                // abort everything
+                return;
+            case PmDuplicateNameReaction::Skip:
+                // break out of the name check loop and skip preset
+                break;  break; continue;
+            case PmDuplicateNameReaction::Replace:
+                // break out of the name check loop and allow overwrite
+                break; break; 
+            case PmDuplicateNameReaction::Rename: {
+                // ask for a new name
+                bool ok;
+                QString presetNameQstr = QInputDialog::getText(
+                     this, obs_module_text("Rename Imported Preset"),
+                    obs_module_text("Enter Name: "), QLineEdit::Normal,
+                     QString(presetName.data()) + " (new)", &ok);
+                if (ok)
+                    presetName = presetNameQstr.toUtf8().data();
+                }
+                break;
+            }
         }
-        emit sigMatchPresetAdd(presetName, presets[presetName]);
+
+        newPresets[presetName] = availablePresets[presetName];
+
         if (firstImported.empty()) {
             firstImported = presetName;
         }
     }
     if (firstImported.size()) {
+        emit sigMatchPresetsAppend(newPresets);
         emit sigMatchPresetSelect(firstImported);
     }
 }

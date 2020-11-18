@@ -615,9 +615,11 @@ void PmCore::onMatchPresetsImport(std::string filename)
     }
 }
 
-void PmCore::onMatchPresetAdd(std::string presetName, PmMultiMatchConfig mcfg)
+void PmCore::onMatchPresetsAppend(PmMatchPresets newPresets)
 {
-    m_matchPresets.insert(presetName, mcfg);
+    for (const auto &name : newPresets.keys()) {
+        m_matchPresets.insert(name, newPresets[name]);
+    }
     emit sigAvailablePresetsChanged();
 }
 

@@ -120,7 +120,7 @@ public slots:
     void onMatchPresetExport(
         std::string filename, QList<std::string> selectedPresets);
     void onMatchPresetsImport(std::string filename);
-    void onMatchPresetAdd(std::string presetName, PmMultiMatchConfig mcfg);
+    void onMatchPresetsAppend(PmMatchPresets presets);
 
     void onMultiMatchConfigReset();
     void onNoMatchSceneChanged(std::string sceneName);

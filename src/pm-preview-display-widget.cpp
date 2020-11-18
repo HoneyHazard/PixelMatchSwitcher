@@ -333,7 +333,7 @@ void PmPreviewDisplayWidget::updateDisplayState(
             "Add Pixel Match filter to the Effect Filters list.<br />"
             "<br />"
             "Filter already added? Ensure the scene is selected."),
-		    Qt::yellow);
+            Qt::yellow);
         m_displayStack->setCurrentWidget(m_imageView);
     } else {
         m_displayStack->setCurrentWidget(m_filterDisplay);

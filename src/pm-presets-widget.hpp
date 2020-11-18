@@ -26,7 +26,7 @@ signals:
     void sigMultiMatchConfigReset();
     void sigMatchPresetExport(std::string filename, QList<std::string> presets);
     void sigMatchPresetsImport(std::string filename);
-    void sigMatchPresetAdd(std::string presetName, PmMultiMatchConfig mcfg);
+    void sigMatchPresetsAppend(PmMatchPresets newPresets);
 
 protected slots:
     // local UI handlers
@@ -43,7 +43,7 @@ protected slots:
     void onAvailablePresetsChanged();
     void onActivePresetChanged();
     void onActivePresetDirtyStateChanged();
-    void onPresetsImportAvailable(PmMatchPresets presets);
+    void onPresetsImportAvailable(PmMatchPresets availablePresets);
 
 protected:
     QMessageBox::ButtonRole promptUnsavedProceed();
