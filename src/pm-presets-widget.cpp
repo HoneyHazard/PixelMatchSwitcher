@@ -1,5 +1,6 @@
 #include "pm-presets-widget.hpp"
 #include "pm-preset-exists-dialog.hpp"
+#include "pm-presets-selector-dialog.hpp"
 #include "pm-core.hpp"
 
 #include <QCheckBox>
@@ -215,7 +216,7 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
                      this, obs_module_text("Rename Imported Preset"),
                     obs_module_text("Enter Name: "), QLineEdit::Normal,
                      QString(presetName.data()) + " (new)", &ok);
-                if (ok && presetNameQstr.size()) {
+               if (ok && presetNameQstr.size()) {
                     // proceed with attempting to rename
                     presetName = presetNameQstr.toUtf8().data();
                 } else {

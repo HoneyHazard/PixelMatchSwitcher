@@ -96,5 +96,5 @@ void PmPresetExistsDialog::abortReleased()
 
 void PmPresetExistsDialog::applyAllToggled(bool value)
 {
-	m_applyToAll = value;
+    m_applyToAll = value;
 }

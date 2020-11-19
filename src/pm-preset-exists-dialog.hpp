@@ -14,7 +14,8 @@ class PmPresetExistsDialog : public QDialog
 
 public:
     PmPresetExistsDialog(
-        const std::string &presetName, bool askApplyAll, QWidget *parent);
+        const std::string &presetName, bool askApplyAll,
+        QWidget *parent = nullptr);
     PmDuplicateNameReaction choice() const { return m_choice; } 
     bool applyToAll() const { return m_applyToAll; }
 
