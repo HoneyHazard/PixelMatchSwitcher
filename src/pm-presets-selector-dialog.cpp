@@ -11,7 +11,8 @@ PmPresetsSelectorDialog::PmPresetsSelectorDialog(
     const QList<std::string> &availablePresets,
     const QList<std::string> &selectedPresets,
     QWidget *parent)
-: QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint)
+: QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint
+                | Qt::WindowCloseButtonHint)
 {
     // all and none buttons
     QHBoxLayout *selAllNoneLayout = new QHBoxLayout;

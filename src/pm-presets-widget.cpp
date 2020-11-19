@@ -161,8 +161,12 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
 
 void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
 {
-    // TODO: allow selection
+    PmPresetsSelectorDialog selector(
+        obs_module_text("Presets to Import"),
+        availablePresets.keys(), availablePresets.keys(), this);
     QList<std::string> selectedPresets = availablePresets.keys();
+    if (selector.result() == QFileDialog::Rejected || selectedPresets.empty())
+        return;
 
     PmMatchPresets newPresets;
     std::string firstImported;
@@ -170,7 +174,7 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
         = PmDuplicateNameReaction::Undefined;
     size_t importCountRemaining = availablePresets.count(); 
 
-    for (std::string presetName : availablePresets.keys()) {
+    for (std::string presetName : selectedPresets) {
         PmMultiMatchConfig mcfg = availablePresets[presetName];
 
         --importCountRemaining;

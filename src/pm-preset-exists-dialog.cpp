@@ -9,7 +9,8 @@
 
 PmPresetExistsDialog::PmPresetExistsDialog(
     const std::string &presetName, bool askApplyAll, QWidget *parent)
-: QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint)
+: QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint
+                | Qt::WindowCloseButtonHint)
 {
     setWindowTitle(obs_module_text("Preset exists"));
 
