@@ -117,6 +117,7 @@ public slots:
     void onMatchPresetSelect(std::string name);
     void onMatchPresetSave(std::string name);
     void onMatchPresetRemove(std::string name);
+    void onMatchPresetActiveRevert();
     void onMatchPresetExport(
         std::string filename, QList<std::string> selectedPresets);
     void onMatchPresetsImport(std::string filename);

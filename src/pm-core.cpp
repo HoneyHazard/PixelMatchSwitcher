@@ -595,6 +595,13 @@ void PmCore::onMatchPresetRemove(std::string name)
     onMatchPresetSelect(selOther);
 }
 
+void PmCore::onMatchPresetActiveRevert()
+{
+    std::string activeName = activeMatchPresetName();
+    onMatchPresetSelect("");
+    onMatchPresetSelect(activeName);
+}
+
 void PmCore::onMatchPresetExport(
     std::string filename,  QList<std::string> selectedPresets)
 {
@@ -619,8 +626,12 @@ void PmCore::onMatchPresetsAppend(PmMatchPresets newPresets)
 {
     for (const auto &name : newPresets.keys()) {
         m_matchPresets.insert(name, newPresets[name]);
+        if (name == activeMatchPresetName())
+            onMatchPresetActiveRevert();
     }
     emit sigAvailablePresetsChanged();
+    emit sigActivePresetDirtyChanged();
+    obs_frontend_save();
 }
 
 void PmCore::onRunningEnabledChanged(bool enable)

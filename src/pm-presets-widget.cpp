@@ -103,6 +103,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onMatchPresetRemove, qc);
     connect(this, &PmPresetsWidget::sigMultiMatchConfigReset,
             m_core, &PmCore::onMultiMatchConfigReset, qc);
+    connect(this, &PmPresetsWidget::sigMatchPresetActiveRevert,
+            m_core, &PmCore::onMatchPresetActiveRevert, qc);
     connect(this, &PmPresetsWidget::sigMatchPresetExport,
             m_core, &PmCore::onMatchPresetExport, qc);
     connect(this, &PmPresetsWidget::sigMatchPresetsImport,
@@ -300,11 +302,9 @@ void PmPresetsWidget::onPresetSelected()
 
 void PmPresetsWidget::onPresetRevert()
 {
-    // TODO: make less hacky
     std::string presetName = m_core->activeMatchPresetName();
     if (presetName.size() && m_core->matchConfigDirty()) {
-        emit sigMatchPresetSelect("");
-        emit sigMatchPresetSelect(presetName);
+	    emit sigMatchPresetActiveRevert();
     }
 }
 
@@ -386,6 +386,8 @@ void PmPresetsWidget::onPresetRemove()
 
 void PmPresetsWidget::onPresetExport()
 {
+	if (!proceedWithExit()) return;
+
     QList<std::string> availablePresets = m_core->matchPresetNames();
     QList<std::string> selectedPresets;
 
@@ -418,6 +420,8 @@ void PmPresetsWidget::onPresetExport()
 
 void PmPresetsWidget::onPresetImport()
 {
+    if (!proceedWithExit()) return;
+
     QString qstrFilename = QFileDialog::getOpenFileName(
         this, obs_module_text("Import Presets(s) XML"), QString(),
         PmConstants::k_xmlFilenameFilter);

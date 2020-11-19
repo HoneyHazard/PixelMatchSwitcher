@@ -24,6 +24,7 @@ signals:
     void sigMatchPresetSave(std::string name);
     void sigMatchPresetRemove(std::string name);
     void sigMultiMatchConfigReset();
+    void sigMatchPresetActiveRevert();
     void sigMatchPresetExport(std::string filename, QList<std::string> presets);
     void sigMatchPresetsImport(std::string filename);
     void sigMatchPresetsAppend(PmMatchPresets newPresets);
