@@ -51,7 +51,7 @@ PmPresetsSelectorDialog::PmPresetsSelectorDialog(
     okCancelLayout->addWidget(okButton);
 
     QPushButton *cancelButton =
-        new QPushButton(obs_module_text("Cancel"), this);
+        new QPushButton(obs_module_text("&Cancel"), this);
     connect(cancelButton, &QPushButton::released,
             this, &QDialog::reject);
     okCancelLayout->addWidget(cancelButton);
@@ -78,4 +78,15 @@ void PmPresetsSelectorDialog::onSelectAll()
     for (QCheckBox *box : m_checkboxes) {
         box->setChecked(false);
     }
+}
+
+QList<std::string> PmPresetsSelectorDialog::selectedPresets() const
+{
+    QList<std::string> ret;
+    for (QCheckBox *checkbox : m_checkboxes) {
+        if (checkbox->isChecked()) {
+            ret.append(checkbox->text().toUtf8().data());
+        }
+    }
+    return ret;
 }
