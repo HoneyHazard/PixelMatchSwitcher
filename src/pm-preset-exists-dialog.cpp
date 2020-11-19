@@ -9,7 +9,7 @@
 
 PmPresetExistsDialog::PmPresetExistsDialog(
     const std::string &presetName, bool askApplyAll, QWidget *parent)
-: QDialog(parent)
+: QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint)
 {
     setWindowTitle(obs_module_text("Preset exists"));
 
@@ -70,28 +70,24 @@ void PmPresetExistsDialog::renameReleased()
 {
     m_choice = PmDuplicateNameReaction::Rename;
     accept();
-    deleteLater();
 }
 
 void PmPresetExistsDialog::replaceReleased()
 {
     m_choice = PmDuplicateNameReaction::Replace;
     accept();
-    deleteLater();
 }
 
 void PmPresetExistsDialog::skipReleased()
 {
     m_choice = PmDuplicateNameReaction::Skip;
     accept();
-    deleteLater();
 }
 
 void PmPresetExistsDialog::abortReleased()
 {
     m_choice = PmDuplicateNameReaction::Abort;
     accept();
-    deleteLater();
 }
 
 void PmPresetExistsDialog::applyAllToggled(bool value)

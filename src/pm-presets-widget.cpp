@@ -171,7 +171,7 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
     size_t importCountRemaining = availablePresets.count(); 
 
     for (std::string presetName : availablePresets.keys()) {
-	    PmMultiMatchConfig mcfg = availablePresets[presetName];
+        PmMultiMatchConfig mcfg = availablePresets[presetName];
 
         --importCountRemaining;
 
@@ -190,10 +190,10 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
                 reaction = defaultReaction;
             } else {
                 // user needs to make a choice to react
-                PmPresetExistsDialog* choiceDialog = new PmPresetExistsDialog(
+                PmPresetExistsDialog choiceDialog(
                     presetName, importCountRemaining > 0, this);
-                reaction = choiceDialog->choice();
-                if (choiceDialog->applyToAll()) {
+                reaction = choiceDialog.choice();
+                if (choiceDialog.applyToAll()) {
                     // user requests a default reaction for subsequent duplicates
                     defaultReaction = reaction;
                 }
@@ -373,7 +373,20 @@ void PmPresetsWidget::onPresetRemove()
 
 void PmPresetsWidget::onPresetExport()
 {
+    QList<std::string> availablePresets = m_core->matchPresetNames();
+    QList<std::string> selectedPresets;
+
     std::string activePresetName = m_core->activeMatchPresetName();
+    if (activePresetName.size()) {
+        selectedPresets.push_back(activePresetName);
+    }
+
+    PmPresetsSelectorDialog selector(
+        obs_module_text("Presets to Export"),
+        availablePresets, selectedPresets, this);
+    selectedPresets = selector.selectedPresets();
+    if (selector.result() == QDialog::Rejected || selectedPresets.empty())
+        return;
 
     QFileDialog saveDialog(
         this, obs_module_text("Export Preset(s) XML"), QString(),
@@ -387,9 +400,6 @@ void PmPresetsWidget::onPresetExport()
     QString qstrFilename = selectedFiles.first();
     std::string filename(qstrFilename.toUtf8().data());
 
-    // TODO: allow exporting multiple presets
-
-    QList<std::string> selectedPresets { activePresetName };
     emit sigMatchPresetExport(filename, selectedPresets);
 }
 

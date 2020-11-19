@@ -17,11 +17,9 @@ public:
         QWidget *parent = nullptr);
     QList<std::string> selectedPresets() const;
 
-protected slots:
-    void onSelectAll();
-    void onSelectNone();
-
 protected:
+    void setAll(bool value);
+
     QVector<QCheckBox*> m_checkboxes;
     QList<std::string> m_availablePresets;
 };
