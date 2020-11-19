@@ -9,6 +9,7 @@
 
 PmPresetExistsDialog::PmPresetExistsDialog(
     const std::string &presetName, bool askApplyAll, QWidget *parent)
+: QDialog(parent)
 {
     setWindowTitle(obs_module_text("Preset exists"));
 
@@ -17,8 +18,10 @@ PmPresetExistsDialog::PmPresetExistsDialog(
     // label
     QLabel *label = new QLabel(
         QString(obs_module_text(
-            "Preset \"%1\" already exists in your configuration\n\n"
-            "How do you want to import \"%1\"?")).arg(presetName.data()), this);
+            "A different version of preset \"%1\" already "
+            "exists in your configuration\n\n"
+            "How do you want to import \"%1\"?\n")).arg(presetName.data()),
+            this);
     mainLayout->addWidget(label);
 
     // buttons
@@ -52,11 +55,11 @@ PmPresetExistsDialog::PmPresetExistsDialog(
     // apply to all
     if (askApplyAll) {
         QCheckBox* applyToAllCheckBox = new QCheckBox(
-            obs_module_text("Apply to All"), this);
+            obs_module_text("Apply to All Preset Collisions"), this);
 	    applyToAllCheckBox->setChecked(m_applyToAll);
         connect(applyToAllCheckBox, &QCheckBox::toggled,
                 this, &PmPresetExistsDialog::applyAllToggled);
-        mainLayout->addWidget(applyToAllCheckBox);
+        mainLayout->addWidget(applyToAllCheckBox, 0, Qt::AlignCenter);
     }
 
     setLayout(mainLayout);

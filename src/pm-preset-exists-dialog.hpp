@@ -23,8 +23,6 @@ protected slots:
     void replaceReleased();
     void skipReleased();
     void abortReleased();
-
-    void abortReleased();
     void applyAllToggled(bool value);
 
 protected:

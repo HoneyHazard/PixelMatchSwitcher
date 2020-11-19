@@ -170,8 +170,11 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
     size_t importCountRemaining = availablePresets.count(); 
 
     for (std::string presetName : availablePresets.keys()) {
+	    PmMultiMatchConfig mcfg = availablePresets[presetName];
+
         --importCountRemaining;
 
+        bool skip = false;
         while (m_core->matchPresetExists(presetName)) {
             // preset with this name exists
             PmMultiMatchConfig checkValue = availablePresets[presetName];
@@ -194,36 +197,43 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
                     defaultReaction = reaction;
                 }
             }
-            switch (reaction) {
-            case PmDuplicateNameReaction::Abort:
+
+            if (reaction == PmDuplicateNameReaction::Abort) {
                 // abort everything
                 return;
-            case PmDuplicateNameReaction::Skip:
+            } else if (reaction == PmDuplicateNameReaction::Skip) {
                 // break out of the name check loop and skip preset
-                break;  break; continue;
-            case PmDuplicateNameReaction::Replace:
+                skip = true;
+                break;
+            } else if (reaction == PmDuplicateNameReaction::Replace) {
                 // break out of the name check loop and allow overwrite
-                break; break; 
-            case PmDuplicateNameReaction::Rename: {
+                break; 
+            } else if (reaction == PmDuplicateNameReaction::Rename) {
                 // ask for a new name
                 bool ok;
                 QString presetNameQstr = QInputDialog::getText(
                      this, obs_module_text("Rename Imported Preset"),
                     obs_module_text("Enter Name: "), QLineEdit::Normal,
                      QString(presetName.data()) + " (new)", &ok);
-                if (ok)
+                if (ok && presetNameQstr.size()) {
+                    // proceed with attempting to rename
                     presetName = presetNameQstr.toUtf8().data();
+                } else {
+                    // user cancelled rename. undo default choice to allow aborting, etc.
+                    defaultReaction = PmDuplicateNameReaction::Undefined;
                 }
-                break;
             }
         }
 
-        newPresets[presetName] = availablePresets[presetName];
-
-        if (firstImported.empty()) {
-            firstImported = presetName;
+        if (!skip) {
+            // stage an approved imported preset
+            newPresets[presetName] = mcfg;
+            if (firstImported.empty()) {
+                firstImported = presetName;
+            }
         }
     }
+
     if (firstImported.size()) {
         emit sigMatchPresetsAppend(newPresets);
         emit sigMatchPresetSelect(firstImported);
