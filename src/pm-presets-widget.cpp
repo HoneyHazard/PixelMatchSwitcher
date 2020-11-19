@@ -218,9 +218,10 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
                 // ask for a new name
                 bool ok;
                 QString presetNameQstr = QInputDialog::getText(
-                     this, obs_module_text("Rename Imported Preset"),
+                    this, obs_module_text("Rename Imported Preset"),
                     obs_module_text("Enter Name: "), QLineEdit::Normal,
-                     QString(presetName.data()) + " (new)", &ok);
+                    QString(presetName.data()) + obs_module_text(" (new)"),
+                    &ok);
                if (ok && presetNameQstr.size()) {
                     // proceed with attempting to rename
                     presetName = presetNameQstr.toUtf8().data();
