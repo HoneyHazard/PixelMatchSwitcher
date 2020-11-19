@@ -172,7 +172,7 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
     std::string firstImported;
     PmDuplicateNameReaction defaultReaction
         = PmDuplicateNameReaction::Undefined;
-    size_t importCountRemaining = availablePresets.count(); 
+    size_t importCountRemaining = availablePresets.count();
 
     for (std::string presetName : selectedPresets) {
         PmMultiMatchConfig mcfg = availablePresets[presetName];
@@ -184,7 +184,8 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
             // preset with this name exists
             PmMultiMatchConfig checkValue = availablePresets[presetName];
             if (checkValue == m_core->matchPresetByName(presetName)) {
-                // it's the same as in existing configuration. don't worry about it
+                // it's the same as in existing configuration. don't bother
+                skip = true;
                 break;
             }
             // new preset, same name, different configuration.
@@ -233,15 +234,22 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
         if (!skip) {
             // stage an approved imported preset
             newPresets[presetName] = mcfg;
-            if (firstImported.empty()) {
-                firstImported = presetName;
-            }
         }
     }
 
-    if (firstImported.size()) {
+    if (newPresets.size()) {
         emit sigMatchPresetsAppend(newPresets);
-        emit sigMatchPresetSelect(firstImported);
+        if (newPresets.size() == 1) {
+            QMessageBox::information(
+                this, obs_module_text("Preset Imported"),
+                QString(obs_module_text("Preset \"%1\" imported."))
+                    .arg(newPresets.keys().first().data()));
+        } else {
+            QMessageBox::information(
+                this, obs_module_text("Presets Imported"),
+                QString(obs_module_text("%1 new presets were imported."))
+                    .arg(newPresets.size()));
+        }
     }
 }
 
