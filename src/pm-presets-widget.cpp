@@ -3,6 +3,8 @@
 #include "pm-presets-selector-dialog.hpp"
 #include "pm-core.hpp"
 
+#include <sstream>
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QPushButton>
@@ -166,7 +168,7 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
     PmPresetsSelectorDialog selector(
         obs_module_text("Presets to Import"),
         availablePresets.keys(), availablePresets.keys(), this);
-    QList<std::string> selectedPresets = availablePresets.keys();
+    QList<std::string> selectedPresets = selector.selectedPresets();
     if (selector.result() == QFileDialog::Rejected || selectedPresets.empty())
         return;
 
@@ -174,12 +176,16 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
     std::string firstImported;
     PmDuplicateNameReaction defaultReaction
         = PmDuplicateNameReaction::Undefined;
-    size_t importCountRemaining = availablePresets.count();
+    size_t numRemaining = availablePresets.count();
+    size_t numReplaced = 0;
+    size_t numUnchanged = 0;
+    size_t numSkipped = 0;
+    size_t numImported = 0;
 
     for (std::string presetName : selectedPresets) {
         PmMultiMatchConfig mcfg = availablePresets[presetName];
 
-        --importCountRemaining;
+        --numRemaining;
 
         bool skip = false;
         while (m_core->matchPresetExists(presetName)) {
@@ -188,6 +194,7 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
             const auto& newPreset = availablePresets[presetName];
             if (newPreset == existingPreset) {
                 // it's the same as in existing configuration. don't bother
+                ++numUnchanged;
                 skip = true;
                 break;
             }
@@ -199,7 +206,7 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
             } else {
                 // user needs to make a choice to react
                 PmPresetExistsDialog choiceDialog(
-                    presetName, importCountRemaining > 0, this);
+                    presetName, numRemaining > 0, this);
                 reaction = choiceDialog.choice();
                 if (choiceDialog.applyToAll()) {
                     // user requests a default reaction for subsequent duplicates
@@ -213,9 +220,11 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
             } else if (reaction == PmDuplicateNameReaction::Skip) {
                 // break out of the name check loop and skip preset
                 skip = true;
+                ++numSkipped;
                 break;
             } else if (reaction == PmDuplicateNameReaction::Replace) {
                 // break out of the name check loop and allow overwrite
+                ++numReplaced;
                 break; 
             } else if (reaction == PmDuplicateNameReaction::Rename) {
                 // ask for a new name
@@ -238,23 +247,35 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
         if (!skip) {
             // stage an approved imported preset
             newPresets[presetName] = mcfg;
+            ++numImported;
         }
     }
 
     if (newPresets.size()) {
         emit sigMatchPresetsAppend(newPresets);
-        if (newPresets.size() == 1) {
-            QMessageBox::information(
-                this, obs_module_text("Preset Imported"),
-                QString(obs_module_text("Preset \"%1\" imported."))
-                    .arg(newPresets.keys().first().data()));
-        } else {
-            QMessageBox::information(
-                this, obs_module_text("Presets Imported"),
-                QString(obs_module_text("%1 new presets were imported."))
-                    .arg(newPresets.size()));
-        }
     }
+
+    std::ostringstream oss;
+    oss << numImported << obs_module_text(" preset(s) imported\n\n");
+    if (numSkipped > 0) {
+        oss << numSkipped
+            << obs_module_text(" existing preset(s) skipped\n\n");
+    }
+    if (numReplaced > 0) {
+        oss << numReplaced
+            << obs_module_text(" existing preset(s) replaced\n\n");
+    }
+    if (numUnchanged > 0) {
+        oss << numUnchanged
+            << obs_module_text(" existing preset(s) unchanged\n\n");
+    }
+    if (numReplaced > 0) {
+        oss << numReplaced
+            << obs_module_text(" existing preset(s) skipped\n\n");
+    }
+    QMessageBox::information(
+        this, obs_module_text("Presets Import Finished"),
+        oss.str().data());
 }
 
 QPushButton* PmPresetsWidget::prepareButton(
