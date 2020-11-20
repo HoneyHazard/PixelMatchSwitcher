@@ -184,8 +184,9 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
         bool skip = false;
         while (m_core->matchPresetExists(presetName)) {
             // preset with this name exists
-            PmMultiMatchConfig checkValue = availablePresets[presetName];
-            if (checkValue == m_core->matchPresetByName(presetName)) {
+            auto existingPreset = m_core->matchPresetByName(presetName);
+            const auto& newPreset = availablePresets[presetName];
+            if (newPreset == existingPreset) {
                 // it's the same as in existing configuration. don't bother
                 skip = true;
                 break;
@@ -304,7 +305,7 @@ void PmPresetsWidget::onPresetRevert()
 {
     std::string presetName = m_core->activeMatchPresetName();
     if (presetName.size() && m_core->matchConfigDirty()) {
-	    emit sigMatchPresetActiveRevert();
+        emit sigMatchPresetActiveRevert();
     }
 }
 
@@ -386,7 +387,7 @@ void PmPresetsWidget::onPresetRemove()
 
 void PmPresetsWidget::onPresetExport()
 {
-	if (!proceedWithExit()) return;
+    if (!proceedWithExit()) return;
 
     QList<std::string> availablePresets = m_core->matchPresetNames();
     QList<std::string> selectedPresets;

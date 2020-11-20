@@ -156,7 +156,7 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
                 filterCfg.mask_color.z =
                     reader.readElementText().toFloat();
             } else if (name == "is_enabled") {
-                filterCfg.mask_alpha =
+                filterCfg.is_enabled =
                     reader.readElementText() == "true" ? true : false;
             } else if (name == "target_scene") {
                 targetScene =
