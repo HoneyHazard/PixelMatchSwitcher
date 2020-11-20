@@ -67,18 +67,33 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
         this, &PmPresetsWidget::onPresetRemove, qc);
     presetLayout->addWidget(m_presetRemoveButton);
 
-    // divider
-    QFrame *divider = new QFrame(this);
-    divider->setFrameShape(QFrame::VLine);
-    divider->setFrameShadow(QFrame::Plain);
-    divider->setFixedWidth(1);
-    presetLayout->addWidget(divider);
+    // divider #1
+    QFrame *divider1 = new QFrame(this);
+    divider1->setFrameShape(QFrame::VLine);
+    divider1->setFrameShadow(QFrame::Plain);
+    divider1->setFixedWidth(1);
+    presetLayout->addWidget(divider1);
 
     m_presetImportButton = prepareButton(obs_module_text("Import Preset(s)"),
         ":/res/images/icons8-import-32.png");
     connect(m_presetImportButton, &QPushButton::released,
             this, &PmPresetsWidget::onPresetImport, qc);
     presetLayout->addWidget(m_presetImportButton);
+
+    m_presetDownloadButton = prepareButton(
+        obs_module_text("Download Preset(s)"),
+        ":/res/images/icons8-download-32.png");
+    connect(m_presetDownloadButton, &QPushButton::released,
+            this, &PmPresetsWidget::onPresetDownload, qc);
+    presetLayout->addWidget(m_presetDownloadButton);
+    m_presetDownloadButton->setEnabled(false);
+
+    // divider #2
+    QFrame *divider2 = new QFrame(this);
+    divider2->setFrameShape(QFrame::VLine);
+    divider2->setFrameShadow(QFrame::Plain);
+    divider2->setFixedWidth(1);
+    presetLayout->addWidget(divider2);
 
     m_presetExportButton = prepareButton(obs_module_text("Export Preset(s)"),
         ":/res/images/icons8-export-32.png");
@@ -453,6 +468,10 @@ void PmPresetsWidget::onPresetImport()
     }
 }
 
+void PmPresetsWidget::onPresetDownload()
+{
+    // TODO
+}
 
 QMessageBox::ButtonRole PmPresetsWidget::promptUnsavedProceed()
 {

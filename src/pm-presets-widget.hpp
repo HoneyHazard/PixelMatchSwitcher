@@ -37,8 +37,9 @@ protected slots:
     void onPresetSaveAs();
     void onNewConfig();
     void onPresetRemove();
-    void onPresetExport();
     void onPresetImport();
+    void onPresetDownload();
+    void onPresetExport();
 
     // core events handlers
     void onAvailablePresetsChanged();
@@ -61,6 +62,7 @@ protected:
     QPushButton* m_presetSaveAsButton;
     QPushButton* m_newConfigButton;
     QPushButton* m_presetRemoveButton;
-    QPushButton *m_presetExportButton;
     QPushButton *m_presetImportButton;
+    QPushButton *m_presetDownloadButton;
+    QPushButton *m_presetExportButton;
 };
