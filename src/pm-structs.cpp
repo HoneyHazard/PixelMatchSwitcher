@@ -1,5 +1,6 @@
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"
+#include "pm-version.hpp"
 
 #include <QXmlStreamWriter>
 #include <QFile>
@@ -428,9 +429,10 @@ void PmMatchPresets::exportXml(const std::string &filename,
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
     xml.writeDTD("<!DOCTYPE pixel-match-switcher>");
-    xml.writeStartElement("presets");
-    xml.writeAttribute("obs_version", OBS_VERSION); // TODO: plugin version as well
+    xml.writeTextElement("obs_version", OBS_VERSION);
+    xml.writeTextElement("pixel_match_switcher_version", PM_VERSION);
 
+    xml.writeStartElement("presets");
     for (const auto &presetName : selectedPresets) {
         auto f = find(presetName);
         if (f != end()) {

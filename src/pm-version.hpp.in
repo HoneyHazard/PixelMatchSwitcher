@@ -1,0 +1,3 @@
+#pragma once
+
+#define PM_VERSION "@PIXEL_MATCH_SWITCHER_VERSION@"

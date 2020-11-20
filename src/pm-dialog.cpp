@@ -1,4 +1,5 @@
 #include "pm-dialog.hpp"
+#include "pm-version.hpp"
 #include "pm-core.hpp"
 #include "pm-toggles-widget.hpp"
 #include "pm-presets-widget.hpp"
@@ -24,7 +25,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
                 | Qt::WindowCloseButtonHint | Qt::WindowMaximizeButtonHint)
 , m_core(core)
 {
-    setWindowTitle(obs_module_text("Pixel Match Switcher"));
+    setWindowTitle(
+        QString(obs_module_text("Pixel Match Switcher ")) + PM_VERSION);
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // UI modules

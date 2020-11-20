@@ -2,6 +2,24 @@ cmake_minimum_required(VERSION 3.5)
 
 project(pixel-match-switcher)
 
+# For plugin version info in UI and XML
+if(NOT DEFINED PIXEL_MATCH_SWITCHER_VERSION_OVERRIDE)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+        execute_process(COMMAND git describe --always --tags --dirty=-modified
+        OUTPUT_VARIABLE PIXEL_MATCH_SWITCHER_VERSION
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    else()
+        set(PIXEL_MATCH_SWITCHER_VERSION "${CPACK_PACKAGE_VERSION}")
+    endif()
+else()
+    set(PIXEL_MATCH_SWITCHER_VERSION "${PIXEL_MATCH_SWITCHER_VERSION_OVERRIDE}")
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/pm-version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp)
+set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp")
+
 if(BUILD_OUT_OF_TREE)
     if(WIN32)
         if (QTDIR OR DEFINED ENV{QTDIR} OR DEFINED ENV{QTDIR32} OR DEFINED ENV{QTDIR64})
@@ -58,6 +76,7 @@ endif()
 include_directories("${LIBOBS_UI_DIR}")
 
 set(pixel-match-switcher_HEADERS
+        ${VERSION_FILE}
         src/pm-filter.h
         src/pm-filter-ref.hpp
         src/pm-core.hpp

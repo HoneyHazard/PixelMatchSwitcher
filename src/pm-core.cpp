@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <QThread>
 #include <QTextStream>
+#include <QMessageBox>
 
 PmCore* PmCore::m_instance = nullptr;
 
@@ -608,7 +609,12 @@ void PmCore::onMatchPresetExport(
     try {
         m_matchPresets.exportXml(filename, selectedPresets);
     } catch (std::exception e) {
-        // TODO?
+        QMessageBox::critical(
+            nullptr, obs_module_text("Preset Export Failed"), e.what());
+    } catch (...) {
+        QMessageBox::critical(nullptr,
+            obs_module_text("Preset Export Failed"),
+            obs_module_text("Unknown error."));
     }
 }
 
@@ -618,7 +624,12 @@ void PmCore::onMatchPresetsImport(std::string filename)
         PmMatchPresets impPresets = PmMatchPresets::importXml(filename);
         emit sigPresetsImportAvailable(impPresets);
     } catch (std::exception e) {
-        // TODO
+        QMessageBox::critical(
+            nullptr, obs_module_text("Preset Import Failed"), e.what());
+    } catch (...) {
+        QMessageBox::critical(nullptr,
+            obs_module_text("Preset Import Failed"),
+            obs_module_text("Unknown error."));
     }
 }
 

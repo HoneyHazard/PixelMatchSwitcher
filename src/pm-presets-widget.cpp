@@ -256,22 +256,22 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
     }
 
     std::ostringstream oss;
-    oss << numImported << obs_module_text(" preset(s) imported\n\n");
+    oss << numImported << obs_module_text(" preset(s) imported");
     if (numSkipped > 0) {
-        oss << numSkipped
-            << obs_module_text(" existing preset(s) skipped\n\n");
+        oss << "\n\n" << numSkipped
+            << obs_module_text(" existing preset(s) skipped");
     }
     if (numReplaced > 0) {
-        oss << numReplaced
-            << obs_module_text(" existing preset(s) replaced\n\n");
+	    oss << "\n\n" << numReplaced
+            << obs_module_text(" existing preset(s) replaced");
     }
     if (numUnchanged > 0) {
-        oss << numUnchanged
-            << obs_module_text(" existing preset(s) unchanged\n\n");
+	    oss << "\n\n" << numUnchanged
+            << obs_module_text(" existing preset(s) unchanged");
     }
     if (numReplaced > 0) {
-        oss << numReplaced
-            << obs_module_text(" existing preset(s) skipped\n\n");
+	    oss << "\n\n" << numReplaced
+            << obs_module_text(" existing preset(s) skipped");
     }
     QMessageBox::information(
         this, obs_module_text("Presets Import Finished"),
