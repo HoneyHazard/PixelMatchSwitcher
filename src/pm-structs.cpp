@@ -391,24 +391,19 @@ PmMatchPresets PmMatchPresets::importXml(const std::string &filename)
     QXmlStreamReader xml(&file);
     bool readingPresets = false;
     while (true) {
+        if (xml.error() != QXmlStreamReader::NoError) {
+            throw std::runtime_error(xml.errorString().toUtf8().data());
+        }
+
         xml.readNext();
-        if (xml.atEnd() || xml.error() != QXmlStreamReader::NoError) {
+        if (xml.atEnd()) {
             break;
         }
 
-        auto name = xml.name();
-        if (name == "presets") {
-            if (xml.isStartElement()) {
-                readingPresets = true;
-            } else {
-                readingPresets = false;
-            }
-        } else if (readingPresets) {
-            if (name == "preset" && xml.isStartElement()) {
-                std::string presetName;
-                PmMultiMatchConfig preset(xml, presetName);
-                ret.insert(presetName, preset);
-            }
+        if (xml.name() == "preset" && xml.isStartElement()) {
+            std::string presetName;
+            PmMultiMatchConfig preset(xml, presetName);
+            ret.insert(presetName, preset);
         }
     }
     return ret;
@@ -429,10 +424,10 @@ void PmMatchPresets::exportXml(const std::string &filename,
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
     xml.writeDTD("<!DOCTYPE pixel-match-switcher>");
+    xml.writeStartElement("pixel_match_switcher");
     xml.writeTextElement("obs_version", OBS_VERSION);
-    xml.writeTextElement("pixel_match_switcher_version", PM_VERSION);
+    xml.writeTextElement("plugin_version", PM_VERSION);
 
-    xml.writeStartElement("presets");
     for (const auto &presetName : selectedPresets) {
         auto f = find(presetName);
         if (f != end()) {
