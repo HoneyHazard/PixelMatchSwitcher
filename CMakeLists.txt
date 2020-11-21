@@ -20,6 +20,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/pm-version.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp)
 set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp")
 
+
 if(BUILD_OUT_OF_TREE)
     if(WIN32)
         if (QTDIR OR DEFINED ENV{QTDIR} OR DEFINED ENV{QTDIR32} OR DEFINED ENV{QTDIR64})
@@ -96,6 +97,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-about-box.hpp
         src/pm-structs.hpp
         src/pm-linger-queue.hpp
+        src/pm-preset-retriever.hpp
         src/pm-debug-tab.hpp
         ${LIBOBS_UI_DIR}/qt-display.hpp
         ${LIBOBS_UI_DIR}/qt-wrappers.hpp
@@ -123,6 +125,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-about-box.cpp
         src/pm-structs.cpp
         src/pm-linger-queue.cpp
+        src/pm-preset-retriever.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
         ${LIBOBS_UI_DIR}/qt-wrappers.cpp
 )
