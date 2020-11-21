@@ -448,7 +448,8 @@ void PmPresetsWidget::onPresetExport()
     saveDialog.exec();
 
     QStringList selectedFiles = saveDialog.selectedFiles();
-    if (selectedFiles.empty()) return;
+    if (saveDialog.result() != QDialog::Accepted
+     || selectedFiles.empty()) return;
     QString qstrFilename = selectedFiles.first();
     std::string filename(qstrFilename.toUtf8().data());
 
