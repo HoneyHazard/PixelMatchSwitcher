@@ -125,10 +125,10 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
             }
         } else if (reader.isStartElement()) {
             if (name == "label") {
-                label = reader.readElementText().toUtf8();
+                label = reader.readElementText().toUtf8().data();
             } else if (name == "match_image_filename") {
                 matchImgFilename =
-                    reader.readElementText().toUtf8();
+                    reader.readElementText().toUtf8().data();
             } else if (name == "roi_left") {
                 filterCfg.roi_left =
                     reader.readElementText().toInt();
@@ -161,10 +161,10 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
                     reader.readElementText() == "true" ? true : false;
             } else if (name == "target_scene") {
                 targetScene =
-                    reader.readElementText().toUtf8();
+                    reader.readElementText().toUtf8().data();
             } else if (name == "target_transition") {
                 targetTransition =
-                    reader.readElementText().toUtf8();
+                    reader.readElementText().toUtf8().data();
             } else if (name == "linger_ms") {
                 lingerMs = reader.readElementText().toInt();
             }
@@ -265,11 +265,11 @@ PmMultiMatchConfig::PmMultiMatchConfig(
             }
         } else {
             if (name == "name") {
-                presetName = reader.readElementText().toUtf8();
+                presetName = reader.readElementText().toUtf8().data();
             } else if (name == "no_match_scene") {
-                noMatchScene = reader.readElementText().toUtf8();
+                noMatchScene = reader.readElementText().toUtf8().data();
             } else if (name == "no_match_transition") {
-                noMatchTransition = reader.readElementText().toUtf8();
+                noMatchTransition = reader.readElementText().toUtf8().data();
             } else if (name == "match_config") {
                 PmMatchConfig cfg(reader);
                 push_back(cfg);
@@ -385,7 +385,7 @@ PmMatchPresets PmMatchPresets::importXml(const std::string &filename)
     if (!file.isOpen()) {
         std::stringstream oss;
         oss << "Unable to open file: " << filename;
-        throw std::exception(oss.str().data());
+        throw std::runtime_error(oss.str().data());
     }
 
     QXmlStreamReader xml(&file);
@@ -422,7 +422,7 @@ void PmMatchPresets::exportXml(const std::string &filename,
     if (!file.isOpen()) {
         std::stringstream oss;
         oss << "Unable to open file: " << filename;
-        throw std::exception(oss.str().data());
+        throw std::runtime_error(oss.str().data());
     }
 
     QXmlStreamWriter xml(&file);
