@@ -25,6 +25,7 @@ public:
         Idle, Downloading, RetryPending, Halted, Done, Failed };
 
     PmFileRetriever(QString fileUrl, QObject *parent = nullptr);
+    ~PmFileRetriever();
 
     FileRetrieverState state() const { return m_state; }
 
@@ -32,8 +33,9 @@ public:
     void halt();
 
 signals:
-    void sigFailed(QString error);
-    void sigSucceeded(QByteArray byteArray);
+    void sigFailed(QString urlName, QString error);
+    void sigSucceeded(QString urlName, QByteArray byteArray);
+    void sigProgress(QString urlName, size_t dlNow, size_t dlTotal);
 
 protected:
     static int staticProgressFunc(void *clientp,
@@ -41,6 +43,8 @@ protected:
         curl_off_t ultotal, curl_off_t ulnow);
     static size_t staticWriteFunc(
         void *ptr, size_t size, size_t nmemb, void *data);
+
+    void reset();
 
     QString m_fileUrl;
     QByteArray m_data;
@@ -65,17 +69,24 @@ public:
 
 signals:
     // xml download
-    void xmlProgress(int percent);
-    void xmlFailed(QString error);
     QList<QString> xmlPresetsAvailable();
+    void sigXmlFailed(QString error);
+
+public slots:
+    void downloadPresets(QList<QString> presetName);
 
 protected slots:
+    // xml download
+    void onXmlProgress(QString xmlUrl, size_t dlNow, size_t dlTotal);
+    void onXmlFailed(QString xmlUrl, QString error);
+    void onXmlSucceeded(QString xmlUrl, QByteArray data);
 
     // images download
-    void imageProgress(QString presetName, int matchIndex, int percent);
-    void imagesFailed(QString error);
+    void onImageProgress(QString imageFilename, int percent);
+    void onImageFailed(QString , QString error);
 
 protected:
+    QString m_xmlUrl;
     int m_numActiveDownloads = 0;
     PresetRetrieverState m_state = Idle;
     QThread *m_thread;
