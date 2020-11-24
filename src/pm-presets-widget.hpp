@@ -46,11 +46,13 @@ protected slots:
     void onActivePresetChanged();
     void onActivePresetDirtyStateChanged();
     void onPresetsImportAvailable(PmMatchPresets availablePresets);
+    void onPresetsDownloadAvailable(QList<std::string> presetNames);
 
 protected:
     QMessageBox::ButtonRole promptUnsavedProceed();
 
     static const char* k_unsavedPresetStr;
+    static const char *k_defaultXmlDownload;
 
     QPushButton* prepareButton(const char* tooltip, const char* icoPath);
 

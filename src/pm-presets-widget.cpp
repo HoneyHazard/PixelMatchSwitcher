@@ -1,6 +1,7 @@
 #include "pm-presets-widget.hpp"
 #include "pm-preset-exists-dialog.hpp"
 #include "pm-presets-selector-dialog.hpp"
+#include "pm-preset-retriever.hpp"
 #include "pm-core.hpp"
 
 #include <sstream>
@@ -16,6 +17,8 @@
 
 const char* PmPresetsWidget::k_unsavedPresetStr
     = obs_module_text("<unsaved preset>");
+const char* PmPresetsWidget::k_defaultXmlDownload
+    = "https://github.com/HoneyHazard/PixelMatchPresets/raw/main/meta.xml";
 
 PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 : QGroupBox(obs_module_text("Presets"), parent)
@@ -86,7 +89,6 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     connect(m_presetDownloadButton, &QPushButton::released,
             this, &PmPresetsWidget::onPresetDownload, qc);
     presetLayout->addWidget(m_presetDownloadButton);
-    m_presetDownloadButton->setEnabled(false);
 
     // divider #2
     QFrame *divider2 = new QFrame(this);
@@ -293,6 +295,11 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
         oss.str().data());
 }
 
+void PmPresetsWidget::onPresetsDownloadAvailable(QList<std::string> presetNames)
+{
+
+}
+
 QPushButton* PmPresetsWidget::prepareButton(
     const char* tooltip, const char* icoPath)
 {
@@ -471,7 +478,14 @@ void PmPresetsWidget::onPresetImport()
 
 void PmPresetsWidget::onPresetDownload()
 {
-    // TODO
+    bool ok;
+    QString url = QInputDialog::getText(this,
+        obs_module_text("Download Preset"),
+        obs_module_text("Enter URL: "),
+        QLineEdit::Normal, k_defaultXmlDownload, &ok);
+    if (ok) {
+
+    }
 }
 
 QMessageBox::ButtonRole PmPresetsWidget::promptUnsavedProceed()

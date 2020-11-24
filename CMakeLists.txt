@@ -97,7 +97,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-about-box.hpp
         src/pm-structs.hpp
         src/pm-linger-queue.hpp
-        src/pm-preset-retriever.hpp
+        src/pm-presets-retriever.hpp
         src/pm-debug-tab.hpp
         ${LIBOBS_UI_DIR}/qt-display.hpp
         ${LIBOBS_UI_DIR}/qt-wrappers.hpp
@@ -125,7 +125,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-about-box.cpp
         src/pm-structs.cpp
         src/pm-linger-queue.cpp
-        src/pm-preset-retriever.cpp
+        src/pm-presets-retriever.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
         ${LIBOBS_UI_DIR}/qt-wrappers.cpp
 )
