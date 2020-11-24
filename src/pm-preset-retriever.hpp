@@ -40,7 +40,7 @@ protected:
         curl_off_t dltotal, curl_off_t dlnow,
         curl_off_t ultotal, curl_off_t ulnow);
     static size_t staticWriteFunc(
-        void *ptr, size_t size, size_t nmemb, void *stream);
+        void *ptr, size_t size, size_t nmemb, void *data);
 
     QString m_fileUrl;
     QByteArray m_data;
