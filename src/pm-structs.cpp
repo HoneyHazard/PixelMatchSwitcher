@@ -377,19 +377,29 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<QList<std::string>>("QList<std::string>");
 }
 
-PmMatchPresets PmMatchPresets::importXml(const std::string &filename)
+PmMatchPresets::PmMatchPresets(const std::string& filename)
 {
-    PmMatchPresets ret;
-    QFile file(filename.data());
-    file.open(QIODevice::ReadOnly);
-    if (!file.isOpen()) {
-        std::stringstream oss;
-        oss << "Unable to open file: " << filename;
-        throw std::runtime_error(oss.str().data());
-    }
+	PmMatchPresets ret;
+	QFile file(filename.data());
+	file.open(QIODevice::ReadOnly);
+	if (!file.isOpen()) {
+		std::stringstream oss;
+		oss << "Unable to open file: " << filename;
+		throw std::runtime_error(oss.str().data());
+	}
 
-    QXmlStreamReader xml(&file);
-    bool readingPresets = false;
+    QXmlStreamReader reader(&file);
+	importXml(reader);
+}
+
+PmMatchPresets::PmMatchPresets(const QByteArray& data)
+{
+	QXmlStreamReader reader(data);
+	importXml(reader);
+}
+
+void PmMatchPresets::importXml(QXmlStreamReader &xml)
+{
     while (true) {
         if (xml.error() != QXmlStreamReader::NoError) {
             throw std::runtime_error(xml.errorString().toUtf8().data());
@@ -403,10 +413,9 @@ PmMatchPresets PmMatchPresets::importXml(const std::string &filename)
         if (xml.name() == "preset" && xml.isStartElement()) {
             std::string presetName;
             PmMultiMatchConfig preset(xml, presetName);
-            ret.insert(presetName, preset);
+            insert(presetName, preset);
         }
     }
-    return ret;
 }
 
 void PmMatchPresets::exportXml(const std::string &filename,

@@ -140,7 +140,8 @@ add_library(pixel-match-switcher MODULE
 
 target_link_libraries(pixel-match-switcher
         Qt5::Core
-        Qt5::Widgets)
+        Qt5::Widgets
+        ${LIBCURL_LIBRARIES})
 if(UNIX AND NOT APPLE)
         target_link_libraries(pixel-match-switcher Qt5::X11Extras)
         #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-old-style-cast")

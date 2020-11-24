@@ -1,6 +1,7 @@
 #include "pm-preset-retriever.hpp"
 
 #include <QThread>
+#include <QXmlStreamReader>
 
 PmFileRetriever::PmFileRetriever(QString fileUrl, QObject* parent)
 : QObject(parent)
@@ -25,7 +26,7 @@ void PmFileRetriever::reset()
 
 void PmFileRetriever::startDownload()
 {
-    if (m_state == Downloading || m_state == Done) return;
+    //if (m_state == Downloading || m_state == Done) return;
 
     reset();
 
@@ -42,7 +43,7 @@ void PmFileRetriever::startDownload()
     curl_easy_setopt(m_curlHandle, CURLOPT_WRITEFUNCTION, staticWriteFunc);
     curl_easy_setopt(m_curlHandle, CURLOPT_WRITEDATA, this);
 
-    m_state = Downloading;
+    //m_state = Downloading;
     curl_easy_perform(m_curlHandle);
 }
 
@@ -86,10 +87,29 @@ PmPresetRetriever::PmPresetRetriever(QString xmlUrl, QObject* parent)
     // initiate xml downloader
     auto *xmlDownloader = new PmFileRetriever(xmlUrl, this);
     connect(xmlDownloader, &PmFileRetriever::sigProgress,
-            this, &PmPresetRetriever::onXmlProgress);
+            this, &PmPresetRetriever::sigXmlProgress);
     connect(xmlDownloader, &PmFileRetriever::sigFailed,
             this, &PmPresetRetriever::onXmlFailed);
     connect(xmlDownloader, &PmFileRetriever::sigSucceeded,
             this, &PmPresetRetriever::onXmlSucceeded);
     xmlDownloader->startDownload();
+}
+
+void PmPresetRetriever::onXmlFailed(QString xmlUrl, QString error)
+{
+    emit sigXmlFailed(xmlUrl, error);
+    deleteLater();
+}
+
+void PmPresetRetriever::onXmlSucceeded(QString xmlUrl, QByteArray xmlData)
+{
+    try {
+        m_presets = PmMatchPresets(xmlData);
+	    emit sigXmlPresetsAvailable(m_presets.keys());
+    } catch (std::exception e) {
+	    onXmlFailed(xmlUrl, e.what());
+    } catch (...) {
+	    onXmlFailed(
+            xmlUrl, obs_module_text("Unknown error during xml import"));
+    } 
 }

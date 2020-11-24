@@ -621,7 +621,7 @@ void PmCore::onMatchPresetExport(
 void PmCore::onMatchPresetsImport(std::string filename)
 {
     try {
-        PmMatchPresets impPresets = PmMatchPresets::importXml(filename);
+        PmMatchPresets impPresets(filename);
         emit sigPresetsImportAvailable(impPresets);
     } catch (std::exception e) {
         QMessageBox::critical(
