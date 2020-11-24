@@ -32,7 +32,7 @@ void PmFileRetriever::startDownload()
 
     m_curlHandle = curl_easy_init();
 
-    curl_easy_setopt(m_curlHandle, CURLOPT_URL, m_fileUrl.data());
+    curl_easy_setopt(m_curlHandle, CURLOPT_URL, m_fileUrl);
 
     curl_easy_setopt(m_curlHandle, CURLOPT_VERBOSE, 1L);
 
@@ -74,29 +74,25 @@ size_t PmFileRetriever::staticWriteFunc(
 
 //========================================================
 
-PmPresetsRetriever::PmPresetsRetriever(QObject *parent)
+PmPresetsRetriever::PmPresetsRetriever(QString xmlUrl, QObject* parent)
 : QObject(parent)
+, m_xmlUrl(xmlUrl)
 {
     curl_global_init(CURL_GLOBAL_ALL);
 
     // move to own thread
     m_thread = new QThread(this);
     m_thread->setObjectName("preset retriever thread");
-}
 
-void PmPresetsRetriever::downloadXml(QString xmlUrl)
-{
-	m_xmlUrl = xmlUrl;
-
-	// initiate xml downloader
-	auto *xmlDownloader = new PmFileRetriever(xmlUrl, this);
-	connect(xmlDownloader, &PmFileRetriever::sigProgress, this,
-		&PmPresetsRetriever::sigXmlProgress);
-	connect(xmlDownloader, &PmFileRetriever::sigFailed, this,
-		&PmPresetsRetriever::onXmlFailed);
-	connect(xmlDownloader, &PmFileRetriever::sigSucceeded, this,
-		&PmPresetsRetriever::onXmlSucceeded);
-	xmlDownloader->startDownload();
+    // initiate xml downloader
+    auto *xmlDownloader = new PmFileRetriever(xmlUrl, this);
+    connect(xmlDownloader, &PmFileRetriever::sigProgress,
+            this, &PmPresetsRetriever::sigXmlProgress);
+    connect(xmlDownloader, &PmFileRetriever::sigFailed,
+            this, &PmPresetsRetriever::onXmlFailed);
+    connect(xmlDownloader, &PmFileRetriever::sigSucceeded,
+            this, &PmPresetsRetriever::onXmlSucceeded);
+    xmlDownloader->startDownload();
 }
 
 void PmPresetsRetriever::onXmlFailed(QString xmlUrl, QString error)

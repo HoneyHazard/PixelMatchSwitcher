@@ -58,9 +58,8 @@ public:
     //enum PresetRetrieverState
     //    { Idle, DownloadingXML, MakeSelection, DownloadingImages };
 
-    PmPresetsRetriever(QObject *parent = nullptr);
+    PmPresetsRetriever(QString xmlUrl, QObject *parent = nullptr);
 
-    void downloadXml(QString xmlFilename);
     void downloadPresets(QList<QString> presetName);
 
 signals:

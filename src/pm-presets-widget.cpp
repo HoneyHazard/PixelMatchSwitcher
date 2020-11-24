@@ -1,7 +1,7 @@
 #include "pm-presets-widget.hpp"
 #include "pm-preset-exists-dialog.hpp"
 #include "pm-presets-selector-dialog.hpp"
-#include "pm-preset-retriever.hpp"
+#include "pm-presets-retriever.hpp"
 #include "pm-core.hpp"
 
 #include <sstream>
@@ -484,7 +484,7 @@ void PmPresetsWidget::onPresetDownload()
         obs_module_text("Enter URL: "),
         QLineEdit::Normal, k_defaultXmlDownload, &ok);
     if (ok) {
-
+	    PmPresetsRetriever *retriever = new PmPresetsRetriever(this);
     }
 }
 
