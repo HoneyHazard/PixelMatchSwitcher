@@ -17,7 +17,7 @@ public:
     //enum FileRetrieverState {
     //    Idle, Downloading, RetryPending, Halted, Done, Failed };
 
-    PmFileRetriever(QString fileUrl, QObject *parent = nullptr);
+    PmFileRetriever(std::string fileUrl, QObject *parent = nullptr);
     ~PmFileRetriever();
 
     //FileRetrieverState state() const { return m_state; }
@@ -26,9 +26,9 @@ public:
     //void halt();
 
 signals:
-    void sigFailed(QString urlName, QString error);
-    void sigSucceeded(QString urlName, QByteArray byteArray);
-    void sigProgress(QString urlName, size_t dlNow, size_t dlTotal);
+    void sigFailed(std::string urlName, QString error);
+	void sigSucceeded(std::string urlName, QByteArray byteArray);
+    void sigProgress(std::string urlName, size_t dlNow, size_t dlTotal);
 
 protected:
     static int staticProgressFunc(void *clientp,
@@ -39,7 +39,7 @@ protected:
 
     void reset();
 
-    QString m_fileUrl;
+    std::string m_fileUrl;
     QByteArray m_data;
 
     //FileRetrieverState m_state = Idle;
@@ -60,26 +60,28 @@ public:
 
     PmPresetsRetriever(QObject *parent = nullptr);
 
-    void downloadXml(QString xmlFilename);
+    void downloadXml(std::string xmlFilename);
     void downloadPresets(QList<QString> presetName);
 
 signals:
     // xml download
-    void sigXmlProgress(QString xmlUrl, size_t dlNow, size_t dlTotal);
-    void sigXmlFailed(QString xmlUrl, QString error);
+	void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
+	void sigXmlFailed(std::string xmlUrl, QString error);
     void sigXmlPresetsAvailable(QList<std::string> presetNames);
 
 protected slots:
     // xml download
-    void onXmlFailed(QString xmlUrl, QString error);
-    void onXmlSucceeded(QString xmlUrl, QByteArray data);
+	void onXmlDownload();
+	void onXmlFailed(std::string xmlUrl, QString error);
+	void onXmlSucceeded(std::string xmlUrl, QByteArray data);
 
     // images download
     //void onImageProgress(QString imageFilename, int percent);
     //void onImageFailed(QString imageFilename, QString error);
 
 protected:
-    QString m_xmlUrl;
+
+    std::string m_xmlUrl;
 	PmMatchPresets m_presets;
 
     int m_numActiveDownloads = 0;

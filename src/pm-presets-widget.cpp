@@ -18,7 +18,7 @@
 const char* PmPresetsWidget::k_unsavedPresetStr
     = obs_module_text("<unsaved preset>");
 const char* PmPresetsWidget::k_defaultXmlDownload
-    = "https://github.com/HoneyHazard/PixelMatchPresets/raw/main/meta.xml";
+    = "https://raw.githubusercontent.com/HoneyHazard/PixelMatchPresets/main/meta.xml";
 
 PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 : QGroupBox(obs_module_text("Presets"), parent)
@@ -484,7 +484,8 @@ void PmPresetsWidget::onPresetDownload()
         obs_module_text("Enter URL: "),
         QLineEdit::Normal, k_defaultXmlDownload, &ok);
     if (ok) {
-	    PmPresetsRetriever *retriever = new PmPresetsRetriever(this);
+        PmPresetsRetriever *retriever = new PmPresetsRetriever(this);
+        retriever->downloadXml(url.toUtf8().data());
     }
 }
 
