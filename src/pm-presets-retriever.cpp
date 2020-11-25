@@ -58,7 +58,7 @@ void PmFileRetriever::startDownload()
 int PmFileRetriever::staticProgressFunc(
     void *clientp,
     curl_off_t dltotal, curl_off_t dlnow,
-    curl_off_t ultotal, curl_off_t ulnowCould )
+    curl_off_t ultotal, curl_off_t ulnowCould)
 {
     PmFileRetriever *r = (PmFileRetriever *)clientp;
     r->m_data.reserve(dltotal);
@@ -75,12 +75,13 @@ size_t PmFileRetriever::staticWriteFunc(
     void *ptr, size_t size, size_t nmemb, void *data)
 {
     PmFileRetriever *r = (PmFileRetriever *)data;
-    r->m_data.append((const char*)ptr, (int)size);
+	size_t realSize = size * nmemb;
+    r->m_data.append((const char*)ptr, (int)realSize);
     if (r->m_data.size() == r->m_data.capacity()) {
         emit r->sigSucceeded(r->m_fileUrl, r->m_data);
         r->deleteLater();
     }
-    return CURLE_OK;
+    return realSize;
 }
 
 //========================================================
