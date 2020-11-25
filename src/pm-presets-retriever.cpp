@@ -1,4 +1,4 @@
-#include "pm-preset-retriever.hpp"
+#include "pm-presets-retriever.hpp"
 
 #include <QThread>
 #include <QXmlStreamReader>
