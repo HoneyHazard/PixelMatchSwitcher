@@ -79,7 +79,7 @@ signals:
     void sigXmlPresetsAvailable(QList<std::string> presetNames);
 
     // finalize
-    void sigXmlPresetsReady(PmMatchPresets presets);
+    void sigPresetsReady(PmMatchPresets presets);
 
 protected slots:
     // xml download

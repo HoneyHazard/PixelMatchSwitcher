@@ -1,8 +1,13 @@
 #include "pm-presets-retriever.hpp"
 
+//#include <obs-app.hpp>
+#include <util/platform.h>
+
 #include <QThread>
 #include <QXmlStreamReader>
 #include <QtConcurrent/QtConcurrent>
+
+#include <sstream>
 
 PmFileRetriever::PmFileRetriever(std::string fileUrl, QObject* parent)
 : QObject(parent)
@@ -27,7 +32,7 @@ void PmFileRetriever::reset()
 
 QFuture<CURLcode> PmFileRetriever::startDownload()
 {
-	return QtConcurrent::run(this, &PmFileRetriever::onDownload);
+    return QtConcurrent::run(this, &PmFileRetriever::onDownload);
 }
 
 CURLcode PmFileRetriever::onDownload()
@@ -138,7 +143,9 @@ void PmPresetsRetriever::onXmlDownload(std::string xmlUrl)
 
 void PmPresetsRetriever::onXmlFailed(std::string xmlUrl, int curlCode)
 {
-	QString errorString = curl_easy_strerror((CURLcode)curlCode);
+    // TODO: retry?
+
+    QString errorString = curl_easy_strerror((CURLcode)curlCode);
 
     emit sigXmlFailed(xmlUrl, errorString);
     deleteLater();
@@ -154,12 +161,43 @@ void PmPresetsRetriever::onXmlSucceeded(std::string xmlUrl, QByteArray xmlData)
         deleteLater();
     } catch (...) {
         emit sigXmlFailed(
-            xmlUrl, obs_module_text("Unknown error during xml import"));
+            xmlUrl, obs_module_text("Unknown error while parsing presets xml"));
         deleteLater();
     }
 }
 
 void PmPresetsRetriever::onRetrievePresets(QList<std::string> selectedPresets)
 {
+    PmMatchPresets readyPresets;
+
+    try {
+
+        // hex suffix based on URL
+        uint urlHash = qHash(m_xmlUrl);
+        std::ostringstream oss;
+        oss << std::hex << urlHash;
+        std::string urlHashSuffix = oss.str();
+
+        std::string storePath = os_get_config_path_ptr(
+            "obs-studio/plugin_config/PixelMatchSwitcher/presets");
+
+        for (const std::string &presetName : selectedPresets) {
+            PmMultiMatchConfig mcfg = m_availablePresets[presetName];
+
+            // unique folder name based on url and preset name
+            std::string presetPath
+                = storePath + presetName + '_' + urlHashSuffix;
+            os_mkdirs(presetPath.data());
+
+            for (PmMatchConfig& cfg : mcfg) {
+
+            }
+        }
+
+    } catch (std::exception e) {
+
+    } catch (...) {
+
+    }
 }
 
