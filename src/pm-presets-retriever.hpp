@@ -1,9 +1,11 @@
 #pragma once
 
 #include <QObject>
+#include <QtConcurrent/QtConcurrent>
 
 #include <curl/curl.h>
 #include <string>
+
 #include "pm-structs.hpp"
 
 class PmFileRetriever : public QObject
@@ -22,13 +24,16 @@ public:
 
     //FileRetrieverState state() const { return m_state; }
 
-    void startDownload();
+    QFuture<CURLcode> startDownload();
     //void halt();
 
 signals:
-    void sigFailed(std::string urlName, QString error);
-	void sigSucceeded(std::string urlName, QByteArray byteArray);
+    void sigFailed(std::string urlName, int curlCode);
+    void sigSucceeded(std::string urlName, QByteArray byteArray);
     void sigProgress(std::string urlName, size_t dlNow, size_t dlTotal);
+
+protected slots:
+    CURLcode onDownload();
 
 protected:
     static int staticProgressFunc(void *clientp,
@@ -61,19 +66,28 @@ public:
     PmPresetsRetriever(QObject *parent = nullptr);
 
     void downloadXml(std::string xmlFilename);
-    void downloadPresets(QList<QString> presetName);
+    void retrievePresets(QList<std::string> selectedPresets);
 
 signals:
+    // forwarded to self to run in its own thread
+    void sigDownloadXml(std::string xmlUrl);
+    void sigRetrievePresets(QList<std::string> selectedPresets);
+
     // xml download
-	void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
-	void sigXmlFailed(std::string xmlUrl, QString error);
+    void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
+    void sigXmlFailed(std::string xmlUrl, QString error);
     void sigXmlPresetsAvailable(QList<std::string> presetNames);
+
+    // finalize
+    void sigXmlPresetsReady(PmMatchPresets presets);
 
 protected slots:
     // xml download
-	void onXmlDownload();
-	void onXmlFailed(std::string xmlUrl, QString error);
-	void onXmlSucceeded(std::string xmlUrl, QByteArray data);
+    void onXmlDownload(std::string xmlUrl);
+    void onXmlFailed(std::string xmlUrl, int curlCode);
+    void onXmlSucceeded(std::string xmlUrl, QByteArray data);
+
+    void onRetrievePresets(QList<std::string> selectedPresets);
 
     // images download
     //void onImageProgress(QString imageFilename, int percent);
@@ -82,7 +96,7 @@ protected slots:
 protected:
 
     std::string m_xmlUrl;
-	PmMatchPresets m_presets;
+    PmMatchPresets m_availablePresets;
 
     int m_numActiveDownloads = 0;
     QThread *m_thread;

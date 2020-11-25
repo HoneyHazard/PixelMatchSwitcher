@@ -3,6 +3,7 @@
 #include <QGroupBox>
 #include <QMessageBox>
 #include <QList>
+#include <QPointer>
 
 #include "pm-structs.hpp"
 
@@ -10,6 +11,7 @@ class QComboBox;
 class QPushButton;
 
 class PmCore;
+class PmPresetsRetriever;
 
 class PmPresetsWidget : public QGroupBox
 {
@@ -57,6 +59,7 @@ protected:
     QPushButton* prepareButton(const char* tooltip, const char* icoPath);
 
     PmCore* m_core;
+    QPointer<PmPresetsRetriever> m_presetsRetriever;
 
     QComboBox* m_presetCombo;
     QPushButton* m_presetRevertButton;

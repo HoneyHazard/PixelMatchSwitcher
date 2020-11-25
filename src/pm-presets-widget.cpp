@@ -489,10 +489,11 @@ void PmPresetsWidget::onPresetDownload()
         obs_module_text("Enter URL: "),
         QLineEdit::Normal, k_defaultXmlDownload, &ok);
     if (ok) {
-        PmPresetsRetriever *retriever = new PmPresetsRetriever(this);
-        connect(retriever, &PmPresetsRetriever::sigXmlPresetsAvailable,
-                this, &PmPresetsWidget::onPresetsDownloadAvailable);
-        retriever->downloadXml(url.toUtf8().data());
+        m_presetsRetriever = new PmPresetsRetriever(this);
+        connect(
+            m_presetsRetriever, &PmPresetsRetriever::sigXmlPresetsAvailable,
+            this, &PmPresetsWidget::onPresetsDownloadAvailable);
+        m_presetsRetriever->downloadXml(url.toUtf8().data());
     }
 }
 

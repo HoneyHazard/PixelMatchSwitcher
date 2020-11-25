@@ -25,7 +25,12 @@ void PmFileRetriever::reset()
     }
 }
 
-void PmFileRetriever::startDownload()
+QFuture<CURLcode> PmFileRetriever::startDownload()
+{
+	return QtConcurrent::run(this, &PmFileRetriever::onDownload);
+}
+
+CURLcode PmFileRetriever::onDownload()
 {
     //if (m_state == Downloading || m_state == Done) return;
 
@@ -51,8 +56,14 @@ void PmFileRetriever::startDownload()
 
     //m_state = Downloading;
     CURLcode result = curl_easy_perform(m_curlHandle);
-
-    blog(LOG_DEBUG, "curl perform result = %d", result);
+    blog(LOG_DEBUG, "file retriever: curl perform result = %d", result);
+    if (result == CURLE_OK) {
+        emit sigSucceeded(m_fileUrl, m_data);
+    } else {
+        std::string errorInfo = curl_easy_strerror(result);
+        emit sigFailed(m_fileUrl, result);
+    }
+    return result;
 }
 
 int PmFileRetriever::staticProgressFunc(
@@ -75,12 +86,8 @@ size_t PmFileRetriever::staticWriteFunc(
     void *ptr, size_t size, size_t nmemb, void *data)
 {
     PmFileRetriever *r = (PmFileRetriever *)data;
-	size_t realSize = size * nmemb;
+    size_t realSize = size * nmemb;
     r->m_data.append((const char*)ptr, (int)realSize);
-    if (r->m_data.size() == r->m_data.capacity()) {
-        emit r->sigSucceeded(r->m_fileUrl, r->m_data);
-        r->deleteLater();
-    }
     return realSize;
 }
 
@@ -94,20 +101,31 @@ PmPresetsRetriever::PmPresetsRetriever(QObject *parent)
     m_thread->setObjectName("preset retriever thread");
     moveToThread(m_thread);
 
-    CURLcode result = curl_global_init(CURL_GLOBAL_ALL);
+    // use signals & slots to run things in its own thread
+    connect(this, &PmPresetsRetriever::sigDownloadXml,
+            this, &PmPresetsRetriever::onXmlDownload, Qt::QueuedConnection);
+    connect(this, &PmPresetsRetriever::sigRetrievePresets,
+            this, &PmPresetsRetriever::onRetrievePresets, Qt::QueuedConnection);
 
-    blog(LOG_DEBUG, "curl init result = %d", result);
+    // CURL global init
+    CURLcode result = curl_global_init(CURL_GLOBAL_ALL);
+    blog(LOG_DEBUG, "preset retriever: curl init result = %d", result);
 }
 
 void PmPresetsRetriever::downloadXml(std::string xmlUrl)
 {
-    m_xmlUrl = xmlUrl;
-    onXmlDownload();
+    emit sigDownloadXml(xmlUrl);
 }
 
-void PmPresetsRetriever::onXmlDownload()
+void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
+{
+    emit sigRetrievePresets(selectedPresets);
+}
+
+void PmPresetsRetriever::onXmlDownload(std::string xmlUrl)
 {
     // initiate xml downloader
+    m_xmlUrl = xmlUrl;
     auto *xmlDownloader = new PmFileRetriever(m_xmlUrl, this);
     connect(xmlDownloader, &PmFileRetriever::sigProgress, this,
         &PmPresetsRetriever::sigXmlProgress);
@@ -118,22 +136,30 @@ void PmPresetsRetriever::onXmlDownload()
     xmlDownloader->startDownload();
 }
 
-void PmPresetsRetriever::onXmlFailed(std::string xmlUrl, QString error)
+void PmPresetsRetriever::onXmlFailed(std::string xmlUrl, int curlCode)
 {
-    emit sigXmlFailed(xmlUrl, error);
+	QString errorString = curl_easy_strerror((CURLcode)curlCode);
+
+    emit sigXmlFailed(xmlUrl, errorString);
     deleteLater();
 }
 
 void PmPresetsRetriever::onXmlSucceeded(std::string xmlUrl, QByteArray xmlData)
 {
     try {
-        m_presets = PmMatchPresets(xmlData);
-        emit sigXmlPresetsAvailable(m_presets.keys());
+        m_availablePresets = PmMatchPresets(xmlData);
+        emit sigXmlPresetsAvailable(m_availablePresets.keys());
     } catch (std::exception e) {
-        onXmlFailed(xmlUrl, e.what());
+        emit sigXmlFailed(xmlUrl, e.what());
+        deleteLater();
     } catch (...) {
-        onXmlFailed(
+        emit sigXmlFailed(
             xmlUrl, obs_module_text("Unknown error during xml import"));
-    } 
+        deleteLater();
+    }
+}
+
+void PmPresetsRetriever::onRetrievePresets(QList<std::string> selectedPresets)
+{
 }
 
