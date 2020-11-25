@@ -379,23 +379,23 @@ void pmRegisterMetaTypes()
 
 PmMatchPresets::PmMatchPresets(const std::string& filename)
 {
-	PmMatchPresets ret;
-	QFile file(filename.data());
-	file.open(QIODevice::ReadOnly);
-	if (!file.isOpen()) {
-		std::stringstream oss;
-		oss << "Unable to open file: " << filename;
-		throw std::runtime_error(oss.str().data());
-	}
+    PmMatchPresets ret;
+    QFile file(filename.data());
+    file.open(QIODevice::ReadOnly);
+    if (!file.isOpen()) {
+        std::stringstream oss;
+        oss << "Unable to open file: " << filename;
+        throw std::runtime_error(oss.str().data());
+    }
 
     QXmlStreamReader reader(&file);
-	importXml(reader);
+    importXml(reader);
 }
 
 PmMatchPresets::PmMatchPresets(const QByteArray& data)
 {
-	QXmlStreamReader reader(data);
-	importXml(reader);
+    QXmlStreamReader reader(data);
+    importXml(reader);
 }
 
 void PmMatchPresets::importXml(QXmlStreamReader &xml)

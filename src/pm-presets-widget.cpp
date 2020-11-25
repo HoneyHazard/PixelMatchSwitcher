@@ -297,7 +297,12 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
 
 void PmPresetsWidget::onPresetsDownloadAvailable(QList<std::string> presetNames)
 {
-
+    PmPresetsSelectorDialog selector(
+        obs_module_text("Presets to Download"),
+        presetNames, presetNames, this);
+    QList<std::string> selectedPresets = selector.selectedPresets();
+    if (selector.result() == QDialog::Rejected || selectedPresets.empty())
+        return;
 }
 
 QPushButton* PmPresetsWidget::prepareButton(
@@ -485,6 +490,8 @@ void PmPresetsWidget::onPresetDownload()
         QLineEdit::Normal, k_defaultXmlDownload, &ok);
     if (ok) {
         PmPresetsRetriever *retriever = new PmPresetsRetriever(this);
+        connect(retriever, &PmPresetsRetriever::sigXmlPresetsAvailable,
+                this, &PmPresetsWidget::onPresetsDownloadAvailable);
         retriever->downloadXml(url.toUtf8().data());
     }
 }
