@@ -37,8 +37,8 @@ void PmFileRetriever::startDownload()
 
     curl_easy_setopt(m_curlHandle, CURLOPT_URL, m_fileUrl.data());
     curl_easy_setopt(m_curlHandle, CURLOPT_FOLLOWLOCATION, 1L);
-    //curl_easy_setopt(m_curlHandle, CURLOPT_SSL_VERIFYPEER, true);
-    //curl_easy_setopt(m_curlHandle, CURLOPT_SSL_VERIFYHOST, 2L);
+    curl_easy_setopt(m_curlHandle, CURLOPT_SSL_VERIFYPEER, true);
+    curl_easy_setopt(m_curlHandle, CURLOPT_SSL_VERIFYHOST, 2L);
 
     curl_easy_setopt(m_curlHandle, CURLOPT_VERBOSE, 1L);
 
