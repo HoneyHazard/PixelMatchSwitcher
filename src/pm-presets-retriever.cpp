@@ -6,6 +6,7 @@
 #include <QThread>
 #include <QXmlStreamReader>
 #include <QtConcurrent/QtConcurrent>
+#include <QFile>
 
 #include <sstream>
 
@@ -30,9 +31,11 @@ void PmFileRetriever::reset()
     }
 }
 
-QFuture<CURLcode> PmFileRetriever::startDownload()
+QFuture<CURLcode> PmFileRetriever::startDownload(QThreadPool &threadPool)
 {
-    return QtConcurrent::run(this, &PmFileRetriever::onDownload);
+    m_future
+        = QtConcurrent::run(&threadPool, this, &PmFileRetriever::onDownload);
+    return m_future;
 }
 
 CURLcode PmFileRetriever::onDownload()
@@ -63,6 +66,18 @@ CURLcode PmFileRetriever::onDownload()
     CURLcode result = curl_easy_perform(m_curlHandle);
     blog(LOG_DEBUG, "file retriever: curl perform result = %d", result);
     if (result == CURLE_OK) {
+        if (m_saveFilename.size()) {
+            QFile file(m_saveFilename.data());
+            file.open(QIODevice::ReadOnly);
+            if (!file.isOpen()) {
+                emit sigFailed(m_fileUrl, CURLE_WRITE_ERROR);
+                return CURLE_WRITE_ERROR;
+            }
+            if (file.error()) {
+                emit sigFailed(m_fileUrl, CURLE_WRITE_ERROR);
+                return CURLE_WRITE_ERROR;
+            }
+        }
         emit sigSucceeded(m_fileUrl, m_data);
     } else {
         std::string errorInfo = curl_easy_strerror(result);
@@ -98,57 +113,179 @@ size_t PmFileRetriever::staticWriteFunc(
 
 //========================================================
 
-PmPresetsRetriever::PmPresetsRetriever(QObject *parent)
+PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl, QObject *parent)
 : QObject(parent)
+, m_xmlUrl(xmlUrl)
 {
     // move to own thread
     m_thread = new QThread(this);
     m_thread->setObjectName("preset retriever thread");
     moveToThread(m_thread);
 
-    // use signals & slots to run things in its own thread
-    connect(this, &PmPresetsRetriever::sigDownloadXml,
-            this, &PmPresetsRetriever::onXmlDownload, Qt::QueuedConnection);
-    connect(this, &PmPresetsRetriever::sigRetrievePresets,
-            this, &PmPresetsRetriever::onRetrievePresets, Qt::QueuedConnection);
+    // worker thread pool for downloads
+    m_workerThreadPool.setMaxThreadCount(k_numConcurrentDownloads);
 
     // CURL global init
     CURLcode result = curl_global_init(CURL_GLOBAL_ALL);
     blog(LOG_DEBUG, "preset retriever: curl init result = %d", result);
 }
 
-void PmPresetsRetriever::downloadXml(std::string xmlUrl)
+void PmPresetsRetriever::downloadXml()
 {
-    emit sigDownloadXml(xmlUrl);
+    emit onDownloadXml();
+
+    //QtConcurrent::run(m_thread, this, &PmPresetsRetriever::onXmlDownload);
 }
 
 void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
 {
-    emit sigRetrievePresets(selectedPresets);
+    emit onRetrievePresets(selectedPresets);
 }
 
-void PmPresetsRetriever::onXmlDownload(std::string xmlUrl)
+void PmPresetsRetriever::retryImages()
+{
+    emit onDownloadImages();
+}
+
+void PmPresetsRetriever::onDownloadXml()
 {
     // initiate xml downloader
-    m_xmlUrl = xmlUrl;
     auto *xmlDownloader = new PmFileRetriever(m_xmlUrl, this);
-    connect(xmlDownloader, &PmFileRetriever::sigProgress, this,
-        &PmPresetsRetriever::sigXmlProgress);
-    connect(xmlDownloader, &PmFileRetriever::sigFailed, this,
-        &PmPresetsRetriever::onXmlFailed);
-    connect(xmlDownloader, &PmFileRetriever::sigSucceeded, this,
-        &PmPresetsRetriever::onXmlSucceeded);
-    xmlDownloader->startDownload();
+    connect(xmlDownloader, &PmFileRetriever::sigProgress,
+            this, &PmPresetsRetriever::sigXmlProgress,
+            Qt::QueuedConnection);
+
+    //connect(xmlDownloader, &PmFileRetriever::sigFailed, this,
+    //    &PmPresetsRetriever::onXmlFailed);
+    //connect(xmlDownloader, &PmFileRetriever::sigSucceeded, this,
+    //    &PmPresetsRetriever::onXmlSucceeded);
+
+    // fetch the xml
+    QFuture<CURLcode> xmlFuture
+        = xmlDownloader->startDownload(m_workerThreadPool);
+    xmlFuture.waitForFinished();
+    CURLcode xmlResultCode = xmlFuture.result();
+    if (xmlResultCode != CURLE_OK) {
+        QString errorString = curl_easy_strerror(xmlResultCode);
+        emit sigXmlFailed(m_xmlUrl, errorString);
+        deleteLater();
+        return;
+    }
+
+    try {
+        // parse the xml data; report available presets
+        const QByteArray &xmlData = xmlDownloader->data();
+        m_availablePresets = PmMatchPresets(xmlData);
+        emit sigXmlPresetsAvailable(m_availablePresets.keys());
+    } catch (std::exception e) {
+        emit sigXmlFailed(m_xmlUrl, e.what());
+        deleteLater();
+    } catch (...) {
+        emit sigXmlFailed(
+            m_xmlUrl,
+            obs_module_text("Unknown error while parsing presets xml"));
+        deleteLater();
+    }
 }
 
-void PmPresetsRetriever::onXmlFailed(std::string xmlUrl, int curlCode)
+void PmPresetsRetriever::onImgFailed(std::string imgUrl, int curlCode)
 {
-    // TODO: retry?
-
     QString errorString = curl_easy_strerror((CURLcode)curlCode);
 
+    emit sigImgFailed(imgUrl, errorString);
+    //onAbort();
+
+    //deleteLater();
+    // TODO: allow retry?
+}
+
+void PmPresetsRetriever::onRetrievePresets(QList<std::string> selectedPresets)
+{
+    m_selectedPresets = selectedPresets;
+
+    // hex suffix based on URL
+    uint urlHash = qHash(m_xmlUrl);
+    std::ostringstream oss;
+    oss << std::hex << urlHash;
+    std::string urlHashSuffix = oss.str();
+
+    std::string storePath = os_get_config_path_ptr(
+        "obs-studio/plugin_config/PixelMatchSwitcher/presets/");
+
+    for (const std::string &presetName : selectedPresets) {
+        PmMultiMatchConfig mcfg = m_availablePresets[presetName];
+
+        // unique folder name based on url and preset name
+        std::string presetStorePath
+            = storePath + presetName + '_' + urlHashSuffix + '/';
+        os_mkdirs(presetStorePath.data());
+
+        for (PmMatchConfig& cfg : mcfg) {
+            // filename
+            std::string imgUrl = cfg.matchImgFilename;
+            std::string imgFilename = QUrl(imgUrl.data())
+                .fileName().toUtf8().data();
+            std::string storeImgPath = presetStorePath + imgFilename;
+            cfg.matchImgFilename = storeImgPath;
+
+            // prepare an image retriever
+            PmFileRetriever *imgRetriever
+                = new PmFileRetriever(imgUrl, this);
+            imgRetriever->setSaveFilename(storeImgPath);
+            connect(imgRetriever, &PmFileRetriever::sigProgress,
+                    this, &PmPresetsRetriever::sigImgProgress,
+                    Qt::QueuedConnection);
+            connect(imgRetriever, &PmFileRetriever::sigFailed,
+                    this, &PmPresetsRetriever::onImgFailed,
+                    Qt::QueuedConnection);
+            m_imgRetrievers.push_back(imgRetriever);
+        }
+    }
+
+    onDownloadImages();
+}
+
+void PmPresetsRetriever::onDownloadImages()
+{
+    // dispatch image retrievers needed to start or resume a failed retrieve
+    for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
+        QFuture<CURLcode> &future = imgRetriever->future();
+        if (!future.isStarted()
+         || !future.isResultReadyAt(0)
+         || future.result() != CURLE_OK) {
+            imgRetriever->startDownload(m_workerThreadPool);
+        }
+    }
+
+    // wait for completion; check for success
+    bool imagesOk = true;
+    for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
+        QFuture<CURLcode> &future = imgRetriever->future();
+        future.waitForFinished();
+        if (future.result() != CURLE_OK) {
+            imagesOk = false;
+        }
+    }
+
+    if (imagesOk) {
+        // finalize the output
+        PmMatchPresets readyPresets;
+        for (const std::string presetName : m_selectedPresets) {
+            readyPresets[presetName] = m_availablePresets[presetName];
+        }
+        emit sigPresetsReady(readyPresets);
+    }
+}
+
+void PmPresetsRetriever::onAbort() {}
+
+#if 0
+void PmPresetsRetriever::onXmlFailed(std::string xmlUrl, int curlCode)
+{
+    QString errorString = curl_easy_strerror(xmlResultCode);
     emit sigXmlFailed(xmlUrl, errorString);
     deleteLater();
+     TODO: allow retry?
 }
 
 void PmPresetsRetriever::onXmlSucceeded(std::string xmlUrl, QByteArray xmlData)
@@ -165,39 +302,4 @@ void PmPresetsRetriever::onXmlSucceeded(std::string xmlUrl, QByteArray xmlData)
         deleteLater();
     }
 }
-
-void PmPresetsRetriever::onRetrievePresets(QList<std::string> selectedPresets)
-{
-    PmMatchPresets readyPresets;
-
-    try {
-
-        // hex suffix based on URL
-        uint urlHash = qHash(m_xmlUrl);
-        std::ostringstream oss;
-        oss << std::hex << urlHash;
-        std::string urlHashSuffix = oss.str();
-
-        std::string storePath = os_get_config_path_ptr(
-            "obs-studio/plugin_config/PixelMatchSwitcher/presets");
-
-        for (const std::string &presetName : selectedPresets) {
-            PmMultiMatchConfig mcfg = m_availablePresets[presetName];
-
-            // unique folder name based on url and preset name
-            std::string presetPath
-                = storePath + presetName + '_' + urlHashSuffix;
-            os_mkdirs(presetPath.data());
-
-            for (PmMatchConfig& cfg : mcfg) {
-
-            }
-        }
-
-    } catch (std::exception e) {
-
-    } catch (...) {
-
-    }
-}
-
+#endif

@@ -486,16 +486,16 @@ void PmPresetsWidget::onPresetImport()
 void PmPresetsWidget::onPresetDownload()
 {
     bool ok;
-    QString url = QInputDialog::getText(this,
+    std::string url = QInputDialog::getText(this,
         obs_module_text("Download Preset"),
         obs_module_text("Enter URL: "),
-        QLineEdit::Normal, k_defaultXmlDownload, &ok);
-    if (ok) {
-        m_presetsRetriever = new PmPresetsRetriever(this);
+        QLineEdit::Normal, k_defaultXmlDownload, &ok).toUtf8().data();
+    if (ok && url.size()) {
+        m_presetsRetriever = new PmPresetsRetriever(url, this);
         connect(
             m_presetsRetriever, &PmPresetsRetriever::sigXmlPresetsAvailable,
             this, &PmPresetsWidget::onPresetsDownloadAvailable);
-        m_presetsRetriever->downloadXml(url.toUtf8().data());
+        m_presetsRetriever->downloadXml();
     }
 }
 

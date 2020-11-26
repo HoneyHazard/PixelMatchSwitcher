@@ -1,12 +1,15 @@
 #pragma once
 
 #include <QObject>
+#include <QByteArray>
 #include <QtConcurrent/QtConcurrent>
 
 #include <curl/curl.h>
 #include <string>
 
 #include "pm-structs.hpp"
+
+typedef bool (*PmSaveCallback)(void); // return true if ok
 
 class PmFileRetriever : public QObject
 {
@@ -16,8 +19,14 @@ public:
     PmFileRetriever(std::string fileUrl, QObject *parent = nullptr);
     ~PmFileRetriever();
 
+    QFuture<CURLcode> startDownload(QThreadPool& threadPool);
 
-    QFuture<CURLcode> startDownload();
+    void setSaveFilename(const std::string& saveFilename)
+        { m_saveFilename = saveFilename; }
+
+    QFuture<CURLcode>& future() { return m_future;}
+
+    const QByteArray &data() const { return m_data; }
 
 signals:
     void sigFailed(std::string urlName, int curlCode);
@@ -37,7 +46,9 @@ protected:
     void reset();
 
     std::string m_fileUrl;
+    std::string m_saveFilename;
     QByteArray m_data;
+    QFuture<CURLcode> m_future;
 
     CURL *m_curlHandle = nullptr;
 
@@ -61,39 +72,54 @@ class PmPresetsRetriever : public QObject
 public:
     static const int k_numConcurrentDownloads = 3;
 
-    PmPresetsRetriever(QObject *parent = nullptr);
+    PmPresetsRetriever(std::string xmlUrl, QObject *parent = nullptr);
 
-    void downloadXml(std::string xmlFilename);
+    void downloadXml();
     void retrievePresets(QList<std::string> selectedPresets);
+    void retryImages();
 
 signals:
     // forwarded to self to run in its own thread
-    void sigDownloadXml(std::string xmlUrl);
     void sigRetrievePresets(QList<std::string> selectedPresets);
+    void sigAbort();
 
-    // xml download
+    // xml phase
     void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
     void sigXmlFailed(std::string xmlUrl, QString error);
     void sigXmlPresetsAvailable(QList<std::string> presetNames);
 
-    // finalize
+    // image phase
+    void sigImgProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
+    void sigImgFailed(std::string xmlUrl, QString error);
     void sigPresetsReady(PmMatchPresets presets);
 
-protected slots:
-    // xml download
-    void onXmlDownload(std::string xmlUrl);
-    void onXmlFailed(std::string xmlUrl, int curlCode);
-    void onXmlSucceeded(std::string xmlUrl, QByteArray data);
+public slots:
+    void onDownloadXml();
+	void onRetrievePresets(QList<std::string> selectedPresets);
+    void onDownloadImages();
+    void onAbort();
 
-    void onRetrievePresets(QList<std::string> selectedPresets);
+protected slots:
+
+    //void onXmlFailed(std::string xmlUrl, int curlCode);
+    //void onXmlSucceeded(std::string xmlUrl, QByteArray data);
+
+    // images download
+    void onImgFailed(std::string imgUrl, int curlCode);
+
+
 
 protected:
+    bool saveImage(const QByteArray &byteArray, const std::string saveLoc);
 
     std::string m_xmlUrl;
     PmMatchPresets m_availablePresets;
+    QList<std::string> m_selectedPresets;
 
-    int m_numActiveDownloads = 0;
+    bool m_abort = false;
     QThread *m_thread;
+    QThreadPool m_workerThreadPool;
+    QList<PmFileRetriever*> m_imgRetrievers;
 
     //enum PresetRetrieverState
     //    { Idle, DownloadingXML, MakeSelection, DownloadingImages };
@@ -102,4 +128,5 @@ protected:
     //void onImageProgress(QString imageFilename, int percent);
     //void onImageFailed(QString imageFilename, QString error);
     //PresetRetrieverState m_state = Idle;
+    //int m_numActiveDownloads = 0;
 };
