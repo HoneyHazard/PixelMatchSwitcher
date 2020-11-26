@@ -1,6 +1,7 @@
 #include "pm-presets-widget.hpp"
 #include "pm-preset-exists-dialog.hpp"
 #include "pm-presets-selector-dialog.hpp"
+#include "pm-retriever-progress-dialog.hpp"
 #include "pm-presets-retriever.hpp"
 #include "pm-core.hpp"
 
@@ -498,6 +499,9 @@ void PmPresetsWidget::onPresetDownload()
         connect(
             m_presetsRetriever, &PmPresetsRetriever::sigXmlPresetsAvailable,
             this, &PmPresetsWidget::onPresetsDownloadAvailable);
+
+        //PmRetrieverProgressDialog *pg =
+            new PmRetrieverProgressDialog(m_presetsRetriever, this);
         m_presetsRetriever->downloadXml();
     }
 }

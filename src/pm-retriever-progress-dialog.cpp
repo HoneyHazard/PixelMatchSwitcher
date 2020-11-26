@@ -13,11 +13,14 @@ PmProgressBar::PmProgressBar(const QString &taskLabel, QWidget *parent)
 : QProgressBar(parent)
 , m_taskLabel(taskLabel)
 {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    setAlignment(Qt::AlignCenter);
+    setStyleSheet("QProgressBar {  background-color: darkBlue; };");
 }
 
 QString PmProgressBar::text() const
 {
-    return QString("%1 - %2%%").arg(m_taskLabel).arg(value());
+    return QString("%1 - %2%").arg(m_taskLabel).arg(value());
 }
 
 //===================================
@@ -28,14 +31,17 @@ PmRetrieverProgressDialog::PmRetrieverProgressDialog(
                 | Qt::WindowCloseButtonHint)
 , m_retriever(retriever)
 {
-	setWindowTitle(obs_module_text("Downloading Preset(s)"));
+    setWindowTitle(obs_module_text("Downloading Preset(s) Data"));
 
-    // scroll area
-    QWidget *scrollWidget = new QWidget(this);
-    m_scrollLayout = new QVBoxLayout();
-    scrollWidget->setLayout(m_scrollLayout);
+    // scroll area to be filled with progress bars
+    m_scrollWidget = new QWidget(this);
     m_scrollArea = new QScrollArea(this);
-    m_scrollArea->setWidget(scrollWidget);
+    m_scrollLayout = new QVBoxLayout(m_scrollWidget);
+    m_scrollLayout->setContentsMargins(0, 0, 0, 0);
+    m_scrollLayout->setAlignment(Qt::AlignTop);
+    m_scrollArea->setWidget(m_scrollWidget);
+    m_scrollArea->setWidgetResizable(true);
+    m_scrollArea->setAlignment(Qt::AlignTop);
 
     // button controls [wip]
     QPushButton *retryButton
@@ -77,12 +83,22 @@ void PmRetrieverProgressDialog::onFileProgress(
 {
     auto find = m_map.find(fileUrl);
     if (find == m_map.end()) {
-        PmProgressBar *pb = new PmProgressBar(fileUrl.data(), this);
+        QString filename = QUrl(fileUrl.data()).fileName();
+        PmProgressBar *pb = new PmProgressBar(filename, this);
         m_scrollLayout->addWidget(pb);
+        const int maxSz = PmPresetsRetriever::k_numConcurrentDownloads * 2;
+        if (m_map.size() < maxSz) {
+            int height = pb->maximumHeight()
+                + pb->contentsMargins().top() + pb->contentsMargins().bottom();
+            m_scrollWidget->setMinimumHeight(m_map.size() * height);
+	        //m_scrollArea->setFixedHeight(m_scrollWidget->minimumHeight());
+        }
+        
         m_map[fileUrl] = pb;
     } else {
         PmProgressBar *pb = *find;
-        int percent = int(float(dlNow) * 100.f / float(dlTotal));
+        int percent = dlTotal ? int(float(dlNow) * 100.f / float(dlTotal))
+                    : 0;
         pb->setValue(percent);
     }
 }
@@ -101,7 +117,7 @@ void PmRetrieverProgressDialog::onFileSuccess(std::string fileUrl)
     auto find = m_map.find(fileUrl);
     if (find != m_map.end()) {
         PmProgressBar *pb = *find;
-        pb->setStyleSheet("QProgressBar {  background-color: green; };");
+        pb->setStyleSheet("QProgressBar {  background-color: darkGreen; };");
     }
 }
 

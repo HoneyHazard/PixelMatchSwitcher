@@ -50,7 +50,9 @@ protected slots:
 
 protected:
     PmPresetsRetriever *m_retriever;
-	QScrollArea *m_scrollArea;
-    QVBoxLayout *m_scrollLayout;
+
     QHash<std::string, PmProgressBar*> m_map;
+    QScrollArea *m_scrollArea;
+    QVBoxLayout *m_scrollLayout;
+    QWidget *m_scrollWidget;
 };

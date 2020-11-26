@@ -115,8 +115,6 @@ protected slots:
     void onImgFailed(std::string imgUrl, int curlCode);
 
 protected:
-    bool saveImage(const QByteArray &byteArray, const std::string saveLoc);
-
     std::string m_xmlUrl;
     PmMatchPresets m_availablePresets;
     QList<std::string> m_selectedPresets;
