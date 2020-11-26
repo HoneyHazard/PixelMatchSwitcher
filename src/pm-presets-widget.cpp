@@ -295,7 +295,8 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
         oss.str().data());
 }
 
-void PmPresetsWidget::onPresetsDownloadAvailable(QList<std::string> presetNames)
+void PmPresetsWidget::onPresetsDownloadAvailable(
+    std::string xmlUrl, QList<std::string> presetNames)
 {
     PmPresetsSelectorDialog selector(
         obs_module_text("Presets to Download"), presetNames, {}, this);
@@ -303,8 +304,10 @@ void PmPresetsWidget::onPresetsDownloadAvailable(QList<std::string> presetNames)
     if (selector.result() == QDialog::Rejected || selectedPresets.empty())
         return;
     if (m_presetsRetriever) {
-	    m_presetsRetriever->retrievePresets(selectedPresets);
+        m_presetsRetriever->retrievePresets(selectedPresets);
     }
+
+    UNUSED_PARAMETER(xmlUrl);
 }
 
 QPushButton* PmPresetsWidget::prepareButton(

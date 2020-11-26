@@ -9,8 +9,9 @@
 
 #include "pm-structs.hpp"
 
-typedef bool (*PmSaveCallback)(void); // return true if ok
-
+/**
+ * @brief Wrapper class for downloads using libcurl
+ */
 class PmFileRetriever : public QObject
 {
     Q_OBJECT
@@ -65,6 +66,10 @@ protected:
     //int msLeftBeforeRetry = k_msBeforeRetry;
 };
 
+/**
+ * @brief Downloads preset XML from URL and associated images; 
+ *        presents local presets
+ */
 class PmPresetsRetriever : public QObject
 {
     Q_OBJECT
@@ -86,11 +91,14 @@ signals:
     // xml phase
     void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
     void sigXmlFailed(std::string xmlUrl, QString error);
-    void sigXmlPresetsAvailable(QList<std::string> presetNames);
+    void sigXmlSuccess(std::string xmlUrl);
+    void sigXmlPresetsAvailable(
+        std::string xmlUrl, QList<std::string> presetNames);
 
     // image phase
-    void sigImgProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
-    void sigImgFailed(std::string xmlUrl, QString error);
+    void sigImgProgress(std::string imgUrl, size_t dlNow, size_t dlTotal);
+    void sigImgFailed(std::string imgUrl, QString error);
+    void sigImgSuccess(std::string imgUrl);
     void sigPresetsReady(PmMatchPresets presets);
 
 public slots:
@@ -106,8 +114,6 @@ protected slots:
 
     // images download
     void onImgFailed(std::string imgUrl, int curlCode);
-
-
 
 protected:
     bool saveImage(const QByteArray &byteArray, const std::string saveLoc);

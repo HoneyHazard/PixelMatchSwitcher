@@ -48,7 +48,8 @@ protected slots:
     void onActivePresetChanged();
     void onActivePresetDirtyStateChanged();
     void onPresetsImportAvailable(PmMatchPresets availablePresets);
-    void onPresetsDownloadAvailable(QList<std::string> presetNames);
+    void onPresetsDownloadAvailable(
+        std::string xmlUrl, QList<std::string> presetNames);
 
 protected:
     QMessageBox::ButtonRole promptUnsavedProceed();

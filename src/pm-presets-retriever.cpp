@@ -14,7 +14,6 @@ PmFileRetriever::PmFileRetriever(std::string fileUrl, QObject* parent)
 : QObject(parent)
 , m_fileUrl(fileUrl)
 {
-
 }
 
 PmFileRetriever::~PmFileRetriever()
@@ -185,7 +184,8 @@ void PmPresetsRetriever::onDownloadXml()
         // parse the xml data; report available presets
         const QByteArray &xmlData = xmlDownloader->data();
         m_availablePresets = PmMatchPresets(xmlData);
-        emit sigXmlPresetsAvailable(m_availablePresets.keys());
+        emit sigXmlSuccess(m_xmlUrl);
+        emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
     } catch (std::exception e) {
         emit sigXmlFailed(m_xmlUrl, e.what());
         deleteLater();
@@ -236,15 +236,16 @@ void PmPresetsRetriever::onRetrievePresets()
             cfg.matchImgFilename = storeImgPath;
 
             // prepare an image retriever
+            const Qt::ConnectionType qc = Qt::QueuedConnection;
             PmFileRetriever *imgRetriever
                 = new PmFileRetriever(imgUrl, this);
             imgRetriever->setSaveFilename(storeImgPath);
             connect(imgRetriever, &PmFileRetriever::sigProgress,
-                    this, &PmPresetsRetriever::sigImgProgress,
-                    Qt::QueuedConnection);
+                    this, &PmPresetsRetriever::sigImgProgress, qc);
             connect(imgRetriever, &PmFileRetriever::sigFailed,
-                    this, &PmPresetsRetriever::onImgFailed,
-                    Qt::QueuedConnection);
+                    this, &PmPresetsRetriever::onImgFailed, qc);
+            connect(imgRetriever, &PmFileRetriever::sigSucceeded,
+                    this, &PmPresetsRetriever::sigImgSuccess, qc);
             m_imgRetrievers.push_back(imgRetriever);
         }
     }
