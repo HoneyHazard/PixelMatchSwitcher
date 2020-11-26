@@ -148,6 +148,11 @@ void PmPresetsRetriever::retryImages()
     emit onDownloadImages();
 }
 
+void PmPresetsRetriever::abort()
+{
+    emit onAbort();
+}
+
 void PmPresetsRetriever::onDownloadXml()
 {
     // initiate xml downloader
@@ -278,7 +283,13 @@ void PmPresetsRetriever::onDownloadImages()
     }
 }
 
-void PmPresetsRetriever::onAbort() {}
+void PmPresetsRetriever::onAbort()
+{
+    for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
+        QFuture<CURLcode> &future = imgRetriever->future();
+        future.cancel();
+    }
+}
 
 #if 0
 void PmPresetsRetriever::onXmlFailed(std::string xmlUrl, int curlCode)

@@ -77,11 +77,11 @@ public:
     void downloadXml();
     void retrievePresets(QList<std::string> selectedPresets);
     void retryImages();
+    void abort();
 
 signals:
     // forwarded to self to run in its own thread
     void sigRetrievePresets(QList<std::string> selectedPresets);
-    void sigAbort();
 
     // xml phase
     void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
