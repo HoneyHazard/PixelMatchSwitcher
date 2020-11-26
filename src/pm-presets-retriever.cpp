@@ -68,11 +68,12 @@ CURLcode PmFileRetriever::onDownload()
     if (result == CURLE_OK) {
         if (m_saveFilename.size()) {
             QFile file(m_saveFilename.data());
-            file.open(QIODevice::ReadOnly);
+            file.open(QIODevice::WriteOnly);
             if (!file.isOpen()) {
                 emit sigFailed(m_fileUrl, CURLE_WRITE_ERROR);
                 return CURLE_WRITE_ERROR;
             }
+            file.write(m_data);
             if (file.error()) {
                 emit sigFailed(m_fileUrl, CURLE_WRITE_ERROR);
                 return CURLE_WRITE_ERROR;
