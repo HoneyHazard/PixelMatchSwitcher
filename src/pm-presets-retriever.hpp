@@ -95,7 +95,7 @@ signals:
 
 public slots:
     void onDownloadXml();
-	void onRetrievePresets(QList<std::string> selectedPresets);
+	void onRetrievePresets();
     void onDownloadImages();
     void onAbort();
 

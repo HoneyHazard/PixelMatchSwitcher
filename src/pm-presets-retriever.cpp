@@ -133,24 +133,27 @@ PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl, QObject *parent)
 
 void PmPresetsRetriever::downloadXml()
 {
-    emit onDownloadXml();
-
-    //QtConcurrent::run(m_thread, this, &PmPresetsRetriever::onXmlDownload);
+    QMetaObject::invokeMethod(
+        this, &PmPresetsRetriever::onDownloadXml, Qt::QueuedConnection);
 }
 
 void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
 {
-    emit onRetrievePresets(selectedPresets);
+    m_selectedPresets = selectedPresets;
+    QMetaObject::invokeMethod(
+        this, &PmPresetsRetriever::onRetrievePresets, Qt::QueuedConnection);
 }
 
 void PmPresetsRetriever::retryImages()
 {
-    emit onDownloadImages();
+    QMetaObject::invokeMethod(
+        this, &PmPresetsRetriever::onDownloadImages, Qt::QueuedConnection);
 }
 
 void PmPresetsRetriever::abort()
 {
-    emit onAbort();
+    QMetaObject::invokeMethod(
+        this, &PmPresetsRetriever::onAbort, Qt::QueuedConnection);
 }
 
 void PmPresetsRetriever::onDownloadXml()
@@ -205,10 +208,8 @@ void PmPresetsRetriever::onImgFailed(std::string imgUrl, int curlCode)
     // TODO: allow retry?
 }
 
-void PmPresetsRetriever::onRetrievePresets(QList<std::string> selectedPresets)
+void PmPresetsRetriever::onRetrievePresets()
 {
-    m_selectedPresets = selectedPresets;
-
     // hex suffix based on URL
     uint urlHash = qHash(m_xmlUrl);
     std::ostringstream oss;
@@ -218,7 +219,7 @@ void PmPresetsRetriever::onRetrievePresets(QList<std::string> selectedPresets)
     std::string storePath = os_get_config_path_ptr(
         "obs-studio/plugin_config/PixelMatchSwitcher/presets/");
 
-    for (const std::string &presetName : selectedPresets) {
+    for (const std::string &presetName : m_selectedPresets) {
         PmMultiMatchConfig mcfg = m_availablePresets[presetName];
 
         // unique folder name based on url and preset name
