@@ -13,19 +13,11 @@ class PmFileRetriever : public QObject
     Q_OBJECT
 
 public:
-    //static const int k_numRetries = 5;
-    //static const int k_msBeforeRetry = 3000;
-
-    //enum FileRetrieverState {
-    //    Idle, Downloading, RetryPending, Halted, Done, Failed };
-
     PmFileRetriever(std::string fileUrl, QObject *parent = nullptr);
     ~PmFileRetriever();
 
-    //FileRetrieverState state() const { return m_state; }
 
     QFuture<CURLcode> startDownload();
-    //void halt();
 
 signals:
     void sigFailed(std::string urlName, int curlCode);
@@ -47,8 +39,16 @@ protected:
     std::string m_fileUrl;
     QByteArray m_data;
 
-    //FileRetrieverState m_state = Idle;
     CURL *m_curlHandle = nullptr;
+
+    //static const int k_numRetries = 5;
+    //static const int k_msBeforeRetry = 3000;
+
+    //enum FileRetrieverState {
+    //    Idle, Downloading, RetryPending, Halted, Done, Failed };
+    //FileRetrieverState m_state = Idle;
+    //FileRetrieverState state() const { return m_state; }
+    //void halt();
 
     //int retriesLeft = k_numRetries;
     //int msLeftBeforeRetry = k_msBeforeRetry;
@@ -60,8 +60,6 @@ class PmPresetsRetriever : public QObject
 
 public:
     static const int k_numConcurrentDownloads = 3;
-    //enum PresetRetrieverState
-    //    { Idle, DownloadingXML, MakeSelection, DownloadingImages };
 
     PmPresetsRetriever(QObject *parent = nullptr);
 
@@ -89,10 +87,6 @@ protected slots:
 
     void onRetrievePresets(QList<std::string> selectedPresets);
 
-    // images download
-    //void onImageProgress(QString imageFilename, int percent);
-    //void onImageFailed(QString imageFilename, QString error);
-
 protected:
 
     std::string m_xmlUrl;
@@ -101,5 +95,11 @@ protected:
     int m_numActiveDownloads = 0;
     QThread *m_thread;
 
+    //enum PresetRetrieverState
+    //    { Idle, DownloadingXML, MakeSelection, DownloadingImages };
+
+    // images download
+    //void onImageProgress(QString imageFilename, int percent);
+    //void onImageFailed(QString imageFilename, QString error);
     //PresetRetrieverState m_state = Idle;
 };
