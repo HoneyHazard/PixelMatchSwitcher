@@ -184,7 +184,6 @@ void PmPresetsRetriever::onDownloadXml()
         // parse the xml data; report available presets
         const QByteArray &xmlData = xmlDownloader->data();
         m_availablePresets = PmMatchPresets(xmlData);
-        emit sigXmlSuccess(m_xmlUrl);
         emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
     } catch (std::exception e) {
         emit sigXmlFailed(m_xmlUrl, e.what());

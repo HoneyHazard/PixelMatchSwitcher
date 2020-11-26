@@ -91,7 +91,6 @@ signals:
     // xml phase
     void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
     void sigXmlFailed(std::string xmlUrl, QString error);
-    void sigXmlSuccess(std::string xmlUrl);
     void sigXmlPresetsAvailable(
         std::string xmlUrl, QList<std::string> presetNames);
 
