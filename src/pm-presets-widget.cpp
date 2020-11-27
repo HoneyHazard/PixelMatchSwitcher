@@ -495,7 +495,7 @@ void PmPresetsWidget::onPresetDownload()
         obs_module_text("Enter URL: "),
         QLineEdit::Normal, k_defaultXmlDownload, &ok).toUtf8().data();
     if (ok && url.size()) {
-        m_presetsRetriever = new PmPresetsRetriever(url, this);
+        m_presetsRetriever = new PmPresetsRetriever(url);
         connect(
             m_presetsRetriever, &PmPresetsRetriever::sigXmlPresetsAvailable,
             this, &PmPresetsWidget::onPresetsDownloadAvailable);

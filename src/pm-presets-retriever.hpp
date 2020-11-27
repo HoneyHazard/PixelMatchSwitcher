@@ -77,7 +77,7 @@ class PmPresetsRetriever : public QObject
 public:
     static const int k_numConcurrentDownloads = 3;
 
-    PmPresetsRetriever(std::string xmlUrl, QObject *parent = nullptr);
+    PmPresetsRetriever(std::string xmlUrl);
 
     void downloadXml();
     void retrievePresets(QList<std::string> selectedPresets);

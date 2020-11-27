@@ -113,14 +113,15 @@ size_t PmFileRetriever::staticWriteFunc(
 
 //========================================================
 
-PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl, QObject *parent)
-: QObject(parent)
+PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl)
+: QObject(nullptr)
 , m_xmlUrl(xmlUrl)
 {
     // move to own thread
     m_thread = new QThread(this);
     m_thread->setObjectName("preset retriever thread");
     moveToThread(m_thread);
+    m_thread->start();
 
     // worker thread pool for downloads
     m_workerThreadPool.setMaxThreadCount(k_numConcurrentDownloads);
@@ -176,7 +177,7 @@ void PmPresetsRetriever::onDownloadXml()
     if (xmlResultCode != CURLE_OK) {
         QString errorString = curl_easy_strerror(xmlResultCode);
         emit sigXmlFailed(m_xmlUrl, errorString);
-        deleteLater();
+        //deleteLater();
         return;
     }
 
@@ -187,12 +188,12 @@ void PmPresetsRetriever::onDownloadXml()
         emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
     } catch (std::exception e) {
         emit sigXmlFailed(m_xmlUrl, e.what());
-        deleteLater();
+        //deleteLater();
     } catch (...) {
         emit sigXmlFailed(
             m_xmlUrl,
             obs_module_text("Unknown error while parsing presets xml"));
-        deleteLater();
+        //deleteLater();
     }
 }
 

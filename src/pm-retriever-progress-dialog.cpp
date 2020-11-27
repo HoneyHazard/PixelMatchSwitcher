@@ -15,7 +15,7 @@ PmProgressBar::PmProgressBar(const QString &taskLabel, QWidget *parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     setAlignment(Qt::AlignCenter);
-    setStyleSheet("QProgressBar {  background-color: darkBlue; };");
+    setStyleSheet("QProgressBar {  background-color: blue; };");
 }
 
 QString PmProgressBar::text() const
@@ -85,16 +85,20 @@ void PmRetrieverProgressDialog::onFileProgress(
     if (find == m_map.end()) {
         QString filename = QUrl(fileUrl.data()).fileName();
         PmProgressBar *pb = new PmProgressBar(filename, this);
-        m_scrollLayout->addWidget(pb);
+        m_scrollLayout->addWidget(pb);       
+
+        m_map[fileUrl] = pb;
+
+        int spacing = m_scrollLayout->spacing();
+        int height = pb->sizeHint().height() + spacing;
+        int heightSeveral = m_map.size() * height - spacing;
+        m_scrollWidget->setMinimumHeight(heightSeveral);
+
         const int maxSz = PmPresetsRetriever::k_numConcurrentDownloads * 2;
         if (m_map.size() < maxSz) {
-            int height = pb->maximumHeight()
-                + pb->contentsMargins().top() + pb->contentsMargins().bottom();
-            m_scrollWidget->setMinimumHeight(m_map.size() * height);
-	        //m_scrollArea->setFixedHeight(m_scrollWidget->minimumHeight());
+            m_scrollArea->setMinimumHeight(heightSeveral + spacing);
+            resize(sizeHint());
         }
-        
-        m_map[fileUrl] = pb;
     } else {
         PmProgressBar *pb = *find;
         int percent = dlTotal ? int(float(dlNow) * 100.f / float(dlTotal))
