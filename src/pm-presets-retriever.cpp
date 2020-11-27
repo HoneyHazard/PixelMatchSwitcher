@@ -41,6 +41,8 @@ CURLcode PmFileRetriever::onDownload()
 {
     //if (m_state == Downloading || m_state == Done) return;
 
+    emit sigProgress(m_fileUrl, 0, 0);
+
     reset();
 
     m_curlHandle = curl_easy_init();
@@ -61,9 +63,15 @@ CURLcode PmFileRetriever::onDownload()
     curl_easy_setopt(m_curlHandle, CURLOPT_WRITEFUNCTION, staticWriteFunc);
     curl_easy_setopt(m_curlHandle, CURLOPT_WRITEDATA, this);
 
-    //m_state = Downloading;
     CURLcode result = curl_easy_perform(m_curlHandle);
     blog(LOG_DEBUG, "file retriever: curl perform result = %d", result);
+
+    long httpCode;
+    curl_easy_getinfo(m_curlHandle, CURLINFO_HTTP_CODE, &httpCode);
+    if (httpCode != 200) {
+        result = CURLE_REMOTE_FILE_NOT_FOUND;
+    }
+
     if (result == CURLE_OK) {
         if (m_saveFilename.size()) {
             QFile file(m_saveFilename.data());
@@ -161,8 +169,7 @@ void PmPresetsRetriever::onDownloadXml()
     // initiate xml downloader
     auto *xmlDownloader = new PmFileRetriever(m_xmlUrl, this);
     connect(xmlDownloader, &PmFileRetriever::sigProgress,
-            this, &PmPresetsRetriever::sigXmlProgress,
-            Qt::QueuedConnection);
+            this, &PmPresetsRetriever::sigXmlProgress, Qt::DirectConnection);
 
     //connect(xmlDownloader, &PmFileRetriever::sigFailed, this,
     //    &PmPresetsRetriever::onXmlFailed);
@@ -177,7 +184,7 @@ void PmPresetsRetriever::onDownloadXml()
     if (xmlResultCode != CURLE_OK) {
         QString errorString = curl_easy_strerror(xmlResultCode);
         emit sigXmlFailed(m_xmlUrl, errorString);
-        //deleteLater();
+        onAbort();
         return;
     }
 
@@ -188,12 +195,12 @@ void PmPresetsRetriever::onDownloadXml()
         emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
     } catch (std::exception e) {
         emit sigXmlFailed(m_xmlUrl, e.what());
-        //deleteLater();
+        onAbort();
     } catch (...) {
         emit sigXmlFailed(
             m_xmlUrl,
             obs_module_text("Unknown error while parsing presets xml"));
-        //deleteLater();
+	    onAbort();
     }
 }
 
@@ -291,6 +298,8 @@ void PmPresetsRetriever::onAbort()
         QFuture<CURLcode> &future = imgRetriever->future();
         future.cancel();
     }
+    m_thread->exit();
+    //deleteLater();
 }
 
 #if 0

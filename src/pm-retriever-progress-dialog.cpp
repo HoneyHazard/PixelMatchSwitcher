@@ -15,7 +15,11 @@ PmProgressBar::PmProgressBar(const QString &taskLabel, QWidget *parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     setAlignment(Qt::AlignCenter);
-    setStyleSheet("QProgressBar {  background-color: blue; };");
+    setStyleSheet(
+        "QProgressBar::chunk {  background-color: green; }; "
+        "QProgressBar { background-color: darkBlue; };"
+    );
+    setValue(0);
 }
 
 QString PmProgressBar::text() const
@@ -84,7 +88,8 @@ void PmRetrieverProgressDialog::onFileProgress(
     auto find = m_map.find(fileUrl);
     if (find == m_map.end()) {
         QString filename = QUrl(fileUrl.data()).fileName();
-        PmProgressBar *pb = new PmProgressBar(filename, this);
+        QString taskLabel = filename.size() ? filename : fileUrl.data();
+        PmProgressBar *pb = new PmProgressBar(taskLabel, this);
         m_scrollLayout->addWidget(pb);       
 
         m_map[fileUrl] = pb;
@@ -110,10 +115,13 @@ void PmRetrieverProgressDialog::onFileProgress(
 void PmRetrieverProgressDialog::onFileFailed(std::string fileUrl, QString error)
 {
     auto find = m_map.find(fileUrl);
+    PmProgressBar *pb;
     if (find != m_map.end()) {
         PmProgressBar *pb = *find;
-        pb->setStyleSheet("QProgressBar {  background-color: red; };");
+        setStyleSheet("QProgressBar::chunk {  background-color: orange; }; "
+                      "QProgressBar { background-color: red; };");
     }
+
 }
 
 void PmRetrieverProgressDialog::onFileSuccess(std::string fileUrl)
@@ -121,7 +129,7 @@ void PmRetrieverProgressDialog::onFileSuccess(std::string fileUrl)
     auto find = m_map.find(fileUrl);
     if (find != m_map.end()) {
         PmProgressBar *pb = *find;
-        pb->setStyleSheet("QProgressBar {  background-color: darkGreen; };");
+        //pb->setStyleSheet("QProgressBar {  background-color: darkGreen; };");
     }
 }
 
