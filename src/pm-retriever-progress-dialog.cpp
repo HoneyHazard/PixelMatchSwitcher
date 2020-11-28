@@ -9,22 +9,41 @@
 
 //===============================
 
-PmProgressBar::PmProgressBar(const QString &taskLabel, QWidget *parent)
+PmProgressBar::PmProgressBar(const QString &m_taskName, QWidget *parent)
 : QProgressBar(parent)
-, m_taskLabel(taskLabel)
+, m_taskName(m_taskName)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     setAlignment(Qt::AlignCenter);
     setStyleSheet(
-        "QProgressBar::chunk {  background-color: green; }; "
-        "QProgressBar { background-color: darkBlue; };"
-    );
+	    //"QProgressBar::chunk {  background-color: green; }; "
+	    //"QProgressBar { background: blue; };"
+	    //"background-color: QLinearGradient( x1: 0, y1: 0.5, x2: 100, y2: 0.5,"
+	    //"stop: 0 green, stop: 1 blue);"
+	    "QProgressBar { background: blue; }; "
+	    "QProgressBar:chunk { background: qlineargradient(x1: 0, y1: 1, x2: 1, y2: 0.5, stop: 0 #FFFF00, stop: 1 #00FFFF);}");
+    setRange(0, 100);
     setValue(0);
 }
 
-QString PmProgressBar::text() const
+void PmProgressBar::setProgress(size_t dlNow, size_t dlTotal)
 {
-    return QString("%1 - %2%").arg(m_taskLabel).arg(value());
+    setRange(0, (int)dlTotal);
+    setValue((int)dlNow);
+    int percent = dlTotal ? int(float(dlNow) * 100.f / float(dlTotal)) : 0;
+
+    m_text = QString("%1 - %2%").arg(m_taskName).arg(percent);
+}
+
+void PmProgressBar::setFailed(QString reason)
+{
+    setStyleSheet(
+        "QProgressBar::chunk {  background-color: orange; }; "
+        "QProgressBar { background-color: red; };");
+
+    m_text = QString("%1 - %2%")
+        .arg(m_taskName)
+        .arg(reason.size() ? reason : obs_module_text("FAILED"));
 }
 
 //===================================
@@ -80,16 +99,20 @@ PmRetrieverProgressDialog::PmRetrieverProgressDialog(
             this, &PmRetrieverProgressDialog::onImgSuccess, qc);
 
     show();
+
+    onFileProgress("test", 100, 199);
 }
 
 void PmRetrieverProgressDialog::onFileProgress(
     std::string fileUrl, size_t dlNow, size_t dlTotal)
 {
+    PmProgressBar *pb;
     auto find = m_map.find(fileUrl);
     if (find == m_map.end()) {
-        QString filename = QUrl(fileUrl.data()).fileName();
-        QString taskLabel = filename.size() ? filename : fileUrl.data();
-        PmProgressBar *pb = new PmProgressBar(taskLabel, this);
+        //QString filename = QUrl(fileUrl.data()).fileName();
+        //QString taskLabel = filename.size() ? filename : fileUrl.data();
+        QString taskLabel = fileUrl.data();
+        pb = new PmProgressBar(taskLabel, this);
         m_scrollLayout->addWidget(pb);       
 
         m_map[fileUrl] = pb;
@@ -105,11 +128,9 @@ void PmRetrieverProgressDialog::onFileProgress(
             resize(sizeHint());
         }
     } else {
-        PmProgressBar *pb = *find;
-        int percent = dlTotal ? int(float(dlNow) * 100.f / float(dlTotal))
-                    : 0;
-        pb->setValue(percent);
+        pb = *find;
     }
+    pb->setProgress(dlNow, dlTotal);
 }
 
 void PmRetrieverProgressDialog::onFileFailed(std::string fileUrl, QString error)
@@ -118,8 +139,7 @@ void PmRetrieverProgressDialog::onFileFailed(std::string fileUrl, QString error)
     PmProgressBar *pb;
     if (find != m_map.end()) {
         PmProgressBar *pb = *find;
-        setStyleSheet("QProgressBar::chunk {  background-color: orange; }; "
-                      "QProgressBar { background-color: red; };");
+	    pb->setFailed(error);
     }
 
 }

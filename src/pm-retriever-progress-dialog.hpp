@@ -18,10 +18,13 @@ class PmProgressBar : public QProgressBar
 
 public:
     PmProgressBar(const QString &taskLabel, QWidget *parent);
-    QString text() const override;
+    QString text() const override { return m_text; }
+    void setProgress(size_t dlNow, size_t dlTotal);
+    void setFailed(QString reason = "");
 
 protected:
-    QString m_taskLabel;
+    QString m_text;
+    QString m_taskName;
 };
 
 /**
