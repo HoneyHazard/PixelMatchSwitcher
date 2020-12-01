@@ -110,9 +110,11 @@ PmRetrieverProgressDialog::PmRetrieverProgressDialog(
 
     show();
 
-    onFileProgress("test", 100, 199);
+    onFileProgress("progress", 100, 199);
     onFileProgress("failed", 0, 0);
     onFileFailed("failed", "who knows");
+    onFileProgress("success", 0, 0);
+    onFileSuccess("success");
 }
 
 void PmRetrieverProgressDialog::onFileProgress(
@@ -121,9 +123,8 @@ void PmRetrieverProgressDialog::onFileProgress(
     PmProgressBar *pb;
     auto find = m_map.find(fileUrl);
     if (find == m_map.end()) {
-        //QString filename = QUrl(fileUrl.data()).fileName();
-        //QString taskLabel = filename.size() ? filename : fileUrl.data();
-        QString taskLabel = fileUrl.data();
+        QString filename = QUrl(fileUrl.data()).fileName();
+        QString taskLabel = filename.size() ? filename : fileUrl.data();
         pb = new PmProgressBar(taskLabel, this);
         m_scrollLayout->addWidget(pb);       
 
