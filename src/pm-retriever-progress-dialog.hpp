@@ -17,14 +17,20 @@ class PmProgressBar : public QProgressBar
     Q_OBJECT
 
 public:
+    enum State { Progress, Failed, Success };
+
     PmProgressBar(const QString &taskLabel, QWidget *parent);
     QString text() const override { return m_text; }
     void setProgress(size_t dlNow, size_t dlTotal);
     void setFailed(QString reason = "");
+    void setSuccess();
+
+    State state() const { return m_state; }
 
 protected:
     QString m_text;
     QString m_taskName;
+    State m_state = Progress;
 };
 
 /**
