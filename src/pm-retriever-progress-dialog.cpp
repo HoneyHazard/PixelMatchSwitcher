@@ -141,6 +141,11 @@ void PmRetrieverProgressDialog::onFileProgress(
         }
     } else {
         pb = *find;
+        if (pb->state() == PmProgressBar::Failed) {
+            // re-insert at the end
+            m_scrollLayout->removeWidget(pb);
+            m_scrollLayout->addWidget(pb);
+        }
     }
     pb->setProgress(dlNow, dlTotal);
 }
