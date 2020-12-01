@@ -77,19 +77,19 @@ CURLcode PmFileRetriever::onDownload()
             QFile file(m_saveFilename.data());
             file.open(QIODevice::WriteOnly);
             if (!file.isOpen()) {
-                emit sigFailed(m_fileUrl, CURLE_WRITE_ERROR);
+                emit sigFailed(m_fileUrl, file.errorString());
                 return CURLE_WRITE_ERROR;
             }
             file.write(m_data);
             if (file.error()) {
-                emit sigFailed(m_fileUrl, CURLE_WRITE_ERROR);
+                emit sigFailed(m_fileUrl, file.errorString());
                 return CURLE_WRITE_ERROR;
             }
         }
         emit sigSucceeded(m_fileUrl, m_data);
     } else {
-        std::string errorInfo = curl_easy_strerror(result);
-        emit sigFailed(m_fileUrl, result);
+        QString errorInfo = curl_easy_strerror(result);
+        emit sigFailed(m_fileUrl, errorInfo);
     }
     return result;
 }
@@ -167,52 +167,36 @@ void PmPresetsRetriever::abort()
 void PmPresetsRetriever::onDownloadXml()
 {
     // initiate xml downloader
-    auto *xmlDownloader = new PmFileRetriever(m_xmlUrl, this);
-    connect(xmlDownloader, &PmFileRetriever::sigProgress,
-            this, &PmPresetsRetriever::sigXmlProgress, Qt::DirectConnection);
-
-    //connect(xmlDownloader, &PmFileRetriever::sigFailed, this,
-    //    &PmPresetsRetriever::onXmlFailed);
-    //connect(xmlDownloader, &PmFileRetriever::sigSucceeded, this,
-    //    &PmPresetsRetriever::onXmlSucceeded);
+	m_xmlRetriever = new PmFileRetriever(m_xmlUrl, this);
+    connect(m_xmlRetriever, &PmFileRetriever::sigProgress,
+            this, &PmPresetsRetriever::sigXmlProgress, Qt::QueuedConnection);
 
     // fetch the xml
     QFuture<CURLcode> xmlFuture
-        = xmlDownloader->startDownload(m_workerThreadPool);
+        = m_xmlRetriever->startDownload(m_workerThreadPool);
     xmlFuture.waitForFinished();
     CURLcode xmlResultCode = xmlFuture.result();
     if (xmlResultCode != CURLE_OK) {
         QString errorString = curl_easy_strerror(xmlResultCode);
         emit sigXmlFailed(m_xmlUrl, errorString);
-        onAbort();
+        emit sigFailed();
         return;
     }
 
     try {
         // parse the xml data; report available presets
-        const QByteArray &xmlData = xmlDownloader->data();
+        const QByteArray &xmlData = m_xmlRetriever->data();
         m_availablePresets = PmMatchPresets(xmlData);
         emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
     } catch (std::exception e) {
         emit sigXmlFailed(m_xmlUrl, e.what());
-        onAbort();
+	    emit sigFailed();
     } catch (...) {
         emit sigXmlFailed(
             m_xmlUrl,
             obs_module_text("Unknown error while parsing presets xml"));
-	    onAbort();
+	    emit sigFailed();
     }
-}
-
-void PmPresetsRetriever::onImgFailed(std::string imgUrl, int curlCode)
-{
-    QString errorString = curl_easy_strerror((CURLcode)curlCode);
-
-    emit sigImgFailed(imgUrl, errorString);
-    //onAbort();
-
-    //deleteLater();
-    // TODO: allow retry?
 }
 
 void PmPresetsRetriever::onRetrievePresets()
@@ -250,7 +234,7 @@ void PmPresetsRetriever::onRetrievePresets()
             connect(imgRetriever, &PmFileRetriever::sigProgress,
                     this, &PmPresetsRetriever::sigImgProgress, qc);
             connect(imgRetriever, &PmFileRetriever::sigFailed,
-                    this, &PmPresetsRetriever::onImgFailed, qc);
+                    this, &PmPresetsRetriever::sigImgFailed, qc);
             connect(imgRetriever, &PmFileRetriever::sigSucceeded,
                     this, &PmPresetsRetriever::sigImgSuccess, qc);
             m_imgRetrievers.push_back(imgRetriever);
@@ -289,17 +273,25 @@ void PmPresetsRetriever::onDownloadImages()
             readyPresets[presetName] = m_availablePresets[presetName];
         }
         emit sigPresetsReady(readyPresets);
+    } else {
+        emit sigFailed();
     }
 }
 
 void PmPresetsRetriever::onAbort()
 {
+    m_xmlRetriever->future().cancel();
     for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
         QFuture<CURLcode> &future = imgRetriever->future();
         future.cancel();
     }
     m_thread->exit();
-    //deleteLater();
+    deleteLater();
+}
+
+void PmPresetsRetriever::onRetry()
+{
+
 }
 
 #if 0

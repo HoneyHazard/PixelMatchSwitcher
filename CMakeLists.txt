@@ -89,7 +89,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-presets-widget.hpp
         src/pm-preset-exists-dialog.hpp
         src/pm-presets-selector-dialog.hpp
-        src/pm-retriever-progress-dialog.hpp
+        src/pm-presets-retrieval-dialog.hpp
         src/pm-toggles-widget.hpp
         src/pm-image-view.hpp
         src/pm-match-image-dialog.hpp
@@ -117,7 +117,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-presets-widget.cpp
         src/pm-preset-exists-dialog.cpp
         src/pm-presets-selector-dialog.cpp
-        src/pm-retriever-progress-dialog.cpp
+        src/pm-presets-retrieval-dialog.cpp
         src/pm-toggles-widget.cpp
         src/pm-image-view.cpp
         src/pm-match-image-dialog.cpp

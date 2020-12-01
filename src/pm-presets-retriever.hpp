@@ -30,7 +30,7 @@ public:
     const QByteArray &data() const { return m_data; }
 
 signals:
-    void sigFailed(std::string urlName, int curlCode);
+    void sigFailed(std::string urlName, QString error);
     void sigSucceeded(std::string urlName, QByteArray byteArray);
     void sigProgress(std::string urlName, size_t dlNow, size_t dlTotal);
 
@@ -94,25 +94,20 @@ signals:
     void sigXmlPresetsAvailable(
         std::string xmlUrl, QList<std::string> presetNames);
 
-    // image phase
+    // image phase and results
     void sigImgProgress(std::string imgUrl, size_t dlNow, size_t dlTotal);
     void sigImgFailed(std::string imgUrl, QString error);
     void sigImgSuccess(std::string imgUrl);
     void sigPresetsReady(PmMatchPresets presets);
+    void sigFailed();
 
 public slots:
     void onDownloadXml();
 	void onRetrievePresets();
     void onDownloadImages();
+
     void onAbort();
-
-protected slots:
-
-    //void onXmlFailed(std::string xmlUrl, int curlCode);
-    //void onXmlSucceeded(std::string xmlUrl, QByteArray data);
-
-    // images download
-    void onImgFailed(std::string imgUrl, int curlCode);
+    void onRetry();
 
 protected:
     std::string m_xmlUrl;
@@ -122,6 +117,7 @@ protected:
     bool m_abort = false;
     QThread *m_thread;
     QThreadPool m_workerThreadPool;
+    PmFileRetriever* m_xmlRetriever;
     QList<PmFileRetriever*> m_imgRetrievers;
 
     //enum PresetRetrieverState

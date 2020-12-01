@@ -501,7 +501,7 @@ void PmPresetsWidget::onPresetDownload()
             this, &PmPresetsWidget::onPresetsDownloadAvailable);
 
         //PmRetrieverProgressDialog *pg =
-            new PmRetrieverProgressDialog(m_presetsRetriever, this);
+            new PmPresetsRetrievalDialog(m_presetsRetriever, this);
         m_presetsRetriever->downloadXml();
     }
 }

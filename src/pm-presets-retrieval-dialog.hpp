@@ -52,9 +52,8 @@ protected slots:
     void onFileFailed(std::string fileUrl, QString error);
     void onFileSuccess(std::string fileUrl);
 
-    void onXmlSuccess(std::string xmlUrl);
-    void onImgSuccess(std::string imgUrl);
     void onFailed();
+    void onSuccess();
 
 protected:
     PmPresetsRetriever *m_retriever;
@@ -63,5 +62,5 @@ protected:
     QScrollArea *m_scrollArea;
     QVBoxLayout *m_scrollLayout;
     QWidget *m_scrollWidget;
-    bool m_success = false;
+    QPushButton *m_retryButton;
 };

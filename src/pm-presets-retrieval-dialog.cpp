@@ -1,4 +1,4 @@
-#include "pm-retriever-progress-dialog.hpp"
+#include "pm-presets-retrieval-dialog.hpp"
 
 #include "pm-presets-retriever.hpp"
 
@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include "pm-presets-retrieval-dialog.hpp"
 
 //===============================
 
@@ -58,7 +59,7 @@ void PmProgressBar::setSuccess()
 
 //===================================
 
-PmRetrieverProgressDialog::PmRetrieverProgressDialog(
+PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
     PmPresetsRetriever *retriever, QWidget *parent)
 : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint
                 | Qt::WindowCloseButtonHint)
@@ -76,14 +77,20 @@ PmRetrieverProgressDialog::PmRetrieverProgressDialog(
     m_scrollArea->setWidgetResizable(true);
     m_scrollArea->setAlignment(Qt::AlignTop);
 
-    // button controls [wip]
-    QPushButton *retryButton
+    // button controls
+    m_retryButton
         = new QPushButton(obs_module_text("Retry"), this);
+    connect(m_retryButton, &QPushButton::released,
+            this, &PmPresetsRetrievalDialog::sigRetry);
+    m_retryButton->setVisible(false);
+
     QPushButton *cancelButton
         = new QPushButton(obs_module_text("Cancel"), this);
+    connect(cancelButton, &QPushButton::released,
+            this, &PmPresetsRetrievalDialog::sigAbort);
 
     QHBoxLayout *buttonsLayout = new QHBoxLayout();
-    buttonsLayout->addWidget(retryButton);
+    buttonsLayout->addWidget(m_retryButton);
     buttonsLayout->addWidget(cancelButton);
 
     // top level layout
@@ -92,21 +99,32 @@ PmRetrieverProgressDialog::PmRetrieverProgressDialog(
     mainLayout->addLayout(buttonsLayout);
     setLayout(mainLayout);
 
-    // connections
+    // connections: retriever -> this
     const Qt::ConnectionType qc = Qt::QueuedConnection;
     connect(m_retriever, &PmPresetsRetriever::sigXmlProgress,
-            this, &PmRetrieverProgressDialog::onFileProgress, qc);
+            this, &PmPresetsRetrievalDialog::onFileProgress, qc);
     connect(m_retriever, &PmPresetsRetriever::sigXmlFailed,
-            this, &PmRetrieverProgressDialog::onXmlFailed, qc);
+            this, &PmPresetsRetrievalDialog::onFileFailed, qc);
     connect(m_retriever, &PmPresetsRetriever::sigXmlPresetsAvailable,
-            this, &PmRetrieverProgressDialog::onXmlSuccess, qc);
+            this, &PmPresetsRetrievalDialog::onFileSuccess, qc);
 
     connect(m_retriever, &PmPresetsRetriever::sigImgProgress,
-            this, &PmRetrieverProgressDialog::onFileProgress, qc);
+            this, &PmPresetsRetrievalDialog::onFileProgress, qc);
     connect(m_retriever, &PmPresetsRetriever::sigImgFailed,
-            this, &PmRetrieverProgressDialog::onImgFailed, qc);
+            this, &PmPresetsRetrievalDialog::onFileFailed, qc);
     connect(m_retriever, &PmPresetsRetriever::sigImgSuccess,
-            this, &PmRetrieverProgressDialog::onImgSuccess, qc);
+            this, &PmPresetsRetrievalDialog::onFileSuccess, qc);
+
+    connect(m_retriever, &PmPresetsRetriever::sigFailed,
+            this, &PmPresetsRetrievalDialog::onFailed, qc);
+    connect(m_retriever, &PmPresetsRetriever::sigPresetsReady,
+            this, &PmPresetsRetrievalDialog::onSuccess, qc);
+
+    // connections: this -> retriever
+    connect(this, &PmPresetsRetrievalDialog::sigAbort,
+            m_retriever, &PmPresetsRetriever::onAbort, qc);
+    connect(this, &PmPresetsRetrievalDialog::sigAbort,
+            m_retriever, &PmPresetsRetriever::onRetry, qc);
 
     show();
 
@@ -117,7 +135,7 @@ PmRetrieverProgressDialog::PmRetrieverProgressDialog(
     onFileSuccess("success");
 }
 
-void PmRetrieverProgressDialog::onFileProgress(
+void PmPresetsRetrievalDialog::onFileProgress(
     std::string fileUrl, size_t dlNow, size_t dlTotal)
 {
     PmProgressBar *pb;
@@ -151,10 +169,9 @@ void PmRetrieverProgressDialog::onFileProgress(
     pb->setProgress(dlNow, dlTotal);
 }
 
-void PmRetrieverProgressDialog::onFileFailed(std::string fileUrl, QString error)
+void PmPresetsRetrievalDialog::onFileFailed(std::string fileUrl, QString error)
 {
     auto find = m_map.find(fileUrl);
-    PmProgressBar *pb;
     if (find != m_map.end()) {
         PmProgressBar *pb = *find;
         pb->setFailed(error);
@@ -162,7 +179,7 @@ void PmRetrieverProgressDialog::onFileFailed(std::string fileUrl, QString error)
 
 }
 
-void PmRetrieverProgressDialog::onFileSuccess(std::string fileUrl)
+void PmPresetsRetrievalDialog::onFileSuccess(std::string fileUrl)
 {
     auto find = m_map.find(fileUrl);
     if (find != m_map.end()) {
@@ -171,25 +188,12 @@ void PmRetrieverProgressDialog::onFileSuccess(std::string fileUrl)
     }
 }
 
-void PmRetrieverProgressDialog::onXmlFailed(
-    std::string xmlUrl, QString error)
+void PmPresetsRetrievalDialog::onSuccess()
 {
-    onFileFailed(xmlUrl, error);
+    deleteLater();
 }
 
-void PmRetrieverProgressDialog::onXmlSuccess(std::string xmlUrl)
+void PmPresetsRetrievalDialog::onFailed()
 {
-    onFileSuccess(xmlUrl);
+	m_retryButton->setVisible(true);
 }
-
-void PmRetrieverProgressDialog::onImgFailed(std::string imgUrl, QString error)
-{
-    onFileFailed(imgUrl, error);
-}
-
-void PmRetrieverProgressDialog::onImgSuccess(std::string imgUrl)
-{
-    onFileSuccess(imgUrl);
-}
-
-
