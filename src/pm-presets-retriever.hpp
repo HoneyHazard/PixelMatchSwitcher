@@ -52,18 +52,6 @@ protected:
     QFuture<CURLcode> m_future;
 
     CURL *m_curlHandle = nullptr;
-
-    //static const int k_numRetries = 5;
-    //static const int k_msBeforeRetry = 3000;
-
-    //enum FileRetrieverState {
-    //    Idle, Downloading, RetryPending, Halted, Done, Failed };
-    //FileRetrieverState m_state = Idle;
-    //FileRetrieverState state() const { return m_state; }
-    //void halt();
-
-    //int retriesLeft = k_numRetries;
-    //int msLeftBeforeRetry = k_msBeforeRetry;
 };
 
 /**
@@ -128,4 +116,16 @@ protected:
     //void onImageFailed(QString imageFilename, QString error);
     //PresetRetrieverState m_state = Idle;
     //int m_numActiveDownloads = 0;
+
+        //static const int k_numRetries = 5;
+    //static const int k_msBeforeRetry = 3000;
+
+    //enum FileRetrieverState {
+    //    Idle, Downloading, RetryPending, Halted, Done, Failed };
+    //FileRetrieverState m_state = Idle;
+    //FileRetrieverState state() const { return m_state; }
+    //void halt();
+
+    //int retriesLeft = k_numRetries;
+    //int msLeftBeforeRetry = k_msBeforeRetry;
 };

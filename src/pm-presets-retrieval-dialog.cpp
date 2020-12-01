@@ -66,6 +66,7 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
 , m_retriever(retriever)
 {
     setWindowTitle(obs_module_text("Downloading Preset(s) Data"));
+	setMinimumWidth(250);
 
     // scroll area to be filled with progress bars
     m_scrollWidget = new QWidget(this);
@@ -123,47 +124,57 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
     // connections: this -> retriever
     connect(this, &PmPresetsRetrievalDialog::sigAbort,
             m_retriever, &PmPresetsRetriever::onAbort, qc);
-    connect(this, &PmPresetsRetrievalDialog::sigAbort,
+    connect(this, &PmPresetsRetrievalDialog::sigRetry,
             m_retriever, &PmPresetsRetriever::onRetry, qc);
 
     show();
 
+    #if 0
     onFileProgress("progress", 100, 199);
     onFileProgress("failed", 0, 0);
     onFileFailed("failed", "who knows");
     onFileProgress("success", 0, 0);
     onFileSuccess("success");
+    #endif
 }
 
 void PmPresetsRetrievalDialog::onFileProgress(
     std::string fileUrl, size_t dlNow, size_t dlTotal)
 {
+	m_retryButton->setVisible(false);
     PmProgressBar *pb;
     auto find = m_map.find(fileUrl);
     if (find == m_map.end()) {
         QString filename = QUrl(fileUrl.data()).fileName();
         QString taskLabel = filename.size() ? filename : fileUrl.data();
         pb = new PmProgressBar(taskLabel, this);
-        m_scrollLayout->addWidget(pb);       
+        m_scrollLayout->addWidget(pb);
 
         m_map[fileUrl] = pb;
 
         int spacing = m_scrollLayout->spacing();
         int height = pb->sizeHint().height() + spacing;
         int heightSeveral = m_map.size() * height - spacing;
+        int width = qMax(
+            m_scrollWidget->minimumWidth(), pb->sizeHint().width());
+
         m_scrollWidget->setMinimumHeight(heightSeveral);
+        m_scrollWidget->setMinimumWidth(width);
 
         const int maxSz = PmPresetsRetriever::k_numConcurrentDownloads * 2;
         if (m_map.size() < maxSz) {
             m_scrollArea->setMinimumHeight(heightSeveral + spacing);
+            m_scrollArea->setMinimumWidth(width + spacing);
             resize(sizeHint());
         }
+        m_scrollArea->ensureWidgetVisible(pb);
     } else {
         pb = *find;
         if (pb->state() == PmProgressBar::Failed) {
             // re-insert at the end
             m_scrollLayout->removeWidget(pb);
             m_scrollLayout->addWidget(pb);
+            m_scrollArea->ensureWidgetVisible(pb);
         }
     }
     pb->setProgress(dlNow, dlTotal);

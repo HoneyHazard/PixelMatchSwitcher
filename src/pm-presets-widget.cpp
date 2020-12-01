@@ -489,6 +489,8 @@ void PmPresetsWidget::onPresetImport()
 
 void PmPresetsWidget::onPresetDownload()
 {
+    if (m_presetsRetriever) return; // retrieval already in progress; wait!
+
     bool ok;
     std::string url = QInputDialog::getText(this,
         obs_module_text("Download Preset"),

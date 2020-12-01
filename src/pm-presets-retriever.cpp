@@ -50,6 +50,7 @@ CURLcode PmFileRetriever::onDownload()
     blog(LOG_DEBUG, "curl download = %s", m_fileUrl.data());
 
     curl_easy_setopt(m_curlHandle, CURLOPT_URL, m_fileUrl.data());
+    curl_easy_setopt(m_curlHandle, CURLOPT_FAILONERROR, 1L);
     curl_easy_setopt(m_curlHandle, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(m_curlHandle, CURLOPT_SSL_VERIFYPEER, true);
     curl_easy_setopt(m_curlHandle, CURLOPT_SSL_VERIFYHOST, 2L);
@@ -66,11 +67,13 @@ CURLcode PmFileRetriever::onDownload()
     CURLcode result = curl_easy_perform(m_curlHandle);
     blog(LOG_DEBUG, "file retriever: curl perform result = %d", result);
 
+#if 0
     long httpCode;
     curl_easy_getinfo(m_curlHandle, CURLINFO_HTTP_CODE, &httpCode);
     if (httpCode != 200) {
         result = CURLE_REMOTE_FILE_NOT_FOUND;
     }
+#endif
 
     if (result == CURLE_OK) {
         if (m_saveFilename.size()) {
@@ -167,9 +170,9 @@ void PmPresetsRetriever::abort()
 void PmPresetsRetriever::onDownloadXml()
 {
     // initiate xml downloader
-	m_xmlRetriever = new PmFileRetriever(m_xmlUrl, this);
+    m_xmlRetriever = new PmFileRetriever(m_xmlUrl, this);
     connect(m_xmlRetriever, &PmFileRetriever::sigProgress,
-            this, &PmPresetsRetriever::sigXmlProgress, Qt::QueuedConnection);
+            this, &PmPresetsRetriever::sigXmlProgress, Qt::DirectConnection);
 
     // fetch the xml
     QFuture<CURLcode> xmlFuture
@@ -189,13 +192,17 @@ void PmPresetsRetriever::onDownloadXml()
         m_availablePresets = PmMatchPresets(xmlData);
         emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
     } catch (std::exception e) {
+        m_xmlRetriever->deleteLater();
+	    m_xmlRetriever = nullptr;
         emit sigXmlFailed(m_xmlUrl, e.what());
-	    emit sigFailed();
+        emit sigFailed();
     } catch (...) {
+        m_xmlRetriever->deleteLater();
+	    m_xmlRetriever = nullptr;
         emit sigXmlFailed(
             m_xmlUrl,
             obs_module_text("Unknown error while parsing presets xml"));
-	    emit sigFailed();
+        emit sigFailed();
     }
 }
 
@@ -227,16 +234,16 @@ void PmPresetsRetriever::onRetrievePresets()
             cfg.matchImgFilename = storeImgPath;
 
             // prepare an image retriever
-            const Qt::ConnectionType qc = Qt::QueuedConnection;
+            const Qt::ConnectionType dc = Qt::DirectConnection;
             PmFileRetriever *imgRetriever
                 = new PmFileRetriever(imgUrl, this);
             imgRetriever->setSaveFilename(storeImgPath);
             connect(imgRetriever, &PmFileRetriever::sigProgress,
-                    this, &PmPresetsRetriever::sigImgProgress, qc);
+                    this, &PmPresetsRetriever::sigImgProgress, dc);
             connect(imgRetriever, &PmFileRetriever::sigFailed,
-                    this, &PmPresetsRetriever::sigImgFailed, qc);
+                    this, &PmPresetsRetriever::sigImgFailed, dc);
             connect(imgRetriever, &PmFileRetriever::sigSucceeded,
-                    this, &PmPresetsRetriever::sigImgSuccess, qc);
+                    this, &PmPresetsRetriever::sigImgSuccess, dc);
             m_imgRetrievers.push_back(imgRetriever);
         }
     }
@@ -282,16 +289,24 @@ void PmPresetsRetriever::onAbort()
 {
     m_xmlRetriever->future().cancel();
     for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
-        QFuture<CURLcode> &future = imgRetriever->future();
-        future.cancel();
+        imgRetriever->future().cancel();
     }
-    m_thread->exit();
+
+    m_xmlRetriever->future().waitForFinished();
+    for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
+        imgRetriever->future().cancel();
+    }
+    
     deleteLater();
 }
 
 void PmPresetsRetriever::onRetry()
 {
-
+    if (m_imgRetrievers.size()) {
+        onDownloadImages();
+    } else {
+        onDownloadXml();
+    }
 }
 
 #if 0
