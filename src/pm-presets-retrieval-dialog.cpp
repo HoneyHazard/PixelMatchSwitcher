@@ -123,7 +123,7 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
 
     // connections: this -> retriever
     connect(this, &PmPresetsRetrievalDialog::sigAbort,
-            m_retriever, &PmPresetsRetriever::onAbort, qc);
+            m_retriever, &PmPresetsRetriever::onAbort, Qt::DirectConnection);
     connect(this, &PmPresetsRetrievalDialog::sigRetry,
             m_retriever, &PmPresetsRetriever::onRetry, qc);
 

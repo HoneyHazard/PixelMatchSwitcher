@@ -66,6 +66,7 @@ public:
     static const int k_numConcurrentDownloads = 3;
 
     PmPresetsRetriever(std::string xmlUrl);
+    ~PmPresetsRetriever();
 
     void downloadXml();
     void retrievePresets(QList<std::string> selectedPresets);

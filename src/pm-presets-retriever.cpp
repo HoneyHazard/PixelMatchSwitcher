@@ -67,14 +67,6 @@ CURLcode PmFileRetriever::onDownload()
     CURLcode result = curl_easy_perform(m_curlHandle);
     blog(LOG_DEBUG, "file retriever: curl perform result = %d", result);
 
-#if 0
-    long httpCode;
-    curl_easy_getinfo(m_curlHandle, CURLINFO_HTTP_CODE, &httpCode);
-    if (httpCode != 200) {
-        result = CURLE_REMOTE_FILE_NOT_FOUND;
-    }
-#endif
-
     if (result == CURLE_OK) {
         if (m_saveFilename.size()) {
             QFile file(m_saveFilename.data());
@@ -129,7 +121,7 @@ PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl)
 , m_xmlUrl(xmlUrl)
 {
     // move to own thread
-    m_thread = new QThread(this);
+    m_thread = new QThread();
     m_thread->setObjectName("preset retriever thread");
     moveToThread(m_thread);
     m_thread->start();
@@ -140,6 +132,14 @@ PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl)
     // CURL global init
     CURLcode result = curl_global_init(CURL_GLOBAL_ALL);
     blog(LOG_DEBUG, "preset retriever: curl init result = %d", result);
+}
+
+PmPresetsRetriever::~PmPresetsRetriever()
+{
+    m_thread->exit();
+    while (m_thread->isRunning()) {
+        QThread::msleep(10);
+    }
 }
 
 void PmPresetsRetriever::downloadXml()
@@ -163,8 +163,9 @@ void PmPresetsRetriever::retryImages()
 
 void PmPresetsRetriever::abort()
 {
-    QMetaObject::invokeMethod(
-        this, &PmPresetsRetriever::onAbort, Qt::QueuedConnection);
+    //QMetaObject::invokeMethod(
+    //    this, &PmPresetsRetriever::onAbort, Qt::QueuedConnection);
+	onAbort();
 }
 
 void PmPresetsRetriever::onDownloadXml()
@@ -296,7 +297,8 @@ void PmPresetsRetriever::onAbort()
     for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
         imgRetriever->future().cancel();
     }
-    
+
+    m_thread->exit();
     deleteLater();
 }
 
