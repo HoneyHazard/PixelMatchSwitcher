@@ -25,7 +25,9 @@ void PmProgressBar::setProgress(size_t dlNow, size_t dlTotal)
     int range = dlTotal ? (int)dlTotal : 100;
     int percent = float(value) * 100.f / float(range);
 
-    setStyleSheet(QString("QProgressBar { text-align: left; color: %1 }")
+    setStyleSheet(
+        QString("QProgressBar { text-align: left; color: %1 } "
+			    "QProgressBar::chunk {  background-color: blue; }")
         .arg(percent < 50 ? "black" : "white"));
 
     m_text = QString("  %1 - %2%").arg(m_taskName).arg(percent);
@@ -36,9 +38,11 @@ void PmProgressBar::setProgress(size_t dlNow, size_t dlTotal)
 
 void PmProgressBar::setFailed(QString reason)
 {
+
     setStyleSheet(
         "QProgressBar { text-align: left; } "
         "QProgressBar::chunk {  background-color: red; }");
+
     m_text = QString("  %1 - %2")
         .arg(m_taskName)
         .arg(reason.size() ? reason : obs_module_text("FAILED"));
@@ -141,7 +145,7 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
 void PmPresetsRetrievalDialog::onFileProgress(
     std::string fileUrl, size_t dlNow, size_t dlTotal)
 {
-	m_retryButton->setVisible(false);
+    m_retryButton->setVisible(false);
     PmProgressBar *pb;
     auto find = m_map.find(fileUrl);
     if (find == m_map.end()) {
