@@ -198,7 +198,7 @@ void PmPresetsRetriever::onRetrievePresets()
 
     // regex for eliminating characters problematic for the OS filenames
     QString problemCharacterStr =
-        QString("[") + QRegExp::escape("\\/:*?\"<>|") + QString("]");
+        QString("[") + QRegExp::escape("\\/:*?\"<>|\"") + QString("]");
     QRegExp problemCharacterRegex(problemCharacterStr);
 
     for (const std::string &presetName : m_selectedPresets) {
