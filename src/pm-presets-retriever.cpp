@@ -188,20 +188,33 @@ void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
 void PmPresetsRetriever::onRetrievePresets()
 {
     // hex suffix based on URL
-    uint urlHash = qHash(m_xmlUrl);
-    std::ostringstream oss;
-    oss << std::hex << urlHash;
-    std::string urlHashSuffix = oss.str();
+	std::ostringstream oss;
+    oss << std::ios::hex << qHash(m_xmlUrl);
+	std::string urlHashSuffix = oss.str();
 
+    // where preset images will be saved
     std::string storePath = os_get_config_path_ptr(
         "obs-studio/plugin_config/PixelMatchSwitcher/presets/");
+
+    // regex for eliminating characters problematic for the OS filenames
+    QString problemCharacterStr =
+        QString("[") + QRegExp::escape("\\/:*?\"<>|") + QString("]");
+    QRegExp problemCharacterRegex(problemCharacterStr);
 
     for (const std::string &presetName : m_selectedPresets) {
         PmMultiMatchConfig &mcfg = m_availablePresets[presetName];
 
+        QString presetNameQstr = presetName.data();
+        presetNameQstr.replace(problemCharacterRegex, "_");
+        std::string presetNameSafe = presetNameQstr.toUtf8().data();
+
+        blog(LOG_DEBUG, "sanitized preset name = %s", presetNameSafe.data());
+
         // unique folder name based on url and preset name
         std::string presetStorePath
-            = storePath + presetName + '_' + urlHashSuffix + '/';
+            = storePath + presetNameSafe + '_' + urlHashSuffix + '/';
+
+        blog(LOG_DEBUG, "presetStorePath = %s", presetStorePath.data());
         os_mkdirs(presetStorePath.data());
 
         for (PmMatchConfig& cfg : mcfg) {
@@ -280,6 +293,7 @@ void PmPresetsRetriever::onAbort()
     for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
         imgRetriever->abort();
     }
+    emit sigAborted();
     deleteLater();
 }
 

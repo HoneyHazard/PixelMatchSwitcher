@@ -24,7 +24,6 @@ const char* PmPresetsWidget::k_defaultXmlUrl
 PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 : QGroupBox(obs_module_text("Presets"), parent)
 , m_core(core)
-
 {
     const Qt::ConnectionType qc = Qt::QueuedConnection;
 
@@ -200,10 +199,13 @@ void PmPresetsWidget::onPresetsDownloadAvailable(
     PmPresetsSelectorDialog selector(
         obs_module_text("Presets to Download"), presetNames, {}, this);
     QList<std::string> selectedPresets = selector.selectedPresets();
-    if (selector.result() == QDialog::Rejected || selectedPresets.empty())
-        return;
+
     if (m_presetsRetriever) {
-        m_presetsRetriever->retrievePresets(selectedPresets);
+        if (selector.result() == QDialog::Rejected || selectedPresets.empty()) {
+            m_presetsRetriever->onAbort();
+        } else {
+            m_presetsRetriever->retrievePresets(selectedPresets);
+        }
     }
 
     UNUSED_PARAMETER(xmlUrl);

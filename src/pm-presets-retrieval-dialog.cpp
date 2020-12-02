@@ -124,10 +124,12 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
             this, &PmPresetsRetrievalDialog::onFailed, qc);
     connect(m_retriever, &PmPresetsRetriever::sigPresetsReady,
             this, &PmPresetsRetrievalDialog::onSuccess, qc);
+    connect(m_retriever, &PmPresetsRetriever::sigAborted,
+            this, &QObject::deleteLater, qc);
 
     // connections: this -> retriever
     connect(this, &PmPresetsRetrievalDialog::sigAbort,
-            this, &PmPresetsRetrievalDialog::onCancelReleased, qc);
+            m_retriever, &PmPresetsRetriever::onAbort, qc);
     connect(this, &PmPresetsRetrievalDialog::sigRetry,
             m_retriever, &PmPresetsRetriever::onRetry, qc);
 
@@ -213,10 +215,3 @@ void PmPresetsRetrievalDialog::onFailed()
     m_retryButton->setVisible(true);
 }
 
-void PmPresetsRetrievalDialog::onCancelReleased()
-{
-    if (m_retriever) {
-        m_retriever->onAbort();
-    }
-    deleteLater();
-}

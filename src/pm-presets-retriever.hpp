@@ -87,6 +87,7 @@ signals:
     void sigImgSuccess(std::string imgUrl);
     void sigPresetsReady(PmMatchPresets presets);
     void sigFailed();
+    void sigAborted();
 
 public slots:
     void onAbort();
