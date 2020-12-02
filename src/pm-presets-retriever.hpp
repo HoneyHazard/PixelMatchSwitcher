@@ -65,19 +65,16 @@ class PmPresetsRetriever : public QObject
     Q_OBJECT
 
 public:
-    static const int k_numConcurrentDownloads = 3;
+    static const int k_numWorkerThreads = 4;
 
     PmPresetsRetriever(std::string xmlUrl);
     ~PmPresetsRetriever();
 
     void downloadXml();
     void retrievePresets(QList<std::string> selectedPresets);
-    void retryImages();
+    void downloadImages();
 
 signals:
-    // forwarded to self to run in its own thread
-    void sigRetrievePresets(QList<std::string> selectedPresets);
-
     // xml phase
     void sigXmlProgress(std::string xmlUrl, size_t dlNow, size_t dlTotal);
     void sigXmlFailed(std::string xmlUrl, QString error);
@@ -92,14 +89,12 @@ signals:
     void sigFailed();
 
 public slots:
-    void onDownloadXml();
-	void onRetrievePresets();
-    void onDownloadImages();
-
     void onAbort();
     void onRetry();
 
 protected slots:
+    void onRetrievePresets();
+    void onDownloadImages();
     void onDownloadXmlWorker();
 
 protected:

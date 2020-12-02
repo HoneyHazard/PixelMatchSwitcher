@@ -122,7 +122,7 @@ PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl)
 , m_xmlUrl(xmlUrl)
 {
     // worker thread pool for downloads
-    m_workerThreadPool.setMaxThreadCount(k_numConcurrentDownloads);
+    m_workerThreadPool.setMaxThreadCount(k_numWorkerThreads);
 
     // CURL global init
     CURLcode result = curl_global_init(CURL_GLOBAL_ALL);
@@ -134,25 +134,6 @@ PmPresetsRetriever::~PmPresetsRetriever()
 }
 
 void PmPresetsRetriever::downloadXml()
-{
-    QMetaObject::invokeMethod(
-        this, &PmPresetsRetriever::onDownloadXml, Qt::QueuedConnection);
-}
-
-void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
-{
-    m_selectedPresets = selectedPresets;
-    QMetaObject::invokeMethod(
-        this, &PmPresetsRetriever::onRetrievePresets, Qt::QueuedConnection);
-}
-
-void PmPresetsRetriever::retryImages()
-{
-    QMetaObject::invokeMethod(
-        this, &PmPresetsRetriever::onDownloadImages, Qt::QueuedConnection);
-}
-
-void PmPresetsRetriever::onDownloadXml()
 {
     QtConcurrent::run(
         &m_workerThreadPool, this, &PmPresetsRetriever::onDownloadXmlWorker);
@@ -195,6 +176,13 @@ void PmPresetsRetriever::onDownloadXmlWorker()
             obs_module_text("Unknown error while parsing presets xml"));
         emit sigFailed();
     }
+}
+
+void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
+{
+    m_selectedPresets = selectedPresets;
+    QtConcurrent::run(
+        &m_workerThreadPool, this, &PmPresetsRetriever::onRetrievePresets);
 }
 
 void PmPresetsRetriever::onRetrievePresets()
@@ -241,6 +229,13 @@ void PmPresetsRetriever::onRetrievePresets()
 
     onDownloadImages();
 }
+
+void PmPresetsRetriever::downloadImages()
+{
+    QtConcurrent::run(
+        &m_workerThreadPool, this, &PmPresetsRetriever::onDownloadImages);
+}
+
 
 void PmPresetsRetriever::onDownloadImages()
 {
@@ -291,9 +286,9 @@ void PmPresetsRetriever::onAbort()
 void PmPresetsRetriever::onRetry()
 {
     if (m_imgRetrievers.size()) {
-        onDownloadImages();
+        downloadImages();
     } else {
-        onDownloadXml();
+        downloadXml();
     }
 }
 

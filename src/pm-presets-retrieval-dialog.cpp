@@ -161,7 +161,7 @@ void PmPresetsRetrievalDialog::onFileProgress(
         m_scrollWidget->setMinimumHeight(heightSeveral);
         m_scrollWidget->setMinimumWidth(width);
 
-        const int maxSz = PmPresetsRetriever::k_numConcurrentDownloads * 2;
+        const int maxSz = PmPresetsRetriever::k_numWorkerThreads * 2;
         if (m_map.size() < maxSz) {
             m_scrollArea->setMinimumHeight(heightSeveral + spacing);
             m_scrollArea->setMinimumWidth(width + spacing);

@@ -403,7 +403,6 @@ void PmPresetsWidget::onPresetDownload()
         connect(
             m_presetsRetriever, &PmPresetsRetriever::sigPresetsReady,
             this, &PmPresetsWidget::onPresetsDownloadFinished, qc);
-
         PmPresetsRetrievalDialog *pg =
             new PmPresetsRetrievalDialog(m_presetsRetriever, this);
         m_presetsRetriever->downloadXml();
