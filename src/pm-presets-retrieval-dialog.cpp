@@ -123,7 +123,7 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
 
     // connections: this -> retriever
     connect(this, &PmPresetsRetrievalDialog::sigAbort,
-            m_retriever, &PmPresetsRetriever::onAbort, Qt::DirectConnection);
+            this, &PmPresetsRetrievalDialog::onCancelReleased, qc);
     connect(this, &PmPresetsRetrievalDialog::sigRetry,
             m_retriever, &PmPresetsRetriever::onRetry, qc);
 
@@ -206,5 +206,13 @@ void PmPresetsRetrievalDialog::onSuccess()
 
 void PmPresetsRetrievalDialog::onFailed()
 {
-	m_retryButton->setVisible(true);
+    m_retryButton->setVisible(true);
+}
+
+void PmPresetsRetrievalDialog::onCancelReleased()
+{
+    if (m_retriever) {
+        m_retriever->onAbort();
+    }
+    deleteLater();
 }

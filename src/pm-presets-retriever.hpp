@@ -21,6 +21,7 @@ public:
     ~PmFileRetriever();
 
     QFuture<CURLcode> startDownload(QThreadPool& threadPool);
+    void abort() { m_abortFlag = 1; }
 
     void setSaveFilename(const std::string& saveFilename)
         { m_saveFilename = saveFilename; }
@@ -52,6 +53,7 @@ protected:
     QFuture<CURLcode> m_future;
 
     CURL *m_curlHandle = nullptr;
+    int m_abortFlag = 0;
 };
 
 /**
@@ -71,7 +73,6 @@ public:
     void downloadXml();
     void retrievePresets(QList<std::string> selectedPresets);
     void retryImages();
-    void abort();
 
 signals:
     // forwarded to self to run in its own thread

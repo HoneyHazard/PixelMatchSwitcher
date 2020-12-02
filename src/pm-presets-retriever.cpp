@@ -100,7 +100,7 @@ int PmFileRetriever::staticProgressFunc(
 
     emit r->sigProgress(r->m_fileUrl, dlnow, dltotal);
 
-    return 0;
+    return r->m_abortFlag;
 
     UNUSED_PARAMETER(ultotal);
     UNUSED_PARAMETER(ulnowCould);
@@ -150,13 +150,6 @@ void PmPresetsRetriever::retryImages()
 {
     QMetaObject::invokeMethod(
         this, &PmPresetsRetriever::onDownloadImages, Qt::QueuedConnection);
-}
-
-void PmPresetsRetriever::abort()
-{
-    //QMetaObject::invokeMethod(
-    //    this, &PmPresetsRetriever::onAbort, Qt::QueuedConnection);
-    onAbort();
 }
 
 void PmPresetsRetriever::onDownloadXml()
@@ -278,6 +271,7 @@ void PmPresetsRetriever::onDownloadImages()
             readyPresets[presetName] = m_availablePresets[presetName];
         }
         emit sigPresetsReady(readyPresets);
+        deleteLater();
     } else {
         emit sigFailed();
     }
@@ -285,17 +279,12 @@ void PmPresetsRetriever::onDownloadImages()
 
 void PmPresetsRetriever::onAbort()
 {
-    //m_xmlRetriever->future().cancel();
-    //for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
-    //    imgRetriever->future().cancel();
-    //}
-
-    //m_xmlRetriever->future().waitForFinished();
-    //for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
-    //    imgRetriever->future().cancel();
-    //}
-
-    //moveToThread(QApplication::instance()->thread());
+    if (m_xmlRetriever) {
+        m_xmlRetriever->abort();
+    }
+    for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
+        imgRetriever->abort();
+    }
     deleteLater();
 }
 

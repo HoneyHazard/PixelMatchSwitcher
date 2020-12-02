@@ -52,6 +52,8 @@ protected slots:
     void onFileFailed(std::string fileUrl, QString error);
     void onFileSuccess(std::string fileUrl);
 
+    void onCancelReleased();
+
     void onFailed();
     void onSuccess();
 
