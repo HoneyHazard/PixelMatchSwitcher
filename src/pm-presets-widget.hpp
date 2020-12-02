@@ -39,25 +39,27 @@ protected slots:
     void onPresetSaveAs();
     void onNewConfig();
     void onPresetRemove();
-    void onPresetImport();
+    void onPresetImportXml();
     void onPresetDownload();
-    void onPresetExport();
+    void onPresetExportXml();
 
-    // core events handlers
+    // preset events handlers
     void onAvailablePresetsChanged();
     void onActivePresetChanged();
     void onActivePresetDirtyStateChanged();
     void onPresetsImportAvailable(PmMatchPresets availablePresets);
     void onPresetsDownloadAvailable(
         std::string xmlUrl, QList<std::string> presetNames);
+    void onPresetsDownloadFinished(PmMatchPresets presets);
 
 protected:
+    static const char *k_unsavedPresetStr;
+    static const char *k_defaultXmlUrl;
+
+    void importPresets(const PmMatchPresets &presets,
+                       const QList<std::string> &selectedPresets);
     QMessageBox::ButtonRole promptUnsavedProceed();
-
-    static const char* k_unsavedPresetStr;
-    static const char *k_defaultXmlDownload;
-
-    QPushButton* prepareButton(const char* tooltip, const char* icoPath);
+    QPushButton *prepareButton(const char *tooltip, const char *icoPath);
 
     PmCore* m_core;
     QPointer<PmPresetsRetriever> m_presetsRetriever;

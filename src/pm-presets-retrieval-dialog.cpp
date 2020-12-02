@@ -66,7 +66,7 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
 , m_retriever(retriever)
 {
     setWindowTitle(obs_module_text("Downloading Preset(s) Data"));
-	setMinimumWidth(250);
+    setMinimumWidth(250);
 
     // scroll area to be filled with progress bars
     m_scrollWidget = new QWidget(this);

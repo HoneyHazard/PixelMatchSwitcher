@@ -219,7 +219,7 @@ void PmPresetsRetriever::onRetrievePresets()
         "obs-studio/plugin_config/PixelMatchSwitcher/presets/");
 
     for (const std::string &presetName : m_selectedPresets) {
-        PmMultiMatchConfig mcfg = m_availablePresets[presetName];
+        PmMultiMatchConfig &mcfg = m_availablePresets[presetName];
 
         // unique folder name based on url and preset name
         std::string presetStorePath
