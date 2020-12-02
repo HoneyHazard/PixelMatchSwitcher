@@ -7,6 +7,7 @@
 #include <QXmlStreamReader>
 #include <QtConcurrent/QtConcurrent>
 #include <QFile>
+#include <QApplication>
 
 #include <sstream>
 
@@ -120,12 +121,6 @@ PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl)
 : QObject(nullptr)
 , m_xmlUrl(xmlUrl)
 {
-    // move to own thread
-    m_thread = new QThread();
-    m_thread->setObjectName("preset retriever thread");
-    moveToThread(m_thread);
-    m_thread->start();
-
     // worker thread pool for downloads
     m_workerThreadPool.setMaxThreadCount(k_numConcurrentDownloads);
 
@@ -136,10 +131,6 @@ PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl)
 
 PmPresetsRetriever::~PmPresetsRetriever()
 {
-    m_thread->exit();
-    while (m_thread->isRunning()) {
-        QThread::msleep(10);
-    }
 }
 
 void PmPresetsRetriever::downloadXml()
@@ -165,10 +156,16 @@ void PmPresetsRetriever::abort()
 {
     //QMetaObject::invokeMethod(
     //    this, &PmPresetsRetriever::onAbort, Qt::QueuedConnection);
-	onAbort();
+    onAbort();
 }
 
 void PmPresetsRetriever::onDownloadXml()
+{
+    QtConcurrent::run(
+        &m_workerThreadPool, this, &PmPresetsRetriever::onDownloadXmlWorker);
+}
+
+void PmPresetsRetriever::onDownloadXmlWorker()
 {
     // initiate xml downloader
     m_xmlRetriever = new PmFileRetriever(m_xmlUrl, this);
@@ -194,12 +191,12 @@ void PmPresetsRetriever::onDownloadXml()
         emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
     } catch (std::exception e) {
         m_xmlRetriever->deleteLater();
-	    m_xmlRetriever = nullptr;
+        m_xmlRetriever = nullptr;
         emit sigXmlFailed(m_xmlUrl, e.what());
         emit sigFailed();
     } catch (...) {
         m_xmlRetriever->deleteLater();
-	    m_xmlRetriever = nullptr;
+        m_xmlRetriever = nullptr;
         emit sigXmlFailed(
             m_xmlUrl,
             obs_module_text("Unknown error while parsing presets xml"));
@@ -288,17 +285,17 @@ void PmPresetsRetriever::onDownloadImages()
 
 void PmPresetsRetriever::onAbort()
 {
-    m_xmlRetriever->future().cancel();
-    for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
-        imgRetriever->future().cancel();
-    }
+    //m_xmlRetriever->future().cancel();
+    //for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
+    //    imgRetriever->future().cancel();
+    //}
 
-    m_xmlRetriever->future().waitForFinished();
-    for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
-        imgRetriever->future().cancel();
-    }
+    //m_xmlRetriever->future().waitForFinished();
+    //for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
+    //    imgRetriever->future().cancel();
+    //}
 
-    m_thread->exit();
+    //moveToThread(QApplication::instance()->thread());
     deleteLater();
 }
 

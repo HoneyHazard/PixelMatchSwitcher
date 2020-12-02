@@ -98,13 +98,15 @@ public slots:
     void onAbort();
     void onRetry();
 
+protected slots:
+    void onDownloadXmlWorker();
+
 protected:
     std::string m_xmlUrl;
     PmMatchPresets m_availablePresets;
     QList<std::string> m_selectedPresets;
 
     bool m_abort = false;
-    QThread *m_thread;
     QThreadPool m_workerThreadPool;
     PmFileRetriever* m_xmlRetriever;
     QList<PmFileRetriever*> m_imgRetrievers;
