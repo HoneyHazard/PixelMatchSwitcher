@@ -434,7 +434,7 @@ void PmCore::onMultiMatchConfigReset()
 
     // report orphaned images
     if (orphanedImages.size()) {
-	    emit sigMatchImagesOrphaned(orphanedImages);
+	    emit sigMatchImagesOrphaned(orphanedImages.toList());
     }
 }
 
@@ -529,7 +529,7 @@ void PmCore::onMatchImageRefresh(size_t matchIndex)
     loadImage(matchIndex);
 }
 
-void PmCore::onRemoveOrphanedImages(QSet<std::string> orphanedImages)
+void PmCore::onMatchImagesRemove(QList<std::string> orphanedImages)
 {
     for (const auto &imgFilename : orphanedImages) {
         QFile file(imgFilename.data());
@@ -622,7 +622,7 @@ void PmCore::onMatchPresetSave(std::string name)
     onMatchPresetSelect(name);
     emit sigActivePresetDirtyChanged();
     if (orphanedImages.size()) {
-	    emit sigMatchImagesOrphaned(orphanedImages);
+	    emit sigMatchImagesOrphaned(orphanedImages.toList());
     }
 
     obs_frontend_save();
@@ -671,7 +671,7 @@ void PmCore::onMatchPresetRemove(std::string name)
 
     emit sigAvailablePresetsChanged();
     if (orphanedImages.size()) {
-        emit sigMatchImagesOrphaned(orphanedImages);
+        emit sigMatchImagesOrphaned(orphanedImages.toList());
     }
 
     onMatchPresetSelect(selOther);

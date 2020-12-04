@@ -112,6 +112,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
             this, &PmPresetsWidget::onActivePresetDirtyStateChanged, qc);
     connect(m_core, &PmCore::sigPresetsImportAvailable,
             this, &PmPresetsWidget::onPresetsImportAvailable, qc);
+    connect(m_core, &PmCore::sigMatchImagesOrphaned,
+            this, &PmPresetsWidget::onMatchImagesOrphaned, qc);
 
     // local signals -> core slots
     connect(this, &PmPresetsWidget::sigMatchPresetSave,
@@ -130,6 +132,8 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
             m_core, &PmCore::onMatchPresetsImport, qc);
     connect(this, &PmPresetsWidget::sigMatchPresetsAppend,
             m_core, &PmCore::onMatchPresetsAppend, qc);
+    connect(this, &PmPresetsWidget::sigMatchImagesRemove,
+            m_core, &PmCore::onMatchImagesRemove, qc);
 
     // finish init state
     onAvailablePresetsChanged();
@@ -413,6 +417,17 @@ void PmPresetsWidget::onPresetDownload()
 void PmPresetsWidget::onPresetsDownloadFinished(PmMatchPresets presets)
 {
     importPresets(presets, presets.keys());
+}
+
+void PmPresetsWidget::onMatchImagesOrphaned(QList<std::string> filenames)
+{
+    PmPresetsSelectorDialog selector(
+        obs_module_text("Remove downloaded images?"),
+        filenames, filenames);
+    QList<std::string> selectedImages = selector.selectedPresets();
+    if (selectedImages.size()) {
+        emit sigMatchImagesRemove(selectedImages);
+    }
 }
 
 void PmPresetsWidget::importPresets(

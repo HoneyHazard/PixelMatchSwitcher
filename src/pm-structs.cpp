@@ -399,7 +399,6 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmCaptureState>("PmCaptureState");
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
     qRegisterMetaType<QList<std::string>>("QList<std::string>");
-    qRegisterMetaType<QList<std::string>>("QSet<std::string>");
 }
 
 PmMatchPresets::PmMatchPresets(const std::string& filename)

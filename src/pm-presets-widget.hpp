@@ -30,6 +30,7 @@ signals:
     void sigMatchPresetExport(std::string filename, QList<std::string> presets);
     void sigMatchPresetsImport(std::string filename);
     void sigMatchPresetsAppend(PmMatchPresets newPresets);
+    void sigMatchImagesRemove(QList<std::string> filenames);
 
 protected slots:
     // local UI handlers
@@ -51,6 +52,7 @@ protected slots:
     void onPresetsDownloadAvailable(
         std::string xmlUrl, QList<std::string> presetNames);
     void onPresetsDownloadFinished(PmMatchPresets presets);
+    void onMatchImagesOrphaned(QList<std::string> filenames);
 
 protected:
     static const char *k_unsavedPresetStr;

@@ -113,7 +113,7 @@ signals:
     void sigMatchImageCaptured(QImage img, int roiLeft, int roiBottom);
     void sigCaptureStateChanged(PmCaptureState capMode, int x=-1, int y=-1);
 
-    void sigMatchImagesOrphaned(QSet<std::string> filenames);
+    void sigMatchImagesOrphaned(QList<std::string> filenames);
 
 public slots:
     void onMatchPresetSelect(std::string name);
@@ -142,7 +142,7 @@ public slots:
     void onCaptureStateChanged(PmCaptureState capMode, int x=-1, int y=-1);
     void onMatchImageRefresh(size_t matchIndex);
 
-    void onRemoveOrphanedImages(QSet<std::string> orphanedImages);
+    void onMatchImagesRemove(QList<std::string> orphanedImages);
 
 protected slots:
     void onMenuAction();
