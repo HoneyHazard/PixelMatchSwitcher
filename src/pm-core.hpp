@@ -142,6 +142,8 @@ public slots:
     void onCaptureStateChanged(PmCaptureState capMode, int x=-1, int y=-1);
     void onMatchImageRefresh(size_t matchIndex);
 
+    void onRemoveOrphanedImages(QSet<std::string> orphanedImages);
+
 protected slots:
     void onMenuAction();
     void onPeriodicUpdate();

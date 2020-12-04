@@ -15,6 +15,10 @@
 #include <QTextStream>
 #include <QMessageBox>
 
+#include <QFile>
+#include <QFileInfo>
+#include <QDir>
+
 PmCore* PmCore::m_instance = nullptr;
 
 void init_pixel_match_switcher()
@@ -523,6 +527,21 @@ void PmCore::onPreviewConfigChanged(PmPreviewConfig cfg)
 void PmCore::onMatchImageRefresh(size_t matchIndex)
 {
     loadImage(matchIndex);
+}
+
+void PmCore::onRemoveOrphanedImages(QSet<std::string> orphanedImages)
+{
+    for (const auto &imgFilename : orphanedImages) {
+        QFile file(imgFilename.data());
+        QFileInfo info(file);
+        if (info.exists()) {
+            file.remove();
+            QDir dir = info.dir();
+            if (dir.isEmpty()) {
+                dir.removeRecursively();
+            }
+        }
+    }
 }
 
 std::string PmCore::activeMatchPresetName() const
