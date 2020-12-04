@@ -88,11 +88,11 @@ set(pixel-match-switcher_HEADERS
         src/pm-preview-display-widget.hpp
         src/pm-presets-widget.hpp
         src/pm-preset-exists-dialog.hpp
-        src/pm-presets-selector-dialog.hpp
         src/pm-presets-retrieval-dialog.hpp
         src/pm-toggles-widget.hpp
         src/pm-image-view.hpp
         src/pm-match-image-dialog.hpp
+        src/pm-list-selector-dialog.hpp
         src/pm-help-widget.hpp
         src/pm-dialog.hpp
         src/pm-about-box.hpp
@@ -116,11 +116,11 @@ set(pixel-match-switcher_SOURCES
         src/pm-preview-display-widget.cpp
         src/pm-presets-widget.cpp
         src/pm-preset-exists-dialog.cpp
-        src/pm-presets-selector-dialog.cpp
         src/pm-presets-retrieval-dialog.cpp
         src/pm-toggles-widget.cpp
         src/pm-image-view.cpp
         src/pm-match-image-dialog.cpp
+        src/pm-list-selector-dialog.cpp
         src/pm-help-widget.cpp
         src/pm-debug-tab.cpp
         src/pm-dialog.cpp

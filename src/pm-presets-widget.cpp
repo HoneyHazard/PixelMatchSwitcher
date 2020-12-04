@@ -1,6 +1,6 @@
 #include "pm-presets-widget.hpp"
 #include "pm-preset-exists-dialog.hpp"
-#include "pm-presets-selector-dialog.hpp"
+#include "pm-list-selector-dialog.hpp"
 #include "pm-retriever-progress-dialog.hpp"
 #include "pm-presets-retriever.hpp"
 #include "pm-core.hpp"
@@ -186,10 +186,10 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
 
 void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
 {
-    PmPresetsSelectorDialog selector(
+    PmListSelectorDialog selector(
         obs_module_text("Presets to Import"),
         availablePresets.keys(), availablePresets.keys(), this);
-    QList<std::string> selectedPresets = selector.selectedPresets();
+    QList<std::string> selectedPresets = selector.selectedChoices();
     if (selector.result() == QFileDialog::Rejected || selectedPresets.empty())
         return;
 
@@ -200,9 +200,9 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
 void PmPresetsWidget::onPresetsDownloadAvailable(
     std::string xmlUrl, QList<std::string> presetNames)
 {
-    PmPresetsSelectorDialog selector(
+    PmListSelectorDialog selector(
         obs_module_text("Presets to Download"), presetNames, {}, this);
-    QList<std::string> selectedPresets = selector.selectedPresets();
+    QList<std::string> selectedPresets = selector.selectedChoices();
 
     if (m_presetsRetriever) {
         if (selector.result() == QDialog::Rejected || selectedPresets.empty()) {
@@ -355,10 +355,10 @@ void PmPresetsWidget::onPresetExportXml()
         selectedPresets.push_back(activePresetName);
     }
 
-    PmPresetsSelectorDialog selector(
+    PmListSelectorDialog selector(
         obs_module_text("Presets to Export"),
         availablePresets, selectedPresets, this);
-    selectedPresets = selector.selectedPresets();
+    selectedPresets = selector.selectedChoices();
     if (selector.result() == QDialog::Rejected || selectedPresets.empty())
         return;
 
@@ -421,10 +421,10 @@ void PmPresetsWidget::onPresetsDownloadFinished(PmMatchPresets presets)
 
 void PmPresetsWidget::onMatchImagesOrphaned(QList<std::string> filenames)
 {
-    PmPresetsSelectorDialog selector(
-        obs_module_text("Remove downloaded images?"),
+    PmListSelectorDialog selector(obs_module_text(
+        "Remove downloaded images no longer used by any preset?"),
         filenames, filenames);
-    QList<std::string> selectedImages = selector.selectedPresets();
+    QList<std::string> selectedImages = selector.selectedChoices();
     if (selectedImages.size()) {
         emit sigMatchImagesRemove(selectedImages);
     }

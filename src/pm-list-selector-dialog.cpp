@@ -1,4 +1,4 @@
-#include "pm-presets-selector-dialog.hpp"
+#include "pm-list-selector-dialog.hpp"
 #include <obs-module.h>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -6,7 +6,7 @@
 #include <QCheckBox>
 #include <QPushButton>
 
-PmPresetsSelectorDialog::PmPresetsSelectorDialog(
+PmListSelectorDialog::PmListSelectorDialog(
     QString title,
     const QList<std::string> &availablePresets,
     const QList<std::string> &selectedPresets,
@@ -38,8 +38,12 @@ PmPresetsSelectorDialog::PmPresetsSelectorDialog(
 
     QWidget *checkboxesWidget = new QWidget(this);
     checkboxesWidget->setLayout(checkboxLayout);
+    checkboxesWidget->setMinimumSize(checkboxesWidget->sizeHint());
+
     QScrollArea *checkboxScrollArea = new QScrollArea(this);
     checkboxScrollArea->setWidget(checkboxesWidget);
+    checkboxScrollArea->setMinimumSize(
+        checkboxesWidget->sizeHint() + QSize(20,20));
 
     // ok and cancel buttons
     QHBoxLayout *okCancelLayout = new QHBoxLayout;
@@ -66,14 +70,14 @@ PmPresetsSelectorDialog::PmPresetsSelectorDialog(
 }
 
 
-void PmPresetsSelectorDialog::setAll(bool value)
+void PmListSelectorDialog::setAll(bool value)
 {
     for (QCheckBox *box : m_checkboxes) {
         box->setChecked(value);
     }
 }
 
-QList<std::string> PmPresetsSelectorDialog::selectedPresets() const
+QList<std::string> PmListSelectorDialog::selectedChoices() const
 {
     QList<std::string> ret;
     for (QCheckBox *checkbox : m_checkboxes) {
