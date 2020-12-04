@@ -97,6 +97,7 @@ struct PmMatchConfig
 
     std::string label = obs_module_text("new config");
     std::string matchImgFilename;
+    bool wasDownloaded = false;
 
     struct pm_match_entry_config filterCfg;
     float totalMatchThresh = 90.f;
@@ -133,6 +134,9 @@ public:
     bool operator!=(const PmMultiMatchConfig& other) const
         { return !operator==(other); }
 
+    bool containsImage(const std::string &imgFilename,
+                       size_t exceptIndex = (size_t)-1) const;
+
     std::string noMatchScene = k_defaultNoMatchScene;
     std::string noMatchTransition = k_defaultNoMatchTransition;
 };
@@ -150,6 +154,12 @@ public:
 
     void exportXml(const std::string &filename,
                    const QList<std::string> &selectedPresets) const;
+
+    bool containsImage(const std::string &imgFilename) const;
+
+    QSet<std::string> orphanedImages(
+        const PmMultiMatchConfig &beingRemoved,
+        PmMultiMatchConfig* activeCfg = nullptr);
 
 protected:
     void importXml(QXmlStreamReader &reader);

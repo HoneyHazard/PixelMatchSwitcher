@@ -196,7 +196,7 @@ void PmPresetsRetriever::onRetrievePresets()
     std::string storePath = os_get_config_path_ptr(
         "obs-studio/plugin_config/PixelMatchSwitcher/presets/");
 
-    // regex for eliminating characters problematic for the OS filenames
+    // regex for eliminating characters problematic for OSs' filenames
     QString problemCharacterStr =
         QString("[") + QRegExp::escape("\\/:*?\"<>|\"") + QString("]");
     QRegExp problemCharacterRegex(problemCharacterStr);
@@ -224,6 +224,7 @@ void PmPresetsRetriever::onRetrievePresets()
                 .fileName().toUtf8().data();
             std::string storeImgPath = presetStorePath + imgFilename;
             cfg.matchImgFilename = storeImgPath;
+            cfg.wasDownloaded = true;
 
             // prepare an image retriever
             const Qt::ConnectionType dc = Qt::DirectConnection;

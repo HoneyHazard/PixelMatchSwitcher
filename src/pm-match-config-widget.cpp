@@ -565,7 +565,10 @@ void PmMatchConfigWidget::onConfigUiChanged()
     if (failedMarker == 0) {
         filename.erase(failedMarker, strlen(k_failedImgStr)+1);
     }
-    
+
+    if (config.wasDownloaded && config.matchImgFilename != filename) {
+	    config.wasDownloaded = false;
+    }
     config.matchImgFilename = filename;
     config.filterCfg.roi_left = m_posXBox->value();
     config.filterCfg.roi_bottom = m_posYBox->value();

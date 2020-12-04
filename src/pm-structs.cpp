@@ -55,6 +55,7 @@ PmMatchConfig::PmMatchConfig()
 bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 {
     return matchImgFilename == other.matchImgFilename
+        && wasDownloaded == other.wasDownloaded
         && label == other.label
         && totalMatchThresh == other.totalMatchThresh
         && maskMode == other.maskMode
@@ -69,6 +70,9 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     obs_data_set_default_string(
         data, "match_image_filename", matchImgFilename.data());
     matchImgFilename = obs_data_get_string(data, "match_image_filename");
+
+    obs_data_set_default_bool(data, "was_downloaded", wasDownloaded);
+    wasDownloaded = obs_data_get_bool(data, "was_downloaded");
 
     obs_data_set_default_string(data, "label", label.data());
     label = obs_data_get_string(data, "label");
@@ -129,6 +133,9 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
             } else if (name == "match_image_filename") {
                 matchImgFilename =
                     reader.readElementText().toUtf8().data();
+            } else if (name == "was_downloaded") {
+                wasDownloaded
+                    = reader.readElementText() == "true" ? true : false;
             } else if (name == "roi_left") {
                 filterCfg.roi_left =
                     reader.readElementText().toInt();
@@ -176,6 +183,7 @@ obs_data_t* PmMatchConfig::save() const
 {
     obs_data_t *ret = obs_data_create();
     obs_data_set_string(ret, "match_image_filename", matchImgFilename.data());
+    obs_data_set_bool(ret, "was_downloaded", wasDownloaded);
     obs_data_set_string(ret, "label", label.data());
     obs_data_set_int(ret, "roi_left", filterCfg.roi_left);
     obs_data_set_int(ret, "roi_bottom", filterCfg.roi_bottom);
@@ -200,6 +208,7 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
     writer.writeStartElement("match_config");
     writer.writeTextElement("label", label.data());
     writer.writeTextElement("match_image_filename", matchImgFilename.data());
+    writer.writeTextElement("was_downloaded", wasDownloaded ? "true" : "false");
     writer.writeTextElement("roi_left",
         QString::number(filterCfg.roi_left));
     writer.writeTextElement("roi_bottom",
@@ -327,6 +336,21 @@ bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
     }
 }
 
+bool PmMultiMatchConfig::containsImage(
+    const std::string &imgFilename, size_t exceptIndex) const
+{
+    for (size_t i = 0; i < size(); ++i) {
+        if (i == exceptIndex)
+            continue;
+
+        const auto &cfg = at(i);
+        if (cfg.matchImgFilename == imgFilename)
+            return true;
+    }
+
+    return false;
+}
+
 QSet<std::string> PmScenes::sceneNames() const 
 {
     QSet<std::string> ret;
@@ -445,4 +469,29 @@ void PmMatchPresets::exportXml(const std::string &filename,
         }
     }
     xml.writeEndDocument();
+}
+
+bool PmMatchPresets::containsImage(const std::string &imgFilename) const
+{
+    for (const auto &mcfg : values()) {
+        if (mcfg.containsImage(imgFilename)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+QSet<std::string> PmMatchPresets::orphanedImages(
+    const PmMultiMatchConfig &beingRemoved, PmMultiMatchConfig* activeCfg)
+{
+    QSet<std::string> ret;
+    for (const auto &rcfg : beingRemoved) {
+        if (rcfg.wasDownloaded && rcfg.matchImgFilename.size()
+        && (!activeCfg || !activeCfg->containsImage(rcfg.matchImgFilename))
+        && !this->containsImage(rcfg.matchImgFilename)) {
+            ret.insert(rcfg.matchImgFilename);
+        }
+    }
+    return ret;
 }

@@ -113,6 +113,8 @@ signals:
     void sigMatchImageCaptured(QImage img, int roiLeft, int roiBottom);
     void sigCaptureStateChanged(PmCaptureState capMode, int x=-1, int y=-1);
 
+    void sigMatchImagesOrphaned(QSet<std::string> filenames);
+
 public slots:
     void onMatchPresetSelect(std::string name);
     void onMatchPresetSave(std::string name);
@@ -155,7 +157,8 @@ protected:
         const std::string& scene, const std::string &transition);
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);
-    void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg);
+    void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg,
+        QSet<std::string>* orphanedImages = nullptr);
     void loadImage(size_t matchIndex);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
     void activeFilterChanged();

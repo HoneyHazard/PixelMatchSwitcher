@@ -33,7 +33,6 @@ void free_pixel_match_switcher()
     PmCore::m_instance = nullptr;
 }
 
-
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)
 {
     PmCore *core = static_cast<PmCore *>(corePtr);
@@ -295,8 +294,19 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
     if (matchIdx >= sz) return; // invalid index?
 
     auto oldCfg = matchConfig(matchIdx);
-    
+
     if (oldCfg == newCfg) return; // config hasn't changed?
+
+    {
+        // check for orphaned images
+        QMutexLocker locker(&m_matchConfigMutex);
+        if (oldCfg.wasDownloaded && oldCfg.matchImgFilename.size()
+         && oldCfg.matchImgFilename != newCfg.matchImgFilename
+         && !m_multiMatchConfig.containsImage(oldCfg.matchImgFilename, matchIdx)
+         && !m_matchPresets.containsImage(oldCfg.matchImgFilename)) {
+            emit sigMatchImagesOrphaned({oldCfg.matchImgFilename});
+        }
+    }
 
     activateMatchConfig(matchIdx, newCfg);
 }
@@ -354,10 +364,21 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
         pm_resize_match_entries(filterData, newSz);
     }
 
-    // reconfigure images
     {
+        // reconfigure images
         QMutexLocker locker(&m_matchImagesMutex);
         m_matchImages.erase(m_matchImages.begin() + int(matchIndex));
+    }
+
+    {
+        // check for an orphaned image
+        QMutexLocker locker(&m_matchConfigMutex);
+        const PmMatchConfig &cfg = m_multiMatchConfig[matchIndex];
+        if (cfg.wasDownloaded
+         && !m_multiMatchConfig.containsImage(cfg.matchImgFilename, matchIndex)
+         && !m_matchPresets.containsImage(cfg.matchImgFilename)) {
+            emit sigMatchImagesOrphaned({cfg.matchImgFilename});
+        }
     }
 
     // finish updating state and notifying
@@ -374,6 +395,13 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
 
 void PmCore::onMultiMatchConfigReset()
 {
+    // cheeck for orphaned images
+    QSet<std::string> orphanedImages;
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+        orphanedImages = m_matchPresets.orphanedImages(m_multiMatchConfig);
+    }
+
     // reset no-match scene and transition
     onNoMatchSceneChanged("");
     onNoMatchTransitionChanged("Cut");
@@ -399,6 +427,11 @@ void PmCore::onMultiMatchConfigReset()
         m_matchImages.clear();
     }
     onMatchConfigSelect(0);
+
+    // report orphaned images
+    if (orphanedImages.size()) {
+	    emit sigMatchImagesOrphaned(orphanedImages);
+    }
 }
 
 void PmCore::onMatchConfigMoveUp(size_t matchIndex)
@@ -550,15 +583,28 @@ bool PmCore::matchConfigDirty() const
 void PmCore::onMatchPresetSave(std::string name)
 {
     bool isNew = !matchPresetExists(name);
+	QSet<std::string> orphanedImages;
     {
         QMutexLocker locker(&m_matchConfigMutex);
-        m_matchPresets[name] = m_multiMatchConfig;
+
+        PmMatchPresets newPresets = m_matchPresets;
+        newPresets[name] = m_multiMatchConfig;
+
+        if (m_matchPresets.contains(name)) {
+            PmMultiMatchConfig oldMcfg = m_matchPresets[name];
+            orphanedImages = newPresets.orphanedImages(oldMcfg);
+        }
+
+        m_matchPresets = newPresets;
     }
     if (isNew) {
         emit sigAvailablePresetsChanged();
     }
     onMatchPresetSelect(name);
     emit sigActivePresetDirtyChanged();
+    if (orphanedImages.size()) {
+	    emit sigMatchImagesOrphaned(orphanedImages);
+    }
 
     obs_frontend_save();
 }
@@ -581,18 +627,34 @@ void PmCore::onMatchPresetSelect(std::string name)
 void PmCore::onMatchPresetRemove(std::string name)
 {
     std::string selOther;
+	QSet<std::string> orphanedImages;
     {
         QMutexLocker locker(&m_matchConfigMutex);
         if (m_matchPresets.empty()) return;
 
+        // stage reduced presets
         PmMatchPresets newPresets = m_matchPresets;
         newPresets.remove(name);
+
+        // check for orphaned images
+        PmMultiMatchConfig mcfgRemoved = m_matchPresets[name];
+        auto orphanedImages = newPresets.orphanedImages(
+            mcfgRemoved, &m_multiMatchConfig);
+
+        // pick a new selection, when needed
         if (m_activeMatchPreset == name && newPresets.size()) {
             selOther = newPresets.keys().first();
         }
+
+        // finalize data
         m_matchPresets = newPresets;
     }
+
     emit sigAvailablePresetsChanged();
+    if (orphanedImages.size()) {
+        emit sigMatchImagesOrphaned(orphanedImages);
+    }
+
     onMatchPresetSelect(selOther);
 }
 
@@ -982,7 +1044,9 @@ void PmCore::updateActiveFilter(
     }
 }
 
-void PmCore::activateMatchConfig(size_t matchIdx, const PmMatchConfig& newCfg)
+void PmCore::activateMatchConfig(
+    size_t matchIdx, const PmMatchConfig& newCfg,
+    QSet<std::string>* orphanedImages)
 {
     // clean linger delay, for safety
     m_lingerQueue.removeAll();
@@ -1011,6 +1075,10 @@ void PmCore::activateMatchConfig(size_t matchIdx, const PmMatchConfig& newCfg)
     if (m_runningEnabled) {
         if (newCfg.matchImgFilename != oldCfg.matchImgFilename) {
             loadImage(matchIdx);
+        }
+        if (orphanedImages && oldCfg.matchImgFilename.size()
+         && oldCfg.wasDownloaded) {
+            orphanedImages->insert(oldCfg.matchImgFilename);
         }
     }
 }
