@@ -39,6 +39,8 @@ if(BUILD_OUT_OF_TREE)
         find_file(CURL_LIB "libcurl.lib" "${DepsPath}/bin")
     else()
         set(CMAKE_PREFIX_PATH "${QTDIR}")
+
+        FindPackage(Libcurl REQUIRED)
     endif()
 
     set(CMAKE_AUTOMOC ON)
