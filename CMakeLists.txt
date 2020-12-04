@@ -20,7 +20,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/pm-version.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp)
 set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp")
 
-
 if(BUILD_OUT_OF_TREE)
     if(WIN32)
         if (QTDIR OR DEFINED ENV{QTDIR} OR DEFINED ENV{QTDIR32} OR DEFINED ENV{QTDIR64})
@@ -53,8 +52,10 @@ if(BUILD_OUT_OF_TREE)
     find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
 
     include_directories(
+            "${CURL_INCLUDE_DIR}"
             "${LIBOBS_INCLUDE_DIR}"
             "${LIBOBS_FRONTEND_INCLUDE_DIR}"
+            "${CMAKE_CURRENT_BINARY_DIR}"
             ${Qt5Core_INCLUDES}
             ${Qt5Widgets_INCLUDES}
     )
