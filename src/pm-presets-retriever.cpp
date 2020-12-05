@@ -189,7 +189,7 @@ void PmPresetsRetriever::onRetrievePresets()
 {
     // hex suffix based on URL
 	std::ostringstream oss;
-    oss << std::ios::hex << qHash(m_xmlUrl);
+    oss << std::hex << qHash(m_xmlUrl);
 	std::string urlHashSuffix = oss.str();
 
     // where preset images will be saved
