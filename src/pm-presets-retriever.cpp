@@ -162,7 +162,11 @@ void PmPresetsRetriever::onDownloadXmlWorker()
         // parse the xml data; report available presets
         const QByteArray &xmlData = m_xmlRetriever->data();
         m_availablePresets = PmMatchPresets(xmlData);
-        emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
+        if (m_availablePresets.size() == 1) {
+            retrievePresets(m_availablePresets.keys());
+        } else {
+            emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
+        }
     } catch (std::exception e) {
         m_xmlRetriever->deleteLater();
         m_xmlRetriever = nullptr;
@@ -306,28 +310,3 @@ void PmPresetsRetriever::onRetry()
         downloadXml();
     }
 }
-
-#if 0
-void PmPresetsRetriever::onXmlFailed(std::string xmlUrl, int curlCode)
-{
-    QString errorString = curl_easy_strerror(xmlResultCode);
-    emit sigXmlFailed(xmlUrl, errorString);
-    deleteLater();
-     TODO: allow retry?
-}
-
-void PmPresetsRetriever::onXmlSucceeded(std::string xmlUrl, QByteArray xmlData)
-{
-    try {
-        m_availablePresets = PmMatchPresets(xmlData);
-        emit sigXmlPresetsAvailable(m_availablePresets.keys());
-    } catch (std::exception e) {
-        emit sigXmlFailed(xmlUrl, e.what());
-        deleteLater();
-    } catch (...) {
-        emit sigXmlFailed(
-            xmlUrl, obs_module_text("Unknown error while parsing presets xml"));
-        deleteLater();
-    }
-}
-#endif
