@@ -301,6 +301,8 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
 
     if (oldCfg == newCfg) return; // config hasn't changed?
 
+    activateMatchConfig(matchIdx, newCfg);
+
     {
         // check for orphaned images
         QMutexLocker locker(&m_matchConfigMutex);
@@ -311,8 +313,6 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
             emit sigMatchImagesOrphaned({oldCfg.matchImgFilename});
         }
     }
-
-    activateMatchConfig(matchIdx, newCfg);
 }
 
 void PmCore::onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg)
@@ -374,14 +374,15 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
         m_matchImages.erase(m_matchImages.begin() + int(matchIndex));
     }
 
+    // check for an orphaned image
+    QList<std::string> orphanedImages;
     {
-        // check for an orphaned image
         QMutexLocker locker(&m_matchConfigMutex);
         const PmMatchConfig &cfg = m_multiMatchConfig[matchIndex];
         if (cfg.wasDownloaded
          && !m_multiMatchConfig.containsImage(cfg.matchImgFilename, matchIndex)
          && !m_matchPresets.containsImage(cfg.matchImgFilename)) {
-            emit sigMatchImagesOrphaned({cfg.matchImgFilename});
+            orphanedImages = {cfg.matchImgFilename};
         }
     }
 
@@ -395,6 +396,10 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
         emit sigActivePresetDirtyChanged();
     }
     onMatchConfigSelect(matchIndex);
+
+    // notify about orphaned images
+    if (orphanedImages.size())
+        emit sigMatchImagesOrphaned(orphanedImages);
 }
 
 void PmCore::onMultiMatchConfigReset()
@@ -434,7 +439,7 @@ void PmCore::onMultiMatchConfigReset()
 
     // report orphaned images
     if (orphanedImages.size()) {
-	    emit sigMatchImagesOrphaned(orphanedImages.toList());
+        emit sigMatchImagesOrphaned(orphanedImages.toList());
     }
 }
 
@@ -602,7 +607,7 @@ bool PmCore::matchConfigDirty() const
 void PmCore::onMatchPresetSave(std::string name)
 {
     bool isNew = !matchPresetExists(name);
-	QSet<std::string> orphanedImages;
+    QSet<std::string> orphanedImages;
     {
         QMutexLocker locker(&m_matchConfigMutex);
 
@@ -622,7 +627,7 @@ void PmCore::onMatchPresetSave(std::string name)
     onMatchPresetSelect(name);
     emit sigActivePresetDirtyChanged();
     if (orphanedImages.size()) {
-	    emit sigMatchImagesOrphaned(orphanedImages.toList());
+        emit sigMatchImagesOrphaned(orphanedImages.toList());
     }
 
     obs_frontend_save();
@@ -646,7 +651,7 @@ void PmCore::onMatchPresetSelect(std::string name)
 void PmCore::onMatchPresetRemove(std::string name)
 {
     std::string selOther;
-	QSet<std::string> orphanedImages;
+    QSet<std::string> orphanedImages;
     {
         QMutexLocker locker(&m_matchConfigMutex);
         if (m_matchPresets.empty()) return;
@@ -670,11 +675,10 @@ void PmCore::onMatchPresetRemove(std::string name)
     }
 
     emit sigAvailablePresetsChanged();
+    onMatchPresetSelect(selOther);
     if (orphanedImages.size()) {
         emit sigMatchImagesOrphaned(orphanedImages.toList());
     }
-
-    onMatchPresetSelect(selOther);
 }
 
 void PmCore::onMatchPresetActiveRevert()

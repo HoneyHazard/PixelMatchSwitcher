@@ -144,10 +144,18 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 void PmPresetsWidget::onAvailablePresetsChanged()
 {
     auto presetNames = m_core->matchPresetNames();
+    std::string activePreset = m_core->activeMatchPresetName();
     m_presetCombo->blockSignals(true);
     m_presetCombo->clear();
+    if (activePreset.empty() && m_core->matchConfigDirty()) {
+        m_presetCombo->addItem(k_unsavedPresetStr);
+    }
     for (const auto &name : presetNames) {
         m_presetCombo->addItem(name.data());
+    }
+    if (activePreset.empty() && !m_core->matchConfigDirty()
+     && presetNames.size()) {
+        emit sigMatchPresetSelect(presetNames.first());
     }
     m_presetCombo->blockSignals(false);
 }
@@ -195,7 +203,6 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
 
     importPresets(availablePresets, selectedPresets);
 }
-
 
 void PmPresetsWidget::onPresetsDownloadAvailable(
     std::string xmlUrl, QList<std::string> presetNames)
