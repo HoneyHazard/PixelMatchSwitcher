@@ -27,7 +27,7 @@ void PmProgressBar::setProgress(size_t dlNow, size_t dlTotal)
 
     setStyleSheet(
         QString("QProgressBar { text-align: left; color: %1 } "
-			    "QProgressBar::chunk {  background-color: blue; }")
+                "QProgressBar::chunk {  background-color: blue; }")
         .arg(percent < 50 ? "black" : "white"));
 
     m_text = QString("  %1 - %2%").arg(m_taskName).arg(percent);
@@ -134,14 +134,6 @@ PmPresetsRetrievalDialog::PmPresetsRetrievalDialog(
             m_retriever, &PmPresetsRetriever::onRetry, qc);
 
     show();
-
-    #if 0
-    onFileProgress("progress", 100, 199);
-    onFileProgress("failed", 0, 0);
-    onFileFailed("failed", "who knows");
-    onFileProgress("success", 0, 0);
-    onFileSuccess("success");
-    #endif
 }
 
 void PmPresetsRetrievalDialog::onFileProgress(

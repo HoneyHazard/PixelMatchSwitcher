@@ -48,7 +48,7 @@ PmPresetExistsDialog::PmPresetExistsDialog(
 
     QPushButton *abortButton = new QPushButton(obs_module_text("Abort"), this);
     connect(abortButton, &QPushButton::released, this,
-	    &PmPresetExistsDialog::abortReleased);
+        &PmPresetExistsDialog::abortReleased);
     buttonLayout->addWidget(abortButton);
 
     mainLayout->addLayout(buttonLayout);
@@ -57,7 +57,7 @@ PmPresetExistsDialog::PmPresetExistsDialog(
     if (askApplyAll) {
         QCheckBox* applyToAllCheckBox = new QCheckBox(
             obs_module_text("Apply to All Preset Collisions"), this);
-	    applyToAllCheckBox->setChecked(m_applyToAll);
+        applyToAllCheckBox->setChecked(m_applyToAll);
         connect(applyToAllCheckBox, &QCheckBox::toggled,
                 this, &PmPresetExistsDialog::applyAllToggled);
         mainLayout->addWidget(applyToAllCheckBox, 0, Qt::AlignCenter);

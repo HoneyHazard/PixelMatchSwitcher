@@ -192,9 +192,9 @@ void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
 void PmPresetsRetriever::onRetrievePresets()
 {
     // hex suffix based on URL
-	std::ostringstream oss;
+    std::ostringstream oss;
     oss << std::hex << qHash(m_xmlUrl);
-	std::string urlHashSuffix = oss.str();
+    std::string urlHashSuffix = oss.str();
 
     // where preset images will be saved
     std::string storePath = os_get_config_path_ptr(

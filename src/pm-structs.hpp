@@ -149,8 +149,8 @@ class PmMatchPresets final : public QHash<std::string, PmMultiMatchConfig>
 {
 public:
     PmMatchPresets() {};
-	PmMatchPresets(const std::string &filename);
-	PmMatchPresets(const QByteArray &data);
+    PmMatchPresets(const std::string &filename);
+    PmMatchPresets(const QByteArray &data);
 
     void exportXml(const std::string &filename,
                    const QList<std::string> &selectedPresets) const;

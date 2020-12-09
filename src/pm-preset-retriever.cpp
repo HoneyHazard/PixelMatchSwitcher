@@ -7,7 +7,6 @@ PmFileRetriever::PmFileRetriever(QString fileUrl, QObject* parent)
 : QObject(parent)
 , m_fileUrl(fileUrl)
 {
-
 }
 
 PmFileRetriever::~PmFileRetriever()
@@ -17,7 +16,7 @@ PmFileRetriever::~PmFileRetriever()
 
 void PmFileRetriever::reset()
 {
-	m_data.clear();
+    m_data.clear();
     if (m_curlHandle) {
         curl_easy_cleanup(m_curlHandle);
         m_curlHandle = nullptr;
@@ -26,15 +25,13 @@ void PmFileRetriever::reset()
 
 void PmFileRetriever::startDownload()
 {
-    //if (m_state == Downloading || m_state == Done) return;
-
     reset();
 
     m_curlHandle = curl_easy_init();
 
     curl_easy_setopt(m_curlHandle, CURLOPT_URL, m_fileUrl);
 
-    curl_easy_setopt(m_curlHandle, CURLOPT_VERBOSE, 1L);
+    //curl_easy_setopt(m_curlHandle, CURLOPT_VERBOSE, 1L);
 
     curl_easy_setopt(m_curlHandle, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(m_curlHandle, CURLOPT_XFERINFOFUNCTION, staticProgressFunc);
@@ -43,7 +40,6 @@ void PmFileRetriever::startDownload()
     curl_easy_setopt(m_curlHandle, CURLOPT_WRITEFUNCTION, staticWriteFunc);
     curl_easy_setopt(m_curlHandle, CURLOPT_WRITEDATA, this);
 
-    //m_state = Downloading;
     curl_easy_perform(m_curlHandle);
 }
 
@@ -105,11 +101,11 @@ void PmPresetsRetriever::onXmlSucceeded(QString xmlUrl, QByteArray xmlData)
 {
     try {
         m_presets = PmMatchPresets(xmlData);
-	    emit sigXmlPresetsAvailable(m_presets.keys());
+        emit sigXmlPresetsAvailable(m_presets.keys());
     } catch (std::exception e) {
-	    onXmlFailed(xmlUrl, e.what());
+        onXmlFailed(xmlUrl, e.what());
     } catch (...) {
-	    onXmlFailed(
+        onXmlFailed(
             xmlUrl, obs_module_text("Unknown error during xml import"));
     } 
 }

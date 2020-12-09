@@ -567,7 +567,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
     }
 
     if (config.wasDownloaded && config.matchImgFilename != filename) {
-	    config.wasDownloaded = false;
+        config.wasDownloaded = false;
     }
     config.matchImgFilename = filename;
     config.filterCfg.roi_left = m_posXBox->value();

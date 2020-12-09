@@ -45,7 +45,7 @@ public:
 
 signals:
     void sigAbort();
-	void sigRetry();
+    void sigRetry();
 
 protected slots:
     void onFileProgress(std::string fileUrl, size_t dlNow, size_t dlTotal);
