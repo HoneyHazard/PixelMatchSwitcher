@@ -415,8 +415,12 @@ void PmMatchConfigWidget::onOpenFileButtonReleased()
         this, obs_module_text("Open an image file"), curPath, 
         PmConstants::k_imageFilenameFilter);
     if (!path.isEmpty()) {
-        config.matchImgFilename = path.toUtf8().data();
-        emit sigMatchConfigChanged(m_matchIndex, config);
+        std::string str = path.toUtf8().data();
+        if (config.matchImgFilename != str) {
+            config.matchImgFilename = str;
+            config.wasDownloaded = false;
+            emit sigMatchConfigChanged(m_matchIndex, config);
+        }
     }
 }
 
