@@ -27,7 +27,7 @@ void PmProgressBar::setProgress(size_t dlNow, size_t dlTotal)
 
     setStyleSheet(
         QString("QProgressBar { text-align: left; color: %1 } "
-                "QProgressBar::chunk {  background-color: blue; }")
+                "QProgressBar::chunk { background-color: blue; }")
         .arg(percent < 50 ? "black" : "white"));
 
     m_text = QString("  %1 - %2%").arg(m_taskName).arg(percent);
@@ -41,7 +41,7 @@ void PmProgressBar::setFailed(QString reason)
 
     setStyleSheet(
         "QProgressBar { text-align: left; } "
-        "QProgressBar::chunk {  background-color: red; }");
+        "QProgressBar::chunk { background-color: red; }");
 
     m_text = QString("  %1 - %2")
         .arg(m_taskName)
