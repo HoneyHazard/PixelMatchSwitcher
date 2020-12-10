@@ -2,10 +2,10 @@
 # help with automatically setting various text editors to those requirements.
 
 # top-most EditorConfig file
-root = false
+root = true
 
 # Unix-style newlines with a newline ending every file.
-[*]
+[**]
 insert_final_newline = true
 trim_trailing_whitespace = true
 charset = utf-8

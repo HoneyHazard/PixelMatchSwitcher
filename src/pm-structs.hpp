@@ -78,9 +78,45 @@ struct PmMatchResults
 };
 
 /**
- * @briefs Contains results for several match entries
+ * @brief Contains results for several match entries
  */
 typedef std::vector<PmMatchResults> PmMultiMatchResults;
+
+/**
+ * @brief Types of reactions provided by the plugin
+ */
+enum class PmReactionType : char {
+    SwitchScene = 0,
+    ShowSource = 1,
+    HideSource = 2,
+    ShowImage = 3, /* TBD */
+    HideImage = 4  /* TBD */
+};
+
+/**
+ * @brief Describes what will happen in reaction to a condition
+ */
+struct PmReaction
+{
+    PmReaction() {}
+    PmReaction(obs_data_t *data);
+    PmReaction(QXmlStreamReader &reader);
+
+    obs_data_t *save() const;
+    void saveXml(QXmlStreamWriter &writer) const;
+
+    PmReactionType type = PmReactionType::SwitchScene;
+
+    std::string targetScene;
+    std::string targetTransition = "Cut";
+    std::string targetSceneItem;
+
+    uint32_t lingerMs = 0;
+
+    bool operator==(const PmReaction &) const;
+    bool operator!=(const PmReaction &other) const
+        { return !operator==(other); }
+};
 
 /**
  * @brief Describes matching configuration of an individual match entry, 
@@ -104,9 +140,7 @@ struct PmMatchConfig
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
 
-    std::string targetScene;
-    std::string targetTransition = "Cut";
-    uint32_t lingerMs = 0;
+    PmReaction reaction;
 
     bool operator==(const PmMatchConfig&) const;
     bool operator!=(const PmMatchConfig& other) const
@@ -137,8 +171,7 @@ public:
     bool containsImage(const std::string &imgFilename,
                        size_t exceptIndex = (size_t)-1) const;
 
-    std::string noMatchScene = k_defaultNoMatchScene;
-    std::string noMatchTransition = k_defaultNoMatchTransition;
+    PmReaction noMatchReaction;
 };
 
 /**

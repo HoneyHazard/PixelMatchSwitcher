@@ -6,6 +6,82 @@
 #include <QFile>
 #include <sstream>
 
+bool PmReaction::operator==(const PmReaction &other) const
+{
+    return type == other.type
+        && targetScene == other.targetScene
+        && targetTransition == other.targetTransition
+        && targetSceneItem == other.targetSceneItem
+        && lingerMs == other.lingerMs;
+}
+
+PmReaction::PmReaction(obs_data_t *data)
+{
+    obs_data_set_default_int(data, "type", (long long)type);
+    type = (PmReactionType)obs_data_get_int(data, "type");
+    targetSceneItem = obs_data_get_string(data, "target_scene_item");
+    targetScene = obs_data_get_string(data, "target_scene");
+    obs_data_set_default_string(
+        data, "target_transition", targetTransition.data());
+    targetTransition = obs_data_get_string(data, "target_transition");
+
+    obs_data_set_default_int(data, "linger_ms", (int)lingerMs);
+    lingerMs = obs_data_get_int(data, "linger_ms");
+}
+
+PmReaction::PmReaction(QXmlStreamReader &reader)
+{
+    while (true) {
+        reader.readNext();
+        if (reader.atEnd() || reader.error() != QXmlStreamReader::NoError) {
+            return;
+        }
+
+        QStringRef name = reader.name();
+        if (reader.isEndElement()) {
+            if (name == "reaction") {
+                return;
+            }
+        } else if (reader.isStartElement()) {
+            if (name == "type") {
+                type = (PmReactionType)reader.readElementText().toInt();
+            } else if (name == "target_scene") {
+                targetScene =
+                    reader.readElementText().toUtf8().data();
+            } else if (name == "target_scene_item") {
+                targetSceneItem =
+                    reader.readElementText().toUtf8().data();
+            } else if (name == "target_transition") {
+                targetTransition =
+                    reader.readElementText().toUtf8().data();
+            } else if (name == "linger_ms") {
+                lingerMs = reader.readElementText().toInt();
+            }
+        }
+    }
+}
+
+obs_data_t *PmReaction::save() const
+{
+    obs_data_t *ret = obs_data_create();
+    obs_data_set_int(ret, "type", (long long)type);
+    obs_data_set_string(ret, "target_scene", targetScene.data());
+    obs_data_set_string(ret, "target_transition", targetTransition.data());
+    obs_data_set_string(ret, "target_scene_item", targetSceneItem.data());
+    obs_data_set_int(ret, "linger_ms", (int)lingerMs);
+    return ret;
+}
+
+void PmReaction::saveXml(QXmlStreamWriter &writer) const
+{
+    writer.writeStartElement("reaction");
+    writer.writeTextElement("type", QString::number((int)type));
+    writer.writeTextElement("target_scene", targetScene.data());
+    writer.writeTextElement("target_transition", targetTransition.data());
+    writer.writeTextElement("target_scene_item", targetSceneItem.data());
+    writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
+}
+
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
 {
@@ -60,9 +136,7 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && totalMatchThresh == other.totalMatchThresh
         && maskMode == other.maskMode
         && filterCfg == other.filterCfg
-        && targetScene == other.targetScene
-        && targetTransition == other.targetTransition
-        && lingerMs == other.lingerMs;
+        && reaction == other.reaction;
 }
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
@@ -104,14 +178,10 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 
     obs_data_set_default_bool(data, "is_enabled", filterCfg.is_enabled);
     filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
-    
-    targetScene = obs_data_get_string(data, "target_scene");
 
-    obs_data_set_default_string(data, "target_transition", targetTransition.data());
-    targetTransition = obs_data_get_string(data, "target_transition");
-
-    obs_data_set_default_int(data, "linger_ms", (int)lingerMs);
-    lingerMs = obs_data_get_int(data, "linger_ms");
+    obs_data_t *reactionObj = obs_data_get_obj(data, "reaction");
+    reaction = PmReaction(reactionObj);
+    obs_data_release(reactionObj);
 }
 
 PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
@@ -166,14 +236,8 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
             } else if (name == "is_enabled") {
                 filterCfg.is_enabled =
                     reader.readElementText() == "true" ? true : false;
-            } else if (name == "target_scene") {
-                targetScene =
-                    reader.readElementText().toUtf8().data();
-            } else if (name == "target_transition") {
-                targetTransition =
-                    reader.readElementText().toUtf8().data();
-            } else if (name == "linger_ms") {
-                lingerMs = reader.readElementText().toInt();
+            } else if (name == "reaction") {
+                reaction = PmReaction(reader);
             }
         }
     }
@@ -196,9 +260,10 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
 
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
-    obs_data_set_string(ret, "target_scene", targetScene.data());
-    obs_data_set_string(ret, "target_transition", targetTransition.data());
-    obs_data_set_int(ret, "linger_ms", (int)lingerMs);
+
+    obs_data_t *reactionObj = reaction.save();
+    obs_data_set_obj(ret, "reaction", reactionObj);
+    obs_data_release(reactionObj);
 
     return ret;
 }
@@ -228,9 +293,7 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
         QString::number(filterCfg.mask_color.z));
     writer.writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
-    writer.writeTextElement("target_scene", targetScene.data());
-    writer.writeTextElement("target_transition", targetTransition.data());
-    writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
+    reaction.saveXml(writer);
     writer.writeEndElement();
 }
 
@@ -249,13 +312,9 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     }
     obs_data_array_release(matchEntriesArray);
 
-    noMatchScene = obs_data_get_string(data, "no_match_scene");
-
-    obs_data_set_default_string(
-        data, "no_match_transition", noMatchTransition.data());
-    std::string str = obs_data_get_string(data, "no_match_transition");
-    if (str.size())
-        noMatchTransition = str;
+    obs_data_t *noMatchReactionObj = obs_data_get_obj(data, "reaction");
+    noMatchReaction = PmReaction(noMatchReactionObj);
+    obs_data_release(noMatchReactionObj);
 }
 
 PmMultiMatchConfig::PmMultiMatchConfig(
@@ -275,10 +334,8 @@ PmMultiMatchConfig::PmMultiMatchConfig(
         } else {
             if (name == "name") {
                 presetName = reader.readElementText().toUtf8().data();
-            } else if (name == "no_match_scene") {
-                noMatchScene = reader.readElementText().toUtf8().data();
-            } else if (name == "no_match_transition") {
-                noMatchTransition = reader.readElementText().toUtf8().data();
+            } else if (name == "reaction") {
+                noMatchReaction = PmReaction(reader);
             } else if (name == "match_config") {
                 PmMatchConfig cfg(reader);
                 push_back(cfg);
@@ -301,9 +358,11 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     }
     obs_data_set_array(ret, "entries", matchEntriesArray);
     obs_data_array_release(matchEntriesArray);
-    
-    obs_data_set_string(ret, "no_match_scene", noMatchScene.data());
-    obs_data_set_string(ret, "no_match_transition", noMatchTransition.data());
+
+    obs_data_t *noMatchReactionObj = noMatchReaction.save();
+    obs_data_set_obj(ret, "reaction", noMatchReactionObj);
+    obs_data_release(noMatchReactionObj);
+
     return ret;
 }
 
@@ -312,8 +371,7 @@ void PmMultiMatchConfig::saveXml(
 {
     writer.writeStartElement("preset");
     writer.writeTextElement("name", presetName.data());
-    writer.writeTextElement("no_match_scene", noMatchScene.data());
-    writer.writeTextElement("no_match_transition", noMatchTransition.data());
+    noMatchReaction.saveXml(writer);
     for (const auto &cfg : *this) {
         cfg.saveXml(writer);
     }
@@ -331,8 +389,7 @@ bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
                 return false;
             }
         }
-        return noMatchScene == other.noMatchScene
-            && noMatchTransition == other.noMatchTransition;
+        return noMatchReaction == other.noMatchReaction;
     }
 }
 
