@@ -20,7 +20,8 @@ struct PmLingerCompare {
 };
 
 /**
- * @brief Manages linger information for multiple entries; sorted by match index
+ * @brief Manages linger information for multiple scenes; 
+ *        prioritized by match index
  */
 class PmLingerQueue final
     : public std::priority_queue<PmLingerInfo, std::deque<PmLingerInfo>,
@@ -29,5 +30,17 @@ public:
     PmLingerQueue() {}
     void removeExpired(const QTime &currTime);
     void removeByMatchIndex(size_t matchIndex);
-    void removeAll();
+    void removeAll() { c.clear(); }
+};
+
+/**
+ * @brief Manages linger information for multiple sceneItems; no priority
+ */
+class PmLingerList final : public std::vector<PmLingerInfo>
+{
+public:
+    PmLingerList() {}
+    std::vector<size_t> removeExpired(const QTime &currTime);
+    void removeByMatchIndex(size_t matchIndex);
+    void removeAll() { clear(); }
 };

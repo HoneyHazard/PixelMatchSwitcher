@@ -82,6 +82,19 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
 }
 
+bool PmReaction::isSet() const
+{
+    switch (type) {
+        case PmReactionType::SwitchScene:
+            return targetScene.size() > 0;
+        case PmReactionType::ShowSceneItem:
+        case PmReactionType::HideSceneItem:
+            return targetSceneItem.size() > 0;
+        default:
+            return false;
+    }
+}
+
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
 {

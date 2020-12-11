@@ -64,8 +64,12 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
+    PmReaction reaction(size_t matchIdx);
+    PmReaction noMatchReaction() const;
+#if 0
     std::string noMatchScene() const;
     std::string noMatchTransition() const;
+#endif
     std::string matchImgFilename(size_t matchIdx) const;
     bool hasFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
@@ -100,8 +104,7 @@ signals:
     void sigMultiMatchConfigSizeChanged(size_t sz);
     void sigMatchConfigChanged(size_t matchIndex, PmMatchConfig config);
     void sigMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
-    void sigNoMatchSceneChanged(std::string sceneName);
-    void sigNoMatchTransitionChanged(std::string transName);
+    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
     
     void sigPreviewConfigChanged(PmPreviewConfig cfg);
     void sigRunningEnabledChanged(bool enable);
@@ -126,8 +129,7 @@ public slots:
     void onMatchPresetsAppend(PmMatchPresets presets);
 
     void onMultiMatchConfigReset();
-    void onNoMatchSceneChanged(std::string sceneName);
-    void onNoMatchTransitionChanged(std::string transName);
+    void onNoMatchReactionChanged(PmReaction noMatchReaction);
 
     void onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg);
     void onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
@@ -155,8 +157,12 @@ protected:
     void activate();
     void deactivate();
 
+    void doReaction(const PmReaction &reaction);
+    void toggleSceneItem(
+        const std::string sceneItem, PmReactionType type, bool matched);
     void switchScene(
         const std::string& scene, const std::string &transition);
+
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);
     void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg,
@@ -183,7 +189,8 @@ protected:
     mutable QMutex m_scenesMutex;
     PmScenes m_scenes;
 
-    PmLingerQueue m_lingerQueue;
+    PmLingerQueue m_sceneLingerQueue;
+    PmLingerList m_sceneItemLingerList;
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;
 

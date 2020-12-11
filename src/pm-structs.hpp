@@ -87,8 +87,8 @@ typedef std::vector<PmMatchResults> PmMultiMatchResults;
  */
 enum class PmReactionType : char {
     SwitchScene = 0,
-    ShowSource = 1,
-    HideSource = 2,
+    ShowSceneItem = 1,
+    HideSceneItem = 2,
     ShowImage = 3, /* TBD */
     HideImage = 4  /* TBD */
 };
@@ -98,6 +98,7 @@ enum class PmReactionType : char {
  */
 struct PmReaction
 {
+public:
     PmReaction() {}
     PmReaction(obs_data_t *data);
     PmReaction(QXmlStreamReader &reader);
@@ -105,6 +106,9 @@ struct PmReaction
     obs_data_t *save() const;
     void saveXml(QXmlStreamWriter &writer) const;
 
+    bool isSet() const;
+
+public:
     PmReactionType type = PmReactionType::SwitchScene;
 
     std::string targetScene;
@@ -137,6 +141,7 @@ struct PmMatchConfig
 
     struct pm_match_entry_config filterCfg;
     float totalMatchThresh = 90.f;
+    bool invert = false;
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
 

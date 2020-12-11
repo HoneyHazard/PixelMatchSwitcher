@@ -27,7 +27,30 @@ void PmLingerQueue::removeByMatchIndex(size_t matchIndex)
     }
 }
 
-void PmLingerQueue::removeAll()
+//--------------------------------------------------------
+
+std::vector<size_t> PmLingerList::removeExpired(const QTime &currTime)
 {
-    c.clear();
+	std::vector<size_t> ret;
+    for (auto itr = begin(); itr != end();) {
+        if (currTime > itr->endTime) {
+            ret.push_back(itr->matchIndex);
+            itr = erase(itr);
+        } else {
+            itr++;
+        }
+    }
+    return ret;
 }
+
+void PmLingerList::removeByMatchIndex(size_t matchIndex)
+{
+    for (auto itr = begin(); itr != end(); itr++) {
+        if (itr->matchIndex == matchIndex) {
+            erase(itr);
+            return;
+        }
+    }
+}
+
+

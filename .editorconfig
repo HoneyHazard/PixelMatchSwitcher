@@ -2,7 +2,7 @@
 # help with automatically setting various text editors to those requirements.
 
 # top-most EditorConfig file
-root = true
+root = false
 
 # Unix-style newlines with a newline ending every file.
 [**]
