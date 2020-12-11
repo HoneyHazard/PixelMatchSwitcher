@@ -1366,7 +1366,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 }
 
 void PmCore::toggleSceneItem(
-    const std::string sceneItem, PmReactionType type, bool matched)
+    const std::string &sceneItem, PmReactionType type, bool matched)
 {
 
 }

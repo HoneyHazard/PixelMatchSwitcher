@@ -33,8 +33,7 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
-    void sigNoMatchSceneChanged(std::string noMatchScene);
-    void sigNoMatchTransitionChanged(std::string transName);
+    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
 
 protected slots:
     // core event handlers
@@ -42,8 +41,7 @@ protected slots:
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
-    void onNoMatchSceneChanged(std::string sceneName);
-    void onNoMatchTransitionChanged(std::string transName);
+    void onNoMatchReactionChanged(PmReaction noMatchReaction);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers

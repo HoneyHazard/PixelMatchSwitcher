@@ -31,7 +31,7 @@ enum class PmMatchListWidget::ColOrder : int {
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
     obs_module_text("Label"),
-    obs_module_text("Target Scene"),
+    obs_module_text("Target"),
     obs_module_text("Transition"),
     obs_module_text("Linger ms"),
     obs_module_text("Result")
@@ -390,12 +390,16 @@ void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
 {
     std::string noMatchScene = 
         (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
-    emit sigNoMatchSceneChanged(noMatchScene);
+    PmReaction noMatchReaction = m_core->noMatchReaction();
+    noMatchReaction.targetScene = noMatchScene;
+    emit sigNoMatchReactionChanged(noMatchReaction);
 }
 
 void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
 {
-    emit sigNoMatchTransitionChanged(str.toUtf8().data());
+	PmReaction noMatchReaction = m_core->noMatchReaction();
+	noMatchReaction.targetTransition = str.toUtf8().data();
+	emit sigNoMatchReactionChanged(noMatchReaction);
 }
 
 QPushButton* PmMatchListWidget::prepareButton(

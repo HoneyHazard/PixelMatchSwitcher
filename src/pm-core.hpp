@@ -160,7 +160,7 @@ protected:
 
     void doReaction(const PmReaction &reaction);
     void toggleSceneItem(
-        const std::string sceneItem, PmReactionType type, bool matched);
+        const std::string &sceneItem, PmReactionType type, bool matched);
     void switchScene(
         const std::string& scene, const std::string &transition);
 
