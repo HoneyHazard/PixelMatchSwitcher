@@ -38,7 +38,7 @@ signals:
 
 protected slots:
     // core event handlers
-    void onScenesChanged(PmScenes);
+    void onScenesChanged(PmSourceHash);
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);

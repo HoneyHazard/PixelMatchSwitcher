@@ -421,7 +421,7 @@ bool PmMultiMatchConfig::containsImage(
     return false;
 }
 
-QSet<std::string> PmScenes::sceneNames() const 
+QSet<std::string> PmSourceHash::sourceNames() const 
 {
     QSet<std::string> ret;
     for (const auto &name : values()) {
@@ -430,7 +430,7 @@ QSet<std::string> PmScenes::sceneNames() const
     return ret;
 }
 
-PmScenes::PmScenes(const PmScenes &other)
+PmSourceHash::PmSourceHash(const PmSourceHash &other)
     : QHash<OBSWeakSource, std::string>(other)
 {
 }
@@ -464,7 +464,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
-    qRegisterMetaType<PmScenes>("PmScenes");
+    qRegisterMetaType<PmSourceHash>("PmScenes");
     qRegisterMetaType<PmFilterRef>("PmFilterRef");
     qRegisterMetaType<PmCaptureState>("PmCaptureState");
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");

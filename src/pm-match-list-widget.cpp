@@ -191,9 +191,9 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onNoMatchTransitionSelected, qc);
 }
 
-void PmMatchListWidget::onScenesChanged(PmScenes scenes)
+void PmMatchListWidget::onScenesChanged(PmSourceHash scenes)
 {
-    m_sceneNames = scenes.sceneNames();
+    m_sceneNames = scenes.sourceNames();
 
     int sz = (int)m_core->multiMatchConfigSize();
     for (int i = 0; i < sz; ++i) {

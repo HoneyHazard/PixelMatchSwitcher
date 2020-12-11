@@ -207,13 +207,13 @@ protected:
  * @brief Represents a set of weak source references to available scenes, that
  *        also allows matching each source to a scene name
  */
-class PmScenes final : public QHash<OBSWeakSource, std::string>
+class PmSourceHash final : public QHash<OBSWeakSource, std::string>
 {
 public:
-    PmScenes() {}
-    PmScenes(const PmScenes& other);
+    PmSourceHash() {}
+    PmSourceHash(const PmSourceHash& other);
 
-    QSet<std::string> sceneNames() const;
+    QSet<std::string> sourceNames() const;
 };
 
 /**
