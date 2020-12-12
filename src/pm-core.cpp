@@ -847,10 +847,22 @@ PmSourceHash PmCore::scenes() const
     return m_scenes;
 }
 
+QList<std::string> PmCore::sceneNames() const
+{
+    QMutexLocker locker(&m_scenesMutex);
+	return m_scenes.values();
+}
+
 PmSourceHash PmCore::sceneItems() const
 {
     QMutexLocker locker(&m_scenesMutex);
     return m_sceneItems;
+}
+
+QList<std::string> PmCore::sceneItemNames() const
+{
+    QMutexLocker locker(&m_scenesMutex);
+    return m_sceneItems.values();
 }
 
 QImage PmCore::matchImage(size_t matchIdx) const
@@ -1024,7 +1036,7 @@ void PmCore::scanScenes()
     }
 
     if (scenesChanged || sceneItemsChanged) {
-        emit sigScenesChanged(newScenes, newSceneItems);
+        emit sigScenesChanged(newScenes.values(), newSceneItems.values());
     }
 
     // adjust for scene changes
@@ -1060,10 +1072,6 @@ void PmCore::scanScenes()
                 onNoMatchReactionChanged(noMatchReaction);
             }
         }
-        {
-            QMutexLocker locker(&m_scenesMutex);
-            m_scenes = newScenes;
-        }
     }
 
     // adjust for scene item changes
@@ -1086,6 +1094,14 @@ void PmCore::scanScenes()
                 }
             }
         }
+    }
+
+    // save state
+    if (scenesChanged || sceneItemsChanged)
+    {
+        QMutexLocker locker(&m_scenesMutex);
+        m_scenes = newScenes;
+        m_sceneItems = newSceneItems;
     }
 }
 

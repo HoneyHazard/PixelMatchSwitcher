@@ -37,7 +37,8 @@ signals:
 
 protected slots:
     // core event handlers
-    void onScenesChanged(PmSourceHash scenes, PmSourceHash sceneItems);
+	void onScenesChanged(
+        QList<std::string> scenes, QList<std::string> sceneItems);
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
@@ -58,18 +59,23 @@ protected:
     enum class ColOrder;
     static const QStringList k_columnLabels;
     static const QString k_dontSwitchStr;
+    static const QString k_scenesLabelStr;
+    static const QString k_sceneItemsLabelStr;
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;
 
     QPushButton* prepareButton(
         const char *tooltip, const char* icoPath, const char* themeId);
-    void constructRow(int idx);
+    void constructRow(int idx, const QList<std::string> &scenes,
+        const QList<std::string> &sceneItems);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
-    void updateSceneChoices(QComboBox* combo);
+    void updateTargetChoices(QComboBox* combo,
+        const QList<std::string> &scenes,
+        const QList<std::string> &sceneItems);
     void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
-    void matchSceneSelected(int idx, const QString &scene);
+    void targetSelected(int idx, const QString &targetQStr);
     void matchTransitionSelected(int idx, const QString& transName);
     void lingerDelayChanged(int idx, int lingerMs);
 
@@ -88,7 +94,6 @@ protected:
     QComboBox* m_noMatchSceneCombo;
     QComboBox* m_noMatchTransitionCombo;
 
-    QSet<std::string> m_sceneNames;
     int m_prevMatchIndex = 0;
 };
 
