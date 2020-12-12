@@ -535,12 +535,9 @@ void PmMatchListWidget::updateTargetSelection(
     if (targetStr.isEmpty()) {
         targetColor = "lightGray";
     }
-
-    QString stylesheet;
-    if (transparent) {
-	    stylesheet = k_transpBgStyle + ';';
-    }
-    stylesheet += QString("color: %1").arg(targetColor);
+    QString stylesheet = QString("%1; color: %2")
+        .arg(transparent ? k_transpBgStyle : "")
+        .arg(targetColor);
 
     targetCombo->blockSignals(true);
     targetCombo->setCurrentText(targetStr.size() ? targetStr : k_dontSwitchStr);

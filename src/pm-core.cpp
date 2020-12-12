@@ -515,7 +515,7 @@ void PmCore::onNoMatchReactionChanged(PmReaction noMatchReaction)
     QMutexLocker locker(&m_matchConfigMutex);
     if (m_multiMatchConfig.noMatchReaction != noMatchReaction) {
         m_multiMatchConfig.noMatchReaction = noMatchReaction;
-	    emit sigNoMatchReactionChanged(m_multiMatchConfig.noMatchReaction);
+        emit sigNoMatchReactionChanged(m_multiMatchConfig.noMatchReaction);
         emit sigActivePresetDirtyChanged();
     }
 }
@@ -850,7 +850,7 @@ PmSourceHash PmCore::scenes() const
 QList<std::string> PmCore::sceneNames() const
 {
     QMutexLocker locker(&m_scenesMutex);
-	return m_scenes.values();
+    return m_scenes.values();
 }
 
 PmSourceHash PmCore::sceneItems() const
