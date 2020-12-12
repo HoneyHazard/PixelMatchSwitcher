@@ -72,6 +72,8 @@ protected:
     void updateTargetChoices(QComboBox* combo,
         const QList<std::string> &scenes,
         const QList<std::string> &sceneItems);
+    void updateTargetSelection(
+        QComboBox *combo, const PmReaction &reaction, bool transparent = false);
     void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);

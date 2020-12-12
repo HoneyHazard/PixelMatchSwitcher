@@ -515,7 +515,7 @@ void PmCore::onNoMatchReactionChanged(PmReaction noMatchReaction)
     QMutexLocker locker(&m_matchConfigMutex);
     if (m_multiMatchConfig.noMatchReaction != noMatchReaction) {
         m_multiMatchConfig.noMatchReaction = noMatchReaction;
-
+	    emit sigNoMatchReactionChanged(m_multiMatchConfig.noMatchReaction);
         emit sigActivePresetDirtyChanged();
     }
 }

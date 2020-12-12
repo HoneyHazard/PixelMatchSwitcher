@@ -213,7 +213,7 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
     m_tableWidget->setRowCount((int)sz + 1);
     // widgets in the new rows are constructed, when necessary
     for (size_t i = oldSz ? oldSz-1 : 0; i < sz; ++i) {
-	    constructRow((int)i, sceneNames, sceneItemNames);
+        constructRow((int)i, sceneNames, sceneItemNames);
     }
     // last row below is empty (for insertion)
     for (int c = 0; c < (int)ColOrder::NumCols; ++c) {
@@ -249,20 +249,10 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     }
 
     const PmReaction &reaction = cfg.reaction;
-    auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
+    auto targetCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::TargetCombo);
-    if (sceneCombo) {
-        sceneCombo->blockSignals(true);
-        const std::string &targetStr
-            = reaction.type == PmReactionType::SwitchScene
-                ? reaction.targetScene : reaction.targetSceneItem;
-        if (targetStr.size()) {
-            sceneCombo->setCurrentText(targetStr.data());
-        } else {
-            sceneCombo->setCurrentText(k_dontSwitchStr);
-        }
-        sceneCombo->setToolTip(sceneCombo->currentText());
-        sceneCombo->blockSignals(false);
+    if (targetCombo) {
+        updateTargetSelection(targetCombo, reaction, true);
     }
 
     auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
@@ -287,15 +277,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 
 void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
 {
-    m_noMatchSceneCombo->blockSignals(true);
-    if (noMatchReaction.targetScene.size()) {
-        m_noMatchSceneCombo->setCurrentText(
-            noMatchReaction.targetScene.data());
-    } else {
-        m_noMatchSceneCombo->setCurrentText(k_dontSwitchStr);
-    }
-    m_noMatchSceneCombo->setToolTip(m_noMatchSceneCombo->currentText());
-    m_noMatchSceneCombo->blockSignals(false);
+    updateTargetSelection(m_noMatchSceneCombo, noMatchReaction);
 
     m_noMatchTransitionCombo->blockSignals(true);
     m_noMatchTransitionCombo->setCurrentText(
@@ -506,6 +488,7 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
     int idx = 0;
 
     combo->addItem(k_dontSwitchStr);
+    combo->setItemData(idx, QBrush(Qt::lightGray), Qt::TextColorRole);
     idx++;
 
     combo->addItem(k_scenesLabelStr);
@@ -535,6 +518,35 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
     combo->setCurrentText(currText);
     combo->setToolTip(combo->currentText());
     combo->blockSignals(false);
+}
+
+void PmMatchListWidget::updateTargetSelection(
+    QComboBox *targetCombo, const PmReaction &reaction, bool transparent)
+{
+    QString targetColor;
+    QString targetStr;
+    if (reaction.type == PmReactionType::SwitchScene) {
+        targetStr = reaction.targetScene.data();
+        targetColor = "cyan";
+    } else {
+        targetStr = reaction.targetSceneItem.data();
+        targetColor = "yellow";
+    }
+    if (targetStr.isEmpty()) {
+        targetColor = "lightGray";
+    }
+
+    QString stylesheet;
+    if (transparent) {
+	    stylesheet = k_transpBgStyle + ';';
+    }
+    stylesheet += QString("color: %1").arg(targetColor);
+
+    targetCombo->blockSignals(true);
+    targetCombo->setCurrentText(targetStr.size() ? targetStr : k_dontSwitchStr);
+    targetCombo->setStyleSheet(stylesheet);
+    targetCombo->setToolTip(targetCombo->currentText());
+    targetCombo->blockSignals(false);
 }
 
 void PmMatchListWidget::updateTransitionChoices(QComboBox* combo)

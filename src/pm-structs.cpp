@@ -461,6 +461,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
+    qRegisterMetaType<PmReaction>("PmReaction");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
