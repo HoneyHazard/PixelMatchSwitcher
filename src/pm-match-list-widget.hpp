@@ -58,9 +58,17 @@ protected slots:
 protected:
     enum class ColOrder;
     static const QStringList k_columnLabels;
+
     static const QString k_dontSwitchStr;
-    static const QString k_scenesLabelStr;
     static const QString k_sceneItemsLabelStr;
+    static const QString k_scenesLabelStr;
+
+    static const QColor k_dontSwitchColor;
+    static const QColor k_scenesLabelColor;
+    static const QColor k_scenesColor;
+    static const QColor k_sceneItemsLabelColor;
+    static const QColor k_sceneItemsColor;
+
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;
 

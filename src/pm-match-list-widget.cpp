@@ -41,10 +41,17 @@ const QStringList PmMatchListWidget::k_columnLabels = {
 
 const QString PmMatchListWidget::k_dontSwitchStr 
     = obs_module_text("<don't switch>");
-const QString PmMatchListWidget::k_scenesLabelStr =
-    obs_module_text("--- Scenes ---");
-const QString PmMatchListWidget::k_sceneItemsLabelStr =
-    obs_module_text("--- Scene Items ---");
+const QString PmMatchListWidget::k_scenesLabelStr
+    = obs_module_text("--- Scenes ---");
+const QString PmMatchListWidget::k_sceneItemsLabelStr
+    = obs_module_text("--- Scene Items ---");
+
+const QColor PmMatchListWidget::k_dontSwitchColor = Qt::lightGray;
+const QColor PmMatchListWidget::k_scenesLabelColor = Qt::darkCyan;
+const QColor PmMatchListWidget::k_scenesColor = Qt::cyan;
+const QColor PmMatchListWidget::k_sceneItemsLabelColor = Qt::darkYellow;
+const QColor PmMatchListWidget::k_sceneItemsColor = Qt::yellow;
+
 const QString PmMatchListWidget::k_transpBgStyle
     = "background-color: rgba(0, 0, 0, 0)";
 const QString PmMatchListWidget::k_semiTranspBgStyle
@@ -488,29 +495,31 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
     int idx = 0;
 
     combo->addItem(k_dontSwitchStr);
-    combo->setItemData(idx, QBrush(Qt::lightGray), Qt::TextColorRole);
+    combo->setItemData(idx, QBrush(k_dontSwitchColor), Qt::TextColorRole);
     idx++;
 
     combo->addItem(k_scenesLabelStr);
-    combo->setItemData(idx, QBrush(Qt::darkCyan), Qt::TextColorRole);
+    combo->setItemData(idx, QBrush(k_scenesLabelColor), Qt::TextColorRole);
     model->item(idx)->setEnabled(false);
     idx++;
 
     for (const std::string &val : scenes) {
         combo->addItem(val.data());
-        combo->setItemData(idx, QBrush(Qt::cyan), Qt::TextColorRole);
+        combo->setItemData(idx, QBrush(k_scenesColor), Qt::TextColorRole);
         idx++;
     }
 
     if (sceneItems.size()) {
         combo->addItem(k_sceneItemsLabelStr);
-        combo->setItemData(idx, QBrush(Qt::darkYellow), Qt::TextColorRole);
+        combo->setItemData(
+            idx, QBrush(k_sceneItemsLabelColor), Qt::TextColorRole);
         model->item(idx)->setEnabled(false);
         idx++;
 
         for (const std::string &val : sceneItems) {
             combo->addItem(val.data());
-            combo->setItemData(idx, QBrush(Qt::yellow), Qt::TextColorRole);
+            combo->setItemData(
+                idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
             idx++;
         }
     }
@@ -527,13 +536,13 @@ void PmMatchListWidget::updateTargetSelection(
     QString targetStr;
     if (reaction.type == PmReactionType::SwitchScene) {
         targetStr = reaction.targetScene.data();
-        targetColor = "cyan";
+        targetColor = k_scenesColor.name();
     } else {
         targetStr = reaction.targetSceneItem.data();
-        targetColor = "yellow";
+        targetColor = k_sceneItemsColor.name();
     }
     if (targetStr.isEmpty()) {
-        targetColor = "lightGray";
+        targetColor = k_dontSwitchColor.name();
     }
     QString stylesheet = QString("%1; color: %2")
         .arg(transparent ? k_transpBgStyle : "")
