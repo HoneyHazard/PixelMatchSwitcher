@@ -112,7 +112,8 @@ public:
     PmReactionType type = PmReactionType::SwitchScene;
 
     std::string targetScene;
-    std::string targetTransition = "Cut";
+    std::string sceneTransition = "Cut";
+
     std::string targetSceneItem;
 
     uint32_t lingerMs = 0;

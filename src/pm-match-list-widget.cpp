@@ -117,7 +117,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     size_t cfgSz = multiConfig.size();
     onMultiMatchConfigSizeChanged(cfgSz);
 
-    onScenesChanged(m_core->scenes());
+    onScenesChanged(m_core->scenes(), m_core->sceneItems());
 
     for (size_t i = 0; i < multiConfig.size(); ++i) {
         onMatchConfigChanged(i, multiConfig[i]);
@@ -126,8 +126,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     onMatchConfigSelect(
         selIdx, selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
 
-    onNoMatchSceneChanged(multiConfig.noMatchScene);
-    onNoMatchTransitionChanged(multiConfig.noMatchTransition);
+    onNoMatchReactionChanged(multiConfig.noMatchReaction);
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {
@@ -149,10 +148,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
     connect(m_core, &PmCore::sigScenesChanged,
         this, &PmMatchListWidget::onScenesChanged, qc);
-    connect(m_core, &PmCore::sigNoMatchSceneChanged,
-        this, &PmMatchListWidget::onNoMatchSceneChanged, qc);
-    connect(m_core, &PmCore::sigNoMatchTransitionChanged,
-        this, &PmMatchListWidget::onNoMatchTransitionChanged);
+    connect(m_core, &PmCore::sigNoMatchReactionChanged,
+        this, &PmMatchListWidget::onNoMatchReactionChanged, qc);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
@@ -167,10 +164,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onMatchConfigInsert, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigRemove,
         m_core, &PmCore::onMatchConfigRemove, qc);
-    connect(this, &PmMatchListWidget::sigNoMatchSceneChanged,
-        m_core, &PmCore::onNoMatchSceneChanged, qc);
-    connect(this, &PmMatchListWidget::sigNoMatchTransitionChanged,
-        m_core, &PmCore::onNoMatchTransitionChanged, qc);
+    connect(this, &PmMatchListWidget::sigNoMatchReactionChanged,
+        m_core, &PmCore::onNoMatchReactionChanged, qc);
 
     // connections: local ui
     connect(m_tableWidget, &QTableWidget::itemChanged,
@@ -191,7 +186,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onNoMatchTransitionSelected, qc);
 }
 
-void PmMatchListWidget::onScenesChanged(PmSourceHash scenes)
+void PmMatchListWidget::onScenesChanged(
+    PmSourceHash scenes, PmSourceHash sceneItems)
 {
     m_sceneNames = scenes.sourceNames();
 
@@ -246,12 +242,16 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         m_tableWidget->blockSignals(false);
     }
 
+    const PmReaction &reaction = cfg.reaction;
     auto sceneCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::SceneCombo);
     if (sceneCombo) {
         sceneCombo->blockSignals(true);
-        if (cfg.targetScene.size()) {
-            sceneCombo->setCurrentText(cfg.targetScene.data());
+        const std::string &targetStr
+            = reaction.type == PmReactionType::SwitchScene
+                ? reaction.targetScene : reaction.targetSceneItem;
+        if (targetStr.size()) {
+            sceneCombo->setCurrentText(targetStr.data());
         } else {
             sceneCombo->setCurrentText(k_dontSwitchStr);
         }
@@ -263,7 +263,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         idx, (int)ColOrder::TransitionCombo);
     if (transCombo) {
         transCombo->blockSignals(true);
-        transCombo->setCurrentText(cfg.targetTransition.data());
+        transCombo->setCurrentText(reaction.sceneTransition.data());
         transCombo->setToolTip(transCombo->currentText());
         transCombo->blockSignals(false);
     }
@@ -272,29 +272,28 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         idx, (int)ColOrder::LingerDelay);
     if (lingerDelayBox) {
         lingerDelayBox->blockSignals(true);
-        lingerDelayBox->setValue(cfg.lingerMs);
+        lingerDelayBox->setValue(reaction.lingerMs);
         lingerDelayBox->blockSignals(false);
     }
 
     setMinWidth();
 }
 
-void PmMatchListWidget::onNoMatchSceneChanged(std::string sceneName)
+void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
 {
     m_noMatchSceneCombo->blockSignals(true);
-    if (sceneName.size()) {
-        m_noMatchSceneCombo->setCurrentText(sceneName.data());
+	if (noMatchReaction.targetScene.size()) {
+        m_noMatchSceneCombo->setCurrentText(
+            noMatchReaction.targetScene.data());
     } else {
         m_noMatchSceneCombo->setCurrentText(k_dontSwitchStr);
     }
     m_noMatchSceneCombo->setToolTip(m_noMatchSceneCombo->currentText());
     m_noMatchSceneCombo->blockSignals(false);
-}
 
-void PmMatchListWidget::onNoMatchTransitionChanged(std::string transName)
-{
     m_noMatchTransitionCombo->blockSignals(true);
-    m_noMatchTransitionCombo->setCurrentText(transName.data());
+    m_noMatchTransitionCombo->setCurrentText(
+        noMatchReaction.sceneTransition.data());
     m_noMatchTransitionCombo->setToolTip(
         m_noMatchTransitionCombo->currentText());
     m_noMatchTransitionCombo->blockSignals(false);
@@ -398,7 +397,7 @@ void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
 void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
 {
 	PmReaction noMatchReaction = m_core->noMatchReaction();
-	noMatchReaction.targetTransition = str.toUtf8().data();
+	noMatchReaction.sceneTransition = str.toUtf8().data();
 	emit sigNoMatchReactionChanged(noMatchReaction);
 }
 
@@ -545,7 +544,8 @@ void PmMatchListWidget::matchSceneSelected(int idx, const QString& scene)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.targetScene = (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
+    cfg.reaction.targetScene
+        = (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
     emit sigMatchConfigChanged(index, cfg);
 }
 
@@ -553,7 +553,7 @@ void PmMatchListWidget::matchTransitionSelected(int idx, const QString& name)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.targetTransition = name.toUtf8().data();
+    cfg.reaction.sceneTransition = name.toUtf8().data();
     emit sigMatchConfigChanged(index, cfg);
 }
 
@@ -561,7 +561,7 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.lingerMs = lingerMs;
+    cfg.reaction.lingerMs = lingerMs;
     emit sigMatchConfigChanged(index, cfg);
 }
 

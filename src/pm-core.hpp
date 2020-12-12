@@ -79,6 +79,7 @@ public:
     PmMultiMatchResults multiMatchResults() const;
     PmMatchResults matchResults(size_t matchIdx) const;
     PmSourceHash scenes() const;
+    PmSourceHash sceneItems() const;
     QList<std::string> availableTransitions() const 
         { return m_availableTransitions.keys(); }
     QImage matchImage(size_t matchIdx) const;
@@ -91,8 +92,7 @@ public:
 
 signals:
     void sigActiveFilterChanged(PmFilterRef newAf);
-    void sigScenesChanged(PmSourceHash scenes);
-    void sigSceneItemsChanged(PmSourceHash sceneItems);
+	void sigScenesChanged(PmSourceHash scenes, PmSourceHash sceneItems);
 
     void sigFrameProcessed(PmMultiMatchResults);
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);

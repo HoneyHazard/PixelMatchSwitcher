@@ -10,7 +10,7 @@ bool PmReaction::operator==(const PmReaction &other) const
 {
     return type == other.type
         && targetScene == other.targetScene
-        && targetTransition == other.targetTransition
+        && sceneTransition == other.sceneTransition
         && targetSceneItem == other.targetSceneItem
         && lingerMs == other.lingerMs;
 }
@@ -22,8 +22,8 @@ PmReaction::PmReaction(obs_data_t *data)
     targetSceneItem = obs_data_get_string(data, "target_scene_item");
     targetScene = obs_data_get_string(data, "target_scene");
     obs_data_set_default_string(
-        data, "target_transition", targetTransition.data());
-    targetTransition = obs_data_get_string(data, "target_transition");
+        data, "target_transition", sceneTransition.data());
+    sceneTransition = obs_data_get_string(data, "target_transition");
 
     obs_data_set_default_int(data, "linger_ms", (int)lingerMs);
     lingerMs = obs_data_get_int(data, "linger_ms");
@@ -52,7 +52,7 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
                 targetSceneItem =
                     reader.readElementText().toUtf8().data();
             } else if (name == "target_transition") {
-                targetTransition =
+                sceneTransition =
                     reader.readElementText().toUtf8().data();
             } else if (name == "linger_ms") {
                 lingerMs = reader.readElementText().toInt();
@@ -66,7 +66,7 @@ obs_data_t *PmReaction::save() const
     obs_data_t *ret = obs_data_create();
     obs_data_set_int(ret, "type", (long long)type);
     obs_data_set_string(ret, "target_scene", targetScene.data());
-    obs_data_set_string(ret, "target_transition", targetTransition.data());
+    obs_data_set_string(ret, "target_transition", sceneTransition.data());
     obs_data_set_string(ret, "target_scene_item", targetSceneItem.data());
     obs_data_set_int(ret, "linger_ms", (int)lingerMs);
     return ret;
@@ -77,7 +77,7 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     writer.writeStartElement("reaction");
     writer.writeTextElement("type", QString::number((int)type));
     writer.writeTextElement("target_scene", targetScene.data());
-    writer.writeTextElement("target_transition", targetTransition.data());
+    writer.writeTextElement("target_transition", sceneTransition.data());
     writer.writeTextElement("target_scene_item", targetSceneItem.data());
     writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
 }

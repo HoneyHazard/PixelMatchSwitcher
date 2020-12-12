@@ -510,8 +510,8 @@ void PmCore::onMatchConfigSelect(size_t matchIndex)
 
 void PmCore::onNoMatchReactionChanged(PmReaction noMatchReaction)
 {
-    if (noMatchReaction.targetTransition.empty())
-        noMatchReaction.targetTransition = "Cut";
+    if (noMatchReaction.sceneTransition.empty())
+        noMatchReaction.sceneTransition = "Cut";
     QMutexLocker locker(&m_matchConfigMutex);
     if (m_multiMatchConfig.noMatchReaction != noMatchReaction) {
         m_multiMatchConfig.noMatchReaction = noMatchReaction;
@@ -847,6 +847,12 @@ PmSourceHash PmCore::scenes() const
     return m_scenes;
 }
 
+PmSourceHash PmCore::sceneItems() const
+{
+    QMutexLocker locker(&m_scenesMutex);
+    return m_sceneItems;
+}
+
 QImage PmCore::matchImage(size_t matchIdx) const
 { 
     QMutexLocker locker(&m_matchImagesMutex);
@@ -1015,6 +1021,10 @@ void PmCore::scanScenes()
             oldSceneItems = m_sceneItems.sourceNames();
             sceneItemsChanged = true;
         }
+    }
+
+    if (scenesChanged || sceneItemsChanged) {
+        emit sigScenesChanged(newScenes, newSceneItems);
     }
 
     // adjust for scene changes
@@ -1338,7 +1348,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
                         // switch scene
                         if (!sceneSelected) {
                             switchScene(reaction.targetScene,
-                                        reaction.targetTransition);
+                                        reaction.sceneTransition);
                             sceneSelected = true;
                         }
                     } else {
@@ -1353,14 +1363,14 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             // a lingering match entry takes precedence
             const auto &lingerInfo = m_sceneLingerQueue.top();
             auto reaction = matchConfig(lingerInfo.matchIndex).reaction;
-            switchScene(reaction.targetScene, reaction.targetTransition);
+            switchScene(reaction.targetScene, reaction.sceneTransition);
             return;
         }
 
         // nothing matched so we fall back to a no-match scene
         PmReaction nmr = noMatchReaction();
         if (nmr.isSet()) {
-            switchScene(nmr.targetScene, nmr.targetTransition);
+            switchScene(nmr.targetScene, nmr.sceneTransition);
         }
     }
 }
