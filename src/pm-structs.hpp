@@ -123,7 +123,7 @@ public:
         { return !operator==(other); }
 };
 
-/**
+/**m_scenes
  * @brief Describes matching configuration of an individual match entry, 
  *        as well as switching behavior in case of a match
  */
@@ -205,16 +205,16 @@ protected:
 };
 
 /*
- * @brief Represents a set of weak source references to available scenes, that
- *        also allows matching each source to a scene name
+ * @brief Represents a set of weak source references to available scenes or 
+ *     scene items, and allows a quick lookup of a weak source by name
  */
-class PmSourceHash final : public QHash<OBSWeakSource, std::string>
+class PmSourceHash final : public QHash<std::string, OBSWeakSource>
 {
 public:
     PmSourceHash() {}
     PmSourceHash(const PmSourceHash& other);
 
-    QSet<std::string> sourceNames() const;
+    QSet<std::string> sourceNames() const { return keys().toSet(); };
 };
 
 /**

@@ -421,17 +421,8 @@ bool PmMultiMatchConfig::containsImage(
     return false;
 }
 
-QSet<std::string> PmSourceHash::sourceNames() const 
-{
-    QSet<std::string> ret;
-    for (const auto &name : values()) {
-        ret.insert(name);
-    }
-    return ret;
-}
-
 PmSourceHash::PmSourceHash(const PmSourceHash &other)
-    : QHash<OBSWeakSource, std::string>(other)
+	: QHash<std::string, OBSWeakSource>(other)
 {
 }
 

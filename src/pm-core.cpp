@@ -850,7 +850,7 @@ PmSourceHash PmCore::scenes() const
 QList<std::string> PmCore::sceneNames() const
 {
     QMutexLocker locker(&m_scenesMutex);
-    return m_scenes.values();
+    return m_scenes.keys();
 }
 
 PmSourceHash PmCore::sceneItems() const
@@ -862,7 +862,7 @@ PmSourceHash PmCore::sceneItems() const
 QList<std::string> PmCore::sceneItemNames() const
 {
     QMutexLocker locker(&m_scenesMutex);
-    return m_sceneItems.values();
+    return m_sceneItems.keys();
 }
 
 QImage PmCore::matchImage(size_t matchIdx) const
@@ -955,7 +955,7 @@ void PmCore::scanScenes()
         obs_weak_source_release(sceneWs);
 
         // build a mapping of scenes
-        newScenes.insert(sceneWsWs, sceneName);
+        newScenes.insert(sceneName, sceneWsWs);
 
         // build a mapping of scene items
         obs_scene_t *scene = obs_scene_from_source(sceneSrc);
@@ -971,7 +971,7 @@ void PmCore::scanScenes()
 
                 PmSourceHash *sceneItems = (PmSourceHash*)p;
                 sceneItems->insert(
-                    sceneItemWsWs, obs_source_get_name(sceneItemSrc)); 
+                    obs_source_get_name(sceneItemSrc), sceneItemWsWs); 
                 return true;
             },
             &newSceneItems);
@@ -1036,23 +1036,28 @@ void PmCore::scanScenes()
     }
 
     if (scenesChanged || sceneItemsChanged) {
-        emit sigScenesChanged(newScenes.values(), newSceneItems.values());
+        emit sigScenesChanged(newScenes.keys(), newSceneItems.keys());
     }
 
     // adjust for scene changes
     if (scenesChanged) {
+        QMutexLocker locker(&m_scenesMutex);
         size_t cfgSize = multiMatchConfigSize();
         auto newNames = newScenes.sourceNames();
         for (size_t i = 0; i < cfgSize; ++i) {
             PmMatchConfig cfgCpy = matchConfig(i);
             auto &reaction = cfgCpy.reaction;
             if (reaction.type == PmReactionType::SwitchScene) {
-                auto& matchSceneName = reaction.targetScene;
-                if (matchSceneName.size() && !newNames.contains(matchSceneName)) {
+                auto &matchSceneName = reaction.targetScene;
+                if (matchSceneName.size()
+                 && !newNames.contains(matchSceneName)) {
+                    // scene was renamed or deleted
                     if (oldScenes.contains(matchSceneName)) {
-                        auto ws = m_scenes.key(matchSceneName);
-                        matchSceneName = newScenes[ws];
+                        // scene was renamed
+                        auto ws = m_scenes[matchSceneName];
+                        matchSceneName = newScenes.key(ws);
                     } else {
+                        // scene was deleted
                         matchSceneName.clear();
                     }
                     onMatchConfigChanged(i, cfgCpy);
@@ -1061,13 +1066,16 @@ void PmCore::scanScenes()
         }
         {
             PmReaction &noMatchReaction = m_multiMatchConfig.noMatchReaction;
-            std::string &noMatchScene = noMatchReaction.targetScene;
-            if (noMatchScene.size() && !newNames.contains(noMatchScene)) {
-                if (oldScenes.contains(noMatchScene)) {
-                    auto ws = m_scenes.key(noMatchScene);
-                    noMatchScene = newScenes[ws];
+            std::string &noMatchSceneName = noMatchReaction.targetScene;
+            if (noMatchSceneName.size()
+             && !newNames.contains(noMatchSceneName)) {
+                if (oldScenes.contains(noMatchSceneName)) {
+                    // no match scene was renamed
+                    auto ws = m_scenes[noMatchSceneName];
+                    noMatchSceneName = newScenes.key(ws);
                 } else {
-                    noMatchScene.clear();
+                    // no match scene was deleted
+                    noMatchSceneName.clear();
                 }
                 onNoMatchReactionChanged(noMatchReaction);
             }
@@ -1076,6 +1084,7 @@ void PmCore::scanScenes()
 
     // adjust for scene item changes
     if (sceneItemsChanged) {
+        QMutexLocker locker(&m_scenesMutex);
         size_t cfgSize = multiMatchConfigSize();
         auto newNames = newSceneItems.sourceNames();
         for (size_t i = 0; i < cfgSize; ++i) {
@@ -1085,8 +1094,8 @@ void PmCore::scanScenes()
                 auto& sceneItemName = reaction.targetSceneItem;
                 if (sceneItemName.size() && !newNames.contains(sceneItemName)) {
                     if (oldSceneItems.contains(sceneItemName)) {
-                        auto ws = m_sceneItems.key(sceneItemName);
-                        sceneItemName = newSceneItems[ws];
+                        auto ws = m_sceneItems[sceneItemName];
+                        sceneItemName = newSceneItems.key(ws);
                     } else {
                         sceneItemName.clear();
                     }
@@ -1415,13 +1424,9 @@ void PmCore::switchScene(
 
     {
         QMutexLocker locker(&m_scenesMutex);
-        for (auto sceneWs : m_scenes.keys()) {
-            if (targetSceneName == m_scenes[sceneWs]) {
-                targetSceneSrc = obs_weak_source_get_source(sceneWs);
-                break;
-            }
-        }
-     }
+        auto sceneWs = m_scenes[targetSceneName];
+        targetSceneSrc = obs_weak_source_get_source(sceneWs);
+    }
 
     if (targetSceneSrc) {
         if (targetSceneSrc != currSceneSrc) {
