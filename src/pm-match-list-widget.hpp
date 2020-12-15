@@ -57,11 +57,14 @@ protected slots:
 
 protected:
     enum class ColOrder;
+	enum class ActionStackOrder;
     static const QStringList k_columnLabels;
 
     static const QString k_dontSwitchStr;
     static const QString k_sceneItemsLabelStr;
     static const QString k_scenesLabelStr;
+    static const QString k_showLabelStr;
+    static const QString k_hideLabelStr;
 
     static const QColor k_dontSwitchColor;
     static const QColor k_scenesLabelColor;
@@ -86,7 +89,9 @@ protected:
 
     void enableConfigToggled(int idx, bool enable);
     void targetSelected(int idx, const QString &targetQStr);
-    void matchTransitionSelected(int idx, const QString& transName);
+    void sceneTransitionSelected(int idx, const QString &transTr);
+    void sceneItemActionSelected(int idx, const QString &actionStr);
+    
     void lingerDelayChanged(int idx, int lingerMs);
 
     void setMinWidth();

@@ -11,6 +11,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QPushButton>
+#include <QStackedWidget>
 #include <QIcon>
 #include <QStandardItemModel>
 
@@ -24,12 +25,18 @@ using namespace std;
 enum class PmMatchListWidget::ColOrder : int {
     EnableBox = 0,
     ConfigName = 1,
-    TargetCombo = 2,
-    TransitionCombo = 3,
+    TargetSelect = 2,
+    ActionSelect = 3,
     LingerDelay = 4,
     Result = 5,
     NumCols = 6,
 };
+
+enum class PmMatchListWidget::ActionStackOrder : int {
+    SceneTarget = 0,
+    SceneItemTarget = 1
+};
+
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
     obs_module_text("Label"),
@@ -45,6 +52,8 @@ const QString PmMatchListWidget::k_scenesLabelStr
     = obs_module_text("--- Scenes ---");
 const QString PmMatchListWidget::k_sceneItemsLabelStr
     = obs_module_text("--- Scene Items ---");
+const QString PmMatchListWidget::k_showLabelStr = obs_module_text("Show");
+const QString PmMatchListWidget::k_hideLabelStr = obs_module_text("Hide");
 
 const QColor PmMatchListWidget::k_dontSwitchColor = Qt::lightGray;
 const QColor PmMatchListWidget::k_scenesLabelColor = Qt::darkCyan;
@@ -183,7 +192,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     // connections: local ui
     connect(m_tableWidget, &QTableWidget::itemChanged,
         this, &PmMatchListWidget::onItemChanged, qc);
-    connect(m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
+    connect(m_tableWidget->selectionModel(),
+        &QItemSelectionModel::selectionChanged,
         this, &PmMatchListWidget::onRowSelected, qc);
     connect(m_cfgMoveUpBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigMoveUpButtonReleased, qc);
@@ -205,7 +215,7 @@ void PmMatchListWidget::onScenesChanged(
     int sz = (int)m_core->multiMatchConfigSize();
     for (int i = 0; i < sz; ++i) {
         QComboBox* sceneBox = (QComboBox*)m_tableWidget->cellWidget(
-            i, (int)ColOrder::TargetCombo);
+            i, (int)ColOrder::TargetSelect);
         updateTargetChoices(sceneBox, scenes, sceneItems);
     }
 
@@ -257,18 +267,36 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 
     const PmReaction &reaction = cfg.reaction;
     auto targetCombo = (QComboBox*)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::TargetCombo);
+        idx, (int)ColOrder::TargetSelect);
     if (targetCombo) {
         updateTargetSelection(targetCombo, reaction, true);
     }
 
-    auto transCombo = (QComboBox*)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::TransitionCombo);
-    if (transCombo) {
-        transCombo->blockSignals(true);
-        transCombo->setCurrentText(reaction.sceneTransition.data());
-        transCombo->setToolTip(transCombo->currentText());
-        transCombo->blockSignals(false);
+    auto actionStack = (QStackedWidget*)m_tableWidget->cellWidget(
+        idx, (int)ColOrder::ActionSelect);
+    if (actionStack) {
+        if (reaction.type == PmReactionType::SwitchScene) {
+            auto sceneTransCombo = (QComboBox *)
+                actionStack->widget(int(ActionStackOrder::SceneTarget));
+            if (sceneTransCombo) {
+                sceneTransCombo->blockSignals(true);
+                sceneTransCombo->setCurrentText(
+                    reaction.sceneTransition.data());
+                sceneTransCombo->setToolTip(
+                    sceneTransCombo->currentText());
+                sceneTransCombo->blockSignals(false);
+            }
+        } else {
+            auto sceneItemActionCombo = (QComboBox* )
+                actionStack->widget(int(ActionStackOrder::SceneItemTarget));
+            if (sceneItemActionCombo) {
+                sceneItemActionCombo->blockSignals(true);
+                QString selStr = reaction.type == PmReactionType::HideSceneItem
+                    ? k_hideLabelStr : k_showLabelStr;
+                sceneItemActionCombo->setCurrentText(selStr);
+                sceneItemActionCombo->blockSignals(false);
+            }
+        }
     }
 
     auto lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
@@ -419,6 +447,7 @@ void PmMatchListWidget::constructRow(int idx,
 {
     QWidget* parent = m_tableWidget;
 
+    // toggle match config on or off
     QCheckBox* enableBox = new QCheckBox(parent);
     enableBox->setStyleSheet(k_transpBgStyle);
     connect(enableBox, &QCheckBox::toggled,
@@ -426,12 +455,14 @@ void PmMatchListWidget::constructRow(int idx,
     enableBox->installEventFilter(this);
     m_tableWidget->setCellWidget(idx, (int)ColOrder::EnableBox, enableBox);
 
+    // config label edit
     QString placeholderName = QString("placeholder %1").arg(idx);
     auto labelItem = new QTableWidgetItem(placeholderName);
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
     m_tableWidget->setItem(
         idx, (int)ColOrder::ConfigName, labelItem);
 
+    // target scene or scene item
     QComboBox* targetCombo = new QComboBox(parent);
     targetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
     targetCombo->setStyleSheet(k_transpBgStyle);
@@ -440,29 +471,45 @@ void PmMatchListWidget::constructRow(int idx,
     targetCombo->installEventFilter(this);
     connect(targetCombo, &QComboBox::currentTextChanged,
         [this, idx](const QString& str) { targetSelected(idx, str); });
-    m_tableWidget->setCellWidget(idx, (int)ColOrder::TargetCombo, targetCombo);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::TargetSelect, targetCombo);
 
-    QComboBox* actionCombo = new QComboBox(parent);
-    actionCombo->setStyleSheet(k_transpBgStyle);
-    actionCombo->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
-    updateTransitionChoices(actionCombo);
-    actionCombo->installEventFilter(this);
-    connect(actionCombo, &QComboBox::currentTextChanged,
-        [this, idx](const QString& str) { matchTransitionSelected(idx, str); });
+    // scene transition or scene item action
+    QComboBox* sceneTransitionCombo = new QComboBox(parent);
+    sceneTransitionCombo->setStyleSheet(k_transpBgStyle);
+    sceneTransitionCombo->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
+    updateTransitionChoices(sceneTransitionCombo);
+    sceneTransitionCombo->installEventFilter(this);
+    connect(sceneTransitionCombo, &QComboBox::currentTextChanged,
+        [this, idx](const QString& str) { sceneTransitionSelected(idx, str); });
+
+    QComboBox *sceneItemActionCombo = new QComboBox(parent);
+    sceneItemActionCombo->setStyleSheet(k_transpBgStyle);
+    sceneItemActionCombo->addItem(k_showLabelStr);
+    sceneItemActionCombo->addItem(k_hideLabelStr);
+    sceneItemActionCombo->installEventFilter(this);
+    connect(sceneItemActionCombo, &QComboBox::currentTextChanged,
+        [this, idx](const QString &str) { sceneItemActionSelected(idx, str); });
+
+    QStackedWidget *targetActionStack = new QStackedWidget(parent);
+    targetActionStack->addWidget(sceneTransitionCombo);
+    targetActionStack->addWidget(sceneItemActionCombo);
     m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::TransitionCombo, actionCombo);
+        idx, (int)ColOrder::ActionSelect, targetActionStack);
 
+    // linger delay
     QSpinBox *lingerDelayBox = new QSpinBox();
     lingerDelayBox->setStyleSheet(k_transpBgStyle);
     lingerDelayBox->setRange(0, 10000);
     lingerDelayBox->setSingleStep(10);
     lingerDelayBox->installEventFilter(this);
-    void (QSpinBox::*sigLingerValueChanged)(int value) = &QSpinBox::valueChanged;
+    void (QSpinBox::*sigLingerValueChanged)(int value)
+        = &QSpinBox::valueChanged;
     connect(lingerDelayBox, sigLingerValueChanged,
         [this, idx](int val) { lingerDelayChanged(idx, val); });
     m_tableWidget->setCellWidget(
         idx, (int)ColOrder::LingerDelay, lingerDelayBox);
 
+    // result
     QLabel *resultLabel = new PmResultsLabel("--", parent);
     resultLabel->setStyleSheet(k_transpBgStyle);
     resultLabel->setTextFormat(Qt::RichText);
@@ -622,12 +669,25 @@ void PmMatchListWidget::targetSelected(int idx, const QString &targetQStr)
     emit sigMatchConfigChanged(index, cfg);
 }
 
-void PmMatchListWidget::matchTransitionSelected(int idx, const QString& name)
+void PmMatchListWidget::sceneTransitionSelected(
+    int idx, const QString& transStr)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.reaction.sceneTransition = name.toUtf8().data();
+    cfg.reaction.sceneTransition = transStr.toUtf8().data();
     emit sigMatchConfigChanged(index, cfg);
+}
+
+void PmMatchListWidget::sceneItemActionSelected(
+    int idx, const QString &actionStr)
+{
+    size_t index = (size_t)(idx);
+    PmMatchConfig cfg = m_core->matchConfig(index);
+    if (actionStr == k_showLabelStr) {
+        cfg.reaction.type = PmReactionType::ShowSceneItem;
+    } else if (actionStr == k_hideLabelStr) {
+        cfg.reaction.type = PmReactionType::HideSceneItem;
+    }
 }
 
 void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
