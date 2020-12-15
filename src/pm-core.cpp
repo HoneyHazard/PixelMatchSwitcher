@@ -1319,15 +1319,19 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         } else {
             // no match; lets check if linger activation is needed
             if (m_switchingEnabled && cfg.filterCfg.is_enabled
-             && lingerMs > 0 && reaction.isSet()
-             && matchResults(matchIndex).isMatched) {
-                // a lingering entry just switched from match to no-match
-                auto endTime = currTime.addMSecs(lingerMs);
-                if (reaction.type == PmReactionType::SwitchScene) {
-                    m_sceneLingerQueue.push(PmLingerInfo{matchIndex, endTime});
-                } else {
-                    m_sceneItemLingerList.push_back(
-                        PmLingerInfo{matchIndex, endTime});
+             && reaction.isSet() && matchResults(matchIndex).isMatched) {
+                if (lingerMs > 0) {
+                    // a lingering entry just switched from match to no-match
+                    auto endTime = currTime.addMSecs(lingerMs);
+                    if (reaction.type == PmReactionType::SwitchScene) {
+                        m_sceneLingerQueue.push(PmLingerInfo{matchIndex, endTime});
+                    } else {
+                        m_sceneItemLingerList.push_back(
+                            PmLingerInfo{matchIndex, endTime});
+                    }
+                } else if (reaction.type != PmReactionType::SwitchScene) {
+                    toggleSceneItem(
+                        reaction.targetSceneItem, reaction.type, false);
                 }
             }
         }
@@ -1394,7 +1398,11 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 void PmCore::toggleSceneItem(
     const std::string &sceneItem, PmReactionType type, bool matched)
 {
+    obs_source_t* sceneItemSrc;
 
+    {
+        QMutexLocker locker(&m_scenesMutex);
+    }
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:

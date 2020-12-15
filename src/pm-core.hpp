@@ -66,10 +66,6 @@ public:
     PmMatchConfig matchConfig(size_t matchIdx) const;
     PmReaction reaction(size_t matchIdx);
     PmReaction noMatchReaction() const;
-#if 0
-    std::string noMatchScene() const;
-    std::string noMatchTransition() const;
-#endif
     std::string matchImgFilename(size_t matchIdx) const;
     bool hasFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
