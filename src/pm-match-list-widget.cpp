@@ -585,21 +585,22 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
 void PmMatchListWidget::updateTargetSelection(
     QComboBox *targetCombo, const PmReaction &reaction, bool transparent)
 {
-    QString targetColor;
+    QColor targetColor = k_dontSwitchColor;
     QString targetStr;
     if (reaction.type == PmReactionType::SwitchScene) {
         targetStr = reaction.targetScene.data();
-        targetColor = k_scenesColor.name();
+        if (targetStr.size()) {
+            targetColor = k_scenesColor;
+        }
     } else {
         targetStr = reaction.targetSceneItem.data();
-        targetColor = k_sceneItemsColor.name();
-    }
-    if (targetStr.isEmpty()) {
-        targetColor = k_dontSwitchColor.name();
+        if (targetStr.size()) {
+            targetColor = k_sceneItemsColor;
+        }
     }
     QString stylesheet = QString("%1; color: %2")
         .arg(transparent ? k_transpBgStyle : "")
-        .arg(targetColor);
+        .arg(targetColor.name());
 
     targetCombo->blockSignals(true);
     targetCombo->setCurrentText(targetStr.size() ? targetStr : k_dontSwitchStr);
@@ -652,23 +653,19 @@ void PmMatchListWidget::targetSelected(int idx, const QString &targetQStr)
     PmReaction &reaction = cfg.reaction;
 
     if (targetQStr == k_dontSwitchStr) {
-        if (reaction.type == PmReactionType::SwitchScene) {
-            reaction.targetScene.clear();
-        } else {
-            reaction.targetScene = targetQStr.toUtf8().data();
-        }
+        reaction.targetSceneItem.clear();
+        reaction.targetScene.clear();
     } else {
         QList<std::string> sceneNames = m_core->sceneNames();
-        //QList<std::string> sceneItemsNames = m_core->sceneItemNames();
         std::string targetStr(targetQStr.toUtf8().data());
         if (sceneNames.contains(targetStr)) {
             reaction.type = PmReactionType::SwitchScene;
             reaction.targetScene = targetStr;
-            // TODO: flip the action selector
+            reaction.targetSceneItem.clear();
         } else {
             reaction.type =  PmReactionType::ShowSceneItem;
             reaction.targetSceneItem = targetStr;
-            // TODO: choose the proper reaction type, flip the action selector
+            reaction.targetScene.clear();
         }
     }
 
