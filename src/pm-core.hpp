@@ -76,7 +76,7 @@ public:
     PmMatchResults matchResults(size_t matchIdx) const;
     PmSourceHash scenes() const;
     QList<std::string> sceneNames() const;
-    PmSourceHash sceneItems() const;
+    PmSceneItemsHash sceneItems() const;
     QList<std::string> sceneItemNames() const;
     QList<std::string> availableTransitions() const 
         { return m_availableTransitions.keys(); }
@@ -188,7 +188,7 @@ protected:
 
     mutable QMutex m_scenesMutex;
     PmSourceHash m_scenes;
-    PmSourceHash m_sceneItems;
+    PmSceneItemsHash m_sceneItems;
 
     PmLingerQueue m_sceneLingerQueue;
     PmLingerList m_sceneItemLingerList;

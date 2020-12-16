@@ -853,7 +853,7 @@ QList<std::string> PmCore::sceneNames() const
     return m_scenes.keys();
 }
 
-PmSourceHash PmCore::sceneItems() const
+PmSceneItemsHash PmCore::sceneItems() const
 {
     QMutexLocker locker(&m_scenesMutex);
     return m_sceneItems;
@@ -943,7 +943,7 @@ void PmCore::scanScenes()
     obs_frontend_get_scenes(&scenesInput);
 
     PmSourceHash newScenes;
-    PmSourceHash newSceneItems;
+    PmSceneItemsHash newSceneItems;
     QSet<OBSWeakSource> filters;
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
@@ -962,16 +962,11 @@ void PmCore::scanScenes()
         obs_scene_enum_items(
             scene,
             [](obs_scene_t*, obs_sceneitem_t *item, void* p)->bool {
+                OBSSceneItem sceneItemSi(item);
+                PmSceneItemsHash *sceneItems = (PmSceneItemsHash *)p;
                 obs_source_t *sceneItemSrc = obs_sceneitem_get_source(item);
-
-                obs_weak_source_t *sceneItemWs =
-                    obs_source_get_weak_source(sceneItemSrc);
-                OBSWeakSource sceneItemWsWs(sceneItemWs);
-                obs_weak_source_release(sceneItemWs);
-
-                PmSourceHash *sceneItems = (PmSourceHash*)p;
                 sceneItems->insert(
-                    obs_source_get_name(sceneItemSrc), sceneItemWsWs); 
+                    obs_source_get_name(sceneItemSrc), sceneItemSi); 
                 return true;
             },
             &newSceneItems);
@@ -1030,7 +1025,7 @@ void PmCore::scanScenes()
             scenesChanged = true;
         }
         if (m_sceneItems != newSceneItems) {
-            oldSceneItems = m_sceneItems.sourceNames();
+            oldSceneItems = m_sceneItems.sceneItemNames();
             sceneItemsChanged = true;
         }
     }
@@ -1086,7 +1081,7 @@ void PmCore::scanScenes()
     if (sceneItemsChanged) {
         QMutexLocker locker(&m_scenesMutex);
         size_t cfgSize = multiMatchConfigSize();
-        auto newNames = newSceneItems.sourceNames();
+        auto newNames = newSceneItems.sceneItemNames();
         for (size_t i = 0; i < cfgSize; ++i) {
             PmMatchConfig cfgCpy = matchConfig(i);
             auto &reaction = cfgCpy.reaction;
@@ -1404,16 +1399,6 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     }
 }
 
-void PmCore::toggleSceneItem(
-    const std::string &sceneItem, PmReactionType type, bool matched)
-{
-    obs_source_t* sceneItemSrc;
-
-    {
-        QMutexLocker locker(&m_scenesMutex);
-    }
-}
-
 // copied (and slightly simplified) from Advanced Scene Switcher:
 // https://github.com/WarmUpTill/SceneSwitcher/blob/05540b61a118f2190bb3fae574c48aea1b436ac7/src/advanced-scene-switcher.cpp#L1066
 void PmCore::switchScene(
@@ -1424,8 +1409,11 @@ void PmCore::switchScene(
 
     {
         QMutexLocker locker(&m_scenesMutex);
-        auto sceneWs = m_scenes[targetSceneName];
-        targetSceneSrc = obs_weak_source_get_source(sceneWs);
+        auto find = m_scenes.find(targetSceneName);
+        if (find != m_scenes.end()) {
+            OBSWeakSource sceneWs = *find;
+            targetSceneSrc = obs_weak_source_get_source(sceneWs);
+        }
     }
 
     if (targetSceneSrc) {
@@ -1453,6 +1441,28 @@ void PmCore::switchScene(
     }
 
     obs_source_release(currSceneSrc);
+}
+
+
+void PmCore::toggleSceneItem(
+    const std::string &sceneItemName, PmReactionType type, bool matched)
+{
+    obs_sceneitem_t* sceneItem = nullptr;
+
+    {
+        QMutexLocker locker(&m_scenesMutex);
+        auto find = m_sceneItems.find(sceneItemName);
+        if (find != m_sceneItems.end()) {
+            OBSSceneItem sceneItemSi = *find;
+            sceneItem = sceneItemSi;
+        }
+    }
+
+    if (sceneItem) {
+        bool visible
+            = (type == PmReactionType::ShowSceneItem) ? matched : !matched;
+        obs_sceneitem_set_visible(sceneItem, visible);
+    }
 }
 
 void PmCore::supplyImageToFilter(

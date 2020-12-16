@@ -496,7 +496,6 @@ void PmMatchListWidget::constructRow(int idx,
     QStackedWidget *targetActionStack = new QStackedWidget(parent);
     targetActionStack->setStyleSheet(
         QString("QWidget { %1 }").arg(k_transpBgStyle));
-
     targetActionStack->setContentsMargins(0, 0, 0, 0);
     targetActionStack->addWidget(sceneTransitionCombo);
     targetActionStack->addWidget(sceneItemActionCombo);

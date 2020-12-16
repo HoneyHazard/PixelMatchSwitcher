@@ -206,15 +206,28 @@ protected:
 
 /*
  * @brief Represents a set of weak source references to available scenes or 
- *     scene items, and allows a quick lookup of a weak source by name
  */
 class PmSourceHash final : public QHash<std::string, OBSWeakSource>
 {
 public:
     PmSourceHash() {}
-    PmSourceHash(const PmSourceHash& other);
+    PmSourceHash(const PmSourceHash &other)
+        : QHash<std::string, OBSWeakSource>(other) {}
 
     QSet<std::string> sourceNames() const { return keys().toSet(); };
+};
+
+/*
+ * @brief Represents a set of scene item references to available scene items
+ */
+class PmSceneItemsHash final : public QHash<std::string, OBSSceneItem>
+{
+public:
+    PmSceneItemsHash() {}
+    PmSceneItemsHash(const PmSceneItemsHash &other)
+        : QHash<std::string, OBSSceneItem>(other) {}
+
+    QSet<std::string> sceneItemNames() const { return keys().toSet(); };
 };
 
 /**

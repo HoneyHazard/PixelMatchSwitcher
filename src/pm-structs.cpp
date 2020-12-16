@@ -421,11 +421,6 @@ bool PmMultiMatchConfig::containsImage(
     return false;
 }
 
-PmSourceHash::PmSourceHash(const PmSourceHash &other)
-	: QHash<std::string, OBSWeakSource>(other)
-{
-}
-
 PmPreviewConfig::PmPreviewConfig(obs_data_t* data)
 {
     obs_data_set_default_int(data, "preview_mode", int(previewMode));
@@ -456,7 +451,8 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
-    qRegisterMetaType<PmSourceHash>("PmScenes");
+    qRegisterMetaType<PmSourceHash>("PmSourceHash");
+    qRegisterMetaType<PmSceneItemsHash>("PmSceneItemsHash");
     qRegisterMetaType<PmFilterRef>("PmFilterRef");
     qRegisterMetaType<PmCaptureState>("PmCaptureState");
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
