@@ -62,9 +62,9 @@ const QColor PmMatchListWidget::k_sceneItemsLabelColor = Qt::darkYellow;
 const QColor PmMatchListWidget::k_sceneItemsColor = Qt::yellow;
 
 const QString PmMatchListWidget::k_transpBgStyle
-    = "background-color: rgba(0, 0, 0, 0)";
+    = "background-color: rgba(0, 0, 0, 0);";
 const QString PmMatchListWidget::k_semiTranspBgStyle
-    = "background-color: rgba(0, 0, 0, 0.6)";
+    = "background-color: rgba(0, 0, 0, 0.6);";
 
 PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 : QGroupBox(obs_module_text("Active Match Entries"), parent)
@@ -276,8 +276,10 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         idx, (int)ColOrder::ActionSelect);
     if (actionStack) {
         if (reaction.type == PmReactionType::SwitchScene) {
-            auto sceneTransCombo = (QComboBox *)
-                actionStack->widget(int(ActionStackOrder::SceneTarget));
+            int idx = int(ActionStackOrder::SceneTarget);
+            actionStack->setCurrentIndex(idx);
+            auto sceneTransCombo = (QComboBox *)actionStack->widget(idx);
+            actionStack->setCurrentWidget(sceneTransCombo);
             if (sceneTransCombo) {
                 sceneTransCombo->blockSignals(true);
                 sceneTransCombo->setCurrentText(
@@ -287,8 +289,9 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
                 sceneTransCombo->blockSignals(false);
             }
         } else {
-            auto sceneItemActionCombo = (QComboBox* )
-                actionStack->widget(int(ActionStackOrder::SceneItemTarget));
+            int idx = int(ActionStackOrder::SceneItemTarget);
+            actionStack->setCurrentIndex(idx);
+            auto sceneItemActionCombo = (QComboBox* )actionStack->widget(idx);
             if (sceneItemActionCombo) {
                 sceneItemActionCombo->blockSignals(true);
                 QString selStr = reaction.type == PmReactionType::HideSceneItem
@@ -466,6 +469,7 @@ void PmMatchListWidget::constructRow(int idx,
     QComboBox* targetCombo = new QComboBox(parent);
     targetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
     targetCombo->setStyleSheet(k_transpBgStyle);
+    targetCombo->setAttribute(Qt::WA_TranslucentBackground);
     targetCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     updateTargetChoices(targetCombo, scenes, sceneItems);
     targetCombo->installEventFilter(this);
@@ -476,7 +480,6 @@ void PmMatchListWidget::constructRow(int idx,
     // scene transition or scene item action
     QComboBox* sceneTransitionCombo = new QComboBox(parent);
     sceneTransitionCombo->setStyleSheet(k_transpBgStyle);
-    sceneTransitionCombo->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
     updateTransitionChoices(sceneTransitionCombo);
     sceneTransitionCombo->installEventFilter(this);
     connect(sceneTransitionCombo, &QComboBox::currentTextChanged,
@@ -491,6 +494,10 @@ void PmMatchListWidget::constructRow(int idx,
         [this, idx](const QString &str) { sceneItemActionSelected(idx, str); });
 
     QStackedWidget *targetActionStack = new QStackedWidget(parent);
+    targetActionStack->setStyleSheet(
+        QString("QWidget { %1 }").arg(k_transpBgStyle));
+
+    targetActionStack->setContentsMargins(0, 0, 0, 0);
     targetActionStack->addWidget(sceneTransitionCombo);
     targetActionStack->addWidget(sceneItemActionCombo);
     m_tableWidget->setCellWidget(
