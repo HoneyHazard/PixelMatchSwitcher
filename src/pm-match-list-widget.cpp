@@ -694,6 +694,7 @@ void PmMatchListWidget::sceneItemActionSelected(
     } else if (actionStr == k_hideLabelStr) {
         cfg.reaction.type = PmReactionType::HideSceneItem;
     }
+    emit sigMatchConfigChanged(index, cfg);
 }
 
 void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
