@@ -147,6 +147,7 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && wasDownloaded == other.wasDownloaded
         && label == other.label
         && totalMatchThresh == other.totalMatchThresh
+        && invertResult == other.invertResult
         && maskMode == other.maskMode
         && filterCfg == other.filterCfg
         && reaction == other.reaction;
@@ -180,6 +181,9 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     totalMatchThresh 
         = float(obs_data_get_double(data, "total_match_threshold"));
 
+    obs_data_set_default_bool(data, "invert_result", invertResult);
+    invertResult = obs_data_get_bool(data, "invert_result");
+
     obs_data_set_default_int(data, "mask_mode", (int)maskMode);
     maskMode = PmMaskMode(obs_data_get_int(data, "mask_mode"));
 
@@ -211,44 +215,35 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
                 return;
             }
         } else if (reader.isStartElement()) {
+            QString elemText = reader.readElementText();
             if (name == "label") {
-                label = reader.readElementText().toUtf8().data();
+                label = elemText.toUtf8().data();
             } else if (name == "match_image_filename") {
-                matchImgFilename =
-                    reader.readElementText().toUtf8().data();
+                matchImgFilename = elemText.toUtf8().data();
             } else if (name == "was_downloaded") {
-                wasDownloaded
-                    = reader.readElementText() == "true" ? true : false;
+                wasDownloaded = (elemText == "true" ? true : false);
             } else if (name == "roi_left") {
-                filterCfg.roi_left =
-                    reader.readElementText().toInt();
+                filterCfg.roi_left = elemText.toInt();
             } else if (name == "roi_bottom") {
-                filterCfg.roi_bottom =
-                    reader.readElementText().toInt();
+                filterCfg.roi_bottom = elemText.toInt();
             } else if (name == "per_pixel_allowed_error") {
-                filterCfg.per_pixel_err_thresh =
-                    reader.readElementText().toFloat();
+                filterCfg.per_pixel_err_thresh = elemText.toFloat();
             } else if (name == "total_match_threshold") {
-                totalMatchThresh =
-                    reader.readElementText().toFloat();
+                totalMatchThresh = elemText.toFloat();
+            } else if (name == "invert_result") {
+                invertResult = (elemText == "true" ? true : false);
             } else if (name == "mask_mode") {
-                maskMode = (PmMaskMode)reader.readElementText()
-                           .toInt();
+                maskMode = (PmMaskMode)elemText.toInt();
             } else if (name == "mask_alpha") {
-                filterCfg.mask_alpha =
-                    reader.readElementText() == "true" ? true : false;
+                filterCfg.mask_alpha = (elemText == "true" ? true : false);
             } else if (name == "mask_color_r") {
-                filterCfg.mask_color.x =
-                    reader.readElementText().toFloat();
+                filterCfg.mask_color.x = elemText.toFloat();
             } else if (name == "mask_color_g") {
-                filterCfg.mask_color.y =
-                    reader.readElementText().toFloat();
+                filterCfg.mask_color.y = elemText.toFloat();
             } else if (name == "mask_color_b") {
-                filterCfg.mask_color.z =
-                    reader.readElementText().toFloat();
+                filterCfg.mask_color.z = elemText.toFloat();
             } else if (name == "is_enabled") {
-                filterCfg.is_enabled =
-                    reader.readElementText() == "true" ? true : false;
+                filterCfg.is_enabled = (elemText == "true" ? true : false);
             } else if (name == "reaction") {
                 reaction = PmReaction(reader);
             }
@@ -268,6 +263,7 @@ obs_data_t* PmMatchConfig::save() const
         ret, "per_pixel_allowed_error", double(filterCfg.per_pixel_err_thresh));
     obs_data_set_double(
         ret, "total_match_threshold", double(totalMatchThresh));
+    obs_data_set_bool(ret, "invert_result", invertResult);
     obs_data_set_int(ret, "mask_mode", (int)maskMode);
     obs_data_set_bool(ret, "mask_alpha", filterCfg.mask_alpha);
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
@@ -287,18 +283,18 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
     writer.writeTextElement("label", label.data());
     writer.writeTextElement("match_image_filename", matchImgFilename.data());
     writer.writeTextElement("was_downloaded", wasDownloaded ? "true" : "false");
-    writer.writeTextElement("roi_left",
-        QString::number(filterCfg.roi_left));
-    writer.writeTextElement("roi_bottom",
+    writer.writeTextElement("roi_left", QString::number(filterCfg.roi_left));
+    writer.writeTextElement("roi_bottom", 
         QString::number(filterCfg.roi_bottom));
     writer.writeTextElement("per_pixel_allowed_error",
         QString::number(filterCfg.per_pixel_err_thresh));
-    writer.writeTextElement("total_match_threshold",
+    writer.writeTextElement("total_match_threshold", 
         QString::number(totalMatchThresh));
+    writer.writeTextElement("invert_result", invertResult ? "true" : "false");
     writer.writeTextElement("mask_mode", QString::number((int)maskMode));
     writer.writeTextElement("mask_alpha",
         filterCfg.mask_alpha ? "true" : "false");
-    writer.writeTextElement("mask_color_r",
+    writer.writeTextElement("mask_color_r", 
         QString::number(filterCfg.mask_color.x));
     writer.writeTextElement("mask_color_g",
         QString::number(filterCfg.mask_color.y));
@@ -310,7 +306,6 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
     writer.writeEndElement();
 }
 
-const std::string PmMultiMatchConfig::k_defaultNoMatchScene = "";
 const std::string PmMultiMatchConfig::k_defaultNoMatchTransition = "Cut";
 
 PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)

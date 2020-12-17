@@ -7,6 +7,7 @@
 
 class PmCore;
 
+class QCheckBox;
 class QPushButton;
 class QLabel;
 class QLineEdit;
@@ -16,7 +17,7 @@ class QDoubleSpinBox;
 class QStackedWidget;
 
 /*!
- * \brief UI tab that shows match settings, UI preview and preview settings
+ * @brief UI tab that shows match settings, UI preview and preview settings
  */
 class PmMatchConfigWidget : public QGroupBox
 {
@@ -89,6 +90,7 @@ protected:
     QSpinBox *m_posXBox, *m_posYBox;
     QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
+    QCheckBox *m_invertResultCheckbox;
 
     PmCore *m_core;
     PmMatchResults m_prevResults;

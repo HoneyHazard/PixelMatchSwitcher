@@ -142,7 +142,7 @@ struct PmMatchConfig
 
     struct pm_match_entry_config filterCfg;
     float totalMatchThresh = 90.f;
-    bool invert = false;
+    bool invertResult = false;
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
 
@@ -160,7 +160,6 @@ struct PmMatchConfig
 class PmMultiMatchConfig final : public std::vector<PmMatchConfig>
 {
 public:
-    static const std::string k_defaultNoMatchScene;
     static const std::string k_defaultNoMatchTransition;
 
     PmMultiMatchConfig() {}

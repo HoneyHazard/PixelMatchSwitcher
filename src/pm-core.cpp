@@ -1380,6 +1380,8 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             = float(newResult.numMatched) / float(newResult.numCompared) * 100.f;
         newResult.isMatched
             = newResult.percentageMatched >= cfg.totalMatchThresh;
+        if (cfg.invertResult)
+            newResult.isMatched = !newResult.isMatched;
 
         // notify other modules of the result and match state
         emit sigNewMatchResults(matchIndex, newResults[matchIndex]);

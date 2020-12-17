@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QFileDialog>
 #include <QSpinBox>
@@ -199,6 +200,14 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     mainLayout->addRow(
         obs_module_text("Match Threshold: "), m_totalMatchThreshBox);
 
+    // invert result checkbox
+    m_invertResultCheckbox = new QCheckBox(this);
+    m_invertResultCheckbox->setFocusPolicy(Qt::NoFocus);
+    connect(m_invertResultCheckbox, &QCheckBox::toggled, this,
+            &PmMatchConfigWidget::onConfigUiChanged, qc);
+
+    mainLayout->addRow(obs_module_text("Invert Result: "), m_invertResultCheckbox);
+
     setLayout(mainLayout);
 
     // core signals -> local slots
@@ -345,6 +354,10 @@ void PmMatchConfigWidget::onMatchConfigChanged(size_t matchIdx, PmMatchConfig cf
     m_totalMatchThreshBox->blockSignals(true);
     m_totalMatchThreshBox->setValue(double(cfg.totalMatchThresh));
     m_totalMatchThreshBox->blockSignals(false);
+
+    m_invertResultCheckbox->blockSignals(true);
+    m_invertResultCheckbox->setChecked(cfg.invertResult);
+    m_invertResultCheckbox->blockSignals(false);
 
     roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight);
     maskModeChanged(cfg.maskMode, m_customColor);
@@ -578,6 +591,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
     config.filterCfg.roi_bottom = m_posYBox->value();
     config.filterCfg.per_pixel_err_thresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
+    config.invertResult = m_invertResultCheckbox->isChecked();
 
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
     switch (config.maskMode) {
