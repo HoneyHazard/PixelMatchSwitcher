@@ -387,8 +387,16 @@ void PmMatchListWidget::onRowSelected()
 
 void PmMatchListWidget::onConfigInsertButtonReleased()
 {
+	PmMatchConfig newCfg;
+
     size_t idx = (size_t)(currentIndex());
-    PmMatchConfig newCfg = PmMatchConfig();
+    size_t sz = m_core->multiMatchConfigSize();
+    if (sz > 0) {
+        size_t closestIdx = std::min(idx, sz-1);
+        PmReaction closestReaction = m_core->reaction(closestIdx);
+        newCfg.reaction.type = closestReaction.type;
+    }
+
     emit sigMatchConfigInsert(idx, newCfg);
     emit sigMatchConfigSelect(idx);
 }
