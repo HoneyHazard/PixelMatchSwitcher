@@ -313,10 +313,46 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
 
     if (matchIdx >= sz) return; // invalid index?
 
-    auto oldCfg = matchConfig(matchIdx);
+    PmMatchConfig oldCfg = matchConfig(matchIdx);
 
     if (oldCfg == newCfg) return; // config hasn't changed?
 
+    // enforce reaction type order
+    if (m_enforceReactionTypeOrder && sz > 1) {
+        if (newCfg.reaction.type == PmReactionType::SwitchScene
+         && matchIdx < sz
+         && matchConfig(matchIdx+1).reaction.type
+            != PmReactionType::SwitchScene) {
+            // remove + insert to enforce scenes after scene items
+            onMatchConfigRemove(matchIdx);
+            while (matchIdx < sz) {
+                PmMatchConfig otherCfg = matchConfig(matchIdx);
+                if (otherCfg.reaction.type == PmReactionType::SwitchScene) {
+                    break;
+                }
+                matchIdx++;
+            }
+            onMatchConfigInsert(matchIdx, newCfg);
+            return;
+        } else if (newCfg.reaction.type != PmReactionType::SwitchScene
+                && matchIdx > 0
+                && matchConfig(matchIdx-1).reaction.type
+                    == PmReactionType::SwitchScene) {
+            // remove + insert to enforce scene items before scenes
+            onMatchConfigRemove(matchIdx);
+            while (matchIdx > 0) {
+                 PmMatchConfig otherCfg = matchConfig(matchIdx-1);
+                 if (otherCfg.reaction.type != PmReactionType::SwitchScene) {
+                     break;
+                 }
+                matchIdx--;
+            }
+            onMatchConfigInsert(matchIdx, newCfg);
+            return;
+        }
+    }
+
+    // normal flow
     activateMatchConfig(matchIdx, newCfg);
 
     {
@@ -1164,6 +1200,7 @@ void PmCore::activateMatchConfig(
 {
     // clean linger delay, for safety
     m_sceneLingerQueue.removeAll();
+    m_sceneItemLingerList.removeAll();
 
     auto oldCfg = matchConfig(matchIdx);
 

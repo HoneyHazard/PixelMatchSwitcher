@@ -210,6 +210,7 @@ protected:
 
     bool m_runningEnabled = false;
     bool m_switchingEnabled = true;
+    bool m_enforceReactionTypeOrder = true;
     
     PmCaptureState m_captureState = PmCaptureState::Inactive;
     int m_captureStartX = 0, m_captureStartY = 0;
