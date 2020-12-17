@@ -64,11 +64,14 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
-    PmReaction reaction(size_t matchIdx);
+    PmReaction reaction(size_t matchIdx) const;
     PmReaction noMatchReaction() const;
     std::string matchImgFilename(size_t matchIdx) const;
     bool hasFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
+    bool enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg);
+    bool matchConfigCanMoveUp(size_t idx) const;
+    bool matchConfigCanMoveDown(size_t idx) const;
 
     PmPreviewConfig previewConfig() const;
 

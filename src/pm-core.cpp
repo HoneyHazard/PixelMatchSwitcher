@@ -261,7 +261,7 @@ PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
                                                 : PmMatchConfig();
 }
 
-PmReaction PmCore::reaction(size_t matchIdx)
+PmReaction PmCore::reaction(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return matchIdx < m_multiMatchConfig.size()
@@ -307,22 +307,43 @@ bool PmCore::hasFilename(size_t matchIdx) const
         return m_multiMatchConfig[matchIdx].matchImgFilename.size() > 0;
 }
 
-void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
+bool PmCore::matchConfigCanMoveUp(size_t idx) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    size_t sz = m_multiMatchConfig.size();
+
+    if (sz <= 1 || idx == 0) return false;
+
+    if (reaction(idx-1).type != PmReactionType::SwitchScene
+     && reaction(idx).type == PmReactionType::SwitchScene)
+        return false;
+
+    return true;
+}
+
+bool PmCore::matchConfigCanMoveDown(size_t idx) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    size_t sz = m_multiMatchConfig.size();
+
+    if (sz <= 1 || idx >= sz-1) return false;
+
+    if (reaction(idx).type != PmReactionType::SwitchScene
+     && reaction(idx+1).type == PmReactionType::SwitchScene)
+        return false;
+
+    return true;
+}
+
+bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
 {
     size_t sz = multiMatchConfigSize();
-
-    if (matchIdx >= sz) return; // invalid index?
-
-    PmMatchConfig oldCfg = matchConfig(matchIdx);
-
-    if (oldCfg == newCfg) return; // config hasn't changed?
 
     // enforce reaction type order
     if (m_enforceReactionTypeOrder && sz > 1) {
         if (newCfg.reaction.type == PmReactionType::SwitchScene
          && matchIdx < sz
-         && matchConfig(matchIdx+1).reaction.type
-            != PmReactionType::SwitchScene) {
+         && reaction(matchIdx+1).type != PmReactionType::SwitchScene) {
             // remove + insert to enforce scenes after scene items
             onMatchConfigRemove(matchIdx);
             while (matchIdx < sz) {
@@ -333,11 +354,10 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
                 matchIdx++;
             }
             onMatchConfigInsert(matchIdx, newCfg);
-            return;
+            return true;
         } else if (newCfg.reaction.type != PmReactionType::SwitchScene
                 && matchIdx > 0
-                && matchConfig(matchIdx-1).reaction.type
-                    == PmReactionType::SwitchScene) {
+                && reaction(matchIdx-1).type == PmReactionType::SwitchScene) {
             // remove + insert to enforce scene items before scenes
             onMatchConfigRemove(matchIdx);
             while (matchIdx > 0) {
@@ -348,11 +368,29 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
                 matchIdx--;
             }
             onMatchConfigInsert(matchIdx, newCfg);
-            return;
+            return true;
         }
     }
+    return false;
+}
 
-    // normal flow
+
+void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
+{
+    size_t sz = multiMatchConfigSize();
+
+    // invalid index?
+    if (matchIdx >= sz) return; 
+
+    PmMatchConfig oldCfg = matchConfig(matchIdx);
+
+     // config hasn't changed? stop callback loops
+    if (oldCfg == newCfg) return;
+
+    // if change breaks the order of target reaction types, do things differntly
+    if (enforceTargetOrder(matchIdx, newCfg)) return;
+
+    // go forward with setting new config state and activation
     activateMatchConfig(matchIdx, newCfg);
 
     {

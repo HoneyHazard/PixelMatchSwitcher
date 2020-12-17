@@ -311,6 +311,10 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     }
 
     setMinWidth();
+
+    // enable/disable control buttons
+    updateAvailableButtons(
+        (size_t)currentIndex(), m_core->multiMatchConfigSize());
 }
 
 void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
@@ -539,8 +543,8 @@ void PmMatchListWidget::constructRow(int idx,
 void PmMatchListWidget::updateAvailableButtons(
     size_t currIdx, size_t numConfigs)
 {
-    m_cfgMoveUpBtn->setEnabled(currIdx > 0 && currIdx < numConfigs);
-    m_cfgMoveDownBtn->setEnabled(numConfigs > 0 && currIdx < numConfigs - 1);
+    m_cfgMoveUpBtn->setEnabled(m_core->matchConfigCanMoveUp(currIdx));
+    m_cfgMoveDownBtn->setEnabled(m_core->matchConfigCanMoveDown(currIdx));
     m_cfgRemoveBtn->setEnabled(currIdx < numConfigs);
     //m_cfgClearBtn->setEnabled(numConfigs > 0);
 }
