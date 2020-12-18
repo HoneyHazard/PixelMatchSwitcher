@@ -31,7 +31,7 @@ void PmLingerQueue::removeByMatchIndex(size_t matchIndex)
 
 std::vector<size_t> PmLingerList::removeExpired(const QTime &currTime)
 {
-	std::vector<size_t> ret;
+    std::vector<size_t> ret;
     for (auto itr = begin(); itr != end();) {
         if (currTime > itr->endTime) {
             ret.push_back(itr->matchIndex);

@@ -37,7 +37,7 @@ signals:
 
 protected slots:
     // core event handlers
-	void onScenesChanged(
+    void onScenesChanged(
         QList<std::string> scenes, QList<std::string> sceneItems);
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
@@ -57,7 +57,7 @@ protected slots:
 
 protected:
     enum class ColOrder;
-	enum class ActionStackOrder;
+    enum class ActionStackOrder;
     static const QStringList k_columnLabels;
 
     static const QString k_dontSwitchStr;

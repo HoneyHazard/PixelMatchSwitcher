@@ -391,7 +391,7 @@ void PmMatchListWidget::onRowSelected()
 
 void PmMatchListWidget::onConfigInsertButtonReleased()
 {
-	PmMatchConfig newCfg;
+    PmMatchConfig newCfg;
 
     size_t idx = (size_t)(currentIndex());
     size_t sz = m_core->multiMatchConfigSize();
