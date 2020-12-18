@@ -1,6 +1,11 @@
 ## Pixel Match Switcher
 
-**Pixel Match Switcher** is an [OBS Studio](https://projectobs.com/en/) plugin that allows scene switching to be triggered by comparisons of match images against regions of a video frame. An individual matching image triggers transition to a specific scene, and several match entries (each with their own scene target) can be arranged in a priority-ordered list. Considerable amount of options is available for customizing the matching rules and the switching behavior. Significant effort has been made towards a quick and user-friendly creation of match rules.
+**Pixel Match Switcher** is an [OBS Studio](https://projectobs.com/en/) plugin that allows switching scenes or changing scene item visibility in response to pixels of video being matched against image templates.
+- An individual matching image triggers transition to a specific *scene*, and several match entries (each with their own scene target) can be arranged in a priority-ordered list.
+- Alternatively, individual *scene items* can be shown or hidden
+by independent matching rules.
+- Considerable amount of options is available for customizing the matching rules and the switching behavior.
+- Significant effort has been made towards a quick and user-friendly creation of match rules.
 
 The following are some of the foreseeable use cases for the plugin:
 - Streamers often like to have displays with a bigger streamer-cam and/or ads when they are in a game menu, or some other “non gameplay” area of the game.
@@ -46,7 +51,11 @@ We hope to see the [changes](https://github.com/HoneyHazard/obs-studio-atomic-ef
 - [Debian-based Linux: OBS In-tree](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/Build-on-Debian-based-Linux%EA%9E%89-OBS-In-Tree)
 - [obs-studio-pixel-match-switcher](https://github.com/PixelMatchSwitcher/obs-studio-pixel-match-switcher) is forked from [obs-studio-atomic-effects](https://github.com/HoneyHazard/obs-studio-atomic-effects), for the sole purpose of easy, in-tree builds of the plugin. These builds become [installer releases](https://github.com/HoneyHazard/PixelMatchSwitcher/releases) of Pixel Match Switcher.
 
+## Special Thank You
+:thumbsup: Special Thank You goes out to [Exceldro](https://github.com/exeldro) for letting [obs-move-transition](https://github.com/exeldro/obs-move-transition) plugin be included with our installer builds.
+
 ## Related Github Projects
 - [obs-studio-atomic-effects](https://github.com/HoneyHazard/obs-studio-atomic-effects)
 - [SceneSwitcher](https://github.com/WarmUpTill/SceneSwitcher)
 - [obs-screenshot-plugin](https://github.com/synap5e/obs-screenshot-plugin)
+- [obs-move-transition](https://github.com/exeldro/obs-move-transition)
