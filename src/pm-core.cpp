@@ -1443,7 +1443,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
                     if (reaction.type == PmReactionType::SwitchScene) {
                         if (m_sceneLingerQueue.size()
                          && m_sceneLingerQueue.top().matchIndex < matchIndex) {
-                        // there is a lingering entry of higher priority
+                            // there is a lingering entry of higher priority
                             continue;
                         }
                         // switch scene
@@ -1460,17 +1460,18 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             }
         }
 
-        if (m_sceneLingerQueue.size()) {
+        if (!sceneSelected && m_sceneLingerQueue.size()) {
             // a lingering match entry takes precedence
             const auto &lingerInfo = m_sceneLingerQueue.top();
             auto reaction = matchConfig(lingerInfo.matchIndex).reaction;
             switchScene(reaction.targetScene, reaction.sceneTransition);
+            sceneSelected = true;
             return;
         }
 
         // nothing matched so we fall back to a no-match scene
         PmReaction nmr = noMatchReaction();
-        if (nmr.isSet()) {
+        if (!sceneSelected && nmr.isSet()) {
             switchScene(nmr.targetScene, nmr.sceneTransition);
         }
     }
@@ -1481,6 +1482,8 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 void PmCore::switchScene(
     const std::string &targetSceneName, const std::string &transitionName)
 {
+	//return;
+
     obs_source_t* currSceneSrc = obs_frontend_get_current_scene();
     obs_source_t* targetSceneSrc = nullptr;
 
@@ -1510,11 +1513,9 @@ void PmCore::switchScene(
                 obs_frontend_set_current_transition(transitionSrc);
                 obs_source_release(transitionSrc);
             }
-        }
-        if (targetSceneSrc) {
             obs_frontend_set_current_scene(targetSceneSrc);
-            obs_source_release(targetSceneSrc);
         }
+        obs_source_release(targetSceneSrc);
     }
 
     obs_source_release(currSceneSrc);
