@@ -194,12 +194,17 @@ void PmPresetsWidget::onActivePresetDirtyStateChanged()
 
 void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
 {
-    PmListSelectorDialog selector(
-        obs_module_text("Presets to Import"),
-        availablePresets.keys(), availablePresets.keys(), this);
-    QList<std::string> selectedPresets = selector.selectedChoices();
-    if (selector.result() == QFileDialog::Rejected || selectedPresets.empty())
-        return;
+    QList<std::string> selectedPresets;
+    if (availablePresets.size() <= 1) {
+        PmListSelectorDialog selector(
+            obs_module_text("Presets to Import"),
+            availablePresets.keys(), availablePresets.keys(), this);
+        selectedPresets = selector.selectedChoices();
+        if (selector.result() == QFileDialog::Rejected || selectedPresets.empty())
+            return;
+    } else {
+        selectedPresets = availablePresets.keys();
+    }
 
     importPresets(availablePresets, selectedPresets);
 }
@@ -359,15 +364,17 @@ void PmPresetsWidget::onPresetExportXml()
 
     std::string activePresetName = m_core->activeMatchPresetName();
     if (activePresetName.size()) {
-        selectedPresets.push_back(activePresetName);
+	    selectedPresets = { activePresetName };
     }
 
-    PmListSelectorDialog selector(
-        obs_module_text("Presets to Export"),
-        availablePresets, selectedPresets, this);
-    selectedPresets = selector.selectedChoices();
-    if (selector.result() == QDialog::Rejected || selectedPresets.empty())
-        return;
+    if (availablePresets.size() > 1) {
+        PmListSelectorDialog selector(
+            obs_module_text("Presets to Export"),
+            availablePresets, selectedPresets, this);
+        selectedPresets = selector.selectedChoices();
+        if (selector.result() == QDialog::Rejected || selectedPresets.empty())
+            return;
+    }
 
     QFileDialog saveDialog(
         this, obs_module_text("Export Preset(s) XML"), QString(),

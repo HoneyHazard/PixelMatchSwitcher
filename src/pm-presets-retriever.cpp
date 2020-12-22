@@ -162,7 +162,7 @@ void PmPresetsRetriever::onDownloadXmlWorker()
         // parse the xml data; report available presets
         const QByteArray &xmlData = m_xmlRetriever->data();
         m_availablePresets = PmMatchPresets(xmlData);
-        if (m_availablePresets.size() == 1) {
+        if (m_availablePresets.size() <= 1) {
             retrievePresets(m_availablePresets.keys());
         } else {
             emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
