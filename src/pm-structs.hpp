@@ -257,7 +257,11 @@ namespace PmConstants
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
     const QString k_xmlFilenameFilter
         = "XML (*.xml);; All files (*.*)";
-    };
+
+    const QString k_problemCharacterStr
+        = QString("[") + QRegExp::escape("\\/:*?\"<>|\"") + QString("]");
+    const QRegExp k_problemCharacterRegex(PmConstants::k_problemCharacterStr);
+};
 
 /**
  * @brief Allows our data structures to be propagated through signals and slots.

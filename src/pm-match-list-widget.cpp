@@ -552,6 +552,8 @@ void PmMatchListWidget::updateAvailableButtons(
 void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
     const QList<std::string> &scenes, const QList<std::string> &sceneItems)
 {
+    if (!combo) return;
+
     auto model = dynamic_cast<QStandardItemModel *>(combo->model());
 
     combo->blockSignals(true);

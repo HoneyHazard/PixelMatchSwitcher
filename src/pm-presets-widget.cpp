@@ -379,7 +379,9 @@ void PmPresetsWidget::onPresetExportXml()
     QFileDialog saveDialog(
         this, obs_module_text("Export Preset(s) XML"), QString(),
         PmConstants::k_xmlFilenameFilter);
-    saveDialog.selectFile(activePresetName.data());
+    QString saveFilename = activePresetName.data();
+    saveFilename.replace(PmConstants::k_problemCharacterRegex, "");
+    saveDialog.selectFile(saveFilename);
     saveDialog.setAcceptMode(QFileDialog::AcceptSave);
     saveDialog.exec();
 

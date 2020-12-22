@@ -200,16 +200,11 @@ void PmPresetsRetriever::onRetrievePresets()
     std::string storePath = os_get_config_path_ptr(
         "obs-studio/plugin_config/PixelMatchSwitcher/presets/");
 
-    // regex for eliminating characters problematic for OSs' filenames
-    QString problemCharacterStr =
-        QString("[") + QRegExp::escape("\\/:*?\"<>|\"") + QString("]");
-    QRegExp problemCharacterRegex(problemCharacterStr);
-
     for (const std::string &presetName : m_selectedPresets) {
         PmMultiMatchConfig &mcfg = m_availablePresets[presetName];
 
         QString presetNameQstr = presetName.data();
-        presetNameQstr.replace(problemCharacterRegex, "_");
+        presetNameQstr.replace(PmConstants::k_problemCharacterRegex, "_");
         std::string presetNameSafe = presetNameQstr.toUtf8().data();
 
         blog(LOG_DEBUG, "sanitized preset name = %s", presetNameSafe.data());
