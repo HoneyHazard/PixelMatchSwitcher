@@ -76,10 +76,19 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("reaction");
     writer.writeTextElement("type", QString::number((int)type));
-    writer.writeTextElement("target_scene", targetScene.data());
-    writer.writeTextElement("target_transition", sceneTransition.data());
-    writer.writeTextElement("target_scene_item", targetSceneItem.data());
-    writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
+    if (targetScene.size()) {
+        writer.writeTextElement("target_scene", targetScene.data());
+        if (sceneTransition.size()) {
+            writer.writeTextElement(
+                "target_transition", sceneTransition.data());
+        }
+    }
+    if (targetSceneItem.size()) {
+        writer.writeTextElement("target_scene_item", targetSceneItem.data());
+    }
+    if (lingerMs > 0) {
+        writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
+    }
     writer.writeEndElement();
 }
 
@@ -246,7 +255,7 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
             } else if (name == "is_enabled") {
                 filterCfg.is_enabled = (elemText == "true" ? true : false);
             } else if (name == "reaction") {
-                reaction = PmReaction(reader);
+                //reaction = PmReaction(reader);
             }
         }
     }
@@ -282,7 +291,10 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("match_config");
     writer.writeTextElement("label", label.data());
-    writer.writeTextElement("match_image_filename", matchImgFilename.data());
+    if (matchImgFilename.size()) {
+        writer.writeTextElement(
+            "match_image_filename", matchImgFilename.data());
+    }
     writer.writeTextElement("was_downloaded", wasDownloaded ? "true" : "false");
     writer.writeTextElement("roi_left", QString::number(filterCfg.roi_left));
     writer.writeTextElement("roi_bottom", 
@@ -303,7 +315,9 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
         QString::number(filterCfg.mask_color.z));
     writer.writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
-    reaction.saveXml(writer);
+    if (reaction.isSet()) {
+        reaction.saveXml(writer);
+    }
     writer.writeEndElement();
 }
 
@@ -380,7 +394,9 @@ void PmMultiMatchConfig::saveXml(
 {
     writer.writeStartElement("preset");
     writer.writeTextElement("name", presetName.data());
-    noMatchReaction.saveXml(writer);
+    if (noMatchReaction.isSet()) {
+        noMatchReaction.saveXml(writer);
+    }
     for (const auto &cfg : *this) {
         cfg.saveXml(writer);
     }
@@ -479,7 +495,8 @@ PmMatchPresets::PmMatchPresets(const QByteArray& data)
 void PmMatchPresets::importXml(QXmlStreamReader &xml)
 {
     while (true) {
-        if (xml.error() != QXmlStreamReader::NoError) {
+        auto error = xml.error();
+        if (error != QXmlStreamReader::NoError) {
             throw std::runtime_error(xml.errorString().toUtf8().data());
         }
 
