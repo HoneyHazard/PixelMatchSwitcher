@@ -770,17 +770,13 @@ void PmCore::onMatchPresetExport(
         m_matchPresets.exportXml(filename, selectedPresets);
     } catch (const std::exception &e) {
         blog(LOG_ERROR, "Preset Export Failed: %s", e.what());
-        if (m_dialog) {
-            QMessageBox::critical(
-                m_dialog, obs_module_text("Preset Export Failed"), e.what());
-        }
+        emit sigShowException(
+            obs_module_text("Preset Export Failed"), e.what());
     } catch (...) {
         blog(LOG_ERROR, "Preset Export Failed: Unknown error.");
-        if (m_dialog) {
-            QMessageBox::critical(m_dialog,
-                obs_module_text("Preset Export Failed"),
-                obs_module_text("Unknown error."));
-        }
+        emit sigShowException(
+            obs_module_text("Preset Export Failed"),
+            obs_module_text("Unknown error."));
     }
 }
 
@@ -791,17 +787,13 @@ void PmCore::onMatchPresetsImport(std::string filename)
         emit sigPresetsImportAvailable(impPresets);
     } catch (const std::exception &e) {
         blog(LOG_ERROR, "Preset Import Failed: %s", e.what());
-        if (m_dialog) {
-            QMessageBox::critical(
-                m_dialog, obs_module_text("Preset Import Failed"), e.what());
-        }
+        emit sigShowException(
+            obs_module_text("Preset Import Failed"), e.what());
     } catch (...) {
         blog(LOG_ERROR, "Preset Import Failed: Uknown error.");
-        if (m_dialog) {
-            QMessageBox::critical(m_dialog,
-                obs_module_text("Preset Import Failed"),
-                obs_module_text("Unknown error."));
-        }
+        emit sigShowException(
+            obs_module_text("Preset Import Failed"),
+            obs_module_text("Unknown error."));
     }
 }
 

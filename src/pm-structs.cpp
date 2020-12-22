@@ -80,6 +80,7 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     writer.writeTextElement("target_transition", sceneTransition.data());
     writer.writeTextElement("target_scene_item", targetSceneItem.data());
     writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
+    writer.writeEndElement();
 }
 
 bool PmReaction::isSet() const

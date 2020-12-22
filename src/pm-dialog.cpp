@@ -98,6 +98,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
             this, &PmDialog::onCaptureStateChanged, Qt::QueuedConnection);
     connect(m_core, &PmCore::sigMatchImageCaptured,
             this, &PmDialog::onMatchImageCaptured, Qt::QueuedConnection);
+    connect(m_core, &PmCore::sigShowException,
+            this, &PmDialog::onShowException, Qt::QueuedConnection);
 
     connect(this, &PmDialog::sigCaptureStateChanged,
             m_core, &PmCore::onCaptureStateChanged, Qt::QueuedConnection);
@@ -142,6 +144,11 @@ void PmDialog::onMatchImageCaptured(QImage matchImg, int roiLeft, int roiBottom)
         m_core->getCaptureEndXY(x, y);
         emit sigCaptureStateChanged(PmCaptureState::SelectFinished, x, y);
     }
+}
+
+void PmDialog::onShowException(std::string caption, std::string descr)
+{
+    QMessageBox::critical(this, caption.data(), descr.data());
 }
 
 void PmDialog::closeEvent(QCloseEvent *closeEvent)

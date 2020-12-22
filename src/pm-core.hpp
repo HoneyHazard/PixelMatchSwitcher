@@ -98,6 +98,7 @@ signals:
 
     void sigFrameProcessed(PmMultiMatchResults);
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
+    void sigShowException(std::string caption, std::string descr);
 
     void sigAvailablePresetsChanged();
     void sigActivePresetChanged();
