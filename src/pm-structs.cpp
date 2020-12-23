@@ -225,37 +225,39 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
                 return;
             }
         } else if (reader.isStartElement()) {
-            QString elemText = reader.readElementText();
-            if (name == "label") {
-                label = elemText.toUtf8().data();
-            } else if (name == "match_image_filename") {
-                matchImgFilename = elemText.toUtf8().data();
-            } else if (name == "was_downloaded") {
-                wasDownloaded = (elemText == "true" ? true : false);
-            } else if (name == "roi_left") {
-                filterCfg.roi_left = elemText.toInt();
-            } else if (name == "roi_bottom") {
-                filterCfg.roi_bottom = elemText.toInt();
-            } else if (name == "per_pixel_allowed_error") {
-                filterCfg.per_pixel_err_thresh = elemText.toFloat();
-            } else if (name == "total_match_threshold") {
-                totalMatchThresh = elemText.toFloat();
-            } else if (name == "invert_result") {
-                invertResult = (elemText == "true" ? true : false);
-            } else if (name == "mask_mode") {
-                maskMode = (PmMaskMode)elemText.toInt();
-            } else if (name == "mask_alpha") {
-                filterCfg.mask_alpha = (elemText == "true" ? true : false);
-            } else if (name == "mask_color_r") {
-                filterCfg.mask_color.x = elemText.toFloat();
-            } else if (name == "mask_color_g") {
-                filterCfg.mask_color.y = elemText.toFloat();
-            } else if (name == "mask_color_b") {
-                filterCfg.mask_color.z = elemText.toFloat();
-            } else if (name == "is_enabled") {
-                filterCfg.is_enabled = (elemText == "true" ? true : false);
-            } else if (name == "reaction") {
-                //reaction = PmReaction(reader);
+            if (name == "reaction") {
+                reaction = PmReaction(reader);
+            } else {
+                QString elemText = reader.readElementText();
+                if (name == "label") {
+                    label = elemText.toUtf8().data();
+                } else if (name == "match_image_filename") {
+                    matchImgFilename = elemText.toUtf8().data();
+                } else if (name == "was_downloaded") {
+                    wasDownloaded = (elemText == "true" ? true : false);
+                } else if (name == "roi_left") {
+                    filterCfg.roi_left = elemText.toInt();
+                } else if (name == "roi_bottom") {
+                    filterCfg.roi_bottom = elemText.toInt();
+                } else if (name == "per_pixel_allowed_error") {
+                    filterCfg.per_pixel_err_thresh = elemText.toFloat();
+                } else if (name == "total_match_threshold") {
+                    totalMatchThresh = elemText.toFloat();
+                } else if (name == "invert_result") {
+                    invertResult = (elemText == "true" ? true : false);
+                } else if (name == "mask_mode") {
+                    maskMode = (PmMaskMode)elemText.toInt();
+                } else if (name == "mask_alpha") {
+                    filterCfg.mask_alpha = (elemText == "true" ? true : false);
+                } else if (name == "mask_color_r") {
+                    filterCfg.mask_color.x = elemText.toFloat();
+                } else if (name == "mask_color_g") {
+                    filterCfg.mask_color.y = elemText.toFloat();
+                } else if (name == "mask_color_b") {
+                    filterCfg.mask_color.z = elemText.toFloat();
+                } else if (name == "is_enabled") {
+                    filterCfg.is_enabled = (elemText == "true" ? true : false);
+                }
             }
         }
     }
