@@ -455,6 +455,12 @@ bool PmPreviewConfig::operator==(const PmPreviewConfig& other) const
     return previewMode == other.previewMode;
 }
 
+bool PmSceneItemData::operator==(const PmSceneItemData &other) const
+{
+    return si == other.si && filtersNames == other.filtersNames;
+}
+
+
 void pmRegisterMetaTypes()
 {
     qRegisterMetaType<size_t>("size_t");

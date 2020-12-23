@@ -216,15 +216,25 @@ public:
     QSet<std::string> sourceNames() const { return keys().toSet(); };
 };
 
-/*
- * @brief Represents a set of scene item references to available scene items
+/**
+ * @brief A reference to a scene item and a list of its filter names
  */
-class PmSceneItemsHash final : public QHash<std::string, OBSSceneItem>
+struct PmSceneItemData
 {
+    bool PmSceneItemData::operator==(const PmSceneItemData &other) const;
+
+    OBSSceneItem si;
+    QList<std::string> filtersNames;
+};
+
+/*
+ * @brief Represents a set 1f scene item references to available scene items
+ */
+class PmSceneItemsHash final : public QHash<std::string, PmSceneItemData> {
 public:
     PmSceneItemsHash() {}
     PmSceneItemsHash(const PmSceneItemsHash &other)
-        : QHash<std::string, OBSSceneItem>(other) {}
+        : QHash<std::string, PmSceneItemData>(other) {}
 
     QSet<std::string> sceneItemNames() const { return keys().toSet(); };
 };

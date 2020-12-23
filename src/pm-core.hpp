@@ -80,6 +80,7 @@ public:
     PmSourceHash scenes() const;
     QList<std::string> sceneNames() const;
     PmSceneItemsHash sceneItems() const;
+    QList<std::string> filters(const std::string &sceneItemName) const;
     QList<std::string> sceneItemNames() const;
     QList<std::string> availableTransitions() const 
         { return m_availableTransitions.keys(); }

@@ -937,6 +937,17 @@ PmSceneItemsHash PmCore::sceneItems() const
     return m_sceneItems;
 }
 
+QList<std::string> PmCore::filters(const std::string &sceneItemName) const
+{
+    QMutexLocker locker(&m_scenesMutex);
+    auto find = m_sceneItems.find(sceneItemName);
+    if (find == m_sceneItems.end()) {
+        return QList<std::string>();
+    } else {
+        return find->filtersNames;
+    }
+}
+
 QList<std::string> PmCore::sceneItemNames() const
 {
     QMutexLocker locker(&m_scenesMutex);
@@ -1035,7 +1046,7 @@ void PmCore::scanScenes()
         // build a mapping of scenes
         newScenes.insert(sceneName, sceneWsWs);
 
-        // build a mapping of scene items
+        // build a mapping of scene items and filters
         obs_scene_t *scene = obs_scene_from_source(sceneSrc);
         obs_scene_enum_items(
             scene,
@@ -1043,8 +1054,19 @@ void PmCore::scanScenes()
                 OBSSceneItem sceneItemSi(item);
                 PmSceneItemsHash *sceneItems = (PmSceneItemsHash *)p;
                 obs_source_t *sceneItemSrc = obs_sceneitem_get_source(item);
-                sceneItems->insert(
-                    obs_source_get_name(sceneItemSrc), sceneItemSi); 
+                PmSceneItemData siData {sceneItemSi, {}};
+
+                obs_source_enum_filters(sceneItemSrc,
+                    [](obs_source_t* parent, obs_source_t* child, void* p)
+                    {
+                        QList<std::string>* filterNames
+                            = (QList<std::string>*)p;
+                        filterNames->push_back(obs_source_get_name(child));
+                        UNUSED_PARAMETER(parent);
+                    },
+                    &siData.filtersNames);
+
+                sceneItems->insert(obs_source_get_name(sceneItemSrc), siData);
                 return true;
             },
             &newSceneItems);
@@ -1486,7 +1508,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 void PmCore::switchScene(
     const std::string &targetSceneName, const std::string &transitionName)
 {
-	//return;
+    //return;
 
     obs_source_t* currSceneSrc = obs_frontend_get_current_scene();
     obs_source_t* targetSceneSrc = nullptr;
@@ -1535,7 +1557,7 @@ void PmCore::toggleSceneItem(
         QMutexLocker locker(&m_scenesMutex);
         auto find = m_sceneItems.find(sceneItemName);
         if (find != m_sceneItems.end()) {
-            OBSSceneItem sceneItemSi = *find;
+            OBSSceneItem sceneItemSi = find->si;
             sceneItem = sceneItemSi;
         }
     }

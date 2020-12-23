@@ -583,11 +583,25 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
         model->item(idx)->setEnabled(false);
         idx++;
 
-        for (const std::string &val : sceneItems) {
-            combo->addItem(val.data());
+        QFont italicFont = font();
+	    italicFont.setItalic(true);
+
+        for (const std::string &siName : sceneItems) {
+            combo->addItem(siName.data());
             combo->setItemData(
                 idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
             idx++;
+
+            QList<std::string> filterNames = m_core->filters(siName);
+            for (const std::string& fiName : filterNames) {
+                combo->addItem(fiName.data());
+                combo->setItemData(
+                    idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
+                combo->setItemData(
+                    idx, Qt::AlignRight, Qt::TextAlignmentRole);
+                combo->setItemData(idx, italicFont, Qt::FontRole);
+                idx++;
+            }
         }
     }
 
