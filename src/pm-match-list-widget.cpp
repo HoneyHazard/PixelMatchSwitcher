@@ -599,25 +599,26 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
 void PmMatchListWidget::updateTargetSelection(
     QComboBox *targetCombo, const PmReaction &reaction, bool transparent)
 {
-    QColor targetColor = k_dontSwitchColor;
+    QColor targetColor;
     QString targetStr;
-    if (reaction.type == PmReactionType::SwitchScene) {
-        targetStr = reaction.targetScene.data();
-        if (targetStr.size()) {
+    if (reaction.isSet()) {
+        if (reaction.type == PmReactionType::SwitchScene) {
+            targetStr = reaction.targetScene.data();
             targetColor = k_scenesColor;
-        }
-    } else {
-        targetStr = reaction.targetSceneItem.data();
-        if (targetStr.size()) {
+        } else {
+            targetStr = reaction.targetSceneItem.data();
             targetColor = k_sceneItemsColor;
         }
+    } else {
+        targetColor = k_dontSwitchColor;
+        targetStr = k_dontSwitchStr;
     }
     QString stylesheet = QString("%1; color: %2")
         .arg(transparent ? k_transpBgStyle : "")
         .arg(targetColor.name());
 
     targetCombo->blockSignals(true);
-    targetCombo->setCurrentText(targetStr.size() ? targetStr : k_dontSwitchStr);
+    targetCombo->setCurrentText(targetStr);
     targetCombo->setStyleSheet(stylesheet);
     targetCombo->setToolTip(targetCombo->currentText());
     targetCombo->blockSignals(false);
@@ -769,7 +770,6 @@ bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
     // do not interfere with events
     return QObject::eventFilter(obj, event);
 }
-
 
 PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
     : QLabel(text, parentWidget)
