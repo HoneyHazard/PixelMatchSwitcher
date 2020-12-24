@@ -12,6 +12,7 @@ bool PmReaction::operator==(const PmReaction &other) const
         && targetScene == other.targetScene
         && sceneTransition == other.sceneTransition
         && targetSceneItem == other.targetSceneItem
+        && targetFilter == other.targetFilter
         && lingerMs == other.lingerMs;
 }
 
@@ -100,6 +101,9 @@ bool PmReaction::isSet() const
         case PmReactionType::ShowSceneItem:
         case PmReactionType::HideSceneItem:
             return targetSceneItem.size() > 0;
+        case PmReactionType::ShowFilter:
+        case PmReactionType::HideFilter:
+            return targetFilter.size() > 0;
         default:
             return false;
     }

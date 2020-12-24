@@ -294,8 +294,9 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
             auto sceneItemActionCombo = (QComboBox* )actionStack->widget(idx);
             if (sceneItemActionCombo) {
                 sceneItemActionCombo->blockSignals(true);
-                QString selStr = reaction.type == PmReactionType::HideSceneItem
-                    ? k_hideLabelStr : k_showLabelStr;
+                bool show = reaction.type == PmReactionType::ShowSceneItem
+                         || reaction.type == PmReactionType::ShowFilter;
+                QString selStr = show ? k_showLabelStr : k_hideLabelStr;
                 sceneItemActionCombo->setCurrentText(selStr);
                 sceneItemActionCombo->blockSignals(false);
             }
@@ -615,18 +616,19 @@ void PmMatchListWidget::updateTargetSelection(
 {
     QColor targetColor;
     QString targetStr;
-    QString fontStr = "";
+    QString fontStr;
     if (reaction.isSet()) {
         if (reaction.type == PmReactionType::SwitchScene) {
             targetStr = reaction.targetScene.data();
             targetColor = k_scenesColor;
-        } else {
+        } else if (reaction.type == PmReactionType::ShowSceneItem
+                || reaction.type == PmReactionType::HideSceneItem) {
             targetStr = reaction.targetSceneItem.data();
             targetColor = k_sceneItemsColor;
-            if (reaction.type == PmReactionType::ShowFilter
-             || reaction.type == PmReactionType::HideFilter) {
-                fontStr = "font: italic";
-            }
+        } else {
+            targetStr = reaction.targetFilter.data();
+            targetColor = k_sceneItemsColor;
+            fontStr = "font: italic";
         }
     } else {
         targetColor = k_dontSwitchColor;
