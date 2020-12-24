@@ -616,7 +616,6 @@ void PmMatchListWidget::updateTargetSelection(
 {
     QColor targetColor;
     QString targetStr;
-    QString fontStr;
     if (reaction.isSet()) {
         if (reaction.type == PmReactionType::SwitchScene) {
             targetStr = reaction.targetScene.data();
@@ -628,16 +627,14 @@ void PmMatchListWidget::updateTargetSelection(
         } else {
             targetStr = reaction.targetFilter.data();
             targetColor = k_sceneItemsColor;
-            fontStr = "font: italic";
         }
     } else {
         targetColor = k_dontSwitchColor;
         targetStr = k_dontSwitchStr;
     }
-    QString stylesheet = QString("%1; color: %2; %3")
+    QString stylesheet = QString("%1; color: %2")
         .arg(transparent ? k_transpBgStyle : "")
-        .arg(targetColor.name())
-        .arg(fontStr);
+        .arg(targetColor.name());
 
     targetCombo->blockSignals(true);
     targetCombo->setCurrentText(targetStr);
