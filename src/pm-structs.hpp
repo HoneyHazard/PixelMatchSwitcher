@@ -89,8 +89,10 @@ enum class PmReactionType : char {
     SwitchScene = 0,
     ShowSceneItem = 1,
     HideSceneItem = 2,
-    ShowImage = 3, /* TBD */
-    HideImage = 4  /* TBD */
+    ShowFilter = 3,
+    HideFilter = 4,
+    ShowImage = 5, /* TBD */
+    HideImage = 6  /* TBD */
 };
 
 /**
@@ -115,6 +117,7 @@ public:
     std::string sceneTransition = "Cut";
 
     std::string targetSceneItem;
+    std::string targetFilter;
 
     uint32_t lingerMs = 0;
 

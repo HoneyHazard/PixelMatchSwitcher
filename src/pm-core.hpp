@@ -194,6 +194,7 @@ protected:
     mutable QMutex m_scenesMutex;
     PmSourceHash m_scenes;
     PmSceneItemsHash m_sceneItems;
+    PmSourceHash m_filters;
 
     PmLingerQueue m_sceneLingerQueue;
     PmLingerList m_sceneItemLingerList;

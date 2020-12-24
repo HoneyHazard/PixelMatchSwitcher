@@ -51,7 +51,7 @@ const QString PmMatchListWidget::k_dontSwitchStr
 const QString PmMatchListWidget::k_scenesLabelStr
     = obs_module_text("--- Scenes ---");
 const QString PmMatchListWidget::k_sceneItemsLabelStr
-    = obs_module_text("--- Scene Items ---");
+    = obs_module_text("--- Scene Items & Filters ---");
 const QString PmMatchListWidget::k_showLabelStr = obs_module_text("Show");
 const QString PmMatchListWidget::k_hideLabelStr = obs_module_text("Hide");
 
@@ -584,7 +584,7 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
         idx++;
 
         QFont italicFont = font();
-	    italicFont.setItalic(true);
+        italicFont.setItalic(true);
 
         for (const std::string &siName : sceneItems) {
             combo->addItem(siName.data());
@@ -615,6 +615,7 @@ void PmMatchListWidget::updateTargetSelection(
 {
     QColor targetColor;
     QString targetStr;
+    QString fontStr = "";
     if (reaction.isSet()) {
         if (reaction.type == PmReactionType::SwitchScene) {
             targetStr = reaction.targetScene.data();
@@ -622,14 +623,19 @@ void PmMatchListWidget::updateTargetSelection(
         } else {
             targetStr = reaction.targetSceneItem.data();
             targetColor = k_sceneItemsColor;
+            if (reaction.type == PmReactionType::ShowFilter
+             || reaction.type == PmReactionType::HideFilter) {
+                fontStr = "font: italic";
+            }
         }
     } else {
         targetColor = k_dontSwitchColor;
         targetStr = k_dontSwitchStr;
     }
-    QString stylesheet = QString("%1; color: %2")
+    QString stylesheet = QString("%1; color: %2; %3")
         .arg(transparent ? k_transpBgStyle : "")
-        .arg(targetColor.name());
+        .arg(targetColor.name())
+        .arg(fontStr);
 
     targetCombo->blockSignals(true);
     targetCombo->setCurrentText(targetStr);
@@ -684,17 +690,28 @@ void PmMatchListWidget::targetSelected(int idx, const QString &targetQStr)
     if (targetQStr == k_dontSwitchStr) {
         reaction.targetSceneItem.clear();
         reaction.targetScene.clear();
+        reaction.targetFilter.clear();
     } else {
+        std::string targetStr = targetQStr.toUtf8().data();
         QList<std::string> sceneNames = m_core->sceneNames();
-        std::string targetStr(targetQStr.toUtf8().data());
+        QList<std::string> sceneItemNames = m_core->sceneItemNames();
         if (sceneNames.contains(targetStr)) {
             reaction.type = PmReactionType::SwitchScene;
             reaction.targetScene = targetStr;
             reaction.targetSceneItem.clear();
-        } else {
-            reaction.type =  PmReactionType::ShowSceneItem;
+            reaction.targetFilter.clear();
+        } else if (sceneItemNames.contains(targetStr)) {
+            if (reaction.type != PmReactionType::HideSceneItem)
+                reaction.type = PmReactionType::ShowSceneItem;
             reaction.targetSceneItem = targetStr;
             reaction.targetScene.clear();
+            reaction.targetFilter.clear();
+        } else {
+            if (reaction.type != PmReactionType::HideFilter)
+                reaction.type = PmReactionType::ShowFilter;
+            reaction.targetFilter = targetStr;
+            reaction.targetScene.clear();
+            reaction.targetSceneItem.clear();
         }
     }
 

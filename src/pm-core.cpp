@@ -1033,7 +1033,8 @@ void PmCore::scanScenes()
 
     PmSourceHash newScenes;
     PmSceneItemsHash newSceneItems;
-    QSet<OBSWeakSource> filters;
+    PmSourceHash newFilters;
+    QSet<OBSWeakSource> pixelMatchFilters;
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &sceneSrc = scenesInput.sources.array[i];
@@ -1046,7 +1047,7 @@ void PmCore::scanScenes()
         // build a mapping of scenes
         newScenes.insert(sceneName, sceneWsWs);
 
-        // build a mapping of scene items and filters
+        // build a mapping of scene items
         obs_scene_t *scene = obs_scene_from_source(sceneSrc);
         obs_scene_enum_items(
             scene,
@@ -1070,6 +1071,24 @@ void PmCore::scanScenes()
                 return true;
             },
             &newSceneItems);
+
+        // build a mapping of filters
+        for (const auto& val : newSceneItems.values()) {
+            obs_sceneitem_t *sceneItem = val.si;
+            obs_source_t *sceneItemSrc = obs_sceneitem_get_source(sceneItem);
+            for (const std::string& filterName : val.filtersNames) {
+                obs_source_t* filterSrc = obs_source_get_filter_by_name(
+                    sceneItemSrc, filterName.data());
+
+                obs_weak_source_t *filterWs
+                    = obs_source_get_weak_source(filterSrc);
+                OBSWeakSource filterWsWs(filterWs);
+                obs_weak_source_release(filterWs);
+                newFilters.insert(filterName, filterWsWs);
+
+                obs_source_release(filterSrc);
+            }
+        }
 
         // find filters
         obs_scene_enum_items(
@@ -1107,17 +1126,18 @@ void PmCore::scanScenes()
                 }
                 return true;
             },
-            &filters
+            &pixelMatchFilters
         );
     }
     obs_frontend_source_list_free(&scenesInput);
 
-    updateActiveFilter(filters);
+    updateActiveFilter(pixelMatchFilters);
 
     bool scenesChanged = false;
     bool sceneItemsChanged = false;
     QSet<std::string> oldScenes;
     QSet<std::string> oldSceneItems;
+    QSet<std::string> oldFilters;
     {
         QMutexLocker locker(&m_scenesMutex);
         if (m_scenes != newScenes) {
@@ -1126,6 +1146,10 @@ void PmCore::scanScenes()
         }
         if (m_sceneItems != newSceneItems) {
             oldSceneItems = m_sceneItems.sceneItemNames();
+            sceneItemsChanged = true;
+        }
+        if (m_filters != newFilters) {
+            oldFilters = m_filters.sourceNames();
             sceneItemsChanged = true;
         }
     }
@@ -1177,22 +1201,40 @@ void PmCore::scanScenes()
         }
     }
 
-    // adjust for scene item changes
+    // adjust for scene item and filter changes
     if (sceneItemsChanged) {
         QMutexLocker locker(&m_scenesMutex);
         size_t cfgSize = multiMatchConfigSize();
-        auto newNames = newSceneItems.sceneItemNames();
+        auto newSiNames = newSceneItems.sceneItemNames();
+        auto newFiNames = newFilters.sourceNames();
         for (size_t i = 0; i < cfgSize; ++i) {
             PmMatchConfig cfgCpy = matchConfig(i);
             auto &reaction = cfgCpy.reaction;
-            if (reaction.type != PmReactionType::SwitchScene) {
+            if (reaction.type == PmReactionType::ShowSceneItem
+             || reaction.type == PmReactionType::HideSceneItem) {
                 auto& sceneItemName = reaction.targetSceneItem;
-                if (sceneItemName.size() && !newNames.contains(sceneItemName)) {
+                if (sceneItemName.size()
+                 && !newSiNames.contains(sceneItemName)) {
                     if (oldSceneItems.contains(sceneItemName)) {
+                        // scene item was renamed
                         auto ws = m_sceneItems[sceneItemName];
                         sceneItemName = newSceneItems.key(ws);
                     } else {
+                        // scene item was deleted
                         sceneItemName.clear();
+                    }
+                    onMatchConfigChanged(i, cfgCpy);
+                }
+            } else if (reaction.type == PmReactionType::ShowFilter
+                    || reaction.type == PmReactionType::HideFilter) {
+                auto &filterName = reaction.targetFilter;
+                if (filterName.size() && !newFiNames.contains(filterName)) {
+                    if (oldFilters.contains(filterName)) {
+                        // filter was renamed
+                        auto ws = m_filters[filterName];
+                        filterName = newFilters.key(ws);
+                    } else {
+                        filterName.clear();
                     }
                     onMatchConfigChanged(i, cfgCpy);
                 }
@@ -1206,6 +1248,7 @@ void PmCore::scanScenes()
         QMutexLocker locker(&m_scenesMutex);
         m_scenes = newScenes;
         m_sceneItems = newSceneItems;
+        m_filters = newFilters;
     }
 }
 
