@@ -162,11 +162,9 @@ protected:
     void activate();
     void deactivate();
 
-    void doReaction(const PmReaction &reaction);
-    void toggleSceneItem(
-        const std::string &sceneItem, PmReactionType type, bool matched);
     void switchScene(
         const std::string& scene, const std::string &transition);
+    void toggleSceneItemOrFilter(PmReaction reaction, bool matched);
 
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);

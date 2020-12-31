@@ -1438,8 +1438,11 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     auto expiredSceneItems = m_sceneItemLingerList.removeExpired(currTime);
     for (size_t siIdx : expiredSceneItems) {
         PmReaction siReaction = reaction(siIdx);
-        toggleSceneItem(siReaction.targetSceneItem, siReaction.type, false);
+        toggleSceneItemOrFilter(siReaction, false);
     }
+
+
+    bool sceneSelected = false;
 
     for (size_t matchIndex = 0; matchIndex < newResults.size(); matchIndex++) {
         // assign match state
@@ -1456,33 +1459,78 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         emit sigNewMatchResults(matchIndex, newResults[matchIndex]);
 
         const PmReaction &reaction = cfg.reaction;
+
+        if (!m_switchingEnabled || !cfg.filterCfg.is_enabled
+         || !reaction.isSet()) {
+            // no reaction necessary
+            continue;
+        }
+
         uint32_t lingerMs = reaction.lingerMs;
-        if (newResult.isMatched) {
-            if (lingerMs) {
-                // unlinger, if this matching entry was previously lingering
-                if (reaction.type == PmReactionType::SwitchScene) {
+        bool isMatched = newResult.isMatched;
+        bool wasMatched = matchResults(matchIndex).isMatched;
+
+        if (reaction.type == PmReactionType::SwitchScene) {
+            if (isMatched) {
+                // target scene: matched
+                if (lingerMs > 0) {
+                    // unlinger scene
                     m_sceneLingerQueue.removeByMatchIndex(matchIndex);
-                } else {
-                    m_sceneItemLingerList.removeByMatchIndex(matchIndex);
+                }
+                if (!sceneSelected) {
+                    if (m_sceneLingerQueue.empty()
+                     || m_sceneLingerQueue.top().matchIndex > matchIndex) {
+                        // there no lingering entry of higher priority
+                        switchScene(
+                            reaction.targetScene, reaction.sceneTransition);
+                    }
+                    sceneSelected = true;
+                }
+            } else if (lingerMs > 0 && wasMatched) {
+                // a lingering entry just switched from match to no-match
+                QTime endTime = currTime.addMSecs(lingerMs);
+                if (reaction.type == PmReactionType::SwitchScene) {
+                    m_sceneLingerQueue.push(
+                        PmLingerInfo{matchIndex, endTime});
                 }
             }
         } else {
-            // no match; lets check if linger activation is needed
-            if (m_switchingEnabled && cfg.filterCfg.is_enabled
-             && reaction.isSet() && matchResults(matchIndex).isMatched) {
+            // show/hide scene item or filter
+            if (isMatched && !wasMatched) {
+                // no match -> matched
                 if (lingerMs > 0) {
-                    // a lingering entry just switched from match to no-match
-                    auto endTime = currTime.addMSecs(lingerMs);
-                    if (reaction.type == PmReactionType::SwitchScene) {
-                        m_sceneLingerQueue.push(PmLingerInfo{matchIndex, endTime});
-                    } else {
-                        m_sceneItemLingerList.push_back(
-                            PmLingerInfo{matchIndex, endTime});
-                    }
-                } else if (reaction.type != PmReactionType::SwitchScene) {
-                    toggleSceneItem(
-                        reaction.targetSceneItem, reaction.type, false);
+                    // unlinger scene item or filter
+                    m_sceneItemLingerList.removeByMatchIndex(matchIndex);
                 }
+                // toggle to matched
+                toggleSceneItemOrFilter(reaction, true);
+            } else if (!isMatched && wasMatched) {
+                // matched -> no match
+                if (lingerMs > 0) {
+                    // linger scene item or filter
+                    QTime endTime = currTime.addMSecs(lingerMs);
+                    m_sceneItemLingerList.push_back(
+                        PmLingerInfo{matchIndex, endTime});
+                } else {
+                    // toggle to unmatched
+                    toggleSceneItemOrFilter(reaction, false);
+                }
+            }
+        }
+    }
+
+    if (m_switchingEnabled && !sceneSelected) {
+        // no scene selected due to no match or linger
+        if (m_sceneLingerQueue.size()) {
+            // a lingering scene takes precedence
+            const auto &lingerInfo = m_sceneLingerQueue.top();
+            auto reaction = matchConfig(lingerInfo.matchIndex).reaction;
+            switchScene(reaction.targetScene, reaction.sceneTransition);
+        } else {
+            // nothing matched so we fall back to a no-match scene
+            PmReaction nmr = noMatchReaction();
+            if (!sceneSelected && nmr.isSet()) {
+                switchScene(nmr.targetScene, nmr.sceneTransition);
             }
         }
     }
@@ -1493,57 +1541,6 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         m_results = newResults;
     }
 
-    bool sceneSelected = false;
-
-    if (m_switchingEnabled) {
-        // test and react to conditions for switching
-
-        for (size_t matchIndex = 0; matchIndex < m_results.size(); ++matchIndex) {
-            const auto& resEntry = newResults[matchIndex];
-            if (resEntry.isMatched) {
-                // we have a result that matched
-                auto cfg = matchConfig(matchIndex);
-
-                if (cfg.filterCfg.is_enabled && cfg.reaction.isSet()) {
-                    // this matching entry is enabled and configured for switching
-
-                    const PmReaction &reaction = cfg.reaction;
-
-                    if (reaction.type == PmReactionType::SwitchScene) {
-                        if (m_sceneLingerQueue.size()
-                         && m_sceneLingerQueue.top().matchIndex < matchIndex) {
-                            // there is a lingering entry of higher priority
-                            continue;
-                        }
-                        // switch scene
-                        if (!sceneSelected) {
-                            switchScene(reaction.targetScene,
-                                        reaction.sceneTransition);
-                            sceneSelected = true;
-                        }
-                    } else {
-                        toggleSceneItem(
-                            reaction.targetSceneItem, reaction.type, true);
-                    }
-                }
-            }
-        }
-
-        if (!sceneSelected && m_sceneLingerQueue.size()) {
-            // a lingering match entry takes precedence
-            const auto &lingerInfo = m_sceneLingerQueue.top();
-            auto reaction = matchConfig(lingerInfo.matchIndex).reaction;
-            switchScene(reaction.targetScene, reaction.sceneTransition);
-            sceneSelected = true;
-            return;
-        }
-
-        // nothing matched so we fall back to a no-match scene
-        PmReaction nmr = noMatchReaction();
-        if (!sceneSelected && nmr.isSet()) {
-            switchScene(nmr.targetScene, nmr.sceneTransition);
-        }
-    }
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:
@@ -1591,24 +1588,39 @@ void PmCore::switchScene(
 }
 
 
-void PmCore::toggleSceneItem(
-    const std::string &sceneItemName, PmReactionType type, bool matched)
+void PmCore::toggleSceneItemOrFilter(PmReaction reaction, bool matched)
 {
-    obs_sceneitem_t* sceneItem = nullptr;
-
-    {
-        QMutexLocker locker(&m_scenesMutex);
-        auto find = m_sceneItems.find(sceneItemName);
-        if (find != m_sceneItems.end()) {
-            OBSSceneItem sceneItemSi = find->si;
-            sceneItem = sceneItemSi;
+    if (reaction.type == PmReactionType::ShowSceneItem
+     || reaction.type == PmReactionType::HideSceneItem) {
+        obs_sceneitem_t* sceneItem = nullptr;
+        {
+            QMutexLocker locker(&m_scenesMutex);
+            auto find = m_sceneItems.find(reaction.targetSceneItem);
+            if (find != m_sceneItems.end()) {
+                OBSSceneItem sceneItemSi = find->si;
+                sceneItem = sceneItemSi;
+            }
         }
-    }
-
-    if (sceneItem) {
-        bool visible
-            = (type == PmReactionType::ShowSceneItem) ? matched : !matched;
-        obs_sceneitem_set_visible(sceneItem, visible);
+        if (sceneItem) {
+            bool show = (reaction.type == PmReactionType::ShowSceneItem)
+                ? matched : !matched;
+            obs_sceneitem_set_visible(sceneItem, show);
+        }
+    } else {
+        obs_source_t *filterSrc = nullptr;
+        {
+            QMutexLocker locker(&m_scenesMutex);
+            auto find = m_filters.find(reaction.targetFilter);
+            if (find != m_filters.end()) {
+                OBSWeakSource filterWs = *find;
+                filterSrc = obs_weak_source_get_source(filterWs);
+            }
+        }
+        if (filterSrc) {
+            bool show = (reaction.type == PmReactionType::ShowFilter)
+                ? matched : !matched;
+            obs_source_set_enabled(filterSrc, show);
+        }
     }
 }
 

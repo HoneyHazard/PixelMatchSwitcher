@@ -700,14 +700,22 @@ void PmMatchListWidget::targetSelected(int idx, const QString &targetQStr)
             reaction.targetSceneItem.clear();
             reaction.targetFilter.clear();
         } else if (sceneItemNames.contains(targetStr)) {
-            if (reaction.type != PmReactionType::HideSceneItem)
+            if (reaction.type == PmReactionType::HideSceneItem
+             || reaction.type == PmReactionType::HideFilter) {
+                reaction.type = PmReactionType::HideSceneItem;
+            } else {
                 reaction.type = PmReactionType::ShowSceneItem;
+            }
             reaction.targetSceneItem = targetStr;
             reaction.targetScene.clear();
             reaction.targetFilter.clear();
         } else {
-            if (reaction.type != PmReactionType::HideFilter)
+            if (reaction.type == PmReactionType::HideSceneItem
+             || reaction.type == PmReactionType::HideFilter) {
+                reaction.type = PmReactionType::HideFilter;
+            } else {
                 reaction.type = PmReactionType::ShowFilter;
+            }
             reaction.targetFilter = targetStr;
             reaction.targetScene.clear();
             reaction.targetSceneItem.clear();
