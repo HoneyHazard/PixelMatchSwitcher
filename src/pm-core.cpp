@@ -1339,6 +1339,9 @@ void PmCore::activateMatchConfig(
             orphanedImages->insert(oldCfg.matchImgFilename);
         }
     }
+
+    // force toggle scene items and filters to proper values
+    m_forceSceneItemRefresh = true;
 }
 
 void PmCore::loadImage(size_t matchIdx)
@@ -1496,7 +1499,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             }
         } else {
             // show/hide scene item or filter
-            if (isMatched && !wasMatched) {
+            if (isMatched && (!wasMatched || m_forceSceneItemRefresh)) {
                 // no match -> matched
                 if (lingerMs > 0) {
                     // unlinger scene item or filter
@@ -1504,7 +1507,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
                 }
                 // toggle to matched
                 toggleSceneItemOrFilter(reaction, true);
-            } else if (!isMatched && wasMatched) {
+            } else if (!isMatched && (wasMatched || m_forceSceneItemRefresh)) {
                 // matched -> no match
                 if (lingerMs > 0) {
                     // linger scene item or filter
@@ -1541,6 +1544,8 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         m_results = newResults;
     }
 
+    if (m_forceSceneItemRefresh)
+        m_forceSceneItemRefresh = false;
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:

@@ -22,6 +22,7 @@ PmReaction::PmReaction(obs_data_t *data)
     type = (PmReactionType)obs_data_get_int(data, "type");
     targetSceneItem = obs_data_get_string(data, "target_scene_item");
     targetScene = obs_data_get_string(data, "target_scene");
+    targetFilter = obs_data_get_string(data, "target_filter");
     obs_data_set_default_string(
         data, "target_transition", sceneTransition.data());
     sceneTransition = obs_data_get_string(data, "target_transition");
@@ -44,19 +45,19 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
                 return;
             }
         } else if (reader.isStartElement()) {
+            QString elementText = reader.readElementText();
             if (name == "type") {
-                type = (PmReactionType)reader.readElementText().toInt();
+                type = (PmReactionType)elementText.toInt();
             } else if (name == "target_scene") {
-                targetScene =
-                    reader.readElementText().toUtf8().data();
-            } else if (name == "target_scene_item") {
-                targetSceneItem =
-                    reader.readElementText().toUtf8().data();
+                targetScene = elementText.toUtf8().data();
             } else if (name == "target_transition") {
-                sceneTransition =
-                    reader.readElementText().toUtf8().data();
+                sceneTransition = elementText.toUtf8().data();
+            } else if (name == "target_scene_item") {
+                targetSceneItem = elementText.toUtf8().data();
+            } else if (name == "target_filter") {
+                targetFilter = elementText.toUtf8().data();
             } else if (name == "linger_ms") {
-                lingerMs = reader.readElementText().toInt();
+                lingerMs = elementText.toInt();
             }
         }
     }
@@ -69,6 +70,7 @@ obs_data_t *PmReaction::save() const
     obs_data_set_string(ret, "target_scene", targetScene.data());
     obs_data_set_string(ret, "target_transition", sceneTransition.data());
     obs_data_set_string(ret, "target_scene_item", targetSceneItem.data());
+    obs_data_set_string(ret, "target_filter", targetFilter.data());
     obs_data_set_int(ret, "linger_ms", (int)lingerMs);
     return ret;
 }
@@ -86,6 +88,9 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     }
     if (targetSceneItem.size()) {
         writer.writeTextElement("target_scene_item", targetSceneItem.data());
+    }
+    if (targetFilter.size()) {
+	    writer.writeTextElement("target_filter", targetFilter.data());
     }
     if (lingerMs > 0) {
         writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
