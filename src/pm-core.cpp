@@ -1607,7 +1607,6 @@ void PmCore::toggleSceneItemOrFilter(PmReaction reaction, bool matched)
             bool show = (reaction.type == PmReactionType::ShowSceneItem)
                 ? matched : !matched;
             obs_sceneitem_set_visible(sceneItem, show);
-            obs_sceneitem_release(sceneItem);
         }
     } else {
         obs_source_t *filterSrc = nullptr;
