@@ -1553,8 +1553,6 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 void PmCore::switchScene(
     const std::string &targetSceneName, const std::string &transitionName)
 {
-    //return;
-
     obs_source_t* currSceneSrc = obs_frontend_get_current_scene();
     obs_source_t* targetSceneSrc = nullptr;
 
@@ -1592,7 +1590,6 @@ void PmCore::switchScene(
     obs_source_release(currSceneSrc);
 }
 
-
 void PmCore::toggleSceneItemOrFilter(PmReaction reaction, bool matched)
 {
     if (reaction.type == PmReactionType::ShowSceneItem
@@ -1610,6 +1607,7 @@ void PmCore::toggleSceneItemOrFilter(PmReaction reaction, bool matched)
             bool show = (reaction.type == PmReactionType::ShowSceneItem)
                 ? matched : !matched;
             obs_sceneitem_set_visible(sceneItem, show);
+            obs_sceneitem_release(sceneItem);
         }
     } else {
         obs_source_t *filterSrc = nullptr;
@@ -1625,6 +1623,7 @@ void PmCore::toggleSceneItemOrFilter(PmReaction reaction, bool matched)
             bool show = (reaction.type == PmReactionType::ShowFilter)
                 ? matched : !matched;
             obs_source_set_enabled(filterSrc, show);
+            obs_source_release(filterSrc);
         }
     }
 }
