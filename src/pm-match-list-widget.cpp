@@ -487,7 +487,7 @@ void PmMatchListWidget::constructRow(int idx,
     updateTargetChoices(targetCombo, scenes, sceneItems);
     targetCombo->installEventFilter(this);
     connect(targetCombo, &QComboBox::currentTextChanged,
-        [this, idx](const QString& str) { targetSelected(idx, str); });
+        [this, targetCombo, idx](){ targetSelected(idx, targetCombo); });
     m_tableWidget->setCellWidget(idx, (int)ColOrder::TargetSelect, targetCombo);
 
     // scene transition or scene item action
@@ -560,9 +560,15 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
     combo->blockSignals(true);
     auto currText = combo->currentText();
     combo->clear();
+
+    QFont mainFont = font();
+    mainFont.setBold(true);
+
     int idx = 0;
 
     combo->addItem(k_dontSwitchStr);
+    combo->setItemData(idx, "", Qt::UserRole);
+    combo->setItemData(idx, mainFont, Qt::FontRole);
     combo->setItemData(idx, QBrush(k_dontSwitchColor), Qt::TextColorRole);
     idx++;
 
@@ -571,8 +577,10 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
     model->item(idx)->setEnabled(false);
     idx++;
 
-    for (const std::string &val : scenes) {
-        combo->addItem(val.data());
+    for (const std::string &sceneName : scenes) {
+        combo->addItem(sceneName.data());
+        combo->setItemData(idx, sceneName.data(), Qt::UserRole);
+        combo->setItemData(idx, mainFont, Qt::FontRole);
         combo->setItemData(idx, QBrush(k_scenesColor), Qt::TextColorRole);
         idx++;
     }
@@ -584,23 +592,26 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
         model->item(idx)->setEnabled(false);
         idx++;
 
-        QFont italicFont = font();
-        italicFont.setItalic(true);
+        QFont filtersFont = font();
+        filtersFont.setBold(false);
 
         for (const std::string &siName : sceneItems) {
             combo->addItem(siName.data());
+            combo->setItemData(idx, siName.data(), Qt::UserRole);
+            combo->setItemData(idx, mainFont, Qt::FontRole);
             combo->setItemData(
                 idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
             idx++;
 
             QList<std::string> filterNames = m_core->filters(siName);
             for (const std::string& fiName : filterNames) {
-                combo->addItem(fiName.data());
+                QString fiLabel
+                    = QString(" ") + QChar(0x25CF) + ' ' + fiName.data();
+                combo->addItem(fiLabel);
+                combo->setItemData(idx, fiName.data(), Qt::UserRole);
                 combo->setItemData(
                     idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
-                combo->setItemData(
-                    idx, Qt::AlignRight, Qt::TextAlignmentRole);
-                combo->setItemData(idx, italicFont, Qt::FontRole);
+                combo->setItemData(idx, filtersFont, Qt::FontRole);
                 idx++;
             }
         }
@@ -615,29 +626,30 @@ void PmMatchListWidget::updateTargetSelection(
     QComboBox *targetCombo, const PmReaction &reaction, bool transparent)
 {
     QColor targetColor;
-    QString targetStr;
+    std::string targetStr;
     if (reaction.isSet()) {
         if (reaction.type == PmReactionType::SwitchScene) {
-            targetStr = reaction.targetScene.data();
+            targetStr = reaction.targetScene;
             targetColor = k_scenesColor;
         } else if (reaction.type == PmReactionType::ShowSceneItem
                 || reaction.type == PmReactionType::HideSceneItem) {
-            targetStr = reaction.targetSceneItem.data();
+            targetStr = reaction.targetSceneItem;
             targetColor = k_sceneItemsColor;
         } else {
-            targetStr = reaction.targetFilter.data();
+            targetStr = reaction.targetFilter;
             targetColor = k_sceneItemsColor;
         }
     } else {
         targetColor = k_dontSwitchColor;
-        targetStr = k_dontSwitchStr;
+        targetStr = "";
     }
     QString stylesheet = QString("%1; color: %2")
         .arg(transparent ? k_transpBgStyle : "")
         .arg(targetColor.name());
 
     targetCombo->blockSignals(true);
-    targetCombo->setCurrentText(targetStr);
+    int idx = targetCombo->findData(targetStr.data(), Qt::UserRole);
+    targetCombo->setCurrentIndex(idx);
     targetCombo->setStyleSheet(stylesheet);
     targetCombo->setToolTip(targetCombo->currentText());
     targetCombo->blockSignals(false);
@@ -680,18 +692,17 @@ void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
     emit sigMatchConfigChanged(index, cfg);
 }
 
-void PmMatchListWidget::targetSelected(int idx, const QString &targetQStr)
+void PmMatchListWidget::targetSelected(int matchIdx, QComboBox *box)
 {
-    size_t index = (size_t)(idx);
+    size_t index = (size_t)(matchIdx);
     PmMatchConfig cfg = m_core->matchConfig(index);
     PmReaction &reaction = cfg.reaction;
+    QByteArray ba = box->currentData(Qt::UserRole).toByteArray();
+    std::string targetStr(ba.data());
 
-    if (targetQStr == k_dontSwitchStr) {
-        reaction.targetSceneItem.clear();
-        reaction.targetScene.clear();
-        reaction.targetFilter.clear();
+    if (targetStr.empty()) {
+        reaction = PmReaction();
     } else {
-        std::string targetStr = targetQStr.toUtf8().data();
         QList<std::string> sceneNames = m_core->sceneNames();
         QList<std::string> sceneItemNames = m_core->sceneItemNames();
         if (sceneNames.contains(targetStr)) {

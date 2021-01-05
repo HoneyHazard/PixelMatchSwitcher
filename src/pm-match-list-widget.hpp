@@ -88,7 +88,7 @@ protected:
     void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
-    void targetSelected(int idx, const QString &targetQStr);
+    void targetSelected(int idx, QComboBox *box);
     void sceneTransitionSelected(int idx, const QString &transTr);
     void sceneItemActionSelected(int idx, const QString &actionStr);
     
