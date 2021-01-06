@@ -625,6 +625,62 @@ static uint32_t pixel_match_filter_height(void *data)
     return obs_source_get_base_height(parent);
 }
 
+bool settings_button_callback(
+    obs_properties_t *props, obs_property_t *property, void *data)
+{
+    struct pm_filter_data *filter = (struct pm_filter_data *)data;
+    if (filter && filter->on_settings_button_released) 
+        filter->on_settings_button_released();
+
+    UNUSED_PARAMETER(props);
+    UNUSED_PARAMETER(property);
+}
+
+static obs_properties_t* pixel_match_filter_properties(void* data)
+{
+    //struct pm_filter_data *filter = (struct pm_filter_data*)data;
+
+    obs_properties_t* props = obs_properties_create();
+
+    obs_properties_add_button(props, "settings_button",
+        obs_module_text("Open Settings"), settings_button_callback);
+
+#if 0
+    obs_properties_add_int(properties,
+        "roi_left", obs_module_text("Roi Left"),
+        0, 10000, 1);
+    obs_properties_add_int(properties,
+        "roi_bottom", obs_module_text("Roi Bottom"),
+        0, 10000, 1);
+    obs_properties_add_int(properties,
+        "roi_right", obs_module_text("Roi Right"),
+        0, 10000, 1);
+    obs_properties_add_int(properties,
+        "roi_top", obs_module_text("Roi Top"),
+        0, 10000, 1);
+
+    obs_properties_add_int(properties,
+        "per_pixel_err_thresh",
+        obs_module_text("Per-Pixel Error Threshold, %"),
+        0, 100, 1);
+    obs_properties_add_int(properties,
+        "total_match_thresh",
+        obs_module_text("Total Match Threshold, %"),
+        0, 100, 1);
+
+    obs_properties_add_int(properties,
+        "num_matched",
+        obs_module_text("Number Matched:"),
+        0, 65536, 1);
+
+    //obs_property_set_modified_callback(
+    //    p, pixel_match_prop_changed_callback);
+
+#endif
+
+    return props;
+}
+
 struct obs_source_info pixel_match_filter = {
     .id = PIXEL_MATCH_FILTER_ID,
     .type = OBS_SOURCE_TYPE_FILTER,
@@ -633,7 +689,7 @@ struct obs_source_info pixel_match_filter = {
     .create = pixel_match_filter_create,
     .destroy = pixel_match_filter_destroy,
     //.update = pixel_match_filter_update,
-    //.get_properties = pixel_match_filter_properties,
+    .get_properties = pixel_match_filter_properties,
     //.get_defaults = pixel_match_filter_defaults,
     //.video_tick = pixel_match_filter_tick,
     .video_render = pixel_match_filter_render,
@@ -787,52 +843,6 @@ void pm_resize_match_entries(struct pm_filter_data *filter, size_t new_size)
         UNUSED_PARAMETER(p);
         UNUSED_PARAMETER(settings);
         return true;
-    }
-#endif
-
-#if 0
-    static obs_properties_t* pixel_match_filter_properties(void* data)
-    {
-        //struct pm_filter_data *filter
-        //    = (struct pm_filter_data*)data;
-
-        obs_properties_t* properties = obs_properties_create();
-
-        obs_properties_add_int(properties,
-            "roi_left", obs_module_text("Roi Left"),
-            0, 10000, 1);
-        obs_properties_add_int(properties,
-            "roi_bottom", obs_module_text("Roi Bottom"),
-            0, 10000, 1);
-        obs_properties_add_int(properties,
-            "roi_right", obs_module_text("Roi Right"),
-            0, 10000, 1);
-        obs_properties_add_int(properties,
-            "roi_top", obs_module_text("Roi Top"),
-            0, 10000, 1);
-
-        obs_properties_add_int(properties,
-            "per_pixel_err_thresh",
-            obs_module_text("Per-Pixel Error Threshold, %"),
-            0, 100, 1);
-        obs_properties_add_int(properties,
-            "total_match_thresh",
-            obs_module_text("Total Match Threshold, %"),
-            0, 100, 1);
-
-        obs_properties_add_int(properties,
-            "num_matched",
-            obs_module_text("Number Matched:"),
-            0, 65536, 1);
-
-        //obs_property_set_modified_callback(
-        //    p, pixel_match_prop_changed_callback);
-
-        // TODO scenes
-        // TODO mask image
-        return properties;
-
-        UNUSED_PARAMETER(data);
     }
 #endif
 

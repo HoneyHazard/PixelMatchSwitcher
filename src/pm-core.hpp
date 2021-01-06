@@ -43,6 +43,7 @@ class PmCore : public QObject
     friend void init_pixel_match_switcher();
     friend void free_pixel_match_switcher();
     friend void on_frame_processed(pm_filter_data *filterData);
+    friend void on_settings_button_released();
     friend void on_match_image_captured(pm_filter_data *filterData);
     friend void pm_save_load_callback(
         obs_data_t *save_data, bool saving, void *corePtr);
@@ -124,6 +125,8 @@ signals:
     void sigMatchImagesOrphaned(QList<std::string> filenames);
 
 public slots:
+    void onMenuAction();
+
     void onMatchPresetSelect(std::string name);
     void onMatchPresetSave(std::string name);
     void onMatchPresetRemove(std::string name);
@@ -152,7 +155,6 @@ public slots:
     void onMatchImagesRemove(QList<std::string> orphanedImages);
 
 protected slots:
-    void onMenuAction();
     void onPeriodicUpdate();
     void onFrameProcessed(PmMultiMatchResults);
 

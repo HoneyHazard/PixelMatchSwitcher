@@ -95,6 +95,9 @@ struct pm_filter_data
     // callbacks for fast reactions
     void (*on_match_image_captured)(struct pm_filter_data *data);
     void (*on_frame_processed)(struct pm_filter_data* filter_data);
+
+    // callback for showing dialog upon settings button in filter UI
+    void (*on_settings_button_released)();
 };
 
 void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data);

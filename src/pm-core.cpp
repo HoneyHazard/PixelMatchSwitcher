@@ -69,6 +69,14 @@ void on_frame_processed(pm_filter_data *filterData)
     }
 }
 
+void on_settings_button_released()
+{
+    auto core = PmCore::m_instance;
+    if (core) {
+        core->onMenuAction();
+    }
+}
+
 void on_match_image_captured(pm_filter_data *filterData)
 {
     auto core = PmCore::m_instance;
@@ -1284,6 +1292,7 @@ void PmCore::updateActiveFilter(
             m_activeFilter.lockData();
             data->on_frame_processed = on_frame_processed;
             data->on_match_image_captured = on_match_image_captured;
+            data->on_settings_button_released = on_settings_button_released;
             data->selected_match_index = m_selectedMatchIndex;
             m_activeFilter.unlockData();
             pm_resize_match_entries(data, cfgSize);

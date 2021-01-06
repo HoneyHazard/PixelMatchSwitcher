@@ -126,7 +126,7 @@ public:
         { return !operator==(other); }
 };
 
-/**m_scenes
+/**
  * @brief Describes matching configuration of an individual match entry, 
  *        as well as switching behavior in case of a match
  */
