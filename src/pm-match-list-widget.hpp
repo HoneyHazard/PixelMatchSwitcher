@@ -54,6 +54,7 @@ protected slots:
     void onConfigMoveDownButtonReleased();
     void onNoMatchSceneSelected(QString str);
     void onNoMatchTransitionSelected(QString str);
+    void onCellChanged(int row, int col);
 
 protected:
     enum class ColOrder;

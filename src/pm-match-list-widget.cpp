@@ -195,6 +195,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     connect(m_tableWidget->selectionModel(),
         &QItemSelectionModel::selectionChanged,
         this, &PmMatchListWidget::onRowSelected, qc);
+    connect(m_tableWidget, &QTableWidget::cellChanged,
+        this, &PmMatchListWidget::onCellChanged, qc);
     connect(m_cfgMoveUpBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigMoveUpButtonReleased, qc);
     connect(m_cfgMoveDownBtn, &QPushButton::released,
@@ -438,6 +440,14 @@ void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
     PmReaction noMatchReaction = m_core->noMatchReaction();
     noMatchReaction.sceneTransition = str.toUtf8().data();
     emit sigNoMatchReactionChanged(noMatchReaction);
+}
+
+void PmMatchListWidget::onCellChanged(int row, int col)
+{
+    int numRows = m_tableWidget->rowCount();
+    if (row == numRows - 1) {
+        m_tableWidget->setItem(row, col, nullptr);
+    }
 }
 
 QPushButton* PmMatchListWidget::prepareButton(
