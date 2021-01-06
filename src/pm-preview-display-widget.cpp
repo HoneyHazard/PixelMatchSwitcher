@@ -333,7 +333,7 @@ void PmPreviewDisplayWidget::updateDisplayState(
                 "Filter initialization failed.<br />"
                 "<br />"
                 "Grab your OBS logs and <br />"
-                "report this on Github!<br />"),
+                "report this on Github!"),
                 Qt::red);
         } else {
             m_imageView->showMessage(obs_module_text(
