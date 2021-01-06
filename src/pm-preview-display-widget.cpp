@@ -12,6 +12,8 @@
 #include <QThread> // sleep
 #include <QMouseEvent>
 
+extern "C" bool pm_filter_failed;
+
 PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
 : QWidget(parent)
 , m_core(core)
@@ -326,14 +328,23 @@ void PmPreviewDisplayWidget::updateDisplayState(
             "to connect to Pixel Match filter(s)."), QColor(255, 159, 0));
         m_displayStack->setCurrentWidget(m_imageView);
     } else if (!activeFilter.isValid()) {
-        m_imageView->showMessage(obs_module_text(
-            "Filter not found in the current scene.<br />"
-            "<br />"
-            "Right click an OBS video source. Select Filters.<br />"
-            "Add Pixel Match filter to the Effect Filters list.<br />"
-            "<br />"
-            "Filter already added? Ensure the scene is selected."),
-            Qt::yellow);
+        if (pm_filter_failed) {
+            m_imageView->showMessage(obs_module_text(
+                "Filter initialization failed.<br />"
+                "<br />"
+                "Grab your OBS logs and <br />"
+                "report this on Github!<br />"),
+                Qt::red);
+        } else {
+            m_imageView->showMessage(obs_module_text(
+                "Filter not found in the current scene.<br />"
+                "<br />"
+                "Right click an OBS video source. Select Filters.<br />"
+                "Add Pixel Match filter to the Effect Filters list.<br />"
+                "<br />"
+                "Filter already added? Ensure the scene is selected."),
+                Qt::yellow);
+        }
         m_displayStack->setCurrentWidget(m_imageView);
     } else {
         m_displayStack->setCurrentWidget(m_filterDisplay);

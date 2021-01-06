@@ -8,6 +8,8 @@ const float PM_AUTOMASK_BORDER_THICKNESS = 4.f;
 
 struct vec3 vec3_dummy;
 
+bool pm_filter_failed = false;
+
 static const char *pixel_match_filter_get_name(void* unused)
 {
     UNUSED_PARAMETER(unused);
@@ -62,6 +64,8 @@ static void *pixel_match_filter_create(
     //  gfx init
     obs_enter_graphics();
     filter->effect = gs_effect_create_from_file(effect_path, NULL);
+    if (!filter->effect)
+	    goto gfx_fail;
     obs_leave_graphics();
 
     bfree(effect_path);
@@ -126,6 +130,7 @@ gfx_fail:
 error:
     blog(LOG_ERROR, "%s", obs_module_text("filter initialization failed."));
     pixel_match_filter_destroy(filter);
+    pm_filter_failed = true;
     return NULL;
 
     UNUSED_PARAMETER(settings);
@@ -631,6 +636,7 @@ bool settings_button_callback(
     struct pm_filter_data *filter = (struct pm_filter_data *)data;
     if (filter && filter->on_settings_button_released) 
         filter->on_settings_button_released();
+    return true;
 
     UNUSED_PARAMETER(props);
     UNUSED_PARAMETER(property);
@@ -679,6 +685,8 @@ static obs_properties_t* pixel_match_filter_properties(void* data)
 #endif
 
     return props;
+
+    UNUSED_PARAMETER(data);
 }
 
 struct obs_source_info pixel_match_filter = {
