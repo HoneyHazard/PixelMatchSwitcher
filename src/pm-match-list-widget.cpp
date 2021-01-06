@@ -235,7 +235,9 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
     // last row below is empty (for insertion)
     for (int c = 0; c < (int)ColOrder::NumCols; ++c) {
         m_tableWidget->setCellWidget((int)sz, c, nullptr);
-        m_tableWidget->setItem((int)sz, c, nullptr);
+        QTableWidgetItem *item = new QTableWidgetItem();
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        m_tableWidget->setItem((int)sz, c, item);
     }
 
     // enable/disable control buttons
