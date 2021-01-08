@@ -147,17 +147,21 @@ void PmPresetsWidget::onAvailablePresetsChanged()
     std::string activePreset = m_core->activeMatchPresetName();
     m_presetCombo->blockSignals(true);
     m_presetCombo->clear();
-    if (activePreset.empty() && m_core->matchConfigDirty()) {
-        m_presetCombo->addItem(k_unsavedPresetStr);
-    }
     for (const auto &name : presetNames) {
         m_presetCombo->addItem(name.data());
     }
-    if (activePreset.empty() && !m_core->matchConfigDirty()
-     && presetNames.size()) {
-        emit sigMatchPresetSelect(presetNames.first());
+    if (activePreset.size()) {
+        m_presetCombo->setCurrentText(activePreset.data());
+    } else {
+        m_presetCombo->addItem(k_unsavedPresetStr);
+        m_presetCombo->setCurrentText(k_unsavedPresetStr);
     }
     m_presetCombo->blockSignals(false);
+
+    if (activePreset.empty() && presetNames.size()
+     && !m_core->matchConfigDirty()) {
+        emit sigMatchPresetSelect(presetNames.first());
+    }
 }
 
 void PmPresetsWidget::onActivePresetChanged()
@@ -200,7 +204,8 @@ void PmPresetsWidget::onPresetsImportAvailable(PmMatchPresets availablePresets)
             obs_module_text("Presets to Import"),
             availablePresets.keys(), availablePresets.keys(), this);
         selectedPresets = selector.selectedChoices();
-        if (selector.result() == QFileDialog::Rejected || selectedPresets.empty())
+        if (selector.result() == QFileDialog::Rejected
+         || selectedPresets.empty())
             return;
     } else {
         selectedPresets = availablePresets.keys();
