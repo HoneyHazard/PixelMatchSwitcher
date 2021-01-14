@@ -5,7 +5,7 @@
 
 #include <QThread>
 #include <QXmlStreamReader>
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QFile>
 #include <QApplication>
 
