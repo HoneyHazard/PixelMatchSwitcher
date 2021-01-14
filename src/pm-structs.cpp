@@ -18,8 +18,8 @@ bool PmReaction::operator==(const PmReaction &other) const
 
 PmReaction::PmReaction(obs_data_t *data)
 {
-    obs_data_set_default_int(data, "type", (long long)type);
-    type = (PmReactionType)obs_data_get_int(data, "type");
+    obs_data_set_default_int(data, "type", static_cast<long long>(type));
+    type = PmReactionType(obs_data_get_int(data, "type"));
     targetSceneItem = obs_data_get_string(data, "target_scene_item");
     targetScene = obs_data_get_string(data, "target_scene");
     targetFilter = obs_data_get_string(data, "target_filter");
@@ -27,8 +27,8 @@ PmReaction::PmReaction(obs_data_t *data)
         data, "target_transition", sceneTransition.data());
     sceneTransition = obs_data_get_string(data, "target_transition");
 
-    obs_data_set_default_int(data, "linger_ms", (int)lingerMs);
-    lingerMs = obs_data_get_int(data, "linger_ms");
+    obs_data_set_default_int(data, "linger_ms", int(lingerMs));
+    lingerMs = static_cast<unsigned int>(obs_data_get_int(data, "linger_ms"));
 }
 
 PmReaction::PmReaction(QXmlStreamReader &reader)
@@ -47,7 +47,7 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
         } else if (reader.isStartElement()) {
             QString elementText = reader.readElementText();
             if (name == "type") {
-                type = (PmReactionType)elementText.toInt();
+                type = PmReactionType(elementText.toInt());
             } else if (name == "target_scene") {
                 targetScene = elementText.toUtf8().data();
             } else if (name == "target_transition") {
@@ -57,7 +57,7 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
             } else if (name == "target_filter") {
                 targetFilter = elementText.toUtf8().data();
             } else if (name == "linger_ms") {
-                lingerMs = elementText.toInt();
+                lingerMs = static_cast<unsigned int>(elementText.toInt());
             }
         }
     }
@@ -66,19 +66,19 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
 obs_data_t *PmReaction::save() const
 {
     obs_data_t *ret = obs_data_create();
-    obs_data_set_int(ret, "type", (long long)type);
+    obs_data_set_int(ret, "type", static_cast<long long>(type));
     obs_data_set_string(ret, "target_scene", targetScene.data());
     obs_data_set_string(ret, "target_transition", sceneTransition.data());
     obs_data_set_string(ret, "target_scene_item", targetSceneItem.data());
     obs_data_set_string(ret, "target_filter", targetFilter.data());
-    obs_data_set_int(ret, "linger_ms", (int)lingerMs);
+    obs_data_set_int(ret, "linger_ms", int(lingerMs));
     return ret;
 }
 
 void PmReaction::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("reaction");
-    writer.writeTextElement("type", QString::number((int)type));
+    writer.writeTextElement("type", QString::number(int(type)));
     if (targetScene.size()) {
         writer.writeTextElement("target_scene", targetScene.data());
         if (sceneTransition.size()) {
@@ -93,7 +93,7 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
 	    writer.writeTextElement("target_filter", targetFilter.data());
     }
     if (lingerMs > 0) {
-        writer.writeTextElement("linger_ms", QString::number((int)lingerMs));
+        writer.writeTextElement("linger_ms", QString::number(int(lingerMs)));
     }
     writer.writeEndElement();
 }
@@ -203,7 +203,7 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     obs_data_set_default_bool(data, "invert_result", invertResult);
     invertResult = obs_data_get_bool(data, "invert_result");
 
-    obs_data_set_default_int(data, "mask_mode", (int)maskMode);
+    obs_data_set_default_int(data, "mask_mode", int(maskMode));
     maskMode = PmMaskMode(obs_data_get_int(data, "mask_mode"));
 
     obs_data_set_default_bool(data, "mask_alpha", filterCfg.mask_alpha);
@@ -255,7 +255,7 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
                 } else if (name == "invert_result") {
                     invertResult = (elemText == "true" ? true : false);
                 } else if (name == "mask_mode") {
-                    maskMode = (PmMaskMode)elemText.toInt();
+                    maskMode = PmMaskMode(elemText.toInt());
                 } else if (name == "mask_alpha") {
                     filterCfg.mask_alpha = (elemText == "true" ? true : false);
                 } else if (name == "mask_color_r") {
@@ -285,7 +285,7 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_double(
         ret, "total_match_threshold", double(totalMatchThresh));
     obs_data_set_bool(ret, "invert_result", invertResult);
-    obs_data_set_int(ret, "mask_mode", (int)maskMode);
+    obs_data_set_int(ret, "mask_mode", int(maskMode));
     obs_data_set_bool(ret, "mask_alpha", filterCfg.mask_alpha);
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
 
@@ -311,19 +311,19 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
     writer.writeTextElement("roi_bottom", 
         QString::number(filterCfg.roi_bottom));
     writer.writeTextElement("per_pixel_allowed_error",
-        QString::number(filterCfg.per_pixel_err_thresh));
+        QString::number(double(filterCfg.per_pixel_err_thresh)));
     writer.writeTextElement("total_match_threshold", 
-        QString::number(totalMatchThresh));
+        QString::number(double(totalMatchThresh)));
     writer.writeTextElement("invert_result", invertResult ? "true" : "false");
-    writer.writeTextElement("mask_mode", QString::number((int)maskMode));
+    writer.writeTextElement("mask_mode", QString::number(int(maskMode)));
     writer.writeTextElement("mask_alpha",
         filterCfg.mask_alpha ? "true" : "false");
     writer.writeTextElement("mask_color_r", 
-        QString::number(filterCfg.mask_color.x));
+        QString::number(double(filterCfg.mask_color.x)));
     writer.writeTextElement("mask_color_g",
-        QString::number(filterCfg.mask_color.y));
+        QString::number(double(filterCfg.mask_color.y)));
     writer.writeTextElement("mask_color_b",
-        QString::number(filterCfg.mask_color.z));
+        QString::number(double(filterCfg.mask_color.z)));
     writer.writeTextElement("is_enabled",
         filterCfg.is_enabled ? "true" : "false" );
     if (reaction.isSet()) {

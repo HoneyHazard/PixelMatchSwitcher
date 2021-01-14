@@ -95,10 +95,10 @@ int PmFileRetriever::staticProgressFunc(
     curl_off_t dltotal, curl_off_t dlnow,
     curl_off_t ultotal, curl_off_t ulnowCould)
 {
-    PmFileRetriever *r = (PmFileRetriever *)clientp;
-    r->m_data.reserve(dltotal);
+    PmFileRetriever *r = static_cast<PmFileRetriever *>(clientp);
+    r->m_data.reserve(int(dltotal));
 
-    emit r->sigProgress(r->m_fileUrl, dlnow, dltotal);
+    emit r->sigProgress(r->m_fileUrl, size_t(dlnow), size_t(dltotal));
 
     return r->m_abortFlag;
 
@@ -109,9 +109,9 @@ int PmFileRetriever::staticProgressFunc(
 size_t PmFileRetriever::staticWriteFunc(
     void *ptr, size_t size, size_t nmemb, void *data)
 {
-    PmFileRetriever *r = (PmFileRetriever *)data;
-    size_t realSize = size * nmemb;
-    r->m_data.append((const char*)ptr, (int)realSize);
+    PmFileRetriever *r = static_cast<PmFileRetriever *>(data);
+    size_t realSize = size_t(size * nmemb);
+    r->m_data.append(static_cast<const char*>(ptr), int(realSize));
     return realSize;
 }
 
@@ -167,7 +167,7 @@ void PmPresetsRetriever::onDownloadXmlWorker()
         } else {
             emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
         }
-    } catch (std::exception e) {
+    } catch (const std::exception &e) {
         m_xmlRetriever->deleteLater();
         m_xmlRetriever = nullptr;
         emit sigXmlFailed(m_xmlUrl, e.what());
@@ -275,7 +275,7 @@ void PmPresetsRetriever::onDownloadImages()
     if (imagesOk) {
         // finalize the output
         PmMatchPresets readyPresets;
-        for (const std::string presetName : m_selectedPresets) {
+        for (const std::string &presetName : m_selectedPresets) {
             readyPresets[presetName] = m_availablePresets[presetName];
         }
         emit sigPresetsReady(readyPresets);
