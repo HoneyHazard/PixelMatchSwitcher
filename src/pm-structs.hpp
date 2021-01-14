@@ -224,7 +224,7 @@ public:
  */
 struct PmSceneItemData
 {
-    bool PmSceneItemData::operator==(const PmSceneItemData &other) const;
+    bool operator==(const PmSceneItemData &other) const;
 
     OBSSceneItem si;
     QList<std::string> filtersNames;
