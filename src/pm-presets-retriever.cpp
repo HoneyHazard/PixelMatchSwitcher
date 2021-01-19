@@ -1,6 +1,5 @@
 #include "pm-presets-retriever.hpp"
 
-//#include <obs-app.hpp>
 #include <util/platform.h>
 
 #include <QThread>
