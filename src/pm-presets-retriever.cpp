@@ -4,21 +4,29 @@
 
 #include <QThread>
 #include <QXmlStreamReader>
-#include <QtConcurrent/QtConcurrentRun>
+#include <QUrl>
 #include <QFile>
 #include <QApplication>
 
 #include <sstream>
 
-PmFileRetriever::PmFileRetriever(std::string fileUrl, QObject* parent)
+PmFileRetriever::PmFileRetriever(std::string fileUrl, QObject *parent)
 : QObject(parent)
 , m_fileUrl(fileUrl)
 {
+    setAutoDelete(false);
 }
 
 PmFileRetriever::~PmFileRetriever()
 {
     reset();
+}
+
+void PmFileRetriever::waitForFinished()
+{
+    while (!m_isFinished) {
+        QThread::msleep(10L);
+    }
 }
 
 void PmFileRetriever::reset()
@@ -30,17 +38,10 @@ void PmFileRetriever::reset()
     }
 }
 
-QFuture<CURLcode> PmFileRetriever::startDownload(QThreadPool &threadPool)
+void PmFileRetriever::run()
 {
-    m_future
-        = QtConcurrent::run(&threadPool, this, &PmFileRetriever::onDownload);
-    return m_future;
-}
-
-CURLcode PmFileRetriever::onDownload()
-{
-    //if (m_state == Downloading || m_state == Done) return;
-
+    m_isStarted = true;
+    m_isFinished = false;
     emit sigProgress(m_fileUrl, 0, 0);
 
     reset();
@@ -73,12 +74,16 @@ CURLcode PmFileRetriever::onDownload()
             file.open(QIODevice::WriteOnly);
             if (!file.isOpen()) {
                 emit sigFailed(m_fileUrl, file.errorString());
-                return CURLE_WRITE_ERROR;
+                m_result = CURLE_WRITE_ERROR;
+                m_isFinished = true;
+                return;
             }
             file.write(m_data);
             if (file.error()) {
                 emit sigFailed(m_fileUrl, file.errorString());
-                return CURLE_WRITE_ERROR;
+                m_result = CURLE_WRITE_ERROR;
+                m_isFinished = true;
+                return;
             }
         }
         emit sigSucceeded(m_fileUrl, m_data);
@@ -86,7 +91,8 @@ CURLcode PmFileRetriever::onDownload()
         QString errorInfo = curl_easy_strerror(result);
         emit sigFailed(m_fileUrl, errorInfo);
     }
-    return result;
+    m_isFinished = true;
+    m_result = result;
 }
 
 int PmFileRetriever::staticProgressFunc(
@@ -120,12 +126,25 @@ PmPresetsRetriever::PmPresetsRetriever(std::string xmlUrl)
 : QObject(nullptr)
 , m_xmlUrl(xmlUrl)
 {
+    m_retrieverThread = new QThread();
+    m_retrieverThread->start();
+    moveToThread(m_retrieverThread);
+
     // worker thread pool for downloads
     m_workerThreadPool.setMaxThreadCount(k_numWorkerThreads);
 
     // CURL global init
     CURLcode result = curl_global_init(CURL_GLOBAL_ALL);
     blog(LOG_DEBUG, "preset retriever: curl init result = %d", result);
+
+    // internal connections
+    auto qc = Qt::QueuedConnection;
+    connect(this, &PmPresetsRetriever::sigDownloadXml,
+            this, &PmPresetsRetriever::onDownloadXml, qc);
+    connect(this, &PmPresetsRetriever::sigRetrievePresets,
+            this, &PmPresetsRetriever::onRetrievePresets, qc);
+    connect(this, &PmPresetsRetriever::sigDownloadImages,
+            this, &PmPresetsRetriever::onDownloadImages, qc);
 }
 
 PmPresetsRetriever::~PmPresetsRetriever()
@@ -134,11 +153,10 @@ PmPresetsRetriever::~PmPresetsRetriever()
 
 void PmPresetsRetriever::downloadXml()
 {
-    QtConcurrent::run(
-        &m_workerThreadPool, this, &PmPresetsRetriever::onDownloadXmlWorker);
+    emit sigDownloadXml();
 }
 
-void PmPresetsRetriever::onDownloadXmlWorker()
+void PmPresetsRetriever::onDownloadXml()
 {
     // initiate xml downloader
     m_xmlRetriever = new PmFileRetriever(m_xmlUrl, this);
@@ -146,10 +164,9 @@ void PmPresetsRetriever::onDownloadXmlWorker()
             this, &PmPresetsRetriever::sigXmlProgress, Qt::DirectConnection);
 
     // fetch the xml
-    QFuture<CURLcode> xmlFuture
-        = m_xmlRetriever->startDownload(m_workerThreadPool);
-    xmlFuture.waitForFinished();
-    CURLcode xmlResultCode = xmlFuture.result();
+    m_workerThreadPool.start(m_xmlRetriever);
+    m_xmlRetriever->waitForFinished();
+    CURLcode xmlResultCode = m_xmlRetriever->result();
     if (xmlResultCode != CURLE_OK) {
         QString errorString = curl_easy_strerror(xmlResultCode);
         emit sigXmlFailed(m_xmlUrl, errorString);
@@ -167,12 +184,12 @@ void PmPresetsRetriever::onDownloadXmlWorker()
             emit sigXmlPresetsAvailable(m_xmlUrl, m_availablePresets.keys());
         }
     } catch (const std::exception &e) {
-        m_xmlRetriever->deleteLater();
+        delete m_xmlRetriever;
         m_xmlRetriever = nullptr;
         emit sigXmlFailed(m_xmlUrl, e.what());
         emit sigFailed();
     } catch (...) {
-        m_xmlRetriever->deleteLater();
+        delete m_xmlRetriever;
         m_xmlRetriever = nullptr;
         emit sigXmlFailed(
             m_xmlUrl,
@@ -184,8 +201,7 @@ void PmPresetsRetriever::onDownloadXmlWorker()
 void PmPresetsRetriever::retrievePresets(QList<std::string> selectedPresets)
 {
     m_selectedPresets = selectedPresets;
-    QtConcurrent::run(
-        &m_workerThreadPool, this, &PmPresetsRetriever::onRetrievePresets);
+    emit sigRetrievePresets();
 }
 
 void PmPresetsRetriever::onRetrievePresets()
@@ -226,8 +242,7 @@ void PmPresetsRetriever::onRetrievePresets()
 
             // prepare an image retriever
             const Qt::ConnectionType dc = Qt::DirectConnection;
-            PmFileRetriever *imgRetriever
-                = new PmFileRetriever(imgUrl, this);
+            PmFileRetriever *imgRetriever = new PmFileRetriever(imgUrl, this);
             imgRetriever->setSaveFilename(storeImgPath);
             connect(imgRetriever, &PmFileRetriever::sigProgress,
                     this, &PmPresetsRetriever::sigImgProgress, dc);
@@ -244,29 +259,24 @@ void PmPresetsRetriever::onRetrievePresets()
 
 void PmPresetsRetriever::downloadImages()
 {
-    QtConcurrent::run(
-        &m_workerThreadPool, this, &PmPresetsRetriever::onDownloadImages);
+    emit sigDownloadImages();
 }
-
 
 void PmPresetsRetriever::onDownloadImages()
 {
     // dispatch image retrievers needed to start or resume a failed retrieve
     for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
-        QFuture<CURLcode> &future = imgRetriever->future();
-        if (!future.isStarted()
-         || !future.isResultReadyAt(0)
-         || future.result() != CURLE_OK) {
-            imgRetriever->startDownload(m_workerThreadPool);
+        if (!imgRetriever->isStarted()
+         || imgRetriever->isFinished() && imgRetriever->result() != CURLE_OK) {
+            m_workerThreadPool.start(imgRetriever);
         }
     }
 
     // wait for completion; check for success
     bool imagesOk = true;
     for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
-        QFuture<CURLcode> &future = imgRetriever->future();
-        future.waitForFinished();
-        if (future.result() != CURLE_OK) {
+        imgRetriever->waitForFinished();
+        if (imgRetriever->result() != CURLE_OK) {
             imagesOk = false;
         }
     }

@@ -2,7 +2,7 @@
 
 #include <QObject>
 #include <QByteArray>
-#include <QtConcurrent/QtConcurrent>
+#include <QThreadPool>
 
 #include <curl/curl.h>
 #include <string>
@@ -12,21 +12,24 @@
 /**
  * @brief Wrapper class for downloads using libcurl
  */
-class PmFileRetriever : public QObject
+class PmFileRetriever : public QObject, public QRunnable
 {
     Q_OBJECT
 
 public:
-    PmFileRetriever(std::string fileUrl, QObject *parent = nullptr);
+    PmFileRetriever(std::string fileUrl, QObject *parent);
     ~PmFileRetriever();
 
-    QFuture<CURLcode> startDownload(QThreadPool& threadPool);
+    void waitForFinished();
     void abort() { m_abortFlag = 1; }
+    void run() override;
+    bool isStarted() const { return m_isStarted; }
+    bool isFinished() const { return m_isFinished; }
 
     void setSaveFilename(const std::string& saveFilename)
         { m_saveFilename = saveFilename; }
 
-    QFuture<CURLcode>& future() { return m_future;}
+    CURLcode result() { return m_result; }
 
     const QByteArray &data() const { return m_data; }
 
@@ -34,9 +37,6 @@ signals:
     void sigFailed(std::string urlName, QString error);
     void sigSucceeded(std::string urlName, QByteArray byteArray);
     void sigProgress(std::string urlName, size_t dlNow, size_t dlTotal);
-
-protected slots:
-    CURLcode onDownload();
 
 protected:
     static int staticProgressFunc(void *clientp,
@@ -50,10 +50,12 @@ protected:
     std::string m_fileUrl;
     std::string m_saveFilename;
     QByteArray m_data;
-    QFuture<CURLcode> m_future;
+    CURLcode m_result;
 
     CURL *m_curlHandle = nullptr;
     int m_abortFlag = 0;
+    bool m_isStarted = false;
+    bool m_isFinished = false;
 };
 
 /**
@@ -89,14 +91,19 @@ signals:
     void sigFailed();
     void sigAborted();
 
+    // internal connections
+    void sigDownloadXml();
+    void sigRetrievePresets();
+    void sigDownloadImages();
+
 public slots:
     void onAbort();
     void onRetry();
 
 protected slots:
+    void onDownloadXml();
     void onRetrievePresets();
     void onDownloadImages();
-    void onDownloadXmlWorker();
 
 protected:
     std::string m_xmlUrl;
@@ -105,6 +112,7 @@ protected:
 
     bool m_abort = false;
     QThreadPool m_workerThreadPool;
-    PmFileRetriever* m_xmlRetriever;
+    QThread *m_retrieverThread = nullptr;
+    PmFileRetriever* m_xmlRetriever = nullptr;
     QList<PmFileRetriever*> m_imgRetrievers;
 };

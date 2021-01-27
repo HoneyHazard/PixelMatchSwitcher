@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QUrl>
 #include "pm-presets-retrieval-dialog.hpp"
 
 //===============================
