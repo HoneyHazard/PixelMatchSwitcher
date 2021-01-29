@@ -835,7 +835,7 @@ PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
 {
     QFontMetrics fm(font());
     auto m = contentsMargins();
-    m_resultWidth = fm.horizontalAdvance("100.0%")
+    m_resultWidth = fm.width("100.0%")
         + m.left() + m.right() + margin() * 2 + 10;
 };
 
