@@ -33,14 +33,8 @@ Pixel Match Switcher plugin requires **effect results** and **atomic counters** 
 
 We hope to see the [changes](https://github.com/HoneyHazard/obs-studio-atomic-effects/wiki/Overview-of-the-changes-introduced-in-the-atomic-effects-fork-of-obs-studio) of the atomic-effects fork eventually integrated into OBS mainline. Perhaps, the Pixel Match Switcher itself could one day be bundled with OBS; part of the starter arsenal to make the awesome tool even more awesome. Our hearts would be filled with joy when the gift of pixel match switching becomes easily accessible to the community.
 
-## Planned Expansion Features
-- Allow show/hide of an image/mask source as an alternative to scene switching
-- Automatically choose a rules preset based on which scene(s) are active
-- Save/load presets configuration to/from XML
-- Download game presets from an online database
-- Advanced matching logic: inverse matching, AND, OR, etc
-
 ## Thought-About Expansion Features
+- Advanced matching logic: AND, OR, etc
 - Try to match an image anywhere in the video frame (not just at a fixed position) and allow show/hide of an image/mask source at the location where the match image would be found
 - More advanced image processing could be made available for identifying elements in the video, so long as it is fast (and should probably stick to being implemented in the shader). This could broaden possible uses of the plugin.
 
