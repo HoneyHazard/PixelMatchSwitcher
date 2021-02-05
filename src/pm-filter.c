@@ -206,6 +206,8 @@ void render_match_entries(struct pm_filter_data* filter)
             if (i != filter->selected_match_index) {
                 // visualize mode only renders the selected match entry
                 continue;
+            } else {
+                nothing_rendered = false;
             }
         } else {
             if (!entry->cfg.is_enabled) {
@@ -215,8 +217,6 @@ void render_match_entries(struct pm_filter_data* filter)
                 continue;
             }
         }
-
-        nothing_rendered = false;
 
         if (entry->match_img_data
             && entry->match_img_width
@@ -259,7 +259,13 @@ void render_match_entries(struct pm_filter_data* filter)
         gs_effect_set_bool(filter->param_mask_alpha, entry->cfg.mask_alpha);
         gs_effect_set_bool(filter->param_store_match_alpha, false);
         gs_effect_set_vec3(filter->param_mask_color, &entry->cfg.mask_color);
-        gs_effect_set_texture(filter->param_match_img, entry->match_img_tex);
+        if (visualize) {
+            gs_effect_set_texture(
+                filter->param_match_img, entry->match_img_tex);
+        } else {
+            gs_effect_set_texture_srgb(
+                filter->param_match_img, entry->match_img_tex);
+        }
         gs_effect_set_bool(filter->param_show_border, visualize);
         gs_effect_set_bool(filter->param_show_color_indicator, visualize);
         gs_effect_set_float(filter->param_border_px_width,
@@ -446,7 +452,6 @@ void configure_mask(struct pm_filter_data* filter)
 
     bool visualize = (filter->filter_mode == PM_MASK_VISUALIZE);
 
-    //gs_effect_set_texture(filter->param_image, tex);
     gs_effect_set_atomic_uint(filter->param_compare_counter, 0);
     gs_effect_set_atomic_uint(filter->param_match_counter, 0);
     gs_effect_set_float(filter->param_roi_left, roi_left_u);
