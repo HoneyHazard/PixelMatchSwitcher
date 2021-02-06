@@ -571,7 +571,7 @@ bool PmMatchPresets::containsImage(const std::string &imgFilename) const
 }
 
 QSet<std::string> PmMatchPresets::orphanedImages(
-    const PmMultiMatchConfig &beingRemoved, PmMultiMatchConfig* activeCfg)
+    const PmMultiMatchConfig &beingRemoved, const PmMultiMatchConfig* activeCfg)
 {
     QSet<std::string> ret;
     for (const auto &rcfg : beingRemoved) {

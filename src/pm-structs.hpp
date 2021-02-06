@@ -200,7 +200,7 @@ public:
 
     QSet<std::string> orphanedImages(
         const PmMultiMatchConfig &beingRemoved,
-        PmMultiMatchConfig* activeCfg = nullptr);
+        const PmMultiMatchConfig* activeCfg = nullptr);
 
 protected:
     void importXml(QXmlStreamReader &reader);

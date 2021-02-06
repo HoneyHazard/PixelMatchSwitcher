@@ -502,42 +502,7 @@ void PmCore::onMatchConfigRemove(size_t matchIndex)
 
 void PmCore::onMultiMatchConfigReset()
 {
-    // cheeck for orphaned images
-    QSet<std::string> orphanedImages;
-    {
-        QMutexLocker locker(&m_matchConfigMutex);
-        orphanedImages = m_matchPresets.orphanedImages(m_multiMatchConfig);
-    }
-
-    // reset no-match reaction
-    onNoMatchReactionChanged(PmReaction());
-
-    // notify other modules about changing size
-    emit sigMultiMatchConfigSizeChanged(0);
-
-    // reconfigure the filter
-    auto fr = activeFilterRef();
-    auto filterData = fr.filterData();
-    if (filterData) {
-        pm_resize_match_entries(filterData, 0);
-    }
-
-    // finish updating state and notifying
-    {
-        QMutexLocker locker(&m_matchConfigMutex);
-        m_multiMatchConfig = PmMultiMatchConfig();
-        emit sigActivePresetDirtyChanged();
-    }
-    {
-        QMutexLocker locker(&m_matchImagesMutex);
-        m_matchImages.clear();
-    }
-    onMatchConfigSelect(0);
-
-    // report orphaned images
-    if (orphanedImages.size()) {
-        emit sigMatchImagesOrphaned(orphanedImages.toList());
-    }
+    resetMultiMatchConfig();
 }
 
 void PmCore::onMatchConfigMoveUp(size_t matchIndex)
@@ -1395,9 +1360,50 @@ void PmCore::loadImage(size_t matchIdx)
     }
 }
 
+void PmCore::resetMultiMatchConfig(const PmMultiMatchConfig *newCfg)
+{
+    // cheeck for orphaned images
+    QSet<std::string> orphanedImages;
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+        orphanedImages
+            = m_matchPresets.orphanedImages(m_multiMatchConfig, newCfg);
+    }
+
+    // reset no-match reaction
+    onNoMatchReactionChanged(PmReaction());
+
+    // notify other modules about changing size
+    emit sigMultiMatchConfigSizeChanged(0);
+
+    // reconfigure the filter
+    auto fr = activeFilterRef();
+    auto filterData = fr.filterData();
+    if (filterData) {
+        pm_resize_match_entries(filterData, 0);
+    }
+
+    // finish updating state and notifying
+    {
+        QMutexLocker locker(&m_matchConfigMutex);
+        m_multiMatchConfig = PmMultiMatchConfig();
+        emit sigActivePresetDirtyChanged();
+    }
+    {
+        QMutexLocker locker(&m_matchImagesMutex);
+        m_matchImages.clear();
+    }
+    onMatchConfigSelect(0);
+
+    // report orphaned images
+    if (orphanedImages.size()) {
+        emit sigMatchImagesOrphaned(orphanedImages.toList());
+    }
+}
+
 void PmCore::activateMultiMatchConfig(const PmMultiMatchConfig& mCfg)
 {
-    onMultiMatchConfigReset();
+    resetMultiMatchConfig(&mCfg);
     for (size_t i = 0; i < mCfg.size(); ++i) {
         onMatchConfigInsert(i, mCfg[i]);
     }

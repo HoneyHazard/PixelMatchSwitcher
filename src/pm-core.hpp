@@ -173,6 +173,7 @@ protected:
     void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg,
         QSet<std::string>* orphanedImages = nullptr);
     void loadImage(size_t matchIndex);
+    void resetMultiMatchConfig(const PmMultiMatchConfig *newCfg = nullptr);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
     void activeFilterChanged();
 
