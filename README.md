@@ -27,6 +27,7 @@ Presently, the plugin requires a special [atomic-effects](#Atomic-Effects-Fork-o
   - [Basic Concepts](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#basic-concepts)
   - [Image Capture Walkthrough](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#image-capture-walkthrough)
   - [UI Details](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#ui-details)
+- [Discord](https://discord.gg/AeUavJpwQg)
 
 ## Atomic Effects Fork of OBS
 Pixel Match Switcher plugin requires **effect results** and **atomic counters** to work. These precursor features are not present in the mainline of OBS Studio at the moment of writing. We provide the [atomic-effects](https://github.com/HoneyHazard/obs-studio-atomic-effects) fork to introduce these key features into OBS and make our plugin possible. Effort is being made to keep the fork up-to-date with the latest OBS commits.
