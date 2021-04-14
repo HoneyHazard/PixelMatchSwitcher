@@ -1,6 +1,6 @@
 ## Pixel Match Switcher
 
-**Pixel Match Switcher** is an [OBS Studio](https://projectobs.com/en/) plugin that allows switching scenes or changing scene item visibility in response to pixels of video being matched against image templates.
+**Pixel Match Switcher** is an [OBS Studio](https://obsproject.com/) plugin that allows switching scenes or changing scene item visibility in response to pixels of video being matched against image templates.
 - An individual matching image triggers transition to a specific *scene*, and several match entries (each with their own scene target) can be arranged in a priority-ordered list.
 - Alternatively, individual *scene items* can be shown or hidden
 by independent matching rules.
@@ -27,6 +27,7 @@ Presently, the plugin requires a special [atomic-effects](#Atomic-Effects-Fork-o
   - [Basic Concepts](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#basic-concepts)
   - [Image Capture Walkthrough](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#image-capture-walkthrough)
   - [UI Details](https://github.com/HoneyHazard/PixelMatchSwitcher/wiki/User-Manual#ui-details)
+- [Discord](https://discord.gg/AeUavJpwQg)
 
 ## Atomic Effects Fork of OBS
 Pixel Match Switcher plugin requires **effect results** and **atomic counters** to work. These precursor features are not present in the mainline of OBS Studio at the moment of writing. We provide the [atomic-effects](https://github.com/HoneyHazard/obs-studio-atomic-effects) fork to introduce these key features into OBS and make our plugin possible. Effort is being made to keep the fork up-to-date with the latest OBS commits.
