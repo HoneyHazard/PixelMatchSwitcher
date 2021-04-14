@@ -64,20 +64,20 @@ if(BUILD_OUT_OF_TREE)
             ${Qt5Core_INCLUDES}
             ${Qt5Widgets_INCLUDES}
     )
-    if(UNIX AND NOT APPLE)
-            find_package(Qt5X11Extras REQUIRED)
-            include_directories(
-                    "${Qt5X11Extras_DIR}"
-                    "${Qt5X11Extras_INCLUDE_DIRS}"
-            )
-    endif()
-
     if(MSVC)
             include_directories("${W32_PTHREADS_INCLUDE_DIR}")
     endif()
 else()
     # for qt-display.hpp:
     set(LIBOBS_UI_DIR "../..")
+endif()
+
+if(UNIX AND NOT APPLE)
+    find_package(Qt5X11Extras REQUIRED)
+    include_directories(
+            "${Qt5X11Extras_DIR}"
+            "${Qt5X11Extras_INCLUDE_DIRS}"
+    )
 endif()
 
 include_directories("${LIBOBS_UI_DIR}")
