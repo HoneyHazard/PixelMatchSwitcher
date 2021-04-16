@@ -65,8 +65,8 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
-    PmReaction reaction(size_t matchIdx) const;
-    PmReaction noMatchReaction() const;
+    PmReactionOld reaction(size_t matchIdx) const;
+    PmReactionOld noMatchReaction() const;
     std::string matchImgFilename(size_t matchIdx) const;
     bool hasFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
@@ -110,7 +110,7 @@ signals:
     void sigMultiMatchConfigSizeChanged(size_t sz);
     void sigMatchConfigChanged(size_t matchIndex, PmMatchConfig config);
     void sigMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
-    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
+    void sigNoMatchReactionChanged(PmReactionOld noMatchReaction);
     
     void sigPreviewConfigChanged(PmPreviewConfig cfg);
     void sigRunningEnabledChanged(bool enable);
@@ -137,7 +137,7 @@ public slots:
     void onMatchPresetsAppend(PmMatchPresets presets);
 
     void onMultiMatchConfigReset();
-    void onNoMatchReactionChanged(PmReaction noMatchReaction);
+    void onNoMatchReactionChanged(PmReactionOld noMatchReaction);
 
     void onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg);
     void onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
@@ -166,7 +166,7 @@ protected:
 
     void switchScene(
         const std::string& scene, const std::string &transition);
-    void toggleSceneItemOrFilter(PmReaction reaction, bool matched);
+    void toggleSceneItemOrFilter(PmReactionOld reaction, bool matched);
 
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);

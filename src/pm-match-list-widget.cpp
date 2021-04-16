@@ -267,7 +267,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         m_tableWidget->blockSignals(false);
     }
 
-    const PmReaction &reaction = cfg.reaction;
+    const PmReactionOld &reaction = cfg.reaction;
     auto targetCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::TargetSelect);
     if (targetCombo) {
@@ -320,7 +320,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         (size_t)currentIndex(), m_core->multiMatchConfigSize());
 }
 
-void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
+void PmMatchListWidget::onNoMatchReactionChanged(PmReactionOld noMatchReaction)
 {
     updateTargetSelection(m_noMatchSceneCombo, noMatchReaction);
 
@@ -400,7 +400,7 @@ void PmMatchListWidget::onConfigInsertButtonReleased()
     size_t sz = m_core->multiMatchConfigSize();
     if (sz > 0) {
         size_t closestIdx = std::min(idx, sz-1);
-        PmReaction closestReaction = m_core->reaction(closestIdx);
+        PmReactionOld closestReaction = m_core->reaction(closestIdx);
         newCfg.reaction.type = closestReaction.type;
     }
 
@@ -430,14 +430,14 @@ void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
 {
     std::string noMatchScene = 
         (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
-    PmReaction noMatchReaction = m_core->noMatchReaction();
+    PmReactionOld noMatchReaction = m_core->noMatchReaction();
     noMatchReaction.targetScene = noMatchScene;
     emit sigNoMatchReactionChanged(noMatchReaction);
 }
 
 void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
 {
-    PmReaction noMatchReaction = m_core->noMatchReaction();
+    PmReactionOld noMatchReaction = m_core->noMatchReaction();
     noMatchReaction.sceneTransition = str.toUtf8().data();
     emit sigNoMatchReactionChanged(noMatchReaction);
 }
@@ -633,7 +633,7 @@ void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
 }
 
 void PmMatchListWidget::updateTargetSelection(
-    QComboBox *targetCombo, const PmReaction &reaction, bool transparent)
+    QComboBox *targetCombo, const PmReactionOld &reaction, bool transparent)
 {
     QColor targetColor;
     std::string targetStr;
@@ -706,12 +706,12 @@ void PmMatchListWidget::targetSelected(int matchIdx, QComboBox *box)
 {
     size_t index = (size_t)(matchIdx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    PmReaction &reaction = cfg.reaction;
+    PmReactionOld &reaction = cfg.reaction;
     QByteArray ba = box->currentData(Qt::UserRole).toByteArray();
     std::string targetStr(ba.data());
 
     if (targetStr.empty()) {
-        reaction = PmReaction();
+        reaction = PmReactionOld();
     } else {
         QList<std::string> sceneNames = m_core->sceneNames();
         QList<std::string> sceneItemNames = m_core->sceneItemNames();

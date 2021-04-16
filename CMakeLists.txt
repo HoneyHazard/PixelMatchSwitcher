@@ -103,6 +103,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-dialog.hpp
         src/pm-about-box.hpp
         src/pm-structs.hpp
+        src/pm-reaction.hpp
         src/pm-linger-queue.hpp
         src/pm-presets-retriever.hpp
         src/pm-debug-tab.hpp
@@ -132,6 +133,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-dialog.cpp
         src/pm-about-box.cpp
         src/pm-structs.cpp
+        src/pm-reaction.cpp
         src/pm-linger-queue.cpp
         src/pm-presets-retriever.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp

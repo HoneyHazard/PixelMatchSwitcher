@@ -98,12 +98,12 @@ enum class PmReactionType : char {
 /**
  * @brief Describes what will happen in reaction to a condition
  */
-struct PmReaction
+struct PmReactionOld
 {
 public:
-    PmReaction() {}
-    PmReaction(obs_data_t *data);
-    PmReaction(QXmlStreamReader &reader);
+    PmReactionOld() {}
+    PmReactionOld(obs_data_t *data);
+    PmReactionOld(QXmlStreamReader &reader);
 
     obs_data_t *save() const;
     void saveXml(QXmlStreamWriter &writer) const;
@@ -121,8 +121,8 @@ public:
 
     uint32_t lingerMs = 0;
 
-    bool operator==(const PmReaction &) const;
-    bool operator!=(const PmReaction &other) const
+    bool operator==(const PmReactionOld &) const;
+    bool operator!=(const PmReactionOld &other) const
         { return !operator==(other); }
 };
 
@@ -149,7 +149,7 @@ struct PmMatchConfig
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
 
-    PmReaction reaction;
+    PmReactionOld reaction;
 
     bool operator==(const PmMatchConfig&) const;
     bool operator!=(const PmMatchConfig& other) const
@@ -179,7 +179,7 @@ public:
     bool containsImage(const std::string &imgFilename,
                        size_t exceptIndex = (size_t)-1) const;
 
-    PmReaction noMatchReaction;
+    PmReactionOld noMatchReaction;
 };
 
 /**

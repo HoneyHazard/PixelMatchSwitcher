@@ -6,7 +6,7 @@
 #include <QFile>
 #include <sstream>
 
-bool PmReaction::operator==(const PmReaction &other) const
+bool PmReactionOld::operator==(const PmReactionOld &other) const
 {
     return type == other.type
         && targetScene == other.targetScene
@@ -16,7 +16,7 @@ bool PmReaction::operator==(const PmReaction &other) const
         && lingerMs == other.lingerMs;
 }
 
-PmReaction::PmReaction(obs_data_t *data)
+PmReactionOld::PmReactionOld(obs_data_t *data)
 {
     obs_data_set_default_int(data, "type", static_cast<long long>(type));
     type = PmReactionType(obs_data_get_int(data, "type"));
@@ -31,7 +31,7 @@ PmReaction::PmReaction(obs_data_t *data)
     lingerMs = static_cast<unsigned int>(obs_data_get_int(data, "linger_ms"));
 }
 
-PmReaction::PmReaction(QXmlStreamReader &reader)
+PmReactionOld::PmReactionOld(QXmlStreamReader &reader)
 {
     while (true) {
         reader.readNext();
@@ -63,7 +63,7 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
     }
 }
 
-obs_data_t *PmReaction::save() const
+obs_data_t *PmReactionOld::save() const
 {
     obs_data_t *ret = obs_data_create();
     obs_data_set_int(ret, "type", static_cast<long long>(type));
@@ -75,7 +75,7 @@ obs_data_t *PmReaction::save() const
     return ret;
 }
 
-void PmReaction::saveXml(QXmlStreamWriter &writer) const
+void PmReactionOld::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("reaction");
     writer.writeTextElement("type", QString::number(int(type)));
@@ -98,7 +98,7 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     writer.writeEndElement();
 }
 
-bool PmReaction::isSet() const
+bool PmReactionOld::isSet() const
 {
     switch (type) {
         case PmReactionType::SwitchScene:
@@ -216,7 +216,7 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
 
     obs_data_t *reactionObj = obs_data_get_obj(data, "reaction");
-    reaction = PmReaction(reactionObj);
+    reaction = PmReactionOld(reactionObj);
     obs_data_release(reactionObj);
 }
 
@@ -235,7 +235,7 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
             }
         } else if (reader.isStartElement()) {
             if (name == "reaction") {
-                reaction = PmReaction(reader);
+                reaction = PmReactionOld(reader);
             } else {
                 QString elemText = reader.readElementText();
                 if (name == "label") {
@@ -347,7 +347,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     obs_data_array_release(matchEntriesArray);
 
     obs_data_t *noMatchReactionObj = obs_data_get_obj(data, "reaction");
-    noMatchReaction = PmReaction(noMatchReactionObj);
+    noMatchReaction = PmReactionOld(noMatchReactionObj);
     obs_data_release(noMatchReactionObj);
 }
 
@@ -369,7 +369,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(
             if (name == "name") {
                 presetName = reader.readElementText().toUtf8().data();
             } else if (name == "reaction") {
-                noMatchReaction = PmReaction(reader);
+                noMatchReaction = PmReactionOld(reader);
             } else if (name == "match_config") {
                 PmMatchConfig cfg(reader);
                 push_back(cfg);
@@ -476,7 +476,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
-    qRegisterMetaType<PmReaction>("PmReaction");
+    qRegisterMetaType<PmReactionOld>("PmReactionOld");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");

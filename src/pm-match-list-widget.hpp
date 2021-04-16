@@ -33,7 +33,7 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
-    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
+    void sigNoMatchReactionChanged(PmReactionOld noMatchReaction);
 
 protected slots:
     // core event handlers
@@ -42,7 +42,7 @@ protected slots:
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
-    void onNoMatchReactionChanged(PmReaction noMatchReaction);
+    void onNoMatchReactionChanged(PmReactionOld noMatchReaction);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers
@@ -85,7 +85,7 @@ protected:
         const QList<std::string> &scenes,
         const QList<std::string> &sceneItems);
     void updateTargetSelection(
-        QComboBox *combo, const PmReaction &reaction, bool transparent = false);
+        QComboBox *combo, const PmReactionOld &reaction, bool transparent = false);
     void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
