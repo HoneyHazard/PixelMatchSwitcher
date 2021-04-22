@@ -31,9 +31,9 @@ PmAction::PmAction(QXmlStreamReader &reader)
         } else if (reader.isStartElement()) {
             QString elementText = reader.readElementText();
             if (name == "action_type") {
-                actionType = (PmAction)(elementText.toInt());
+                actionType = (ActionType)(elementText.toInt());
             } else if (name == "action_code") {
-                m_actionCode == int(elementText.toInt());
+                m_actionCode = int(elementText.toInt());
             } else if (name == "target_element") {
                 m_targetElement = elementText.toUtf8().data();
             } else if (name == "target_details") {
@@ -53,7 +53,7 @@ obs_data_t *PmAction::saveData() const
     return ret;
 }
 
-void PmAction::saveXml(QXmlStreamWriter &writer)
+void PmAction::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("action");
     writer.writeTextElement("action_type", QString::number(int(actionType)));
@@ -138,12 +138,10 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
                 return;
             }
         } else if (reader.isStartElement()) {
-            if (name == "match_action") {
-                PmAction action(reader);
-                matchActions.push_back(action);
-            } else if (name == "unmatch_action") {
-                PmAction action(reader);
-                unmatchActions.push_back(action);
+            if (name == "match_actions") {
+                readActionsXml(reader, "match_actions", matchActions);
+            } else if (name == "unmatch_actions") {
+                readActionsXml(reader, "unmatch_actions", unmatchActions);
             } else {
                 QString elemText = reader.readElementText();
                 if (name == "linger_ms") {
@@ -174,6 +172,16 @@ obs_data_t *PmReaction::saveData() const
     return ret;
 }
 
+void PmReaction::saveXml(QXmlStreamWriter &writer) const
+{
+    writer.writeStartElement("reaction");
+    writer.writeTextElement("linger_ms", QString::number(lingerMs));
+    writer.writeTextElement("cooldown_ms", QString::number(cooldownMs));
+    writeActionsXml(writer, "match_actions", matchActions);
+    writeActionsXml(writer, "unmatch_actions", unmatchActions);
+    writer.writeEndElement();
+}
+
 void PmReaction::readActionArray(obs_data_t *aData, void *param)
 {
     auto *actions = static_cast< std::vector<PmAction>* >(param);
@@ -191,4 +199,38 @@ obs_data_array_t *PmReaction::writeActionArray(const std::vector<PmAction> &vec)
         obs_data_release(aData);
     }
     return ret;
+}
+
+void PmReaction::readActionsXml(QXmlStreamReader &reader,
+    const std::string &vecName, std::vector<PmAction> &vec)
+{
+    while (true) {
+        reader.readNext();
+        if (reader.atEnd() ||
+            reader.error() != QXmlStreamReader::NoError) {
+            return;
+        }
+
+        QStringRef name = reader.name();
+        if (reader.isEndElement()) {
+            if (name == vecName.data()) {
+                return;
+            }
+        } else if (reader.isStartElement() && name == "action") {
+            PmAction action(reader);
+            vec.push_back(action);
+        }
+    }
+}
+
+void PmReaction::writeActionsXml(QXmlStreamWriter &writer,
+    const std::string &vecName, const std::vector<PmAction> &vec)
+{
+    if (vec.empty()) return;
+
+    writer.writeStartElement(vecName.data());
+    for (const auto &action : vec) {
+        action.saveXml(writer);
+    }
+    writer.writeEndElement();
 }

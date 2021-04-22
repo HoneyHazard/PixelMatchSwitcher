@@ -5,6 +5,7 @@
 #include <string>
 #include <obs-data.h>
 #include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 struct PmAction
 {
@@ -18,7 +19,7 @@ struct PmAction
     PmAction(QXmlStreamReader &reader);
 
     obs_data_t *saveData() const;
-    void saveXml(QXmlStreamWriter &writer);
+    void saveXml(QXmlStreamWriter &writer) const;
     //void execute();
 
     bool isSet() const;
@@ -44,7 +45,7 @@ struct PmReaction
     PmReaction(QXmlStreamReader &reader);
 
     obs_data_t *saveData() const;
-    void saveXml(QXmlStreamWriter &writer);
+    void saveXml(QXmlStreamWriter &writer) const;
 
     bool operator==(const PmAction &) const;
     bool operator!=(const PmAction &other) const
@@ -59,4 +60,8 @@ struct PmReaction
 protected:
     static void readActionArray(obs_data_t *a, void *param);
 	static obs_data_array_t *writeActionArray(const std::vector<PmAction> &vec);
+    static void readActionsXml(QXmlStreamReader &reader,
+        const std::string &vecName, std::vector<PmAction> &vec);
+	static void writeActionsXml(QXmlStreamWriter &writer,
+        const std::string &vecName, const std::vector<PmAction> &vec);
 };
