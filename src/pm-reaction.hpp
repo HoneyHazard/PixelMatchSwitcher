@@ -6,9 +6,8 @@
 #include <obs-data.h>
 #include <QXmlStreamReader>
 
-class PmAction
+struct PmAction
 {
-public:
     enum class ActionType : unsigned char {
         None=0, Scene=1, SceneItem=2, Filter=3, Hotkey=4, FrontEndEvent=5 };
 
@@ -18,24 +17,22 @@ public:
     PmAction(obs_data_t *data);
     PmAction(QXmlStreamReader &reader);
 
-    void execute();
-
     obs_data_t *saveData() const;
     void saveXml(QXmlStreamWriter &writer);
+    //void execute();
 
+    bool isSet() const;
     bool operator==(const PmAction &) const;
-    bool operator!=(const PmAction &other) const
-        { return !operator==(other); }
+    bool operator!=(const PmAction &other) const { return !operator==(other); }
 
-protected:
-    void switchScene();
-    void toggleSceneItem();
-    void toggleFilter();
-    void triggerHotkey();
-    void triggerFrontEndEvent();
+    //void switchScene();
+    //void toggleSceneItem();
+    //void toggleFilter();
+    //void triggerHotkey();
+    //void triggerFrontEndEvent();
 
-    ActionType m_actionType = ActionType::None;
-    int m_targetCode = 0;
+    ActionType actionType = ActionType::None;
+    int m_actionCode = 0;
     std::string m_targetElement;
     std::string m_targetDetails;
 };
@@ -49,9 +46,17 @@ struct PmReaction
     obs_data_t *saveData() const;
     void saveXml(QXmlStreamWriter &writer);
 
-    uint32_t lingerMs;
-    uint32_t cooldownMs;
+    bool operator==(const PmAction &) const;
+    bool operator!=(const PmAction &other) const
+        { return !operator==(other); }
+
+    uint32_t lingerMs = 0;
+    uint32_t cooldownMs = 0;
 
     std::vector<PmAction> matchActions;
     std::vector<PmAction> unmatchActions;
+
+protected:
+    static void readActionArray(obs_data_t *a, void *param);
+	static obs_data_array_t *writeActionArray(const std::vector<PmAction> &vec);
 };
