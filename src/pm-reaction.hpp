@@ -6,13 +6,18 @@
 #include <obs-data.h>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QColor>
 
 struct PmAction
 {
+public:
     enum class ActionType : unsigned char {
         None=0, Scene=1, SceneItem=2, Filter=3, Hotkey=4, FrontEndEvent=5 };
 
     enum class ToggleCode : int { Show=0, Hide=1 };
+
+    static const char *actionStr(ActionType actionType);
+    static QColor actionColor(ActionType color);
 
     PmAction() {}
     PmAction(obs_data_t *data);

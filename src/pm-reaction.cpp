@@ -1,5 +1,24 @@
 #include "pm-reaction.hpp"
 #include <obs-frontend-api.h>
+#include <obs-module.h>
+
+const char *PmAction::actionStr(ActionType actionType)
+{
+	switch (actionType) {
+	case ActionType::None: return obs_module_text("None");
+	case ActionType::Scene: return obs_module_text("Scene");
+	case ActionType::SceneItem: return obs_module_text("SceneItem");
+	case ActionType::Filter: return obs_module_text("Filter");
+	case ActionType::Hotkey: return obs_module_text("Hotkey");
+	case ActionType::FrontEndEvent: return obs_module_text("FrontEndEvent");
+	default: return obs_module_text("Unknown");
+	}
+}
+
+QColor PmAction::actionColor(ActionType actionType)
+{
+    // TODO
+}
 
 PmAction::PmAction(obs_data_t *data)
 {

@@ -26,8 +26,6 @@ class PmMatchConfigWidget : public QGroupBox
 public:
     PmMatchConfigWidget(PmCore *core, QWidget *parent);
 
-    size_t matchIndex() const { return m_matchIndex; }
-
 signals:
     void sigMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
     void sigCaptureStateChanged(PmCaptureState capState, int x=-1, int y=-1);
@@ -41,7 +39,8 @@ protected slots:
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onActiveFilterChanged(PmFilterRef newAf);
 
-    void onMatchImageLoadSuccess(size_t matchIndex, std::string filename, QImage img);
+    void onMatchImageLoadSuccess(
+        size_t matchIndex, std::string filename, QImage img);
     void onMatchImageLoadFailed(size_t matchIndex, std::string filename);
     void onCaptureStateChanged(PmCaptureState capState, int x, int y);
 
