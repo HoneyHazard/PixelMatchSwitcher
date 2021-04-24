@@ -11,6 +11,7 @@
 #include <obs.hpp>
 
 #include "pm-filter.h"
+#include "pm-reaction.hpp"
 
 class QXmlStreamWriter;
 class QXmlStreamReader;
@@ -149,7 +150,8 @@ struct PmMatchConfig
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
 
-    PmReactionOld reaction;
+    //PmReactionOld reactionOld;
+    PmReaction reaction;
 
     bool operator==(const PmMatchConfig&) const;
     bool operator!=(const PmMatchConfig& other) const
@@ -179,7 +181,8 @@ public:
     bool containsImage(const std::string &imgFilename,
                        size_t exceptIndex = (size_t)-1) const;
 
-    PmReactionOld noMatchReaction;
+    PmReactionOld noMatchReactionOld;
+    PmReaction noMatchReaction;
 };
 
 /**

@@ -182,6 +182,29 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     writer.writeEndElement();
 }
 
+bool PmReaction::isSet() const
+{
+    for (const auto &action : matchActions) {
+        if (action.isSet()) {
+            return true;
+        }
+    }
+    for (const auto &action : unmatchActions) {
+        if (action.isSet()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool PmReaction::operator==(const PmReaction &other) const
+{
+    return lingerMs == other.lingerMs
+        && cooldownMs == other.cooldownMs
+        && matchActions == other.matchActions
+        && unmatchActions == other.unmatchActions;
+}
+
 void PmReaction::readActionArray(obs_data_t *aData, void *param)
 {
     auto *actions = static_cast< std::vector<PmAction>* >(param);

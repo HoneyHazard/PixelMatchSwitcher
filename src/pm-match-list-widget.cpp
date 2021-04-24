@@ -148,7 +148,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     onMatchConfigSelect(
         selIdx, selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
 
-    onNoMatchReactionChanged(multiConfig.noMatchReaction);
+    onNoMatchReactionChanged(multiConfig.noMatchReactionOld);
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {
@@ -267,7 +267,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         m_tableWidget->blockSignals(false);
     }
 
-    const PmReactionOld &reaction = cfg.reaction;
+    const PmReactionOld &reaction = cfg.reactionOld;
     auto targetCombo = (QComboBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::TargetSelect);
     if (targetCombo) {
@@ -401,7 +401,7 @@ void PmMatchListWidget::onConfigInsertButtonReleased()
     if (sz > 0) {
         size_t closestIdx = std::min(idx, sz-1);
         PmReactionOld closestReaction = m_core->reaction(closestIdx);
-        newCfg.reaction.type = closestReaction.type;
+        newCfg.reactionOld.type = closestReaction.type;
     }
 
     emit sigMatchConfigInsert(idx, newCfg);
@@ -706,7 +706,7 @@ void PmMatchListWidget::targetSelected(int matchIdx, QComboBox *box)
 {
     size_t index = (size_t)(matchIdx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    PmReactionOld &reaction = cfg.reaction;
+    PmReactionOld &reaction = cfg.reactionOld;
     QByteArray ba = box->currentData(Qt::UserRole).toByteArray();
     std::string targetStr(ba.data());
 
@@ -751,7 +751,7 @@ void PmMatchListWidget::sceneTransitionSelected(
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.reaction.sceneTransition = transStr.toUtf8().data();
+    cfg.reactionOld.sceneTransition = transStr.toUtf8().data();
     emit sigMatchConfigChanged(index, cfg);
 }
 
@@ -761,9 +761,9 @@ void PmMatchListWidget::sceneItemActionSelected(
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
     if (actionStr == k_showLabelStr) {
-        cfg.reaction.type = PmReactionType::ShowSceneItem;
+        cfg.reactionOld.type = PmReactionType::ShowSceneItem;
     } else if (actionStr == k_hideLabelStr) {
-        cfg.reaction.type = PmReactionType::HideSceneItem;
+        cfg.reactionOld.type = PmReactionType::HideSceneItem;
     }
     emit sigMatchConfigChanged(index, cfg);
 }
@@ -772,7 +772,7 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.reaction.lingerMs = lingerMs;
+    cfg.reactionOld.lingerMs = lingerMs;
     emit sigMatchConfigChanged(index, cfg);
 }
 

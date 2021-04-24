@@ -174,6 +174,8 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
 {
+	memset(&filterCfg, 0, sizeof(pm_match_entry_config));
+
     obs_data_set_default_string(
         data, "match_image_filename", matchImgFilename.data());
     matchImgFilename = obs_data_get_string(data, "match_image_filename");
@@ -216,12 +218,14 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
     filterCfg.is_enabled = obs_data_get_bool(data, "is_enabled");
 
     obs_data_t *reactionObj = obs_data_get_obj(data, "reaction");
-    reaction = PmReactionOld(reactionObj);
+    reaction = PmReaction(reactionObj);
     obs_data_release(reactionObj);
 }
 
 PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
 {
+	memset(&filterCfg, 0, sizeof(pm_match_entry_config));
+
     while (true) {
         reader.readNext();
         if (reader.atEnd() || reader.error() != QXmlStreamReader::NoError) {
@@ -235,7 +239,7 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
             }
         } else if (reader.isStartElement()) {
             if (name == "reaction") {
-                reaction = PmReactionOld(reader);
+                reaction = PmReaction(reader);
             } else {
                 QString elemText = reader.readElementText();
                 if (name == "label") {
@@ -291,7 +295,7 @@ obs_data_t* PmMatchConfig::save() const
 
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
 
-    obs_data_t *reactionObj = reaction.save();
+    obs_data_t *reactionObj = reaction.saveData();
     obs_data_set_obj(ret, "reaction", reactionObj);
     obs_data_release(reactionObj);
 
@@ -347,7 +351,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     obs_data_array_release(matchEntriesArray);
 
     obs_data_t *noMatchReactionObj = obs_data_get_obj(data, "reaction");
-    noMatchReaction = PmReactionOld(noMatchReactionObj);
+    noMatchReactionOld = PmReactionOld(noMatchReactionObj);
     obs_data_release(noMatchReactionObj);
 }
 
@@ -369,7 +373,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(
             if (name == "name") {
                 presetName = reader.readElementText().toUtf8().data();
             } else if (name == "reaction") {
-                noMatchReaction = PmReactionOld(reader);
+                noMatchReactionOld = PmReactionOld(reader);
             } else if (name == "match_config") {
                 PmMatchConfig cfg(reader);
                 push_back(cfg);
@@ -393,7 +397,7 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     obs_data_set_array(ret, "entries", matchEntriesArray);
     obs_data_array_release(matchEntriesArray);
 
-    obs_data_t *noMatchReactionObj = noMatchReaction.save();
+    obs_data_t *noMatchReactionObj = noMatchReactionOld.save();
     obs_data_set_obj(ret, "reaction", noMatchReactionObj);
     obs_data_release(noMatchReactionObj);
 
@@ -405,8 +409,8 @@ void PmMultiMatchConfig::saveXml(
 {
     writer.writeStartElement("preset");
     writer.writeTextElement("name", presetName.data());
-    if (noMatchReaction.isSet()) {
-        noMatchReaction.saveXml(writer);
+    if (noMatchReactionOld.isSet()) {
+        noMatchReactionOld.saveXml(writer);
     }
     for (const auto &cfg : *this) {
         cfg.saveXml(writer);
@@ -425,7 +429,7 @@ bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
                 return false;
             }
         }
-        return noMatchReaction == other.noMatchReaction;
+        return noMatchReactionOld == other.noMatchReactionOld;
     }
 }
 
@@ -476,7 +480,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
-    qRegisterMetaType<PmReactionOld>("PmReactionOld");
+    qRegisterMetaType<PmReaction>("PmReaction");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");

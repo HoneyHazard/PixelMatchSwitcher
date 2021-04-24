@@ -47,8 +47,9 @@ struct PmReaction
     obs_data_t *saveData() const;
     void saveXml(QXmlStreamWriter &writer) const;
 
-    bool operator==(const PmAction &) const;
-    bool operator!=(const PmAction &other) const
+    bool isSet() const;
+    bool operator==(const PmReaction &) const;
+    bool operator!=(const PmReaction &other) const
         { return !operator==(other); }
 
     uint32_t lingerMs = 0;
