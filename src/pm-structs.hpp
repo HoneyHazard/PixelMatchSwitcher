@@ -84,21 +84,9 @@ struct PmMatchResults
 typedef std::vector<PmMatchResults> PmMultiMatchResults;
 
 /**
- * @brief Types of reactions provided by the plugin
- */
-enum class PmReactionType : char {
-    SwitchScene = 0,
-    ShowSceneItem = 1,
-    HideSceneItem = 2,
-    ShowFilter = 3,
-    HideFilter = 4,
-    ShowImage = 5, /* TBD */
-    HideImage = 6  /* TBD */
-};
-
-/**
  * @brief Describes what will happen in reaction to a condition
  */
+#if 0
 struct PmReactionOld
 {
 public:
@@ -126,6 +114,7 @@ public:
     bool operator!=(const PmReactionOld &other) const
         { return !operator==(other); }
 };
+#endif
 
 /**
  * @brief Describes matching configuration of an individual match entry, 
@@ -181,7 +170,6 @@ public:
     bool containsImage(const std::string &imgFilename,
                        size_t exceptIndex = (size_t)-1) const;
 
-    PmReactionOld noMatchReactionOld;
     PmReaction noMatchReaction;
 };
 

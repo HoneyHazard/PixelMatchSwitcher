@@ -19,7 +19,7 @@ bool PmReactionOld::operator==(const PmReactionOld &other) const
 PmReactionOld::PmReactionOld(obs_data_t *data)
 {
     obs_data_set_default_int(data, "type", static_cast<long long>(type));
-    type = PmReactionType(obs_data_get_int(data, "type"));
+    type = PmActionType(obs_data_get_int(data, "type"));
     targetSceneItem = obs_data_get_string(data, "target_scene_item");
     targetScene = obs_data_get_string(data, "target_scene");
     targetFilter = obs_data_get_string(data, "target_filter");
@@ -47,7 +47,7 @@ PmReactionOld::PmReactionOld(QXmlStreamReader &reader)
         } else if (reader.isStartElement()) {
             QString elementText = reader.readElementText();
             if (name == "type") {
-                type = PmReactionType(elementText.toInt());
+                type = PmActionType(elementText.toInt());
             } else if (name == "target_scene") {
                 targetScene = elementText.toUtf8().data();
             } else if (name == "target_transition") {
@@ -101,13 +101,13 @@ void PmReactionOld::saveXml(QXmlStreamWriter &writer) const
 bool PmReactionOld::isSet() const
 {
     switch (type) {
-        case PmReactionType::SwitchScene:
+        case PmActionType::SwitchScene:
             return targetScene.size() > 0;
-        case PmReactionType::ShowSceneItem:
-        case PmReactionType::HideSceneItem:
+        case PmActionType::ShowSceneItem:
+        case PmActionType::HideSceneItem:
             return targetSceneItem.size() > 0;
-        case PmReactionType::ShowFilter:
-        case PmReactionType::HideFilter:
+        case PmActionType::ShowFilter:
+        case PmActionType::HideFilter:
             return targetFilter.size() > 0;
         default:
             return false;

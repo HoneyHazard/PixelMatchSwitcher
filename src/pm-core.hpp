@@ -32,7 +32,6 @@ void on_frame_processed(struct pm_filter_data *filterData);
 void on_match_image_captured(struct pm_filter_data *filterData);
 
 /**
- * @brief The core interacts with the filter, UI, activates scene transitions,
  *        and more
  */
 class PmCore : public QObject   
@@ -65,8 +64,9 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
-    PmReactionOld reaction(size_t matchIdx) const;
-    PmReactionOld noMatchReaction() const;
+    bool hasTargetScene(size_t matchIdx) const; 
+    PmReaction reaction(size_t matchIdx) const;
+    PmReaction noMatchReaction() const;
     std::string matchImgFilename(size_t matchIdx) const;
     bool hasFilename(size_t matchIdx) const;
     size_t selectedConfigIndex() const { return m_selectedMatchIndex; }
@@ -110,7 +110,7 @@ signals:
     void sigMultiMatchConfigSizeChanged(size_t sz);
     void sigMatchConfigChanged(size_t matchIndex, PmMatchConfig config);
     void sigMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
-    void sigNoMatchReactionChanged(PmReactionOld noMatchReaction);
+    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
     
     void sigPreviewConfigChanged(PmPreviewConfig cfg);
     void sigRunningEnabledChanged(bool enable);
@@ -137,7 +137,7 @@ public slots:
     void onMatchPresetsAppend(PmMatchPresets presets);
 
     void onMultiMatchConfigReset();
-    void onNoMatchReactionChanged(PmReactionOld noMatchReaction);
+    void onNoMatchReactionChanged(PmReaction noMatchReaction);
 
     void onMatchConfigChanged(size_t matchIndex, PmMatchConfig cfg);
     void onMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
@@ -164,9 +164,10 @@ protected:
     void activate();
     void deactivate();
 
-    void switchScene(
+    void processReaction(size_t matchIdx, PmMatchConfig &cfg);
+    void execSceneReaction(
         const std::string& scene, const std::string &transition);
-    void toggleSceneItemOrFilter(PmReactionOld reaction, bool matched);
+    void execAsyncReaction(const PmReaction& reaction, bool matched);
 
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);

@@ -12,6 +12,30 @@ class QPushButton;
 class QComboBox;
 class QListWidget;
 
+class PmActionEntryWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    PmActionEntryWidget(PmCore *core, QWidget *parent);
+
+signals:
+    void sigActionChanged(size_t actionIndex, PmAction action);
+
+public slots:
+    void onActionChanged(size_t actionIndex, PmAction action);
+
+protected:
+    QLineEdit *m_lingerEdit;
+    QLineEdit *m_cooldownEdit;
+    QComboBox *m_targetCombo;
+    QComboBox *m_actionTypeCombo;
+    QComboBox *m_actionDetailsCombo;
+
+    size_t m_actionIndex;
+};
+
+
 class PmMatchReactionWidget : public QGroupBox
 {
     Q_OBJECT
@@ -39,28 +63,4 @@ protected:
     size_t m_multiConfigSz = 0;
 
     PmCore *m_core;
-};
-
-
-class PmMatchReactionWidget::ActionEntryWidget : public QWidget
-{
-    Q_OBJECT
-
-public:
-    ActionEntryWidget(PmCore *core, QWidget *parent);
-
-signals:
-    void sigActionChanged(size_t actionIndex, PmAction action);
-
-public slots:
-    void onActionChanged(size_t actionIndex, PmAction action);
-
-protected:
-    QLineEdit *m_lingerEdit;
-    QLineEdit *m_cooldownEdit;
-    QComboBox *m_targetCombo;
-    QComboBox *m_actionTypeCombo;
-    QComboBox *m_actionDetailsCombo;
-
-    size_t m_actionIndex;
 };

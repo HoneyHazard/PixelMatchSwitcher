@@ -277,7 +277,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     auto actionStack = (QStackedWidget*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::ActionSelect);
     if (actionStack) {
-        if (reaction.type == PmReactionType::SwitchScene) {
+        if (reaction.type == PmActionType::SwitchScene) {
             int idx = int(ActionStackOrder::SceneTarget);
             actionStack->setCurrentIndex(idx);
             auto sceneTransCombo = (QComboBox *)actionStack->widget(idx);
@@ -296,8 +296,8 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
             auto sceneItemActionCombo = (QComboBox* )actionStack->widget(idx);
             if (sceneItemActionCombo) {
                 sceneItemActionCombo->blockSignals(true);
-                bool show = reaction.type == PmReactionType::ShowSceneItem
-                         || reaction.type == PmReactionType::ShowFilter;
+                bool show = reaction.type == PmActionType::ShowSceneItem
+                         || reaction.type == PmActionType::ShowFilter;
                 QString selStr = show ? k_showLabelStr : k_hideLabelStr;
                 sceneItemActionCombo->setCurrentText(selStr);
                 sceneItemActionCombo->blockSignals(false);
@@ -638,11 +638,11 @@ void PmMatchListWidget::updateTargetSelection(
     QColor targetColor;
     std::string targetStr;
     if (reaction.isSet()) {
-        if (reaction.type == PmReactionType::SwitchScene) {
+        if (reaction.type == PmActionType::SwitchScene) {
             targetStr = reaction.targetScene;
             targetColor = k_scenesColor;
-        } else if (reaction.type == PmReactionType::ShowSceneItem
-                || reaction.type == PmReactionType::HideSceneItem) {
+        } else if (reaction.type == PmActionType::ShowSceneItem
+                || reaction.type == PmActionType::HideSceneItem) {
             targetStr = reaction.targetSceneItem;
             targetColor = k_sceneItemsColor;
         } else {
@@ -716,26 +716,26 @@ void PmMatchListWidget::targetSelected(int matchIdx, QComboBox *box)
         QList<std::string> sceneNames = m_core->sceneNames();
         QList<std::string> sceneItemNames = m_core->sceneItemNames();
         if (sceneNames.contains(targetStr)) {
-            reaction.type = PmReactionType::SwitchScene;
+            reaction.type = PmActionType::SwitchScene;
             reaction.targetScene = targetStr;
             reaction.targetSceneItem.clear();
             reaction.targetFilter.clear();
         } else if (sceneItemNames.contains(targetStr)) {
-            if (reaction.type == PmReactionType::HideSceneItem
-             || reaction.type == PmReactionType::HideFilter) {
-                reaction.type = PmReactionType::HideSceneItem;
+            if (reaction.type == PmActionType::HideSceneItem
+             || reaction.type == PmActionType::HideFilter) {
+                reaction.type = PmActionType::HideSceneItem;
             } else {
-                reaction.type = PmReactionType::ShowSceneItem;
+                reaction.type = PmActionType::ShowSceneItem;
             }
             reaction.targetSceneItem = targetStr;
             reaction.targetScene.clear();
             reaction.targetFilter.clear();
         } else {
-            if (reaction.type == PmReactionType::HideSceneItem
-             || reaction.type == PmReactionType::HideFilter) {
-                reaction.type = PmReactionType::HideFilter;
+            if (reaction.type == PmActionType::HideSceneItem
+             || reaction.type == PmActionType::HideFilter) {
+                reaction.type = PmActionType::HideFilter;
             } else {
-                reaction.type = PmReactionType::ShowFilter;
+                reaction.type = PmActionType::ShowFilter;
             }
             reaction.targetFilter = targetStr;
             reaction.targetScene.clear();
@@ -761,9 +761,9 @@ void PmMatchListWidget::sceneItemActionSelected(
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
     if (actionStr == k_showLabelStr) {
-        cfg.reactionOld.type = PmReactionType::ShowSceneItem;
+        cfg.reactionOld.type = PmActionType::ShowSceneItem;
     } else if (actionStr == k_hideLabelStr) {
-        cfg.reactionOld.type = PmReactionType::HideSceneItem;
+        cfg.reactionOld.type = PmActionType::HideSceneItem;
     }
     emit sigMatchConfigChanged(index, cfg);
 }

@@ -2,28 +2,28 @@
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 
-const char *PmAction::actionStr(ActionType actionType)
+const char *PmAction::actionStr(PmActionType actionType)
 {
-	switch (actionType) {
-	case ActionType::None: return obs_module_text("None");
-	case ActionType::Scene: return obs_module_text("Scene");
-	case ActionType::SceneItem: return obs_module_text("SceneItem");
-	case ActionType::Filter: return obs_module_text("Filter");
-	case ActionType::Hotkey: return obs_module_text("Hotkey");
-	case ActionType::FrontEndEvent: return obs_module_text("FrontEndEvent");
-	default: return obs_module_text("Unknown");
-	}
+    switch (actionType) {
+    case PmActionType::None: return obs_module_text("None");
+    case PmActionType::Scene: return obs_module_text("Scene");
+    case PmActionType::SceneItem: return obs_module_text("SceneItem");
+    case PmActionType::Filter: return obs_module_text("Filter");
+    case PmActionType::Hotkey: return obs_module_text("Hotkey");
+    case PmActionType::FrontEndEvent: return obs_module_text("FrontEndEvent");
+    default: return obs_module_text("Unknown");
+    }
 }
 
-QColor PmAction::actionColor(ActionType actionType)
+QColor PmAction::actionColor(PmActionType actionType)
 {
-    // TODO
+    return Qt::cyan;
 }
 
 PmAction::PmAction(obs_data_t *data)
 {
     obs_data_set_default_int(data, "action_type", (long long)actionType);
-    actionType = (ActionType)obs_data_get_int(data, "action_type");
+    actionType = (PmActionType)obs_data_get_int(data, "action_type");
 
     obs_data_set_default_int(data, "action_code", m_actionCode);
     m_actionCode = (int)obs_data_get_int(data, "action_code");
@@ -50,7 +50,7 @@ PmAction::PmAction(QXmlStreamReader &reader)
         } else if (reader.isStartElement()) {
             QString elementText = reader.readElementText();
             if (name == "action_type") {
-                actionType = (ActionType)(elementText.toInt());
+                actionType = (PmActionType)(elementText.toInt());
             } else if (name == "action_code") {
                 m_actionCode = int(elementText.toInt());
             } else if (name == "target_element") {
@@ -86,12 +86,12 @@ void PmAction::saveXml(QXmlStreamWriter &writer) const
 void PmAction::execute()
 {
     switch (m_actionType) {
-    case ActionType::None: break;
-    case ActionType::Scene: switchScene(); break;
-    case ActionType::SceneItem: toggleSceneItem(); break;
-    case ActionType::Filter: toggleFilter(); break;
-    case ActionType::Hotkey: triggerHotkey(); break;
-    case ActionType::FrontEndEvent: triggerFrontEndEvent(); break;
+    case PmActionType::None: break;
+    case PmActionType::Scene: switchScene(); break;
+    case PmActionType::SceneItem: toggleSceneItem(); break;
+    case PmActionType::Filter: toggleFilter(); break;
+    case PmActionType::Hotkey: triggerHotkey(); break;
+    case PmActionType::FrontEndEvent: triggerFrontEndEvent(); break;
     }
 }
 */
@@ -100,11 +100,16 @@ bool PmAction::isSet() const
 {
     // TODO: revisit
     switch (actionType) {
-    case ActionType::None:
+    case PmActionType::None:
         return false; break;
     default:
         return m_targetElement.size() > 0; break;
     }
+}
+
+const char *PmAction::targetScene() const
+{
+    return actionType == PmActionType::Scene ? m_targetElement.data() : nullptr;
 }
 
 bool PmAction::operator==(const PmAction &other) const
@@ -199,6 +204,21 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     writeActionsXml(writer, "match_actions", matchActions);
     writeActionsXml(writer, "unmatch_actions", unmatchActions);
     writer.writeEndElement();
+}
+
+const char *PmReaction::targetScene() const
+{
+    for (const PmAction& action : matchActions) {
+        const char *ts = action.targetScene();
+        if (ts)
+            return ts;
+    }
+    for (const PmAction &action : unmatchActions) {
+        const char *ts = action.targetScene();
+        if (ts)
+            return ts;
+    }
+    return nullptr;
 }
 
 bool PmReaction::isSet() const
