@@ -166,9 +166,7 @@ protected:
     void activate();
     void deactivate();
 
-    void processReaction(size_t matchIdx, PmMatchConfig &cfg);
-    void execSceneReaction(
-        const std::string& scene, const std::string &transition);
+    void execSceneReaction(const PmReaction &reaction, bool matched);
     void execAsyncReaction(const PmReaction& reaction, bool matched);
 
     void scanScenes();

@@ -1557,18 +1557,20 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         m_forceSceneItemRefresh = false;
 }
 
-void PmCore::processReaction(size_t matchIdx, PmMatchConfig &cfg)
-{
-
-}
-
 // copied (and slightly simplified) from Advanced Scene Switcher:
 // https://github.com/WarmUpTill/SceneSwitcher/blob/05540b61a118f2190bb3fae574c48aea1b436ac7/src/advanced-scene-switcher.cpp#L1066
-void PmCore::execSceneReaction(
-    const std::string &targetSceneName, const std::string &transitionName)
+void PmCore::execSceneReaction(const PmReaction &reaction, bool matched)
 {
     obs_source_t* currSceneSrc = obs_frontend_get_current_scene();
     obs_source_t* targetSceneSrc = nullptr;
+    std::string targetSceneName;
+    std::string targetTransition;
+
+    if (matched) {
+        reaction.getMatchScene(targetSceneName, targetTransition);
+    } else {
+        reaction.getUnmatchScene(targetSceneName, targetTransition);
+    }
 
     {
         QMutexLocker locker(&m_scenesMutex);
@@ -1582,8 +1584,8 @@ void PmCore::execSceneReaction(
     if (targetSceneSrc) {
         if (targetSceneSrc != currSceneSrc) {
             obs_source_t* transitionSrc = nullptr;
-            if (!transitionName.empty()) {
-                auto find = m_availableTransitions.find(transitionName);
+            if (!targetTransition.empty()) {
+                auto find = m_availableTransitions.find(targetTransition);
                 if (find == m_availableTransitions.end()) {
                     find = m_availableTransitions.find("Cut");
                 }
@@ -1592,11 +1594,17 @@ void PmCore::execSceneReaction(
                     transitionSrc = obs_weak_source_get_source(weakTransSrc);
                 }
             }
+
+            obs_source_t *currTransition = nullptr;
             if (transitionSrc) {
+                currTransition = obs_frontend_get_current_transition();
                 obs_frontend_set_current_transition(transitionSrc);
                 obs_source_release(transitionSrc);
             }
             obs_frontend_set_current_scene(targetSceneSrc);
+            if (transitionSrc) {
+                obs_source_release(currTransition);
+            }
         }
         obs_source_release(targetSceneSrc);
     }
@@ -1604,39 +1612,42 @@ void PmCore::execSceneReaction(
     obs_source_release(currSceneSrc);
 }
 
-void PmCore::toggleSceneItemOrFilter(PmReaction reaction, bool matched)
+void PmCore::execAsyncReaction(const PmReaction &reaction, bool matched)
 {
-    if (reaction.type == PmActionType::ShowSceneItem
-     || reaction.type == PmActionType::HideSceneItem) {
-        obs_sceneitem_t* sceneItem = nullptr;
-        {
-            QMutexLocker locker(&m_scenesMutex);
-            auto find = m_sceneItems.find(reaction.targetSceneItem);
-            if (find != m_sceneItems.end()) {
-                OBSSceneItem sceneItemSi = find->si;
-                sceneItem = sceneItemSi;
+	const auto &actions
+        = matched ? reaction.matchActions : reaction.unmatchActions;
+    for (const auto &action: actions) {
+        if (action.m_actionType == PmActionType::SceneItem) {
+            obs_sceneitem_t* sceneItem = nullptr;
+            {
+                QMutexLocker locker(&m_scenesMutex);
+                auto find = m_sceneItems.find(action.m_targetElement);
+                if (find != m_sceneItems.end()) {
+                    OBSSceneItem sceneItemSi = find->si;
+                    sceneItem = sceneItemSi;
+                }
             }
-        }
-        if (sceneItem) {
-            bool show = (reaction.type == PmActionType::ShowSceneItem)
-                ? matched : !matched;
-            obs_sceneitem_set_visible(sceneItem, show);
-        }
-    } else {
-        obs_source_t *filterSrc = nullptr;
-        {
-            QMutexLocker locker(&m_scenesMutex);
-            auto find = m_filters.find(reaction.targetFilter);
-            if (find != m_filters.end()) {
-                OBSWeakSource filterWs = *find;
-                filterSrc = obs_weak_source_get_source(filterWs);
+            if (sceneItem) {
+                bool show = (action.m_actionCode == (int)PmToggleCode::Show)
+                    ? matched : !matched;
+                obs_sceneitem_set_visible(sceneItem, show);
             }
-        }
-        if (filterSrc) {
-            bool show = (reaction.type == PmActionType::ShowFilter)
-                ? matched : !matched;
-            obs_source_set_enabled(filterSrc, show);
-            obs_source_release(filterSrc);
+        } else if (action.m_actionType == PmActionType::Filter) {
+            obs_source_t *filterSrc = nullptr;
+            {
+                QMutexLocker locker(&m_scenesMutex);
+                auto find = m_filters.find(action.m_targetElement);
+                if (find != m_filters.end()) {
+                    OBSWeakSource filterWs = *find;
+                    filterSrc = obs_weak_source_get_source(filterWs);
+                }
+            }
+            if (filterSrc) {
+                bool show = (action.m_actionCode == (int)PmToggleCode::Show)
+                    ? matched : !matched;
+                obs_source_set_enabled(filterSrc, show);
+                obs_source_release(filterSrc);
+            }
         }
     }
 }

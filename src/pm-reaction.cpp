@@ -279,6 +279,34 @@ bool PmReaction::operator==(const PmReaction &other) const
         && unmatchActions == other.unmatchActions;
 }
 
+void PmReaction::getMatchScene(std::string &sceneName, std::string &transition)
+{
+    for (const PmAction& action : matchActions) {
+        if (action.m_actionType == PmActionType::Scene) {
+            sceneName = action.m_targetElement;
+            transition = action.m_targetDetails;
+            return;
+        }
+    }
+}
+
+void PmReaction::getUnmatchScene(
+    std::string &sceneName, std::string &transition)
+{
+    for (const PmAction& action : unmatchActions) {
+        if (action.m_actionType == PmActionType::Scene) {
+            sceneName = action.m_targetElement;
+            transition = action.m_targetDetails;
+            return;
+        }
+    }
+}
+
+void PmReaction::getUnmatchScene(
+    std::string &scenename, std::string &transition)
+{
+}
+
 void PmReaction::readActionArray(obs_data_t *aData, void *param)
 {
     auto *actions = static_cast< std::vector<PmAction>* >(param);

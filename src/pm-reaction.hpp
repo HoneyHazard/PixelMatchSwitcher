@@ -20,11 +20,11 @@ enum class PmActionType : char {
     FrontEndEvent = 5
 };
 
+enum class PmToggleCode : int { Show = 0, Hide = 1 };
+
 struct PmAction
 {
 public:
-    enum class ToggleCode : int { Show=0, Hide=1 };
-
     static const char *actionStr(PmActionType actionType);
     static QColor actionColor(PmActionType color);
 
@@ -64,6 +64,8 @@ struct PmReaction
     bool operator==(const PmReaction &) const;
     bool operator!=(const PmReaction &other) const
         { return !operator==(other); }
+    void getMatchScene(std::string &sceneName, std::string &transition);
+    void getUnmatchScene(std::string &scenename, std::string &transition);
 
     uint32_t lingerMs = 0;
     uint32_t cooldownMs = 0;
