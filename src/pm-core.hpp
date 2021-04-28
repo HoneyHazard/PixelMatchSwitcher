@@ -64,7 +64,9 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
-    bool hasTargetScene(size_t matchIdx) const; 
+    bool hasSceneAction(size_t matchIdx) const
+        { return hasAction(matchIdx, PmActionType::Scene); }
+    bool hasAction(size_t matchIdx, PmActionType actionType) const;
     PmReaction reaction(size_t matchIdx) const;
     PmReaction noMatchReaction() const;
     std::string matchImgFilename(size_t matchIdx) const;

@@ -34,14 +34,14 @@ public:
 
     obs_data_t *saveData() const;
     void saveXml(QXmlStreamWriter &writer) const;
-    //void execute();
+    bool renameElement(PmActionType actionType,
+        const std::string &oldName, const std::string &newName);
 
     bool isSet() const;
-    const char *targetScene() const;
     bool operator==(const PmAction &) const;
     bool operator!=(const PmAction &other) const { return !operator==(other); }
 
-    PmActionType actionType = PmActionType::None;
+    PmActionType m_actionType = PmActionType::None;
     int m_actionCode = 0;
     std::string m_targetElement;
     std::string m_targetDetails;
@@ -55,9 +55,11 @@ struct PmReaction
 
     obs_data_t *saveData() const;
     void saveXml(QXmlStreamWriter &writer) const;
+    bool renameElement(PmActionType actionType,
+        const std::string &oldName, const std::string &newName);
 
-    const char *targetScene() const;
-    bool hasTargetScene() const { return targetScene() != nullptr; }
+    bool hasAction(PmActionType actionType) const;
+    bool hasSceneAction() const { return hasAction(PmActionType::Scene); }
     bool isSet() const;
     bool operator==(const PmReaction &) const;
     bool operator!=(const PmReaction &other) const

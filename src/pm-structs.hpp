@@ -138,8 +138,6 @@ struct PmMatchConfig
     bool invertResult = false;
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
-
-    //PmReactionOld reactionOld;
     PmReaction reaction;
 
     bool operator==(const PmMatchConfig&) const;

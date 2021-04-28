@@ -269,11 +269,11 @@ PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
                                                 : PmMatchConfig();
 }
 
-bool PmCore::hasTargetScene(size_t matchIdx) const
+bool PmCore::hasAction(size_t matchIdx, PmActionType actionType) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
     return matchIdx < m_multiMatchConfig.size()
-        ? m_multiMatchConfig[matchIdx].reaction.hasTargetScene() : false;
+        ? m_multiMatchConfig[matchIdx].reaction.hasAction(actionType) : false;
 }
 
 PmReaction PmCore::reaction(size_t matchIdx) const
@@ -301,7 +301,7 @@ std::string PmCore::noMatchTransition() const
 PmReaction PmCore::noMatchReaction() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
-    return m_multiMatchConfig.noMatchReactionOld;
+	return m_multiMatchConfig.noMatchReaction;
 }
 
 std::string PmCore::matchImgFilename(size_t matchIdx) const
@@ -329,7 +329,7 @@ bool PmCore::matchConfigCanMoveUp(size_t idx) const
 
     if (sz <= 1 || idx == 0) return false;
 
-    if (!hasTargetScene(idx - 1) && hasTargetScene(idx))
+    if (!hasSceneAction(idx - 1) && hasSceneAction(idx))
         return false;
 
     return true;
@@ -342,7 +342,7 @@ bool PmCore::matchConfigCanMoveDown(size_t idx) const
 
     if (sz <= 1 || idx >= sz-1) return false;
 
-    if (!hasTargetScene(idx) && hasTargetScene(idx + 1))
+    if (!hasSceneAction(idx) && hasSceneAction(idx + 1))
         return false;
  
     return true;
@@ -354,19 +354,19 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
 
     // enforce reaction type order
     if (m_enforceReactionTypeOrder && sz > 1) {
-	    if (newCfg.reaction.hasTargetScene() && !hasTargetScene(matchIdx + 1)) {
+	    if (newCfg.reaction.hasSceneAction() && !hasSceneAction(matchIdx + 1)) {
             // remove + insert to enforce scenes after scene items
             onMatchConfigRemove(matchIdx);
-            while (matchIdx < sz && !hasTargetScene(matchIdx)) {
+            while (matchIdx < sz && !hasSceneAction(matchIdx)) {
                 matchIdx++;
             }
             onMatchConfigInsert(matchIdx, newCfg);
             return true;
-	    } else if (!newCfg.reaction.hasTargetScene()
-                && hasTargetScene(matchIdx - 1)) {
+	    } else if (!newCfg.reaction.hasSceneAction()
+                && hasSceneAction(matchIdx - 1)) {
             // remove + insert to enforce scene items before scenes
             onMatchConfigRemove(matchIdx);
-            while (matchIdx > 0 && hasTargetScene(matchIdx -1)) {
+            while (matchIdx > 0 && hasSceneAction(matchIdx -1)) {
                 matchIdx--;
             }
             onMatchConfigInsert(matchIdx, newCfg);
@@ -549,14 +549,12 @@ void PmCore::onMatchConfigSelect(size_t matchIndex)
     emit sigMatchConfigSelect(matchIndex, selCfg);
 }
 
-void PmCore::onNoMatchReactionChanged(PmReactionOld noMatchReaction)
+void PmCore::onNoMatchReactionChanged(PmReaction noMatchReaction)
 {
-    if (noMatchReaction.sceneTransition.empty())
-        noMatchReaction.sceneTransition = "Cut";
     QMutexLocker locker(&m_matchConfigMutex);
-    if (m_multiMatchConfig.noMatchReactionOld != noMatchReaction) {
-        m_multiMatchConfig.noMatchReactionOld = noMatchReaction;
-        emit sigNoMatchReactionChanged(m_multiMatchConfig.noMatchReactionOld);
+    if (m_multiMatchConfig.noMatchReaction != noMatchReaction) {
+        m_multiMatchConfig.noMatchReaction = noMatchReaction;
+        emit sigNoMatchReactionChanged(m_multiMatchConfig.noMatchReaction);
         emit sigActivePresetDirtyChanged();
     }
 }
@@ -638,7 +636,7 @@ bool PmCore::matchConfigDirty() const
                 return true;
             }
         }
-        return m_multiMatchConfig.noMatchReactionOld != PmReactionOld();
+        return m_multiMatchConfig.noMatchReaction != PmReaction();
     } else {
         const PmMultiMatchConfig& presetCfg 
             = m_matchPresets[m_activeMatchPreset];
@@ -1102,21 +1100,21 @@ void PmCore::scanScenes()
 
     bool scenesChanged = false;
     bool sceneItemsChanged = false;
-    QSet<std::string> oldScenes;
-    QSet<std::string> oldSceneItems;
-    QSet<std::string> oldFilters;
+    QSet<std::string> oldSceneNames;
+    QSet<std::string> oldSceneItemNames;
+    QSet<std::string> oldFilterNames;
     {
         QMutexLocker locker(&m_scenesMutex);
         if (m_scenes != newScenes) {
-            oldScenes = m_scenes.sourceNames();
+            oldSceneNames = m_scenes.sourceNames();
             scenesChanged = true;
         }
         if (m_sceneItems != newSceneItems) {
-            oldSceneItems = m_sceneItems.sceneItemNames();
+            oldSceneItemNames = m_sceneItems.sceneItemNames();
             sceneItemsChanged = true;
         }
         if (m_filters != newFilters) {
-            oldFilters = m_filters.sourceNames();
+            oldFilterNames = m_filters.sourceNames();
             sceneItemsChanged = true;
         }
     }
@@ -1129,41 +1127,26 @@ void PmCore::scanScenes()
     if (scenesChanged) {
         QMutexLocker locker(&m_scenesMutex);
         size_t cfgSize = multiMatchConfigSize();
-        auto newNames = newScenes.sourceNames();
-        for (size_t i = 0; i < cfgSize; ++i) {
-            PmMatchConfig cfgCpy = matchConfig(i);
-            auto &reaction = cfgCpy.reactionOld;
-            if (reaction.type == PmActionType::SwitchScene) {
-                auto &matchSceneName = reaction.targetScene;
-                if (matchSceneName.size()
-                 && !newNames.contains(matchSceneName)) {
-                    // scene was renamed or deleted
-                    if (oldScenes.contains(matchSceneName)) {
-                        // scene was renamed
-                        auto ws = m_scenes[matchSceneName];
-                        matchSceneName = newScenes.key(ws);
-                    } else {
-                        // scene was deleted
-                        matchSceneName.clear();
+        for (const std::string& oldSceneName : oldSceneNames) {
+            if (!newScenes.contains(oldSceneName)) {
+                auto ws = m_scenes[oldSceneName];
+                std::string newSceneName = newScenes.key(ws);
+                if (m_multiMatchConfig.noMatchReaction.hasSceneAction()) {
+                    auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
+                    if (noMatchReaction.renameElement(
+                        PmActionType::Scene, oldSceneName, newSceneName)) {
+                            onNoMatchReactionChanged(noMatchReaction);
                     }
-                    onMatchConfigChanged(i, cfgCpy);
                 }
-            }
-        }
-        {
-            PmReactionOld &noMatchReaction = m_multiMatchConfig.noMatchReactionOld;
-            std::string &noMatchSceneName = noMatchReaction.targetScene;
-            if (noMatchSceneName.size()
-             && !newNames.contains(noMatchSceneName)) {
-                if (oldScenes.contains(noMatchSceneName)) {
-                    // no match scene was renamed
-                    auto ws = m_scenes[noMatchSceneName];
-                    noMatchSceneName = newScenes.key(ws);
-                } else {
-                    // no match scene was deleted
-                    noMatchSceneName.clear();
+                for (size_t i = 0; i < cfgSize; i++) {
+                    if (hasSceneAction(i)) {
+                        PmMatchConfig cfg = m_multiMatchConfig[i];
+                        if (cfg.reaction.renameElement(
+                            PmActionType::Scene, oldSceneName, newSceneName)) {
+                            onMatchConfigChanged(i, cfg);
+                        }
+                    }
                 }
-                onNoMatchReactionChanged(noMatchReaction);
             }
         }
     }
@@ -1172,38 +1155,55 @@ void PmCore::scanScenes()
     if (sceneItemsChanged) {
         QMutexLocker locker(&m_scenesMutex);
         size_t cfgSize = multiMatchConfigSize();
-        auto newSiNames = newSceneItems.sceneItemNames();
-        auto newFiNames = newFilters.sourceNames();
-        for (size_t i = 0; i < cfgSize; ++i) {
-            PmMatchConfig cfgCpy = matchConfig(i);
-            auto &reaction = cfgCpy.reactionOld;
-            if (reaction.type == PmActionType::ShowSceneItem
-             || reaction.type == PmActionType::HideSceneItem) {
-                auto& sceneItemName = reaction.targetSceneItem;
-                if (sceneItemName.size()
-                 && !newSiNames.contains(sceneItemName)) {
-                    if (oldSceneItems.contains(sceneItemName)) {
-                        // scene item was renamed
-                        auto ws = m_sceneItems[sceneItemName];
-                        sceneItemName = newSceneItems.key(ws);
-                    } else {
-                        // scene item was deleted
-                        sceneItemName.clear();
+
+        // scene items
+        auto newSiNames = newSceneItems.keys();
+        for (const std::string& oldSiName : oldSceneItemNames) {
+            if (!newSiNames.contains(oldSiName)) {
+                auto src = m_sceneItems[oldSiName];
+                std::string newSiName = newSceneItems.key(src);
+                if (m_multiMatchConfig.noMatchReaction.hasAction(
+                        PmActionType::SceneItem)) {
+                    auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
+                    if (noMatchReaction.renameElement(
+                        PmActionType::SceneItem, oldSiName, newSiName)) {
+                            onNoMatchReactionChanged(noMatchReaction);
                     }
-                    onMatchConfigChanged(i, cfgCpy);
+                    for (size_t i = 0; i < cfgSize; i++) {
+                        if (hasSceneAction(i)) {
+                            PmMatchConfig cfg = m_multiMatchConfig[i];
+                            if (cfg.reaction.renameElement(
+                                PmActionType::SceneItem, oldSiName, newSiName)) {
+                                onMatchConfigChanged(i, cfg);
+                            }
+                        }
+                    }
                 }
-            } else if (reaction.type == PmActionType::ShowFilter
-                    || reaction.type == PmActionType::HideFilter) {
-                auto &filterName = reaction.targetFilter;
-                if (filterName.size() && !newFiNames.contains(filterName)) {
-                    if (oldFilters.contains(filterName)) {
-                        // filter was renamed
-                        auto ws = m_filters[filterName];
-                        filterName = newFilters.key(ws);
-                    } else {
-                        filterName.clear();
+            }
+        }
+
+        // filters
+        auto newFiNames = newFilters.keys();
+        for (const std::string& oldFiName : oldFilterNames) {
+            if (!newFiNames.contains(oldFiName)) {
+                auto ws = m_filters[oldFiName];
+                std::string newFiName = newFilters.key(ws);
+                if (m_multiMatchConfig.noMatchReaction.hasAction(
+                    PmActionType::SceneItem)) {
+                    auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
+                    if (noMatchReaction.renameElement(
+                        PmActionType::SceneItem, oldFiName, newFiName)) {
+                            onNoMatchReactionChanged(noMatchReaction);
                     }
-                    onMatchConfigChanged(i, cfgCpy);
+                    for (size_t i = 0; i < cfgSize; i++) {
+                        if (hasSceneAction(i)) {
+                            PmMatchConfig cfg = m_multiMatchConfig[i];
+                            if (cfg.reaction.renameElement(
+                                PmActionType::SceneItem, oldFiName, newFiName)) {
+                                onMatchConfigChanged(i, cfg);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1365,7 +1365,7 @@ void PmCore::resetMultiMatchConfig(const PmMultiMatchConfig *newCfg)
     }
 
     // reset no-match reaction
-    onNoMatchReactionChanged(PmReactionOld());
+    onNoMatchReactionChanged(PmReaction());
 
     // notify other modules about changing size
     emit sigMultiMatchConfigSizeChanged(0);
@@ -1401,7 +1401,7 @@ void PmCore::activateMultiMatchConfig(const PmMultiMatchConfig& mCfg)
     for (size_t i = 0; i < mCfg.size(); ++i) {
         onMatchConfigInsert(i, mCfg[i]);
     }
-    onNoMatchReactionChanged(mCfg.noMatchReactionOld);
+    onNoMatchReactionChanged(mCfg.noMatchReaction);
     onMatchConfigSelect(0);
 }
 
@@ -1604,7 +1604,7 @@ void PmCore::execSceneReaction(
     obs_source_release(currSceneSrc);
 }
 
-void PmCore::toggleSceneItemOrFilter(PmReactionOld reaction, bool matched)
+void PmCore::toggleSceneItemOrFilter(PmReaction reaction, bool matched)
 {
     if (reaction.type == PmActionType::ShowSceneItem
      || reaction.type == PmActionType::HideSceneItem) {

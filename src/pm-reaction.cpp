@@ -22,8 +22,8 @@ QColor PmAction::actionColor(PmActionType actionType)
 
 PmAction::PmAction(obs_data_t *data)
 {
-    obs_data_set_default_int(data, "action_type", (long long)actionType);
-    actionType = (PmActionType)obs_data_get_int(data, "action_type");
+    obs_data_set_default_int(data, "action_type", (long long)m_actionType);
+    m_actionType = (PmActionType)obs_data_get_int(data, "action_type");
 
     obs_data_set_default_int(data, "action_code", m_actionCode);
     m_actionCode = (int)obs_data_get_int(data, "action_code");
@@ -50,7 +50,7 @@ PmAction::PmAction(QXmlStreamReader &reader)
         } else if (reader.isStartElement()) {
             QString elementText = reader.readElementText();
             if (name == "action_type") {
-                actionType = (PmActionType)(elementText.toInt());
+                m_actionType = (PmActionType)(elementText.toInt());
             } else if (name == "action_code") {
                 m_actionCode = int(elementText.toInt());
             } else if (name == "target_element") {
@@ -65,7 +65,7 @@ PmAction::PmAction(QXmlStreamReader &reader)
 obs_data_t *PmAction::saveData() const
 {
     obs_data_t *ret = obs_data_create();
-    obs_data_set_int(ret, "action_type", (long long)actionType);
+    obs_data_set_int(ret, "action_type", (long long)m_actionType);
     obs_data_set_int(ret, "action_code", (long long)m_actionCode);
     obs_data_set_string(ret, "target_element", m_targetElement.data());
     obs_data_set_string(ret, "target_details", m_targetDetails.data());
@@ -75,11 +75,21 @@ obs_data_t *PmAction::saveData() const
 void PmAction::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("action");
-    writer.writeTextElement("action_type", QString::number(int(actionType)));
+    writer.writeTextElement("action_type", QString::number(int(m_actionType)));
     writer.writeTextElement("action_code", QString::number(int(m_actionCode)));
     writer.writeTextElement("target_element", m_targetElement.data());
     writer.writeTextElement("target_details", m_targetDetails.data());
     writer.writeEndElement();
+}
+
+bool PmAction::renameElement(PmActionType actionType,
+    const std::string &oldName, const std::string &newName)
+{
+    if (m_actionType == actionType && m_targetElement == oldName) {
+        m_targetElement = newName;
+        return true;
+    }
+    return false;
 }
 
 /*
@@ -99,7 +109,7 @@ void PmAction::execute()
 bool PmAction::isSet() const
 {
     // TODO: revisit
-    switch (actionType) {
+    switch (m_actionType) {
     case PmActionType::None:
         return false; break;
     default:
@@ -107,14 +117,9 @@ bool PmAction::isSet() const
     }
 }
 
-const char *PmAction::targetScene() const
-{
-    return actionType == PmActionType::Scene ? m_targetElement.data() : nullptr;
-}
-
 bool PmAction::operator==(const PmAction &other) const
 {
-    return actionType == other.actionType
+    return m_actionType == other.m_actionType
         && m_actionCode == other.m_actionCode
         && m_targetElement == other.m_targetElement
         && m_targetDetails == other.m_targetDetails;
@@ -206,6 +211,35 @@ void PmReaction::saveXml(QXmlStreamWriter &writer) const
     writer.writeEndElement();
 }
 
+bool PmReaction::renameElement(PmActionType actionType,
+    const std::string &oldName, const std::string &newName)
+{
+    bool ret = false;
+    for (PmAction &action : matchActions) {
+        ret |= action.renameElement(actionType, oldName, newName); 
+    }
+    for (PmAction &action : matchActions) {
+        ret |= action.renameElement(actionType, oldName, newName);
+    }
+    return ret;
+}
+
+bool PmReaction::hasAction(PmActionType actionType) const
+{
+    for (const PmAction& action : matchActions) {
+        if (action.m_actionType == actionType) {
+            return true;
+        }
+    }
+    for (const PmAction &action : matchActions) {
+	    if (action.m_actionType == actionType) {
+            return true;
+        }
+    }
+    return nullptr;
+}
+
+#if 0
 const char *PmReaction::targetScene() const
 {
     for (const PmAction& action : matchActions) {
@@ -220,6 +254,7 @@ const char *PmReaction::targetScene() const
     }
     return nullptr;
 }
+#endif
 
 bool PmReaction::isSet() const
 {

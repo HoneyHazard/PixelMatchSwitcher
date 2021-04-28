@@ -6,6 +6,7 @@
 #include <QFile>
 #include <sstream>
 
+#if 0
 bool PmReactionOld::operator==(const PmReactionOld &other) const
 {
     return type == other.type
@@ -113,6 +114,7 @@ bool PmReactionOld::isSet() const
             return false;
     }
 }
+#endif
 
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
@@ -351,7 +353,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
     obs_data_array_release(matchEntriesArray);
 
     obs_data_t *noMatchReactionObj = obs_data_get_obj(data, "reaction");
-    noMatchReactionOld = PmReactionOld(noMatchReactionObj);
+    noMatchReaction = PmReaction(noMatchReactionObj);
     obs_data_release(noMatchReactionObj);
 }
 
@@ -373,7 +375,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(
             if (name == "name") {
                 presetName = reader.readElementText().toUtf8().data();
             } else if (name == "reaction") {
-                noMatchReactionOld = PmReactionOld(reader);
+                noMatchReaction = PmReaction(reader);
             } else if (name == "match_config") {
                 PmMatchConfig cfg(reader);
                 push_back(cfg);
@@ -397,7 +399,7 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     obs_data_set_array(ret, "entries", matchEntriesArray);
     obs_data_array_release(matchEntriesArray);
 
-    obs_data_t *noMatchReactionObj = noMatchReactionOld.save();
+    obs_data_t *noMatchReactionObj = noMatchReaction.saveData();
     obs_data_set_obj(ret, "reaction", noMatchReactionObj);
     obs_data_release(noMatchReactionObj);
 
@@ -409,8 +411,8 @@ void PmMultiMatchConfig::saveXml(
 {
     writer.writeStartElement("preset");
     writer.writeTextElement("name", presetName.data());
-    if (noMatchReactionOld.isSet()) {
-        noMatchReactionOld.saveXml(writer);
+    if (noMatchReaction.isSet()) {
+        noMatchReaction.saveXml(writer);
     }
     for (const auto &cfg : *this) {
         cfg.saveXml(writer);
@@ -429,7 +431,7 @@ bool PmMultiMatchConfig::operator==(const PmMultiMatchConfig& other) const
                 return false;
             }
         }
-        return noMatchReactionOld == other.noMatchReactionOld;
+        return noMatchReaction == other.noMatchReaction;
     }
 }
 
