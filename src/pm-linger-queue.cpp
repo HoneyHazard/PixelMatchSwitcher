@@ -53,4 +53,12 @@ void PmLingerList::removeByMatchIndex(size_t matchIndex)
     }
 }
 
-
+bool PmLingerList::contains(const size_t matchIdx) const
+{
+    for (auto itr = begin(); itr != end(); itr++) {
+        if (itr->matchIndex == matchIdx) {
+            return true;
+        }
+    }
+    return false;
+}

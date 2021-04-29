@@ -43,4 +43,5 @@ public:
     std::vector<size_t> removeExpired(const QTime &currTime);
     void removeByMatchIndex(size_t matchIndex);
     void removeAll() { clear(); }
+    bool contains(const size_t matchIdx) const;
 };

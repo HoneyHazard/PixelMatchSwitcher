@@ -369,7 +369,7 @@ void PmPresetsWidget::onPresetExportXml()
 
     std::string activePresetName = m_core->activeMatchPresetName();
     if (activePresetName.size()) {
-	    selectedPresets = { activePresetName };
+        selectedPresets = { activePresetName };
     }
 
     if (availablePresets.size() > 1) {

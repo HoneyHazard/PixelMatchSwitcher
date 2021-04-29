@@ -232,12 +232,33 @@ bool PmReaction::hasAction(PmActionType actionType) const
         }
     }
     for (const PmAction &action : matchActions) {
-	    if (action.m_actionType == actionType) {
+        if (action.m_actionType == actionType) {
             return true;
         }
     }
     return nullptr;
 }
+
+bool PmReaction::hasMatchAction(PmActionType actionType) const
+{
+    for (const PmAction& action : matchActions) {
+        if (action.m_actionType == actionType) {
+            return true;
+        }
+    }
+    return nullptr;
+}
+
+bool PmReaction::hasUnmatchAction(PmActionType actionType) const
+{
+    for (const PmAction& action : unmatchActions) {
+        if (action.m_actionType == actionType) {
+            return true;
+        }
+    }
+    return nullptr;
+}
+
 
 #if 0
 const char *PmReaction::targetScene() const
@@ -279,7 +300,8 @@ bool PmReaction::operator==(const PmReaction &other) const
         && unmatchActions == other.unmatchActions;
 }
 
-void PmReaction::getMatchScene(std::string &sceneName, std::string &transition)
+void PmReaction::getMatchScene(
+    std::string &sceneName, std::string &transition) const
 {
     for (const PmAction& action : matchActions) {
         if (action.m_actionType == PmActionType::Scene) {
@@ -291,7 +313,7 @@ void PmReaction::getMatchScene(std::string &sceneName, std::string &transition)
 }
 
 void PmReaction::getUnmatchScene(
-    std::string &sceneName, std::string &transition)
+    std::string &sceneName, std::string &transition) const
 {
     for (const PmAction& action : unmatchActions) {
         if (action.m_actionType == PmActionType::Scene) {
@@ -300,11 +322,6 @@ void PmReaction::getUnmatchScene(
             return;
         }
     }
-}
-
-void PmReaction::getUnmatchScene(
-    std::string &scenename, std::string &transition)
-{
 }
 
 void PmReaction::readActionArray(obs_data_t *aData, void *param)

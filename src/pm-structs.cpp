@@ -91,7 +91,7 @@ void PmReactionOld::saveXml(QXmlStreamWriter &writer) const
         writer.writeTextElement("target_scene_item", targetSceneItem.data());
     }
     if (targetFilter.size()) {
-	    writer.writeTextElement("target_filter", targetFilter.data());
+        writer.writeTextElement("target_filter", targetFilter.data());
     }
     if (lingerMs > 0) {
         writer.writeTextElement("linger_ms", QString::number(int(lingerMs)));
@@ -176,7 +176,7 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
 {
-	memset(&filterCfg, 0, sizeof(pm_match_entry_config));
+    memset(&filterCfg, 0, sizeof(pm_match_entry_config));
 
     obs_data_set_default_string(
         data, "match_image_filename", matchImgFilename.data());
@@ -226,7 +226,7 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 
 PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
 {
-	memset(&filterCfg, 0, sizeof(pm_match_entry_config));
+    memset(&filterCfg, 0, sizeof(pm_match_entry_config));
 
     while (true) {
         reader.readNext();

@@ -166,8 +166,11 @@ protected:
     void activate();
     void deactivate();
 
-    void execSceneReaction(const PmReaction &reaction, bool matched);
-    void execAsyncReaction(const PmReaction& reaction, bool matched);
+    void execReaction(bool &sceneSelected, size_t matchIdx, const QTime &time,
+        const PmReaction &reaction, bool switchedOn);
+    bool execSceneAction(
+        size_t matchIdx, const PmReaction &reaction, bool switchedOn);
+    void execIndependentActions(const PmReaction &reaction, bool switchedOn);
 
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);
@@ -200,6 +203,7 @@ protected:
 
     PmLingerQueue m_sceneLingerQueue;
     PmLingerList m_sceneItemLingerList;
+    PmLingerList m_cooldownList;
     bool m_forceSceneItemRefresh = true;
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;

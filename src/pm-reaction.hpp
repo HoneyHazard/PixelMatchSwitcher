@@ -59,13 +59,16 @@ struct PmReaction
         const std::string &oldName, const std::string &newName);
 
     bool hasAction(PmActionType actionType) const;
+    bool hasMatchAction(PmActionType actionType) const;
+    bool hasUnmatchAction(PmActionType actionType) const;
     bool hasSceneAction() const { return hasAction(PmActionType::Scene); }
+    void getMatchScene(std::string &sceneName, std::string &transition) const;
+    void getUnmatchScene(std::string &scenename, std::string &transition) const;
+
     bool isSet() const;
     bool operator==(const PmReaction &) const;
     bool operator!=(const PmReaction &other) const
         { return !operator==(other); }
-    void getMatchScene(std::string &sceneName, std::string &transition);
-    void getUnmatchScene(std::string &scenename, std::string &transition);
 
     uint32_t lingerMs = 0;
     uint32_t cooldownMs = 0;
