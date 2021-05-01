@@ -7,6 +7,8 @@
 #include <QLabel>
 
 class PmCore;
+class PmReactionWidget;
+
 class QTableWidget;
 class QPushButton;
 class QComboBox;
@@ -33,7 +35,7 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
-    void sigNoMatchReactionChanged(PmReactionOld noMatchReaction);
+    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
 
 protected slots:
     // core event handlers
@@ -42,7 +44,7 @@ protected slots:
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
-    void onNoMatchReactionChanged(PmReactionOld noMatchReaction);
+    void onNoMatchReactionChanged(PmReaction noMatchReaction);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers
@@ -78,15 +80,15 @@ protected:
 
     QPushButton* prepareButton(
         const char *tooltip, const char* icoPath, const char* themeId);
-    void constructRow(int idx, const QList<std::string> &scenes,
-        const QList<std::string> &sceneItems);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
-    void updateTargetChoices(QComboBox* combo,
-        const QList<std::string> &scenes,
-        const QList<std::string> &sceneItems);
-    void updateTargetSelection(
-        QComboBox *combo, const PmReactionOld &reaction, bool transparent = false);
-    void updateTransitionChoices(QComboBox* combo);
+    void constructRow(int idx);
+    //    const QList<std::string> &sceneItems);
+    //void updateTargetChoices(QComboBox* combo,
+    //    const QList<std::string> &scenes,
+    //    const QList<std::string> &sceneItems);
+    //    void updateTargetSelection(
+    //        QComboBox *combo, const PmReaction &reaction, bool transparent = false);
+    //void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
     void targetSelected(int idx, QComboBox *box);
@@ -107,13 +109,15 @@ protected:
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
 
-    QComboBox* m_noMatchSceneCombo;
-    QComboBox* m_noMatchTransitionCombo;
+    //QComboBox* m_noMatchSceneCombo;
+    //QComboBox* m_noMatchTransitionCombo;
+    PmReactionWidget *m_noMatchReactionWidget;
 
     int m_prevMatchIndex = 0;
 };
 
-class PmResultsLabel : public QLabel {
+class PmResultsLabel : public QLabel
+{
     Q_OBJECT
 
 public:
@@ -122,4 +126,16 @@ public:
 
 protected:
     int m_resultWidth;
+};
+
+class PmReactionLabel : public QLabel
+{
+    Q_OBJECT
+
+public:
+    PmReactionLabel(size_t matchIdx, QWidget *parent);
+	void updateReaction(const PmReaction &reaction);
+
+protected:
+    size_t matchIdx;
 };

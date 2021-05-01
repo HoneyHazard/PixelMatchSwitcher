@@ -17,7 +17,10 @@ class PmActionEntryWidget : public QWidget
     Q_OBJECT
 
 public:
-    PmActionEntryWidget(PmCore *core, QWidget *parent);
+    PmActionEntryWidget(PmCore *core, size_t actionIndex, QWidget *parent);
+    void updateScenes(const QList<std::string> scenes);
+    void updateSceneItems(const QList<std::string> sceneItems);
+    void updateFilters(const QList<std::string> sceneFilters);
 
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
@@ -26,15 +29,12 @@ public slots:
     void onActionChanged(size_t actionIndex, PmAction action);
 
 protected:
-    QLineEdit *m_lingerEdit;
-    QLineEdit *m_cooldownEdit;
-    QComboBox *m_targetCombo;
     QComboBox *m_actionTypeCombo;
+    QComboBox *m_targetCombo;
     QComboBox *m_actionDetailsCombo;
 
     size_t m_actionIndex;
 };
-
 
 class PmMatchReactionWidget : public QGroupBox
 {
@@ -53,11 +53,12 @@ protected slots:
     void onActiveFilterChanged(PmFilterRef newAf);
 
 protected:
-    class ActionEntryWidget;
-
     QListWidget *m_actionList;
     QPushButton *m_addButton;
     QPushButton *m_removeButton;
+
+    QLineEdit *m_lingerEdit;
+    QLineEdit *m_cooldownEdit;
 
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;
