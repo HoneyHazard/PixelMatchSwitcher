@@ -337,8 +337,6 @@ void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
         m_noMatchTransitionCombo->currentText());
     m_noMatchTransitionCombo->blockSignals(false);
 #endif
-
-
 }
 
 void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)

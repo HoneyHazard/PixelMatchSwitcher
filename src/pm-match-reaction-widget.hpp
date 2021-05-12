@@ -18,20 +18,28 @@ class PmActionEntryWidget : public QWidget
 
 public:
     PmActionEntryWidget(PmCore *core, size_t actionIndex, QWidget *parent);
-    void updateScenes(const QList<std::string> scenes);
-    void updateSceneItems(const QList<std::string> sceneItems);
-    void updateFilters(const QList<std::string> sceneFilters);
+
+    void updateScenes(const QList<std::string> &scenes);
+    void updateSceneItems(const QList<std::string> &sceneItems);
+    void updateFilters(const QList<std::string> &sceneFilters);
+    void updateTransitons(const QList<std::string> &transitions);
+
+    void updateHotkeys(); // TODO
+    void updateFrontendEvents(); // TODO
+
+    void updateAction(size_t actionIndex, PmAction action);
 
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
 
-public slots:
-    void onActionChanged(size_t actionIndex, PmAction action);
-
 protected:
+    static const QString k_defaultTransitionStr;
+
     QComboBox *m_actionTypeCombo;
     QComboBox *m_targetCombo;
-    QComboBox *m_actionDetailsCombo;
+
+    QComboBox *m_transitionsCombo;
+    QComboBox *m_toggleCombo;
 
     size_t m_actionIndex;
 };

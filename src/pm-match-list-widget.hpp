@@ -134,7 +134,7 @@ class PmReactionLabel : public QLabel
 
 public:
     PmReactionLabel(size_t matchIdx, QWidget *parent);
-	void updateReaction(const PmReaction &reaction);
+    void updateReaction(const PmReaction &reaction);
 
 protected:
     size_t matchIdx;
