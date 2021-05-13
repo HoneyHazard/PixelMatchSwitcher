@@ -11,6 +11,7 @@ class QLineEdit;
 class QPushButton;
 class QComboBox;
 class QListWidget;
+class QStackWidget;
 
 class PmActionEntryWidget : public QWidget
 {
@@ -32,6 +33,9 @@ public:
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
 
+protected slots:
+    void onUiChanged();
+
 protected:
     static const QString k_defaultTransitionStr;
 
@@ -40,6 +44,7 @@ protected:
 
     QComboBox *m_transitionsCombo;
     QComboBox *m_toggleCombo;
+    QStackWidget *m_detailsStack;
 
     size_t m_actionIndex;
 };

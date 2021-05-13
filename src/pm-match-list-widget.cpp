@@ -259,7 +259,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         enableBox->setChecked(cfg.filterCfg.is_enabled);
         enableBox->blockSignals(false);
     }
-    
+
     auto nameItem = m_tableWidget->item(idx, (int)ColOrder::ConfigName);
     if (nameItem) {
         m_tableWidget->blockSignals(true);
