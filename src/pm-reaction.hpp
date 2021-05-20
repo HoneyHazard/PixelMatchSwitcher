@@ -69,6 +69,8 @@ struct PmReaction
     bool operator==(const PmReaction &) const;
     bool operator!=(const PmReaction &other) const
         { return !operator==(other); }
+    size_t matchSz() const { return matchActions.size(); }
+    size_t unmatchSz() const { return unmatchActions.size(); }
 
     uint32_t lingerMs = 0;
     uint32_t cooldownMs = 0;

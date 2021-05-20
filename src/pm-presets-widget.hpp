@@ -60,6 +60,7 @@ protected:
 
     void importPresets(const PmMatchPresets &presets,
                        const QList<std::string> &selectedPresets);
+
     QMessageBox::ButtonRole promptUnsavedProceed();
     QPushButton *prepareButton(const char *tooltip, const char *icoPath);
 

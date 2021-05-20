@@ -35,7 +35,7 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
-    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
+    //void sigNoMatchReactionChanged(PmReaction noMatchReaction);
 
 protected slots:
     // core event handlers
@@ -44,7 +44,7 @@ protected slots:
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
-    void onNoMatchReactionChanged(PmReaction noMatchReaction);
+    //void onNoMatchReactionChanged(PmReaction noMatchReaction);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers
@@ -54,8 +54,8 @@ protected slots:
     void onConfigRemoveButtonReleased();
     void onConfigMoveUpButtonReleased();
     void onConfigMoveDownButtonReleased();
-    void onNoMatchSceneSelected(QString str);
-    void onNoMatchTransitionSelected(QString str);
+    //void onNoMatchSceneSelected(QString str);
+    //void onNoMatchTransitionSelected(QString str);
     void onCellChanged(int row, int col);
 
 protected:
@@ -91,7 +91,7 @@ protected:
     //void updateTransitionChoices(QComboBox* combo);
 
     void enableConfigToggled(int idx, bool enable);
-    void targetSelected(int idx, QComboBox *box);
+    //void targetSelected(int idx, QComboBox *box);
     void sceneTransitionSelected(int idx, const QString &transTr);
     void sceneItemActionSelected(int idx, const QString &actionStr);
     
@@ -111,7 +111,7 @@ protected:
 
     //QComboBox* m_noMatchSceneCombo;
     //QComboBox* m_noMatchTransitionCombo;
-    PmReactionWidget *m_noMatchReactionWidget;
+    //PmReactionWidget *m_noMatchReactionWidget;
 
     int m_prevMatchIndex = 0;
 };
@@ -125,7 +125,7 @@ public:
     QSize sizeHint() const override;
 
 protected:
-    int m_resultWidth;
+    int m_resultTextWidth;
 };
 
 class PmReactionLabel : public QLabel
@@ -133,9 +133,10 @@ class PmReactionLabel : public QLabel
     Q_OBJECT
 
 public:
-    PmReactionLabel(size_t matchIdx, QWidget *parent);
+    PmReactionLabel(const QString &text, QWidget *parent);
     void updateReaction(const PmReaction &reaction);
+    QSize sizeHint() const override;
 
 protected:
-    size_t matchIdx;
+    int m_reactionTextWidth;
 };

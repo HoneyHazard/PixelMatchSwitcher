@@ -5,6 +5,7 @@
 #include "pm-presets-widget.hpp"
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
+#include "pm-match-reaction-widget.hpp"
 #include "pm-match-results-widget.hpp"
 #include "pm-preview-config-widget.hpp"
 #include "pm-preview-display-widget.hpp"
@@ -36,6 +37,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
         = new PmMatchListWidget(core, this);
     PmMatchConfigWidget *configWidget 
         = new PmMatchConfigWidget(core, this);
+    PmMatchReactionWidget *reactionWidget
+        = new PmMatchReactionWidget(core, this);
     PmMatchResultsWidget* resultsWidget 
         = new PmMatchResultsWidget(core, this);
     PmPreviewConfigWidget* previewCfgWidget 
@@ -51,12 +54,14 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(m_presetsWidget);
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
+    leftLayout->addWidget(reactionWidget);
     leftLayout->addWidget(resultsWidget);
     leftLayout->setStretch(0, 1);
     leftLayout->setStretch(1, 1000);
     leftLayout->setStretch(2, 1);
     leftLayout->setStretch(3, 1);
-    QWidget* leftWidget = new QWidget(this);
+    leftLayout->setStretch(4, 1);
+    QWidget *leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 
     // top layout

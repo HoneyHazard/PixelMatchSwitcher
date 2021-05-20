@@ -251,8 +251,7 @@ void PmMatchConfigWidget::onMatchConfigSelect(
     m_matchIndex = matchIndex;
 
     onMatchConfigChanged(matchIndex, cfg);
-    bool existingSelected = matchIndex < m_multiConfigSz;
-    setEnabled(existingSelected);
+    setEnabled(matchIndex < m_multiConfigSz);
 
     if (m_core->hasFilename(matchIndex) && m_core->runningEnabled()) {
         std::string matchImgFilename = m_core->matchImgFilename(matchIndex);

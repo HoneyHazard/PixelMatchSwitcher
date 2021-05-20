@@ -25,7 +25,7 @@ using namespace std;
 enum class PmMatchListWidget::ColOrder : int {
     EnableBox = 0,
     ConfigName = 1,
-    TargetSelect = 2,
+    Reaction = 2,
     ReactionDisplay = 3,
     Result = 4,
     NumCols = 5,
@@ -132,7 +132,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
-    mainLayout->addLayout(noMatchLayout);
+    //mainLayout->addLayout(noMatchLayout);
     setLayout(mainLayout);
 
     // init state
@@ -149,7 +149,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     onMatchConfigSelect(
         selIdx, selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
 
-    onNoMatchReactionChanged(multiConfig.noMatchReaction);
+    //onNoMatchReactionChanged(multiConfig.noMatchReaction);
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {
@@ -171,8 +171,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
     connect(m_core, &PmCore::sigScenesChanged,
         this, &PmMatchListWidget::onScenesChanged, qc);
-    connect(m_core, &PmCore::sigNoMatchReactionChanged,
-        this, &PmMatchListWidget::onNoMatchReactionChanged, qc);
+    //connect(m_core, &PmCore::sigNoMatchReactionChanged,
+    //    this, &PmMatchListWidget::onNoMatchReactionChanged, qc);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
@@ -187,8 +187,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onMatchConfigInsert, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigRemove,
         m_core, &PmCore::onMatchConfigRemove, qc);
-    connect(this, &PmMatchListWidget::sigNoMatchReactionChanged,
-        m_core, &PmCore::onNoMatchReactionChanged, qc);
+    //connect(this, &PmMatchListWidget::sigNoMatchReactionChanged,
+    //    m_core, &PmCore::onNoMatchReactionChanged, qc);
 
     // connections: local ui
     connect(m_tableWidget, &QTableWidget::itemChanged,
@@ -206,10 +206,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onConfigInsertButtonReleased, qc);
     connect(m_cfgRemoveBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigRemoveButtonReleased, qc);
-    connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
-        this, &PmMatchListWidget::onNoMatchSceneSelected, qc);
-    connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
-        this, &PmMatchListWidget::onNoMatchTransitionSelected, qc);
+    //connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
+    //    this, &PmMatchListWidget::onNoMatchSceneSelected, qc);
+    //connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
+    //    this, &PmMatchListWidget::onNoMatchTransitionSelected, qc);
 }
 
 #if 0
@@ -325,9 +325,9 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         (size_t)currentIndex(), m_core->multiMatchConfigSize());
 }
 
+#if 0
 void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
 {
-#if 0
     updateTargetSelection(m_noMatchSceneCombo, noMatchReaction);
 
     m_noMatchTransitionCombo->blockSignals(true);
@@ -336,8 +336,8 @@ void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
     m_noMatchTransitionCombo->setToolTip(
         m_noMatchTransitionCombo->currentText());
     m_noMatchTransitionCombo->blockSignals(false);
-#endif
 }
+#endif
 
 void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
 {
@@ -436,6 +436,7 @@ void PmMatchListWidget::onConfigMoveDownButtonReleased()
     emit sigMatchConfigMoveDown(idx);
 }
 
+#if 0
 void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
 {
     std::string noMatchScene = 
@@ -453,6 +454,7 @@ void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
     noMatchReaction.sceneTransition = str.toUtf8().data();
     emit sigNoMatchReactionChanged(noMatchReaction);
 }
+#endif
 
 void PmMatchListWidget::onCellChanged(int row, int col)
 {
@@ -551,8 +553,12 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)ColOrder::LingerDelay, lingerDelayBox);
     #endif
 
-    PmReactionLabel = new PmReactionLabel(idx, parent);
-
+    PmReactionLabel *reactionLabel = new PmReactionLabel("--", parent);
+    reactionLabel->setStyleSheet(k_transpBgStyle);
+    reactionLabel->setTextFormat(Qt::RichText);
+    reactionLabel->installEventFilter(this);
+    m_tableWidget->setCellWidget(
+        idx, (int)ColOrder::Reaction, reactionLabel);
 
     // result
     QLabel *resultLabel = new PmResultsLabel("--", parent);
@@ -720,6 +726,7 @@ void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
     emit sigMatchConfigChanged(index, cfg);
 }
 
+#if 0
 void PmMatchListWidget::targetSelected(int matchIdx, QComboBox *box)
 {
     size_t index = (size_t)(matchIdx);
@@ -793,6 +800,7 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
     cfg.reactionOld.lingerMs = lingerMs;
     emit sigMatchConfigChanged(index, cfg);
 }
+#endif
 
 void PmMatchListWidget::setMinWidth()
 {
@@ -853,13 +861,29 @@ PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
 {
     QFontMetrics fm(font());
     auto m = contentsMargins();
-    m_resultWidth = fm.width("100.0%")
+    m_resultTextWidth = fm.width("100.0%")
         + m.left() + m.right() + margin() * 2 + 10;
 };
 
 QSize PmResultsLabel::sizeHint() const
 {
     QSize ret = QLabel::sizeHint();
-    ret.setWidth(m_resultWidth);
+    ret.setWidth(m_resultTextWidth);
     return ret;
+}
+
+PmReactionLabel::PmReactionLabel(const QString &text, QWidget *parent)
+: QLabel(parent)
+{
+    // TODO
+}
+
+void PmReactionLabel::updateReaction(const PmReaction &reaction)
+{
+    // TODO
+}
+
+QSize PmReactionLabel::sizeHint() const
+{
+    return QSize();
 }
