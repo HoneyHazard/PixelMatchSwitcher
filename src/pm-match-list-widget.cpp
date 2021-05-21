@@ -26,9 +26,10 @@ enum class PmMatchListWidget::ColOrder : int {
     EnableBox = 0,
     ConfigName = 1,
     Reaction = 2,
-    ReactionDisplay = 3,
-    Result = 4,
-    NumCols = 5,
+    Linger = 3,
+    Cooldown = 4,
+    Result = 5,
+    NumCols = 6,
 };
 
 enum class PmMatchListWidget::ActionStackOrder : int {
@@ -39,12 +40,13 @@ enum class PmMatchListWidget::ActionStackOrder : int {
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
     obs_module_text("Label"),
-    obs_module_text("Target"),
-    obs_module_text("Action"),
-    obs_module_text("Linger ms"),
+    obs_module_text("Reaction"),
+    obs_module_text("Linger"),
+    obs_module_text("Cooldown"),
     obs_module_text("Result")
 };
 
+#if 0
 const QString PmMatchListWidget::k_dontSwitchStr 
     = obs_module_text("<don't switch>");
 const QString PmMatchListWidget::k_scenesLabelStr
@@ -59,6 +61,7 @@ const QColor PmMatchListWidget::k_scenesLabelColor = Qt::darkCyan;
 const QColor PmMatchListWidget::k_scenesColor = Qt::cyan;
 const QColor PmMatchListWidget::k_sceneItemsLabelColor = Qt::darkYellow;
 const QColor PmMatchListWidget::k_sceneItemsColor = Qt::yellow;
+#endif
 
 const QString PmMatchListWidget::k_transpBgStyle
     = "background-color: rgba(0, 0, 0, 0);";

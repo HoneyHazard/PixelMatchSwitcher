@@ -119,7 +119,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-core.cpp
         src/pm-match-config-widget.cpp
         src/pm-match-results-widget.cpp
-        src/pm-match-reaction-widget.hpp
+        src/pm-match-reaction-widget.cpp
         src/pm-match-list-widget.cpp
         src/pm-preview-config-widget.cpp
         src/pm-preview-display-widget.cpp

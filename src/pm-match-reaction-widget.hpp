@@ -13,7 +13,7 @@ class QLineEdit;
 class QPushButton;
 class QComboBox;
 class QListWidget;
-class QStackWidget;
+class QStackedWidget;
 class QVBoxLayout;
 
 class PmActionEntryWidget : public QWidget
@@ -39,6 +39,7 @@ signals:
 
 protected slots:
     void onUiChanged();
+	void onActionChanged(size_t actionIndex, PmAction action);
 
 protected:
     static const QString k_defaultTransitionStr;
@@ -48,7 +49,7 @@ protected:
 
     QComboBox *m_transitionsCombo;
     QComboBox *m_toggleCombo;
-    QStackWidget *m_detailsStack;
+    QStackedWidget *m_detailsStack;
 
     size_t m_actionIndex;
 };
@@ -60,7 +61,7 @@ class PmMatchReactionWidget : public QGroupBox
     Q_OBJECT
 
 public:
-    PmMatchReactionWidget(PmCore *core, QWidget *parent);
+    PmMatchReactionWidget(PmCore *core, bool matchList, QWidget *parent);
 
 signals:
     void sigMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
@@ -72,21 +73,24 @@ protected slots:
     //void onActiveFilterChanged(PmFilterRef newAf);
     void onScenesChanged(
         QList<std::string> scenes, QList<std::string> sceneItems);
+    void onActionChanged(size_t actionIndex, PmAction action);
 
 protected:
+    QPushButton *prepareButton(
+        const char *tooltip, const char *icoPath, const char *themeId);
+
     QListWidget *m_matchActionList;
-	QListWidget *m_unmatchActionList;
-	QPushButton *m_addButton;
-    QPushButton *m_removeButton;
-    QVBoxLayout *m_vertLayout;
+	QPushButton *m_insertActionButton;
+    QPushButton *m_removeActionButton;
+    QVBoxLayout *m_actionLayout;
 
     QLineEdit *m_lingerEdit;
     QLineEdit *m_cooldownEdit;
 
+    bool m_matchList = false;
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;
-    std::vector<PmActionEntryWidget*> m_matchActionWidgets;
-    std::vector<PmActionEntryWidget*> m_unmatchActionWidget;
+    std::vector<PmActionEntryWidget*> m_actionWidgets;
 
     PmCore *m_core;
 };
