@@ -143,7 +143,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     size_t cfgSz = multiConfig.size();
     onMultiMatchConfigSizeChanged(cfgSz);
 
-    onScenesChanged(m_core->sceneNames(), m_core->sceneItemNames());
+    //onScenesChanged(m_core->sceneNames(), m_core->sceneItemNames());
 
     for (size_t i = 0; i < multiConfig.size(); ++i) {
         onMatchConfigChanged(i, multiConfig[i]);
@@ -172,8 +172,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMatchConfigSelect,
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
-    connect(m_core, &PmCore::sigScenesChanged,
-        this, &PmMatchListWidget::onScenesChanged, qc);
+    //connect(m_core, &PmCore::sigScenesChanged,
+    //    this, &PmMatchListWidget::onScenesChanged, qc);
     //connect(m_core, &PmCore::sigNoMatchReactionChanged,
     //    this, &PmMatchListWidget::onNoMatchReactionChanged, qc);
 
@@ -310,16 +310,25 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         }
     }
 
-    auto lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::LingerDelay);
+#endif
+
+    const PmReaction &reaction = cfg.reaction;
+
+    QSpinBox* lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
+        idx, (int)ColOrder::Linger);
     if (lingerDelayBox) {
         lingerDelayBox->blockSignals(true);
         lingerDelayBox->setValue(reaction.lingerMs);
         lingerDelayBox->blockSignals(false);
     }
 
-#endif
-
+    QSpinBox *cooldownDelayBox =
+        (QSpinBox *)m_tableWidget->cellWidget(idx, (int)ColOrder::Cooldown);
+    if (cooldownDelayBox) {
+        cooldownDelayBox->blockSignals(true);
+        cooldownDelayBox->setValue(reaction.cooldownMs);
+        cooldownDelayBox->blockSignals(false);
+    }
 
     setMinWidth();
 
@@ -541,6 +550,13 @@ void PmMatchListWidget::constructRow(int idx)
     targetActionStack->addWidget(sceneItemActionCombo);
     m_tableWidget->setCellWidget(
         idx, (int)ColOrder::ActionSelect, targetActionStack);
+    #endif
+
+    PmReactionLabel *reactionLabel = new PmReactionLabel("--", parent);
+    reactionLabel->setStyleSheet(k_transpBgStyle);
+    reactionLabel->setTextFormat(Qt::RichText);
+    reactionLabel->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::Reaction, reactionLabel);
 
     // linger delay
     QSpinBox *lingerDelayBox = new QSpinBox();
@@ -553,15 +569,20 @@ void PmMatchListWidget::constructRow(int idx)
     connect(lingerDelayBox, sigLingerValueChanged,
         [this, idx](int val) { lingerDelayChanged(idx, val); });
     m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::LingerDelay, lingerDelayBox);
-    #endif
+        idx, (int)ColOrder::Linger, lingerDelayBox);
 
-    PmReactionLabel *reactionLabel = new PmReactionLabel("--", parent);
-    reactionLabel->setStyleSheet(k_transpBgStyle);
-    reactionLabel->setTextFormat(Qt::RichText);
-    reactionLabel->installEventFilter(this);
-    m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::Reaction, reactionLabel);
+    
+    // cooldown delay
+    QSpinBox *cooldownDelayBox = new QSpinBox();
+    cooldownDelayBox->setStyleSheet(k_transpBgStyle);
+    cooldownDelayBox->setRange(0, 10000);
+    cooldownDelayBox->setSingleStep(10);
+    cooldownDelayBox->installEventFilter(this);
+    void (QSpinBox::*sigcooldownValueChanged)(int value) =
+        &QSpinBox::valueChanged;
+    connect(cooldownDelayBox, sigcooldownValueChanged,
+        [this, idx](int val) { cooldownChanged(idx, val); });
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::Cooldown, cooldownDelayBox);
 
     // result
     QLabel *resultLabel = new PmResultsLabel("--", parent);
@@ -795,15 +816,23 @@ void PmMatchListWidget::sceneItemActionSelected(
     }
     emit sigMatchConfigChanged(index, cfg);
 }
+#endif
 
 void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
 {
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.reactionOld.lingerMs = lingerMs;
+    cfg.reaction.lingerMs = lingerMs;
     emit sigMatchConfigChanged(index, cfg);
 }
-#endif
+
+void PmMatchListWidget::cooldownChanged(int idx, int cooldownMs)
+{
+    size_t index = (size_t)(idx);
+    PmMatchConfig cfg = m_core->matchConfig(index);
+    cfg.reaction.cooldownMs = cooldownMs;
+    emit sigMatchConfigChanged(index, cfg);
+}
 
 void PmMatchListWidget::setMinWidth()
 {

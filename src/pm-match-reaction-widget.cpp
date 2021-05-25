@@ -13,6 +13,8 @@ const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default>");
 
 PmActionEntryWidget::PmActionEntryWidget(size_t actionIndex, QWidget *parent)
+: QWidget(parent)
+, m_actionIndex(actionIndex)
 {
     m_actionTypeCombo = new QComboBox(this);
     m_actionTypeCombo->addItem(
@@ -94,17 +96,24 @@ void PmActionEntryWidget::updateTransitons(
 
 void PmActionEntryWidget::updateSizeHints(QList<QSize> &columnSizes)
 {
-    QSize hint = m_actionTypeCombo->sizeHint();
-    columnSizes[0] = qMax(columnSizes[0], hint);
-
-    hint = m_targetCombo->sizeHint();
-    columnSizes[1] = qMax(columnSizes[1], hint);
-
-    hint = m_detailsStack->sizeHint();
-    columnSizes[2] = qMax(columnSizes[2], hint);
+    QList<QSize> sizes = {
+        m_actionTypeCombo->sizeHint(),
+        m_targetCombo->sizeHint(),
+        m_detailsStack->sizeHint()
+    };
+    while (columnSizes.size() < 3) {
+        columnSizes.append({0, 0});
+    }
+    for (int i = 0; i < columnSizes.size(); ++i) {
+        columnSizes[i] = {
+            qMax(columnSizes[i].width(), sizes[i].width()),
+            qMax(columnSizes[i].height(), sizes[i].height())
+        };
+    }
 }
 
-void PmActionEntryWidget::updateAction(PmAction action)
+
+void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 {
     int findIdx = m_actionTypeCombo->findData(int(action.m_actionCode));
     m_actionTypeCombo->setCurrentIndex(findIdx);
@@ -146,12 +155,12 @@ void PmActionEntryWidget::onUiChanged()
         break;
     case PmActionType::Scene:
         action.m_targetElement = m_targetCombo->currentText().toUtf8().data();
-	    action.m_targetDetails = std::string(
-		    m_transitionsCombo->currentText().toUtf8().data());
+        action.m_targetDetails = std::string(
+            m_transitionsCombo->currentText().toUtf8().data());
         break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
-	    action.m_targetElement = m_targetCombo->currentText().toUtf8().data();
+        action.m_targetElement = m_targetCombo->currentText().toUtf8().data();
         action.m_actionCode = int(m_toggleCombo->currentData().toInt());
         break;
     }
@@ -162,16 +171,19 @@ void PmActionEntryWidget::onUiChanged()
 //----------------------------------------------------
 
 PmMatchReactionWidget::PmMatchReactionWidget(
-    PmCore *core, bool matchList, QWidget *parent)
+    PmCore *core,
+    ReactionTarget reactionTarget, ReactionType reactionType,
+    QWidget *parent)
 : QGroupBox(parent)
 , m_core(core)
-, m_matchList(matchList)
+, m_reactionTarget(reactionTarget)
+, m_reactionType(reactionType)
 {
     m_insertActionButton = prepareButton(obs_module_text("Insert New Match Entry"),
-		":/res/images/add.png", "addIconSmall");
+        ":/res/images/add.png", "addIconSmall");
     m_removeActionButton = prepareButton(obs_module_text("Remove Match Entry"),
-		":/res/images/list_remove.png",
-		"removeIconSmall");
+        ":/res/images/list_remove.png",
+        "removeIconSmall");
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(m_insertActionButton);
     buttonLayout->addWidget(m_removeActionButton);
@@ -186,20 +198,27 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     //--------------------------------------
 
     const auto qc = Qt::QueuedConnection;
-    
-    connect(m_core, &PmCore::sigMatchConfigSelect,
-            this, &PmMatchReactionWidget::onMatchConfigSelect, qc);
-    connect(m_core, &PmCore::sigMatchConfigChanged,
-            this, &PmMatchReactionWidget::onMatchConfigChanged, qc);
-    connect(m_core, &PmCore::sigMultiMatchConfigSizeChanged,
-            this, &PmMatchReactionWidget::onMultiMatchConfigSizeChanged, qc);
 
-    //----------------------------------
+    if (reactionTarget == Entry) {
+        connect(m_core, &PmCore::sigMatchConfigSelect,
+                this, &PmMatchReactionWidget::onMatchConfigSelect, qc);
+        connect(m_core, &PmCore::sigMatchConfigChanged,
+                this, &PmMatchReactionWidget::onMatchConfigChanged, qc);
+        connect(m_core, &PmCore::sigMultiMatchConfigSizeChanged,
+                this, &PmMatchReactionWidget::onMultiMatchConfigSizeChanged, qc);
 
-    //onActiveFilterChanged(m_core->activeFilterRef());
-    onMultiMatchConfigSizeChanged(m_core->multiMatchConfigSize());
-    size_t idx = m_core->selectedConfigIndex();
-    onMatchConfigSelect(idx, m_core->matchConfig(idx));
+        onMultiMatchConfigSizeChanged(m_core->multiMatchConfigSize());
+        size_t idx = m_core->selectedConfigIndex();
+        onMatchConfigSelect(idx, m_core->matchConfig(idx));
+    } else { // Anything
+        connect(m_core, &PmCore::sigNoMatchReactionChanged,
+                this, &PmMatchReactionWidget::onNoMatchReactionChanged, qc);
+        connect(this, &PmMatchReactionWidget::sigNoMatchReactionChanged,
+                m_core, &PmCore::onNoMatchReactionChanged, qc);
+        setTitle((m_reactionType == Match)
+            ? obs_module_text("Anything Matched")
+            : obs_module_text("Nothing Matched")); 
+    }
 }
 
 void PmMatchReactionWidget::onMatchConfigChanged(
@@ -207,19 +226,29 @@ void PmMatchReactionWidget::onMatchConfigChanged(
 {
     if (matchIdx != m_matchIndex) return;
 
-    setTitle(QString(obs_module_text("%1 Reaction #%2: %3"))
-        .arg(m_matchList ?
-            obs_module_text("Match") : obs_module_text("Unmatch"))
+    setTitle(QString(obs_module_text("%1 Actions #%2: %3"))
+        .arg((m_reactionType == Match) ?
+                obs_module_text("Match") : obs_module_text("Unmatch"))
         .arg(matchIdx + 1)
         .arg(cfg.label.data()));
 
     const PmReaction &reaction = cfg.reaction;
-    const auto &actionList
-        = m_matchList ? reaction.matchActions : reaction.unmatchActions;
+    updateReaction(reaction);
+}
+
+void PmMatchReactionWidget::onNoMatchReactionChanged(PmReaction reaction)
+{
+    updateReaction(reaction);
+}
+
+void PmMatchReactionWidget::updateReaction(const PmReaction &reaction)
+{
+    const auto &actionList = (m_reactionType == Match) ?
+        reaction.matchActions : reaction.unmatchActions;
 
     size_t listSz = reaction.matchSz();
     for (size_t i = 0; i < listSz; ++i) {
-	    PmActionEntryWidget *entryWidget;
+        PmActionEntryWidget *entryWidget = nullptr;
         if (i > m_actionWidgets.size()) {
             PmActionEntryWidget *entryWidget = new PmActionEntryWidget(i, this);
             connect(entryWidget, &PmActionEntryWidget::sigActionChanged,
@@ -228,9 +257,9 @@ void PmMatchReactionWidget::onMatchConfigChanged(
             m_actionWidgets.push_back(entryWidget);
             m_actionLayout->addWidget(entryWidget);
         } else {
-		    entryWidget = m_actionWidgets[i];
+            entryWidget = m_actionWidgets[i];
         }
-	    entryWidget->updateAction(actionList[i]);
+        entryWidget->updateAction(i, actionList[i]);
     }
     for (size_t i = m_actionWidgets.size(); i < listSz; ++i) {
         PmActionEntryWidget *entryWidget = m_actionWidgets[i];
@@ -243,7 +272,7 @@ void PmMatchReactionWidget::onMatchConfigChanged(
 void PmMatchReactionWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig cfg)
 {
-	m_matchIndex = matchIndex;
+    m_matchIndex = matchIndex;
 
     setEnabled(matchIndex < m_multiConfigSz);
 
@@ -271,21 +300,42 @@ void PmMatchReactionWidget::onScenesChanged(
     }
 }
 
-QPushButton *PmMatchReactionWidget::prepareButton(const char *tooltip,
-						  const char *icoPath,
-						  const char *themeId)
+void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
 {
-	QIcon icon;
-	icon.addFile(icoPath, QSize(), QIcon::Normal, QIcon::Off);
+    PmReaction reaction = (m_reactionType == Entry) ?
+        m_core->reaction(m_matchIndex) : m_core->noMatchReaction();
 
-	QPushButton *ret = new QPushButton(icon, "", this);
-	ret->setToolTip(tooltip);
-	ret->setIcon(icon);
-	ret->setIconSize(QSize(16, 16));
-	ret->setMaximumSize(22, 22);
-	ret->setFlat(true);
-	ret->setProperty("themeID", QVariant(themeId));
-	ret->setFocusPolicy(Qt::NoFocus);
 
-	return ret;
+    if (m_reactionType == Match) {
+        reaction.matchActions[actionIndex] = action;
+    } else {
+        reaction.unmatchActions[actionIndex] = action;
+    }
+
+    if (m_reactionTarget == Entry) {
+        PmMatchConfig cfg = m_core->matchConfig(m_matchIndex);
+        cfg.reaction = reaction;
+        emit sigMatchConfigChanged(m_matchIndex, cfg);
+    } else {
+        emit sigNoMatchReactionChanged(reaction);
+    }
+}
+
+QPushButton *PmMatchReactionWidget::prepareButton(const char *tooltip,
+                          const char *icoPath,
+                          const char *themeId)
+{
+    QIcon icon;
+    icon.addFile(icoPath, QSize(), QIcon::Normal, QIcon::Off);
+
+    QPushButton *ret = new QPushButton(icon, "", this);
+    ret->setToolTip(tooltip);
+    ret->setIcon(icon);
+    ret->setIconSize(QSize(16, 16));
+    ret->setMaximumSize(22, 22);
+    ret->setFlat(true);
+    ret->setProperty("themeID", QVariant(themeId));
+    ret->setFocusPolicy(Qt::NoFocus);
+
+    return ret;
 }

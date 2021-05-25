@@ -37,9 +37,30 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
         = new PmMatchListWidget(core, this);
     PmMatchConfigWidget *configWidget 
         = new PmMatchConfigWidget(core, this);
-    PmMatchReactionWidget *reactionWidget
-        = new PmMatchReactionWidget(core, this);
-    PmMatchResultsWidget* resultsWidget 
+
+    // TODO: tabs?
+    PmMatchReactionWidget *entryMatchActions
+        = new PmMatchReactionWidget(core,
+            PmMatchReactionWidget::Entry,
+            PmMatchReactionWidget::Match,
+            this);
+    PmMatchReactionWidget *entryUnmatchActions
+        = new PmMatchReactionWidget(core,
+            PmMatchReactionWidget::Entry,
+            PmMatchReactionWidget::Unmatch,
+            this);
+    PmMatchReactionWidget *anythingMatchedActions
+        = new PmMatchReactionWidget(core,
+            PmMatchReactionWidget::Anything,
+            PmMatchReactionWidget::Match,
+            this);
+    PmMatchReactionWidget *nothingMatchedActions
+        = new PmMatchReactionWidget(core,
+            PmMatchReactionWidget::Anything,
+            PmMatchReactionWidget::Unmatch,
+            this);
+
+    PmMatchResultsWidget *resultsWidget 
         = new PmMatchResultsWidget(core, this);
     PmPreviewConfigWidget* previewCfgWidget 
         = new PmPreviewConfigWidget(core, this);
@@ -54,13 +75,22 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(m_presetsWidget);
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
-    leftLayout->addWidget(reactionWidget);
+
+    leftLayout->addWidget(entryMatchActions);
+    leftLayout->addWidget(entryUnmatchActions);
+    leftLayout->addWidget(anythingMatchedActions);
+    leftLayout->addWidget(nothingMatchedActions);
+
     leftLayout->addWidget(resultsWidget);
+
     leftLayout->setStretch(0, 1);
     leftLayout->setStretch(1, 1000);
     leftLayout->setStretch(2, 1);
     leftLayout->setStretch(3, 1);
     leftLayout->setStretch(4, 1);
+    leftLayout->setStretch(5, 1);
+    leftLayout->setStretch(6, 1);
+    leftLayout->setStretch(7, 1);
     QWidget *leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 

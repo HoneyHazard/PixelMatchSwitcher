@@ -39,8 +39,8 @@ signals:
 
 protected slots:
     // core event handlers
-    void onScenesChanged(
-        QList<std::string> scenes, QList<std::string> sceneItems);
+    //void onScenesChanged(
+    //    QList<std::string> scenes, QList<std::string> sceneItems);
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
@@ -96,6 +96,8 @@ protected:
     void sceneItemActionSelected(int idx, const QString &actionStr);
     
     void lingerDelayChanged(int idx, int lingerMs);
+    void cooldownChanged(int idx, int cooldown);
+   
 
     void setMinWidth();
     bool selectRowAtGlobalPos(QPoint globalPos);

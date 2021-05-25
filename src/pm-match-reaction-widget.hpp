@@ -29,17 +29,17 @@ public:
     void updateTransitons(const QList<std::string> &transitions);
     void updateSizeHints(QList<QSize> &columnSizes);
 
+    void updateAction(size_t actionIndex, PmAction action);
     void updateHotkeys(); // TODO
     void updateFrontendEvents(); // TODO
-
-    void updateAction(PmAction action);
 
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
 
+public slots:
+
 protected slots:
     void onUiChanged();
-	void onActionChanged(size_t actionIndex, PmAction action);
 
 protected:
     static const QString k_defaultTransitionStr;
@@ -61,15 +61,23 @@ class PmMatchReactionWidget : public QGroupBox
     Q_OBJECT
 
 public:
-    PmMatchReactionWidget(PmCore *core, bool matchList, QWidget *parent);
+    enum ReactionTarget { Entry, Anything };
+    enum ReactionType { Match, Unmatch};
+
+    PmMatchReactionWidget(
+        PmCore *core,
+        ReactionTarget reactionTarget, ReactionType reactionType,
+        QWidget *parent);
 
 signals:
     void sigMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
+    void sigNoMatchReactionChanged(PmReaction reaction);
 
 protected slots:
     void onMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg);
     void onMultiMatchConfigSizeChanged(size_t sz);
+    void onNoMatchReactionChanged(PmReaction reaction);
     //void onActiveFilterChanged(PmFilterRef newAf);
     void onScenesChanged(
         QList<std::string> scenes, QList<std::string> sceneItems);
@@ -78,17 +86,19 @@ protected slots:
 protected:
     QPushButton *prepareButton(
         const char *tooltip, const char *icoPath, const char *themeId);
+    void updateReaction(const PmReaction &reaction);
 
     QListWidget *m_matchActionList;
-	QPushButton *m_insertActionButton;
+    QPushButton *m_insertActionButton;
     QPushButton *m_removeActionButton;
     QVBoxLayout *m_actionLayout;
 
-    QLineEdit *m_lingerEdit;
-    QLineEdit *m_cooldownEdit;
+//  QLineEdit *m_lingerEdit;
+//  QLineEdit *m_cooldownEdit;
 
-    bool m_matchList = false;
-    size_t m_matchIndex = 0;
+    ReactionTarget m_reactionTarget;
+    ReactionType m_reactionType;
+    size_t m_matchIndex = (size_t)-1;
     size_t m_multiConfigSz = 0;
     std::vector<PmActionEntryWidget*> m_actionWidgets;
 
