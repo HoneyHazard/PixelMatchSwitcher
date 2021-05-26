@@ -10,7 +10,7 @@
 #include <QPushButton>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
-    = obs_module_text("<default>");
+    = obs_module_text("<default transition>");
 
 PmActionEntryWidget::PmActionEntryWidget(
     PmCore* core, size_t actionIndex, QWidget *parent)
@@ -135,7 +135,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     if (m_actionIndex != actionIndex) return;
 
     PmActionType prevType = actionType();
-    int findIdx = m_actionTypeCombo->findData(int(action.m_actionCode));
+    int findIdx = m_actionTypeCombo->findData(int(action.m_actionType));
 
     m_actionTypeCombo->blockSignals(true);
     m_actionTypeCombo->setCurrentIndex(findIdx);
