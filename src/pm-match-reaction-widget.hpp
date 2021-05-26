@@ -23,11 +23,6 @@ class PmActionEntryWidget : public QWidget
 public:
     PmActionEntryWidget(PmCore *core, size_t actionIndex, QWidget *parent);
 
-    void updateScenes();
-    void updateSceneItems();
-    void updateFilters();
-    void updateTransitons();
-
     void updateSizeHints(QList<QSize> &columnSizes);
 
     void updateAction(size_t actionIndex, PmAction action);
@@ -48,6 +43,13 @@ protected slots:
 
 protected:
     static const QString k_defaultTransitionStr;
+
+    void prepareSelections();
+
+    void updateScenes();
+    void updateSceneItems();
+    void updateFilters();
+    void updateTransitons();
 
     QComboBox *m_actionTypeCombo;
     QComboBox *m_targetCombo;

@@ -135,19 +135,22 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     if (m_actionIndex != actionIndex) return;
 
     PmActionType prevType = actionType();
-    int findIdx = m_actionTypeCombo->findData(int(action.m_actionType));
+    if (prevType != action.m_actionType) {
+        int findIdx = m_actionTypeCombo->findData(int(action.m_actionType));
+        m_actionTypeCombo->blockSignals(true);
+        m_actionTypeCombo->setCurrentIndex(findIdx);
+        m_actionTypeCombo->blockSignals(false);
 
-    m_actionTypeCombo->blockSignals(true);
-    m_actionTypeCombo->setCurrentIndex(findIdx);
-    m_actionTypeCombo->blockSignals(false);
+        prepareSelections();
+    }
 
     switch (action.m_actionType) {
     case PmActionType::None:
-	    m_targetCombo->setVisible(false);
-	    m_detailsStack->setVisible(false);
+        m_targetCombo->setVisible(false);
+        m_detailsStack->setVisible(false);
         break;
     case PmActionType::Scene:
-    	m_targetCombo->setVisible(true);
+        m_targetCombo->setVisible(true);
         m_targetCombo->blockSignals(true);
         m_targetCombo->setCurrentText(action.m_targetElement.data());
         m_targetCombo->blockSignals(false);
@@ -159,29 +162,29 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_transitionsCombo->blockSignals(false);
         break;
     case PmActionType::SceneItem:
-	    m_targetCombo->setVisible(true);
-	    m_targetCombo->blockSignals(true);
+        m_targetCombo->setVisible(true);
+        m_targetCombo->blockSignals(true);
         m_targetCombo->setCurrentText(action.m_targetElement.data());
-	    m_targetCombo->blockSignals(false);
-
-	    m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_toggleCombo);
-        findIdx = m_toggleCombo->findData(action.m_actionCode);
-        m_toggleCombo->blockSignals(true);
-        m_toggleCombo->setCurrentIndex(findIdx);
-        m_toggleCombo->blockSignals(false);
-        break;
-    case PmActionType::Filter:
-	    m_targetCombo->setVisible(true);
-	    m_targetCombo->blockSignals(true);
-        m_targetCombo->setCurrentText(action.m_targetElement.data());
-	    m_targetCombo->blockSignals(false);
+        m_targetCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
         m_detailsStack->setCurrentWidget(m_toggleCombo);
-        findIdx = m_toggleCombo->findData(action.m_actionCode);
         m_toggleCombo->blockSignals(true);
-        m_toggleCombo->setCurrentIndex(findIdx);
+        m_toggleCombo->setCurrentIndex(
+            m_toggleCombo->findData(action.m_actionCode));
+        m_toggleCombo->blockSignals(false);
+        break;
+    case PmActionType::Filter:
+        m_targetCombo->setVisible(true);
+        m_targetCombo->blockSignals(true);
+        m_targetCombo->setCurrentText(action.m_targetElement.data());
+        m_targetCombo->blockSignals(false);
+
+        m_detailsStack->setVisible(true);
+        m_detailsStack->setCurrentWidget(m_toggleCombo);
+        m_toggleCombo->blockSignals(true);
+        m_toggleCombo->setCurrentIndex(
+            m_toggleCombo->findData(action.m_actionCode));
         m_toggleCombo->blockSignals(false);
         break;
     }
@@ -192,24 +195,28 @@ PmActionType PmActionEntryWidget::actionType() const
     return (PmActionType)m_actionTypeCombo->currentData().toInt();
 }
 
-void PmActionEntryWidget::onActionTypeSelectionChanged()
+void PmActionEntryWidget::prepareSelections()
 {
     PmActionType actionType
         = PmActionType(m_actionTypeCombo->currentData().toInt());
 
     switch (actionType) {
     case PmActionType::Scene:
-	    updateScenes();
-	    updateTransitons();
-	    break;
+        updateScenes();
+        updateTransitons();
+        break;
     case PmActionType::SceneItem:
-	    updateSceneItems();
+        updateSceneItems();
         break;
     case PmActionType::Filter:
-	    updateFilters();
-	    break;
+        updateFilters();
+        break;
     }
+}
 
+void PmActionEntryWidget::onActionTypeSelectionChanged()
+{
+    prepareSelections();
     onUiChanged();
 }
 
