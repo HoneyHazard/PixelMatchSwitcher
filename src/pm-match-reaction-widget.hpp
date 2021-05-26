@@ -21,24 +21,29 @@ class PmActionEntryWidget : public QWidget
     Q_OBJECT
 
 public:
-    PmActionEntryWidget(size_t actionIndex, QWidget *parent);
+    PmActionEntryWidget(PmCore *core, size_t actionIndex, QWidget *parent);
 
-    void updateScenes(const QList<std::string> &scenes);
-    void updateSceneItems(const QList<std::string> &sceneItems);
-    void updateFilters(const QList<std::string> &sceneFilters);
-    void updateTransitons(const QList<std::string> &transitions);
+    void updateScenes();
+    void updateSceneItems();
+    void updateFilters();
+    void updateTransitons();
+
     void updateSizeHints(QList<QSize> &columnSizes);
 
     void updateAction(size_t actionIndex, PmAction action);
     void updateHotkeys(); // TODO
     void updateFrontendEvents(); // TODO
 
+    PmActionType actionType() const;
+
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
 
 public slots:
+    void onScenesChanged();
 
 protected slots:
+    void onActionTypeSelectionChanged();
     void onUiChanged();
 
 protected:
@@ -51,6 +56,7 @@ protected:
     QComboBox *m_toggleCombo;
     QStackedWidget *m_detailsStack;
 
+    PmCore *m_core;
     size_t m_actionIndex;
 };
 
@@ -74,19 +80,24 @@ signals:
     void sigNoMatchReactionChanged(PmReaction reaction);
 
 protected slots:
+    // core events
     void onMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onNoMatchReactionChanged(PmReaction reaction);
     //void onActiveFilterChanged(PmFilterRef newAf);
-    void onScenesChanged(
-        QList<std::string> scenes, QList<std::string> sceneItems);
     void onActionChanged(size_t actionIndex, PmAction action);
+
+    // local UI events
+    void onInsertReleased();
 
 protected:
     QPushButton *prepareButton(
         const char *tooltip, const char *icoPath, const char *themeId);
-    void updateReaction(const PmReaction &reaction);
+
+    PmReaction pullReaction() const;
+    void pushReaction(const PmReaction &reaction);
+    void reactionToUi(const PmReaction &reaction);
 
     QListWidget *m_matchActionList;
     QPushButton *m_insertActionButton;

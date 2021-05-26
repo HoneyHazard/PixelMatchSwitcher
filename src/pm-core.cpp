@@ -124,6 +124,7 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
 PmCore::PmCore()
 : m_filtersMutex(QMutex::Recursive)
 , m_matchConfigMutex(QMutex::Recursive)
+, m_scenesMutex(QMutex::Recursive)
 {
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
@@ -354,7 +355,7 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
 
     // enforce reaction type order
     if (m_enforceReactionTypeOrder && sz > 1) {
-        if (newCfg.reaction.hasSceneAction() && !hasSceneAction(matchIdx + 1)) {
+        if (!newCfg.reaction.hasSceneAction() && hasSceneAction(matchIdx + 1)) {
             // remove + insert to enforce scenes after scene items
             onMatchConfigRemove(matchIdx);
             while (matchIdx < sz && !hasSceneAction(matchIdx)) {
@@ -900,6 +901,16 @@ PmSceneItemsHash PmCore::sceneItems() const
 {
     QMutexLocker locker(&m_scenesMutex);
     return m_sceneItems;
+}
+
+QList<std::string> PmCore::allFilters() const
+{
+    QMutexLocker locker(&m_scenesMutex);
+    QList<std::string> ret;
+    for (const std::string &siName : m_sceneItems.keys()) {
+        ret.append(filters(siName));
+    }
+    return ret;
 }
 
 QList<std::string> PmCore::filters(const std::string &sceneItemName) const

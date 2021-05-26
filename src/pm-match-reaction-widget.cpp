@@ -12,8 +12,10 @@
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default>");
 
-PmActionEntryWidget::PmActionEntryWidget(size_t actionIndex, QWidget *parent)
+PmActionEntryWidget::PmActionEntryWidget(
+    PmCore* core, size_t actionIndex, QWidget *parent)
 : QWidget(parent)
+, m_core(core)
 , m_actionIndex(actionIndex)
 {
     m_actionTypeCombo = new QComboBox(this);
@@ -22,6 +24,8 @@ PmActionEntryWidget::PmActionEntryWidget(size_t actionIndex, QWidget *parent)
     m_actionTypeCombo->addItem(
         obs_module_text("Scene"), int(PmActionType::Scene));
     m_actionTypeCombo->addItem(
+        obs_module_text("SceneItem"), int(PmActionType::SceneItem));
+    m_actionTypeCombo->addItem(
         obs_module_text("Filter"), int(PmActionType::Filter));
     m_actionTypeCombo->addItem(
         obs_module_text("Hotkey"), int(PmActionType::Hotkey));
@@ -29,6 +33,8 @@ PmActionEntryWidget::PmActionEntryWidget(size_t actionIndex, QWidget *parent)
         obs_module_text("FrontEndEvent"), int(PmActionType::FrontEndEvent));
 
     m_targetCombo = new QComboBox(this);
+
+    m_detailsStack = new QStackedWidget(this);
 
     m_transitionsCombo = new QComboBox(this);
     m_detailsStack->addWidget(m_transitionsCombo);
@@ -43,55 +49,67 @@ PmActionEntryWidget::PmActionEntryWidget(size_t actionIndex, QWidget *parent)
     mainLayout->addWidget(m_targetCombo);
     mainLayout->addWidget(m_detailsStack);
     setLayout(mainLayout);
+
+    // local UI connections
+    connect(m_actionTypeCombo, &QComboBox::currentTextChanged,
+            this, &PmActionEntryWidget::onActionTypeSelectionChanged);
+    connect(m_targetCombo, &QComboBox::currentTextChanged,
+            this, &PmActionEntryWidget::onUiChanged);
+    connect(m_transitionsCombo, &QComboBox::currentTextChanged,
+            this, &PmActionEntryWidget::onUiChanged);
+    connect(m_toggleCombo, &QComboBox::currentTextChanged,
+            this, &PmActionEntryWidget::onUiChanged);
 }
 
-void PmActionEntryWidget::updateScenes(const QList<std::string> &scenes)
+void PmActionEntryWidget::updateScenes()
 {
-    // TODO: color
-    PmActionType actionType = PmActionType(
-        int(m_actionTypeCombo->currentData().toInt()));
-    if (actionType != PmActionType::Scene) return;
+    QList<std::string> scenes = m_core->sceneNames();
 
+    // TODO: color
+    m_targetCombo->blockSignals(true);
     m_targetCombo->clear();
     for (const std::string& scene : scenes) {
         m_targetCombo->addItem(scene.data());
     }
+    m_targetCombo->blockSignals(false);
 }
 
-void PmActionEntryWidget::updateSceneItems(const QList<std::string> &sceneItems)
+void PmActionEntryWidget::updateSceneItems()
 {
-    // TODO: color
-    PmActionType actionType = PmActionType(
-        int(m_actionTypeCombo->currentData().toInt()));
-    if (actionType != PmActionType::SceneItem) return;
+    QList<std::string> sceneItems = m_core->sceneItemNames();
 
+    // TODO: color
     m_targetCombo->clear();
+    m_targetCombo->blockSignals(true);
     for (const std::string& sceneItem : sceneItems) {
         m_targetCombo->addItem(sceneItem.data());
     }
+    m_targetCombo->blockSignals(false);
 }
 
-void PmActionEntryWidget::updateFilters(const QList<std::string> &sceneFilters)
+void PmActionEntryWidget::updateFilters()
 {
+    QList<std::string> sceneFilters = m_core->allFilters();
     // TODO: color; group by scene items
-    PmActionType actionType = PmActionType(
-        int(m_actionTypeCombo->currentData().toInt()));
-    if (actionType != PmActionType::Filter) return;
-
+    m_targetCombo->blockSignals(true);
     m_targetCombo->clear();
     for (const std::string& filter : sceneFilters) {
         m_targetCombo->addItem(filter.data());
     }
+    m_targetCombo->blockSignals(false);
 }
 
-void PmActionEntryWidget::updateTransitons(
-    const QList<std::string> &transitions)
+void PmActionEntryWidget::updateTransitons()
 {
+    QList<std::string> transitions = m_core->availableTransitions();
+
+    m_transitionsCombo->blockSignals(true);
     m_transitionsCombo->clear();
     m_transitionsCombo->addItem(k_defaultTransitionStr, "");
     for (const std::string &t : transitions) {
         m_transitionsCombo->addItem(t.data(), t.data());
     }
+    m_transitionsCombo->blockSignals(false);
 }
 
 void PmActionEntryWidget::updateSizeHints(QList<QSize> &columnSizes)
@@ -112,45 +130,95 @@ void PmActionEntryWidget::updateSizeHints(QList<QSize> &columnSizes)
     }
 }
 
-
 void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 {
+    if (m_actionIndex != actionIndex) return;
+
+    PmActionType prevType = actionType();
     int findIdx = m_actionTypeCombo->findData(int(action.m_actionCode));
+
+    m_actionTypeCombo->blockSignals(true);
     m_actionTypeCombo->setCurrentIndex(findIdx);
+    m_actionTypeCombo->blockSignals(false);
 
     switch (action.m_actionType) {
     case PmActionType::None:
-        m_targetCombo->setVisible(false);
+	    m_targetCombo->setVisible(false);
+	    m_detailsStack->setVisible(false);
         break;
     case PmActionType::Scene:
-        m_targetCombo->setVisible(true);
+    	m_targetCombo->setVisible(true);
+        m_targetCombo->blockSignals(true);
         m_targetCombo->setCurrentText(action.m_targetElement.data());
+        m_targetCombo->blockSignals(false);
+
+        m_detailsStack->setVisible(true);
         m_detailsStack->setCurrentWidget(m_transitionsCombo);
+        m_transitionsCombo->blockSignals(true);
         m_transitionsCombo->setCurrentText(action.m_targetDetails.data());
+        m_transitionsCombo->blockSignals(false);
         break;
     case PmActionType::SceneItem:
-        m_targetCombo->setVisible(true);
+	    m_targetCombo->setVisible(true);
+	    m_targetCombo->blockSignals(true);
         m_targetCombo->setCurrentText(action.m_targetElement.data());
+	    m_targetCombo->blockSignals(false);
+
+	    m_detailsStack->setVisible(true);
         m_detailsStack->setCurrentWidget(m_toggleCombo);
         findIdx = m_toggleCombo->findData(action.m_actionCode);
+        m_toggleCombo->blockSignals(true);
         m_toggleCombo->setCurrentIndex(findIdx);
+        m_toggleCombo->blockSignals(false);
         break;
     case PmActionType::Filter:
-        m_targetCombo->setVisible(true);
+	    m_targetCombo->setVisible(true);
+	    m_targetCombo->blockSignals(true);
         m_targetCombo->setCurrentText(action.m_targetElement.data());
+	    m_targetCombo->blockSignals(false);
+
+        m_detailsStack->setVisible(true);
         m_detailsStack->setCurrentWidget(m_toggleCombo);
         findIdx = m_toggleCombo->findData(action.m_actionCode);
+        m_toggleCombo->blockSignals(true);
         m_toggleCombo->setCurrentIndex(findIdx);
+        m_toggleCombo->blockSignals(false);
         break;
     }
+}
+
+PmActionType PmActionEntryWidget::actionType() const
+{
+    return (PmActionType)m_actionTypeCombo->currentData().toInt();
+}
+
+void PmActionEntryWidget::onActionTypeSelectionChanged()
+{
+    PmActionType actionType
+        = PmActionType(m_actionTypeCombo->currentData().toInt());
+
+    switch (actionType) {
+    case PmActionType::Scene:
+	    updateScenes();
+	    updateTransitons();
+	    break;
+    case PmActionType::SceneItem:
+	    updateSceneItems();
+        break;
+    case PmActionType::Filter:
+	    updateFilters();
+	    break;
+    }
+
+    onUiChanged();
 }
 
 void PmActionEntryWidget::onUiChanged()
 {
     PmAction action;
-    action.m_actionCode = int(m_actionTypeCombo->currentData().toInt());
+    action.m_actionType = PmActionType(m_actionTypeCombo->currentData().toInt());
 
-    switch (PmActionType(action.m_actionCode)) {
+    switch (PmActionType(action.m_actionType)) {
     case PmActionType::None:
         break;
     case PmActionType::Scene:
@@ -166,6 +234,15 @@ void PmActionEntryWidget::onUiChanged()
     }
 
     emit sigActionChanged(m_actionIndex, action);
+}
+
+void PmActionEntryWidget::onScenesChanged()
+{
+    switch (actionType()) {
+    case PmActionType::Scene: updateScenes(); updateTransitons(); break;
+    case PmActionType::SceneItem: updateSceneItems(); break;
+    case PmActionType::Filter: updateFilters(); break;
+    }
 }
 
 //----------------------------------------------------
@@ -195,8 +272,11 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     mainLayout->addLayout(m_actionLayout);
     setLayout(mainLayout);
 
-    //--------------------------------------
+    // local UI events
+    connect(m_insertActionButton, &QPushButton::released,
+            this, &PmMatchReactionWidget::onInsertReleased);
 
+    // entry vs no-match specific
     const auto qc = Qt::QueuedConnection;
 
     if (reactionTarget == Entry) {
@@ -206,6 +286,9 @@ PmMatchReactionWidget::PmMatchReactionWidget(
                 this, &PmMatchReactionWidget::onMatchConfigChanged, qc);
         connect(m_core, &PmCore::sigMultiMatchConfigSizeChanged,
                 this, &PmMatchReactionWidget::onMultiMatchConfigSizeChanged, qc);
+
+        connect(this, &PmMatchReactionWidget::sigMatchConfigChanged,
+                m_core, &PmCore::onMatchConfigChanged);
 
         onMultiMatchConfigSizeChanged(m_core->multiMatchConfigSize());
         size_t idx = m_core->selectedConfigIndex();
@@ -233,27 +316,46 @@ void PmMatchReactionWidget::onMatchConfigChanged(
         .arg(cfg.label.data()));
 
     const PmReaction &reaction = cfg.reaction;
-    updateReaction(reaction);
+    reactionToUi(reaction);
 }
 
 void PmMatchReactionWidget::onNoMatchReactionChanged(PmReaction reaction)
 {
-    updateReaction(reaction);
+    reactionToUi(reaction);
 }
 
-void PmMatchReactionWidget::updateReaction(const PmReaction &reaction)
+PmReaction PmMatchReactionWidget::pullReaction() const
+{
+    return m_reactionType == Entry
+        ? m_core->reaction(m_matchIndex) : m_core->noMatchReaction();
+}
+
+void PmMatchReactionWidget::pushReaction(const PmReaction &reaction)
+{
+    if (m_reactionTarget == Entry) {
+        PmMatchConfig cfg = m_core->matchConfig(m_matchIndex);
+        cfg.reaction = reaction;
+        emit sigMatchConfigChanged(m_matchIndex, cfg);
+    } else {
+        emit sigNoMatchReactionChanged(reaction);
+    }
+}
+
+void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
 {
     const auto &actionList = (m_reactionType == Match) ?
         reaction.matchActions : reaction.unmatchActions;
 
-    size_t listSz = reaction.matchSz();
+    size_t listSz = actionList.size();
     for (size_t i = 0; i < listSz; ++i) {
         PmActionEntryWidget *entryWidget = nullptr;
-        if (i > m_actionWidgets.size()) {
-            PmActionEntryWidget *entryWidget = new PmActionEntryWidget(i, this);
+        if (i >= m_actionWidgets.size()) {
+            const auto qc = Qt::QueuedConnection;
+            entryWidget = new PmActionEntryWidget(m_core, i, this);
+            connect(m_core, &PmCore::sigScenesChanged,
+                    entryWidget, &PmActionEntryWidget::onScenesChanged, qc);
             connect(entryWidget, &PmActionEntryWidget::sigActionChanged,
-                    this, &PmMatchReactionWidget::onActionChanged);
-
+                    this, &PmMatchReactionWidget::onActionChanged, qc);
             m_actionWidgets.push_back(entryWidget);
             m_actionLayout->addWidget(entryWidget);
         } else {
@@ -285,26 +387,9 @@ void PmMatchReactionWidget::onMultiMatchConfigSizeChanged(size_t sz)
     setEnabled(m_matchIndex < m_multiConfigSz);
 }
 
-void PmMatchReactionWidget::onScenesChanged(
-    QList<std::string> scenes, QList<std::string> sceneItems)
-{
-    QList<std::string> filterNames;
-    for (const std::string siName : sceneItems) {
-        filterNames.append(m_core->filters(siName));
-    }
-
-    for (auto *w : m_actionWidgets) {
-        w->updateScenes(scenes);
-        w->updateSceneItems(sceneItems);
-        w->updateFilters(filterNames);
-    }
-}
-
 void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
 {
-    PmReaction reaction = (m_reactionType == Entry) ?
-        m_core->reaction(m_matchIndex) : m_core->noMatchReaction();
-
+    PmReaction reaction = pullReaction();
 
     if (m_reactionType == Match) {
         reaction.matchActions[actionIndex] = action;
@@ -312,18 +397,23 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
         reaction.unmatchActions[actionIndex] = action;
     }
 
-    if (m_reactionTarget == Entry) {
-        PmMatchConfig cfg = m_core->matchConfig(m_matchIndex);
-        cfg.reaction = reaction;
-        emit sigMatchConfigChanged(m_matchIndex, cfg);
-    } else {
-        emit sigNoMatchReactionChanged(reaction);
-    }
+    pushReaction(reaction);
 }
 
-QPushButton *PmMatchReactionWidget::prepareButton(const char *tooltip,
-                          const char *icoPath,
-                          const char *themeId)
+void PmMatchReactionWidget::onInsertReleased()
+{
+    // TODO: insert at currently selected index
+    PmReaction reaction = pullReaction();
+    if (m_reactionType == Match) {
+        reaction.matchActions.resize(reaction.matchActions.size() + 1);
+    } else { // Unmatch
+        reaction.unmatchActions.resize(reaction.unmatchActions.size() + 1);
+    }
+    pushReaction(reaction);
+}
+
+QPushButton *PmMatchReactionWidget::prepareButton(
+    const char *tooltip, const char *icoPath, const char *themeId)
 {
     QIcon icon;
     icon.addFile(icoPath, QSize(), QIcon::Normal, QIcon::Off);
