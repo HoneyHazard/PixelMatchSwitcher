@@ -8,6 +8,7 @@
 #include <QStackedWidget>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QListWidget>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -272,11 +273,11 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     buttonLayout->addWidget(m_insertActionButton);
     buttonLayout->addWidget(m_removeActionButton);
 
-    m_actionLayout = new QVBoxLayout();
+    m_actionListWidget = new QListWidget();
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addLayout(buttonLayout);
-    mainLayout->addLayout(m_actionLayout);
+    mainLayout->addWidget(m_actionListWidget);
     setLayout(mainLayout);
 
     // local UI events
@@ -364,7 +365,11 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
             connect(entryWidget, &PmActionEntryWidget::sigActionChanged,
                     this, &PmMatchReactionWidget::onActionChanged, qc);
             m_actionWidgets.push_back(entryWidget);
-            m_actionLayout->addWidget(entryWidget);
+
+            QListWidgetItem *item = new QListWidgetItem(m_actionListWidget);
+            m_actionListWidget->addItem(item);
+            item->setSizeHint(entryWidget->sizeHint());
+            m_actionListWidget->setItemWidget(item, entryWidget);
         } else {
             entryWidget = m_actionWidgets[i];
         }
@@ -372,7 +377,7 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     }
     for (size_t i = m_actionWidgets.size(); i < listSz; ++i) {
         PmActionEntryWidget *entryWidget = m_actionWidgets[i];
-        m_actionLayout->removeWidget(entryWidget);
+        //m_actionLayout->removeWidget(entryWidget);
         entryWidget->deleteLater();
     }
     m_actionWidgets.resize(listSz);

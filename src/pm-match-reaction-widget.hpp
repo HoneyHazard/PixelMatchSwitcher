@@ -101,10 +101,10 @@ protected:
     void pushReaction(const PmReaction &reaction);
     void reactionToUi(const PmReaction &reaction);
 
-    QListWidget *m_matchActionList;
+    QListWidget *m_actionListWidget;
     QPushButton *m_insertActionButton;
     QPushButton *m_removeActionButton;
-    QVBoxLayout *m_actionLayout;
+    //QVBoxLayout *m_actionLayout;
 
 //  QLineEdit *m_lingerEdit;
 //  QLineEdit *m_cooldownEdit;
