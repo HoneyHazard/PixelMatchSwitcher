@@ -13,6 +13,7 @@ class QLineEdit;
 class QPushButton;
 class QComboBox;
 class QListWidget;
+class QListWidgetItem;
 class QStackedWidget;
 class QVBoxLayout;
 
@@ -113,7 +114,7 @@ protected:
     ReactionType m_reactionType;
     size_t m_matchIndex = (size_t)-1;
     size_t m_multiConfigSz = 0;
-    std::vector<PmActionEntryWidget*> m_actionWidgets;
+    //std::vector<QListWidgetItem*> m_actionItems;
 
     PmCore *m_core;
 };

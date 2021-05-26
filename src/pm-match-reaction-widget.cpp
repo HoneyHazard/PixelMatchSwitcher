@@ -357,30 +357,30 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     size_t listSz = actionList.size();
     for (size_t i = 0; i < listSz; ++i) {
         PmActionEntryWidget *entryWidget = nullptr;
-        if (i >= m_actionWidgets.size()) {
+        if (i >= m_actionListWidget->count()) {
             const auto qc = Qt::QueuedConnection;
             entryWidget = new PmActionEntryWidget(m_core, i, this);
             connect(m_core, &PmCore::sigScenesChanged,
                     entryWidget, &PmActionEntryWidget::onScenesChanged, qc);
             connect(entryWidget, &PmActionEntryWidget::sigActionChanged,
                     this, &PmMatchReactionWidget::onActionChanged, qc);
-            m_actionWidgets.push_back(entryWidget);
 
             QListWidgetItem *item = new QListWidgetItem(m_actionListWidget);
             m_actionListWidget->addItem(item);
             item->setSizeHint(entryWidget->sizeHint());
             m_actionListWidget->setItemWidget(item, entryWidget);
         } else {
-            entryWidget = m_actionWidgets[i];
+            QListWidgetItem* item = m_actionListWidget->item(int(i));
+            entryWidget
+                = (PmActionEntryWidget*) m_actionListWidget->itemWidget(item);
         }
         entryWidget->updateAction(i, actionList[i]);
     }
-    for (size_t i = m_actionWidgets.size(); i < listSz; ++i) {
-        PmActionEntryWidget *entryWidget = m_actionWidgets[i];
-        //m_actionLayout->removeWidget(entryWidget);
-        entryWidget->deleteLater();
+    while (m_actionListWidget->count() > listSz) {
+        QListWidgetItem *item = m_actionListWidget->takeItem(
+            m_actionListWidget->count() - 1);
+        delete item;
     }
-    m_actionWidgets.resize(listSz);
 }
 
 void PmMatchReactionWidget::onMatchConfigSelect(
