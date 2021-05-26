@@ -355,19 +355,22 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
 
     // enforce reaction type order
     if (m_enforceReactionTypeOrder && sz > 1) {
-        if (!newCfg.reaction.hasSceneAction() && hasSceneAction(matchIdx + 1)) {
+        if (!newCfg.reaction.hasSceneAction()
+          && matchIdx < sz-1
+          && hasSceneAction(matchIdx + 1)) {
             // remove + insert to enforce scenes after scene items
             onMatchConfigRemove(matchIdx);
-            while (matchIdx < sz && !hasSceneAction(matchIdx)) {
+            while (matchIdx < sz-1 && hasSceneAction(matchIdx)) {
                 matchIdx++;
             }
             onMatchConfigInsert(matchIdx, newCfg);
             return true;
-        } else if (!newCfg.reaction.hasSceneAction()
-                && hasSceneAction(matchIdx - 1)) {
+        } else if (newCfg.reaction.hasSceneAction()
+                && matchIdx > 0
+                && !hasSceneAction(matchIdx - 1)) {
             // remove + insert to enforce scene items before scenes
             onMatchConfigRemove(matchIdx);
-            while (matchIdx > 0 && hasSceneAction(matchIdx -1)) {
+            while (matchIdx > 0 && !hasSceneAction(matchIdx -1)) {
                 matchIdx--;
             }
             onMatchConfigInsert(matchIdx, newCfg);
@@ -390,7 +393,7 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
      // config hasn't changed? stop callback loops
     if (oldCfg == newCfg) return;
 
-    // if change breaks the order of target reaction types, do things differntly
+    // if change breaks the order of target reaction types, do things differently
     if (enforceTargetOrder(matchIdx, newCfg)) return;
 
     // go forward with setting new config state and activation

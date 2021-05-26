@@ -106,6 +106,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     buttonsLayout->addItem(buttonSpacer2);
     buttonsLayout->addWidget(m_cfgRemoveBtn);
 
+    #if 0
     // no-match configuration UI
     QLabel* noMatchSceneLabel = new QLabel(
         obs_module_text("No-match Scene: "), this);
@@ -116,7 +117,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     QLabel* noMatchTransitionLabel = new QLabel(
         obs_module_text("No-match Transition: "), this);
 
-#if 0
     m_noMatchTransitionCombo = new QComboBox(this);
     updateTransitionChoices(m_noMatchTransitionCombo);
 

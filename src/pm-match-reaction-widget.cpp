@@ -334,7 +334,7 @@ void PmMatchReactionWidget::onNoMatchReactionChanged(PmReaction reaction)
 
 PmReaction PmMatchReactionWidget::pullReaction() const
 {
-    return m_reactionType == Entry
+	return m_reactionTarget == Entry
         ? m_core->reaction(m_matchIndex) : m_core->noMatchReaction();
 }
 
