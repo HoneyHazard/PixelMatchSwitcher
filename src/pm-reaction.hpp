@@ -20,13 +20,27 @@ enum class PmActionType : char {
     FrontEndEvent = 5
 };
 
+/**
+ * @brief Scene items and filters can be shown or hidden
+ */
 enum class PmToggleCode : int { Show = 0, Hide = 1 };
 
+/**
+ * @brief Match entry actions vs global match/unmatch
+ */
+enum class PmReactionTarget { Entry, Anything };
+
+enum class PmReactionType { Match, Unmatch };
+
+/**
+ * @brief Individual unit of action that is part of a reaction
+ */
 struct PmAction
 {
 public:
     static const char *actionStr(PmActionType actionType);
-    static QColor actionColor(PmActionType color);
+    QColor actionColor() const;
+    QString actionColorStr() const;
 
     PmAction() {}
     PmAction(obs_data_t *data);
@@ -47,6 +61,9 @@ public:
     std::string m_targetDetails;
 };
 
+/**
+ * @brief Describes what should happen when an entry is matched or unmatched
+ */
 struct PmReaction
 {
     PmReaction() {}

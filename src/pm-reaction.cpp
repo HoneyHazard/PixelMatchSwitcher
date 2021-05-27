@@ -15,9 +15,21 @@ const char *PmAction::actionStr(PmActionType actionType)
     }
 }
 
-QColor PmAction::actionColor(PmActionType actionType)
+QColor PmAction::actionColor() const
 {
-    return Qt::cyan;
+    switch (m_actionType) {
+	case PmActionType::Scene: return Qt::cyan;
+	case PmActionType::SceneItem: return Qt::yellow;
+	case PmActionType::Filter: return QColor(255, 0, 255, 255);
+	case PmActionType::Hotkey: return Qt::red;
+	case PmActionType::FrontEndEvent: return Qt::green;
+	default: return Qt::white;
+    }
+}
+
+QString PmAction::actionColorStr() const
+{
+    return actionColor().name();
 }
 
 PmAction::PmAction(obs_data_t *data)

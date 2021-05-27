@@ -70,12 +70,9 @@ class PmMatchReactionWidget : public QGroupBox
     Q_OBJECT
 
 public:
-    enum ReactionTarget { Entry, Anything };
-    enum ReactionType { Match, Unmatch};
-
     PmMatchReactionWidget(
         PmCore *core,
-        ReactionTarget reactionTarget, ReactionType reactionType,
+        PmReactionTarget reactionTarget, PmReactionType reactionType,
         QWidget *parent);
 
 signals:
@@ -93,6 +90,7 @@ protected slots:
 
     // local UI events
     void onInsertReleased();
+    void onRemoveReleased();
 
 protected:
     QPushButton *prepareButton(
@@ -110,8 +108,8 @@ protected:
 //  QLineEdit *m_lingerEdit;
 //  QLineEdit *m_cooldownEdit;
 
-    ReactionTarget m_reactionTarget;
-    ReactionType m_reactionType;
+    PmReactionTarget m_reactionTarget;
+    PmReactionType m_reactionType;
     size_t m_matchIndex = (size_t)-1;
     size_t m_multiConfigSz = 0;
     //std::vector<QListWidgetItem*> m_actionItems;

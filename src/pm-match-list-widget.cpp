@@ -25,11 +25,12 @@ using namespace std;
 enum class PmMatchListWidget::ColOrder : int {
     EnableBox = 0,
     ConfigName = 1,
-    Reaction = 2,
-    Linger = 3,
-    Cooldown = 4,
-    Result = 5,
-    NumCols = 6,
+    MatchActions = 2,
+    UnmatchActions = 3,
+    Linger = 4,
+    Cooldown = 5,
+    Result = 6,
+    NumCols = 7,
 };
 
 enum class PmMatchListWidget::ActionStackOrder : int {
@@ -40,7 +41,8 @@ enum class PmMatchListWidget::ActionStackOrder : int {
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
     obs_module_text("Label"),
-    obs_module_text("Reaction"),
+    obs_module_text("On Match"),
+    obs_module_text("On Unmatch"),
     obs_module_text("Linger"),
     obs_module_text("Cooldown"),
     obs_module_text("Result")
@@ -314,6 +316,14 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 
     const PmReaction &reaction = cfg.reaction;
 
+    PmReactionDisplay *matchDisplay = (PmReactionDisplay *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::MatchActions);
+    matchDisplay->updateReaction(reaction, PmReactionType::Match);
+
+    PmReactionDisplay *unmatchDisplay = (PmReactionDisplay *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::UnmatchActions);
+    unmatchDisplay->updateReaction(reaction, PmReactionType::Unmatch);
+
     QSpinBox* lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
         idx, (int)ColOrder::Linger);
     if (lingerDelayBox) {
@@ -552,11 +562,21 @@ void PmMatchListWidget::constructRow(int idx)
         idx, (int)ColOrder::ActionSelect, targetActionStack);
     #endif
 
-    PmReactionLabel *reactionLabel = new PmReactionLabel("--", parent);
-    reactionLabel->setStyleSheet(k_transpBgStyle);
-    reactionLabel->setTextFormat(Qt::RichText);
-    reactionLabel->installEventFilter(this);
-    m_tableWidget->setCellWidget(idx, (int)ColOrder::Reaction, reactionLabel);
+    // match actions
+    PmReactionDisplay *matchActionsDisplay
+        = new PmReactionDisplay("--", parent);
+    matchActionsDisplay->setStyleSheet(k_transpBgStyle);
+    matchActionsDisplay->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::MatchActions,
+        matchActionsDisplay);
+
+    // unmatch actions
+    PmReactionDisplay *unmatchActionsDisplay =
+        new PmReactionDisplay("--", parent);
+    unmatchActionsDisplay->setStyleSheet(k_transpBgStyle);
+    unmatchActionsDisplay->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::UnmatchActions,
+        unmatchActionsDisplay);
 
     // linger delay
     QSpinBox *lingerDelayBox = new QSpinBox();
@@ -571,7 +591,6 @@ void PmMatchListWidget::constructRow(int idx)
     m_tableWidget->setCellWidget(
         idx, (int)ColOrder::Linger, lingerDelayBox);
 
-    
     // cooldown delay
     QSpinBox *cooldownDelayBox = new QSpinBox();
     cooldownDelayBox->setStyleSheet(k_transpBgStyle);
@@ -889,7 +908,7 @@ bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
 }
 
 PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
-    : QLabel(text, parentWidget)
+: QLabel(text, parentWidget)
 {
     QFontMetrics fm(font());
     auto m = contentsMargins();
@@ -904,18 +923,73 @@ QSize PmResultsLabel::sizeHint() const
     return ret;
 }
 
-PmReactionLabel::PmReactionLabel(const QString &text, QWidget *parent)
+//---------------------------------------------------------
+
+PmReactionDisplay::PmReactionDisplay(const QString &text, QWidget *parent)
 : QLabel(parent)
+, m_fontMetrics(font())
 {
-    // TODO
+    setTextFormat(Qt::RichText);
+    setText(text);
+    auto m = contentsMargins();
+    m_marginsWidth = m.left() + m.right() + margin() * 2 + 10;
 }
 
-void PmReactionLabel::updateReaction(const PmReaction &reaction)
+void PmReactionDisplay::updateReaction(
+    const PmReaction &reaction, PmReactionType rtype)
 {
-    // TODO
+	int maxLength = 0;
+    const std::vector<PmAction> &actions = (rtype == PmReactionType::Match)
+        ? reaction.matchActions : reaction.unmatchActions;
+    QString text;
+    QString html;
+    for (size_t i = 0; i < actions.size(); ++i) {
+        const auto &action = actions[i];
+        if (action.m_actionType == PmActionType::None)
+            continue;
+
+        switch (action.m_actionType) {
+        case PmActionType::Scene:
+		    text = QString("%1%2")
+			    .arg(action.m_targetElement.data())
+                .arg(action.m_targetDetails.size() ?
+                    QString(" [%1]").arg(action.m_targetDetails.data()) : "");
+            html += QString("<font color=\"%1\">%2</font>")
+				.arg(action.actionColorStr())
+                .arg(text);
+		    maxLength = qMax(maxLength, m_fontMetrics.size(0, text).width());
+            break;
+        case PmActionType::SceneItem:
+        case PmActionType::Filter:
+            text = QString("%1 [%2]")
+                .arg(action.m_targetElement.data())
+                .arg(action.m_actionCode == int(PmToggleCode::Show) ?
+                    obs_module_text("show") : obs_module_text("hide"));
+            html += QString("<font color=\"%1\">%2</font>")
+                .arg(action.actionColorStr())
+                .arg(text);
+            maxLength = qMax(maxLength, m_fontMetrics.size(0, text).width());
+            break;
+        case PmActionType::Hotkey:
+            // TODO
+            break;
+        case PmActionType::FrontEndEvent:
+            // TODO
+            break;
+        }
+
+        if (i < actions.size() - 1) {
+            html += "<br />";
+        }
+    }
+    setText(html);
+    m_textWidth = maxLength;
+    updateGeometry();
 }
 
-QSize PmReactionLabel::sizeHint() const
+QSize PmReactionDisplay::sizeHint() const
 {
-    return QSize();
+    QSize ret = QLabel::sizeHint();
+    ret.setWidth(m_textWidth);
+    return ret;
 }

@@ -1525,10 +1525,10 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             } else {
                 // nothing matched so we fall back to a no-match scene
                 if (!sceneSelected) {
-                    execSceneAction(0, nmr, !anythingIsMatched);
+                    execSceneAction(0, nmr, anythingIsMatched);
                 }
             }
-            execIndependentActions(nmr, !anythingIsMatched);
+            execIndependentActions(nmr, anythingIsMatched);
         }
     }
 

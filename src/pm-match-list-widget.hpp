@@ -130,15 +130,17 @@ protected:
     int m_resultTextWidth;
 };
 
-class PmReactionLabel : public QLabel
+class PmReactionDisplay : public QLabel
 {
     Q_OBJECT
 
 public:
-    PmReactionLabel(const QString &text, QWidget *parent);
-    void updateReaction(const PmReaction &reaction);
+    PmReactionDisplay(const QString &text, QWidget *parent);
+    void updateReaction(const PmReaction &reaction, PmReactionType rtype);
     QSize sizeHint() const override;
 
 protected:
-    int m_reactionTextWidth;
+    int m_textWidth = 0;
+	int m_marginsWidth = 0;
+    QFontMetrics m_fontMetrics;
 };

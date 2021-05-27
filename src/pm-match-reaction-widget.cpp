@@ -106,7 +106,7 @@ void PmActionEntryWidget::updateTransitons()
 
     m_transitionsCombo->blockSignals(true);
     m_transitionsCombo->clear();
-    m_transitionsCombo->addItem(k_defaultTransitionStr, "");
+    m_transitionsCombo->addItem(k_defaultTransitionStr, QVariant(QString()));
     for (const std::string &t : transitions) {
         m_transitionsCombo->addItem(t.data(), t.data());
     }
@@ -231,8 +231,8 @@ void PmActionEntryWidget::onUiChanged()
         break;
     case PmActionType::Scene:
         action.m_targetElement = m_targetCombo->currentText().toUtf8().data();
-        action.m_targetDetails = std::string(
-            m_transitionsCombo->currentText().toUtf8().data());
+        action.m_targetDetails =
+            m_transitionsCombo->currentData().toString().toUtf8().data();
         break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
@@ -257,7 +257,7 @@ void PmActionEntryWidget::onScenesChanged()
 
 PmMatchReactionWidget::PmMatchReactionWidget(
     PmCore *core,
-    ReactionTarget reactionTarget, ReactionType reactionType,
+    PmReactionTarget reactionTarget, PmReactionType reactionType,
     QWidget *parent)
 : QGroupBox(parent)
 , m_core(core)
@@ -283,11 +283,13 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     // local UI events
     connect(m_insertActionButton, &QPushButton::released,
             this, &PmMatchReactionWidget::onInsertReleased);
+    connect(m_removeActionButton, &QPushButton::released,
+            this, &PmMatchReactionWidget::onRemoveReleased);
 
     // entry vs no-match specific
     const auto qc = Qt::QueuedConnection;
 
-    if (reactionTarget == Entry) {
+    if (reactionTarget == PmReactionTarget::Entry) {
         connect(m_core, &PmCore::sigMatchConfigSelect,
                 this, &PmMatchReactionWidget::onMatchConfigSelect, qc);
         connect(m_core, &PmCore::sigMatchConfigChanged,
@@ -306,9 +308,10 @@ PmMatchReactionWidget::PmMatchReactionWidget(
                 this, &PmMatchReactionWidget::onNoMatchReactionChanged, qc);
         connect(this, &PmMatchReactionWidget::sigNoMatchReactionChanged,
                 m_core, &PmCore::onNoMatchReactionChanged, qc);
-        setTitle((m_reactionType == Match)
+        setTitle((m_reactionType == PmReactionType::Match)
             ? obs_module_text("Anything Matched")
-            : obs_module_text("Nothing Matched")); 
+            : obs_module_text("Nothing Matched"));
+        onNoMatchReactionChanged(m_core->noMatchReaction());
     }
 }
 
@@ -318,7 +321,7 @@ void PmMatchReactionWidget::onMatchConfigChanged(
     if (matchIdx != m_matchIndex) return;
 
     setTitle(QString(obs_module_text("%1 Actions #%2: %3"))
-        .arg((m_reactionType == Match) ?
+        .arg((m_reactionType == PmReactionType::Match) ?
                 obs_module_text("Match") : obs_module_text("Unmatch"))
         .arg(matchIdx + 1)
         .arg(cfg.label.data()));
@@ -334,13 +337,13 @@ void PmMatchReactionWidget::onNoMatchReactionChanged(PmReaction reaction)
 
 PmReaction PmMatchReactionWidget::pullReaction() const
 {
-	return m_reactionTarget == Entry
+    return m_reactionTarget == PmReactionTarget::Entry
         ? m_core->reaction(m_matchIndex) : m_core->noMatchReaction();
 }
 
 void PmMatchReactionWidget::pushReaction(const PmReaction &reaction)
 {
-    if (m_reactionTarget == Entry) {
+    if (m_reactionTarget == PmReactionTarget::Entry) {
         PmMatchConfig cfg = m_core->matchConfig(m_matchIndex);
         cfg.reaction = reaction;
         emit sigMatchConfigChanged(m_matchIndex, cfg);
@@ -351,7 +354,7 @@ void PmMatchReactionWidget::pushReaction(const PmReaction &reaction)
 
 void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
 {
-    const auto &actionList = (m_reactionType == Match) ?
+    const auto &actionList = (m_reactionType == PmReactionType::Match) ?
         reaction.matchActions : reaction.unmatchActions;
 
     size_t listSz = actionList.size();
@@ -403,7 +406,7 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
 {
     PmReaction reaction = pullReaction();
 
-    if (m_reactionType == Match) {
+    if (m_reactionType == PmReactionType::Match) {
         reaction.matchActions[actionIndex] = action;
     } else {
         reaction.unmatchActions[actionIndex] = action;
@@ -414,12 +417,43 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
 
 void PmMatchReactionWidget::onInsertReleased()
 {
-    // TODO: insert at currently selected index
+    size_t idx = 0;
+    if (m_actionListWidget->count() > 0) {
+        int currRow = m_actionListWidget->currentRow();
+        if (currRow == -1) {
+            idx = m_actionListWidget->count();
+        } else {
+            idx = (size_t)currRow;
+        }
+    }
+
     PmReaction reaction = pullReaction();
-    if (m_reactionType == Match) {
-        reaction.matchActions.resize(reaction.matchActions.size() + 1);
+    if (m_reactionType == PmReactionType::Match) {
+        reaction.matchActions.insert(
+            reaction.matchActions.begin() + idx, PmAction());
     } else { // Unmatch
-        reaction.unmatchActions.resize(reaction.unmatchActions.size() + 1);
+        reaction.unmatchActions.insert(
+            reaction.unmatchActions.begin() + idx, PmAction());
+    }
+    pushReaction(reaction);
+}
+
+void PmMatchReactionWidget::onRemoveReleased()
+{
+    int idx = 0;
+    if (m_actionListWidget->count() > 0) {
+        idx = (size_t)m_actionListWidget->currentRow();
+        if (idx < 0)
+            return;
+    } else {                       
+        return;
+    }
+
+    PmReaction reaction = pullReaction();
+    if (m_reactionType == PmReactionType::Match) {
+        reaction.matchActions.erase(reaction.matchActions.begin() + idx);
+    } else { // Unmatch
+        reaction.unmatchActions.erase(reaction.unmatchActions.begin() + idx);
     }
     pushReaction(reaction);
 }
