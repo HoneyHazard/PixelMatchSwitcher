@@ -38,7 +38,9 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmMatchConfigWidget *configWidget 
         = new PmMatchConfigWidget(core, this);
 
-    // TODO: tabs?
+    m_actionsTargetTab = new QTabWidget(this);
+
+    // match/unmatch for an entry
     PmMatchReactionWidget *entryMatchActions
         = new PmMatchReactionWidget(core,
             PmMatchReactionWidget::Entry,
@@ -49,6 +51,20 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
             PmMatchReactionWidget::Entry,
             PmMatchReactionWidget::Unmatch,
             this);
+    QVBoxLayout *entryActionsLayout = new QVBoxLayout();
+    entryActionsLayout->addWidget(entryMatchActions);
+    entryActionsLayout->addWidget(entryUnmatchActions);
+    auto actionsLayoutMargins = entryActionsLayout->contentsMargins();
+    actionsLayoutMargins.setLeft(0);
+    actionsLayoutMargins.setRight(0);
+    actionsLayoutMargins.setBottom(0);
+    entryActionsLayout->setContentsMargins(actionsLayoutMargins);
+    QWidget *entryActionsWidget = new QWidget(this);
+    entryActionsWidget->setLayout(entryActionsLayout);
+    m_actionsTargetTab->addTab(entryActionsWidget,
+        obs_module_text("Entry Match Actions"));
+
+    // match/unmatch for anything/nothing
     PmMatchReactionWidget *anythingMatchedActions
         = new PmMatchReactionWidget(core,
             PmMatchReactionWidget::Anything,
@@ -59,6 +75,14 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
             PmMatchReactionWidget::Anything,
             PmMatchReactionWidget::Unmatch,
             this);
+    QVBoxLayout *globalActionsLayout = new QVBoxLayout();
+    globalActionsLayout->addWidget(anythingMatchedActions);
+    globalActionsLayout->addWidget(nothingMatchedActions);
+    globalActionsLayout->setContentsMargins(actionsLayoutMargins);
+    QWidget *globalActionsWidget = new QWidget(this);
+    globalActionsWidget->setLayout(globalActionsLayout);
+    m_actionsTargetTab->addTab(globalActionsWidget,
+        obs_module_text("Global Match/Unmatch"));
 
     PmMatchResultsWidget *resultsWidget 
         = new PmMatchResultsWidget(core, this);
@@ -76,10 +100,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
 
-    leftLayout->addWidget(entryMatchActions);
-    leftLayout->addWidget(entryUnmatchActions);
-    leftLayout->addWidget(anythingMatchedActions);
-    leftLayout->addWidget(nothingMatchedActions);
+    leftLayout->addWidget(m_actionsTargetTab);
 
     leftLayout->addWidget(resultsWidget);
 
@@ -88,9 +109,6 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->setStretch(2, 1);
     leftLayout->setStretch(3, 1);
     leftLayout->setStretch(4, 1);
-    leftLayout->setStretch(5, 1);
-    leftLayout->setStretch(6, 1);
-    leftLayout->setStretch(7, 1);
     QWidget *leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 

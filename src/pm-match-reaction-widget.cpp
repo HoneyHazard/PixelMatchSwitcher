@@ -23,15 +23,15 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_actionTypeCombo->addItem(
         obs_module_text("<don't switch>"), int(PmActionType::None));
     m_actionTypeCombo->addItem(
-        obs_module_text("Scene"), int(PmActionType::Scene));
+        obs_module_text("Scene:"), int(PmActionType::Scene));
     m_actionTypeCombo->addItem(
-        obs_module_text("SceneItem"), int(PmActionType::SceneItem));
+        obs_module_text("SceneItem:"), int(PmActionType::SceneItem));
     m_actionTypeCombo->addItem(
-        obs_module_text("Filter"), int(PmActionType::Filter));
+        obs_module_text("Filter:"), int(PmActionType::Filter));
     m_actionTypeCombo->addItem(
-        obs_module_text("Hotkey"), int(PmActionType::Hotkey));
+        obs_module_text("Hotkey:"), int(PmActionType::Hotkey));
     m_actionTypeCombo->addItem(
-        obs_module_text("FrontEndEvent"), int(PmActionType::FrontEndEvent));
+        obs_module_text("FrontEndEvent:"), int(PmActionType::FrontEndEvent));
 
     m_targetCombo = new QComboBox(this);
 

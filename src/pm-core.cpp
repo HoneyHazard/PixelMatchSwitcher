@@ -1500,7 +1500,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             continue;
         }
 
-        uint32_t lingerMs = reaction.lingerMs;
+        //uint32_t lingerMs = reaction.lingerMs;
         bool isMatched = newResult.isMatched;
         bool wasMatched = matchResults(matchIndex).isMatched;
         anythingIsMatched |= isMatched;
