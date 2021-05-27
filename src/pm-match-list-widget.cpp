@@ -342,6 +342,9 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 
     setMinWidth();
 
+    // workaround for a buggy behavior that automatic resizing isn't handling
+    m_tableWidget->resizeColumnsToContents();
+
     // enable/disable control buttons
     updateAvailableButtons(
         (size_t)currentIndex(), m_core->multiMatchConfigSize());
@@ -941,7 +944,7 @@ void PmReactionDisplay::updateReaction(
 	int maxLength = 0;
     const std::vector<PmAction> &actions = (rtype == PmReactionType::Match)
         ? reaction.matchActions : reaction.unmatchActions;
-    QString text;
+    QString line;
     QString html;
     for (size_t i = 0; i < actions.size(); ++i) {
         const auto &action = actions[i];
@@ -950,25 +953,25 @@ void PmReactionDisplay::updateReaction(
 
         switch (action.m_actionType) {
         case PmActionType::Scene:
-		    text = QString("%1%2")
+		    line = QString("%1%2")
 			    .arg(action.m_targetElement.data())
                 .arg(action.m_targetDetails.size() ?
                     QString(" [%1]").arg(action.m_targetDetails.data()) : "");
             html += QString("<font color=\"%1\">%2</font>")
 				.arg(action.actionColorStr())
-                .arg(text);
-		    maxLength = qMax(maxLength, m_fontMetrics.size(0, text).width());
+                .arg(line);
+		    maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
             break;
         case PmActionType::SceneItem:
         case PmActionType::Filter:
-            text = QString("%1 [%2]")
+            line = QString("%1 [%2]")
                 .arg(action.m_targetElement.data())
                 .arg(action.m_actionCode == int(PmToggleCode::Show) ?
                     obs_module_text("show") : obs_module_text("hide"));
             html += QString("<font color=\"%1\">%2</font>")
                 .arg(action.actionColorStr())
-                .arg(text);
-            maxLength = qMax(maxLength, m_fontMetrics.size(0, text).width());
+                .arg(line);
+            maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
             break;
         case PmActionType::Hotkey:
             // TODO
@@ -990,6 +993,6 @@ void PmReactionDisplay::updateReaction(
 QSize PmReactionDisplay::sizeHint() const
 {
     QSize ret = QLabel::sizeHint();
-    ret.setWidth(m_textWidth);
+	ret.setWidth(m_textWidth + m_marginsWidth);
     return ret;
 }

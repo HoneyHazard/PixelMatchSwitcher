@@ -64,7 +64,8 @@ PmActionEntryWidget::PmActionEntryWidget(
 
 void PmActionEntryWidget::updateScenes()
 {
-    QList<std::string> scenes = m_core->sceneNames();
+#if 0
+    QList < std::string> scenes = m_core->sceneNames();
 
     // TODO: color
     m_targetCombo->blockSignals(true);
@@ -73,6 +74,9 @@ void PmActionEntryWidget::updateScenes()
         m_targetCombo->addItem(scene.data());
     }
     m_targetCombo->blockSignals(false);
+#endif
+
+    QList<std::string> scenes = m_core->sceneNames();
 }
 
 void PmActionEntryWidget::updateSceneItems()

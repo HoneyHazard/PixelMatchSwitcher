@@ -35,16 +35,12 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
-    //void sigNoMatchReactionChanged(PmReaction noMatchReaction);
 
 protected slots:
     // core event handlers
-    //void onScenesChanged(
-    //    QList<std::string> scenes, QList<std::string> sceneItems);
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
-    //void onNoMatchReactionChanged(PmReaction noMatchReaction);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
 
     // local UI handlers
@@ -54,8 +50,6 @@ protected slots:
     void onConfigRemoveButtonReleased();
     void onConfigMoveUpButtonReleased();
     void onConfigMoveDownButtonReleased();
-    //void onNoMatchSceneSelected(QString str);
-    //void onNoMatchTransitionSelected(QString str);
     void onCellChanged(int row, int col);
 
 protected:
@@ -82,22 +76,12 @@ protected:
         const char *tooltip, const char* icoPath, const char* themeId);
     void updateAvailableButtons(size_t currIdx, size_t numConfigs);
     void constructRow(int idx);
-    //    const QList<std::string> &sceneItems);
-    //void updateTargetChoices(QComboBox* combo,
-    //    const QList<std::string> &scenes,
-    //    const QList<std::string> &sceneItems);
-    //    void updateTargetSelection(
-    //        QComboBox *combo, const PmReaction &reaction, bool transparent = false);
-    //void updateTransitionChoices(QComboBox* combo);
-
     void enableConfigToggled(int idx, bool enable);
-    //void targetSelected(int idx, QComboBox *box);
     void sceneTransitionSelected(int idx, const QString &transTr);
     void sceneItemActionSelected(int idx, const QString &actionStr);
     
     void lingerDelayChanged(int idx, int lingerMs);
     void cooldownChanged(int idx, int cooldown);
-   
 
     void setMinWidth();
     bool selectRowAtGlobalPos(QPoint globalPos);
@@ -110,10 +94,6 @@ protected:
     QPushButton* m_cfgMoveDownBtn;
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
-
-    //QComboBox* m_noMatchSceneCombo;
-    //QComboBox* m_noMatchTransitionCombo;
-    //PmReactionWidget *m_noMatchReactionWidget;
 
     int m_prevMatchIndex = 0;
 };

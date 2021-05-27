@@ -41,6 +41,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     m_actionTargetsTab = new QTabWidget(this);
 
     // match/unmatch for an entry
+    QSizePolicy minPol(QSizePolicy::Minimum, QSizePolicy::Minimum);
     PmMatchReactionWidget *entryMatchActions
         = new PmMatchReactionWidget(core,
             PmReactionTarget::Entry,
