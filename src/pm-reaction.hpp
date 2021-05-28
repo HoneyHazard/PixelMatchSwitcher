@@ -39,9 +39,9 @@ struct PmAction
 {
 public:
     static const char *actionStr(PmActionType actionType);
-    QColor actionColor() const;
-    QString actionColorStr() const;
-
+	static QColor actionColor(PmActionType actionType);
+    static QColor dimmedColor(PmActionType actionType,
+                              PmActionType active = PmActionType::None);
     PmAction() {}
     PmAction(obs_data_t *data);
     PmAction(QXmlStreamReader &reader);
@@ -54,6 +54,7 @@ public:
     bool isSet() const;
     bool operator==(const PmAction &) const;
     bool operator!=(const PmAction &other) const { return !operator==(other); }
+    QString actionColorStr() const;
 
     PmActionType m_actionType = PmActionType::None;
     int m_actionCode = 0;

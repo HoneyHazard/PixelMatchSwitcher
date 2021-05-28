@@ -48,8 +48,8 @@ protected:
     void prepareSelections();
 
     void updateScenes();
-    void updateSceneItems();
-    void updateFilters();
+    //void updateSceneItems();
+    //void updateFilters();
     void updateTransitons();
 
     QComboBox *m_actionTypeCombo;

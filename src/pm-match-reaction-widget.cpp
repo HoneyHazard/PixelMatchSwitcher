@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QListWidget>
+#include <QStandardItemModel>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -76,9 +77,56 @@ void PmActionEntryWidget::updateScenes()
     m_targetCombo->blockSignals(false);
 #endif
 
+    PmActionType aType = actionType();
+	QBrush sceneBrush = PmAction::dimmedColor(PmActionType::Scene, aType);
+    QBrush siBrush = PmAction::dimmedColor(PmActionType::SceneItem, aType);
+	QBrush fiBrush = PmAction::dimmedColor(PmActionType::Filter, aType);
+
     QList<std::string> scenes = m_core->sceneNames();
+    auto model = dynamic_cast<QStandardItemModel *>(m_targetCombo->model());
+    int idx;
+
+    m_targetCombo->blockSignals(true);
+    m_targetCombo->clear();
+    for (const std::string &scene : scenes) {
+	    m_targetCombo->addItem(scene.data(), scene.data());
+	    idx = m_targetCombo->count() - 1; 
+	    m_targetCombo->setItemData(idx, sceneBrush, Qt::TextColorRole);
+	    if (aType != PmActionType::Scene) {
+		    QList<std::string> siNames = m_core->sceneItemNames(scene);
+		    if (siNames.empty()) {
+			    m_targetCombo->removeItem(idx);
+			    continue;
+            }
+		    model->item(idx)->setEnabled(false);
+		    for (const std::string &siName : siNames) {
+			    m_targetCombo->addItem(
+                    QString("  ") + siName.data(), siName.data());
+			    idx = m_targetCombo->count() - 1;
+                m_targetCombo->setItemData(idx, siBrush, Qt::TextColorRole);
+			    if (aType != PmActionType::SceneItem) {
+                    QList<std::string> fiNames = m_core->filterNames(siName);
+				    if (fiNames.empty()) {
+                        m_targetCombo->removeItem(idx);
+					    continue;
+                    }
+				    model->item(idx)->setEnabled(false);
+                    for (const std::string& fiName : fiNames) {
+                        m_targetCombo->addItem(
+                            QString("    ") + fiName.data(), fiName.data());
+			            idx = m_targetCombo->count() - 1;
+                        m_targetCombo->setItemData(
+                            idx, fiBrush, Qt::TextColorRole);
+
+                    }
+                }
+            }
+	    }
+    }
+    m_targetCombo->blockSignals(false);
 }
 
+#if 0
 void PmActionEntryWidget::updateSceneItems()
 {
     QList<std::string> sceneItems = m_core->sceneItemNames();
@@ -94,7 +142,7 @@ void PmActionEntryWidget::updateSceneItems()
 
 void PmActionEntryWidget::updateFilters()
 {
-    QList<std::string> sceneFilters = m_core->allFilters();
+    QList<std::string> sceneFilters = m_core->allFilterNames();
     // TODO: color; group by scene items
     m_targetCombo->blockSignals(true);
     m_targetCombo->clear();
@@ -103,6 +151,7 @@ void PmActionEntryWidget::updateFilters()
     }
     m_targetCombo->blockSignals(false);
 }
+#endif
 
 void PmActionEntryWidget::updateTransitons()
 {
@@ -211,10 +260,8 @@ void PmActionEntryWidget::prepareSelections()
         updateTransitons();
         break;
     case PmActionType::SceneItem:
-        updateSceneItems();
-        break;
     case PmActionType::Filter:
-        updateFilters();
+        updateScenes();
         break;
     }
 }
@@ -234,13 +281,15 @@ void PmActionEntryWidget::onUiChanged()
     case PmActionType::None:
         break;
     case PmActionType::Scene:
-        action.m_targetElement = m_targetCombo->currentText().toUtf8().data();
-        action.m_targetDetails =
-            m_transitionsCombo->currentData().toString().toUtf8().data();
+        action.m_targetElement
+            = m_targetCombo->currentData().toString().toUtf8().data();
+        action.m_targetDetails
+            = m_transitionsCombo->currentData().toString().toUtf8().data();
         break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
-        action.m_targetElement = m_targetCombo->currentText().toUtf8().data();
+        action.m_targetElement
+            = m_targetCombo->currentData().toString().toUtf8().data();
         action.m_actionCode = int(m_toggleCombo->currentData().toInt());
         break;
     }
@@ -250,11 +299,7 @@ void PmActionEntryWidget::onUiChanged()
 
 void PmActionEntryWidget::onScenesChanged()
 {
-    switch (actionType()) {
-    case PmActionType::Scene: updateScenes(); updateTransitons(); break;
-    case PmActionType::SceneItem: updateSceneItems(); break;
-    case PmActionType::Filter: updateFilters(); break;
-    }
+	prepareSelections();
 }
 
 //----------------------------------------------------

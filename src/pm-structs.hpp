@@ -195,15 +195,26 @@ protected:
     void importXml(QXmlStreamReader &reader);
 };
 
+/**
+ * @brief A reference to a scene or filter
+ */
+struct PmSourceData
+{
+	bool operator==(const PmSourceData &other) const;
+
+    OBSWeakSource wsrc;
+	QList<std::string> childNames;
+};
+
 /*
  * @brief Represents a set of weak source references to available scenes or 
  */
-class PmSourceHash final : public QHash<std::string, OBSWeakSource>
+class PmSourceHash final : public QHash<std::string, PmSourceData>
 {
 public:
     PmSourceHash() {}
     PmSourceHash(const PmSourceHash &other)
-        : QHash<std::string, OBSWeakSource>(other) {}
+        : QHash<std::string, PmSourceData>(other) {}
 
     QSet<std::string> sourceNames() const { return keys().toSet(); };
 };

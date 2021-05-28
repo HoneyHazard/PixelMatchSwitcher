@@ -15,9 +15,9 @@ const char *PmAction::actionStr(PmActionType actionType)
     }
 }
 
-QColor PmAction::actionColor() const
+QColor PmAction::actionColor(PmActionType actionType)
 {
-    switch (m_actionType) {
+	switch (actionType) {
 	case PmActionType::Scene: return Qt::cyan;
 	case PmActionType::SceneItem: return Qt::yellow;
 	case PmActionType::Filter: return QColor(255, 0, 255, 255);
@@ -27,9 +27,15 @@ QColor PmAction::actionColor() const
     }
 }
 
-QString PmAction::actionColorStr() const
+QColor PmAction::dimmedColor(PmActionType actionType, PmActionType active)
 {
-    return actionColor().name();
+	QColor color = actionColor(actionType);
+	if (active != actionType) {
+		color.setRed(color.red() / 2);
+		color.setGreen(color.green() / 2);
+		color.setBlue(color.blue() / 2);
+	}
+	return color;
 }
 
 PmAction::PmAction(obs_data_t *data)
@@ -135,6 +141,11 @@ bool PmAction::operator==(const PmAction &other) const
         && m_actionCode == other.m_actionCode
         && m_targetElement == other.m_targetElement
         && m_targetDetails == other.m_targetDetails;
+}
+
+QString PmAction::actionColorStr() const
+{
+	return actionColor(m_actionType).name();
 }
 
 

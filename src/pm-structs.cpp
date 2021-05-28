@@ -590,3 +590,8 @@ QSet<std::string> PmMatchPresets::orphanedImages(
     }
     return ret;
 }
+
+bool PmSourceData::operator==(const PmSourceData &other) const
+{
+	return wsrc == other.wsrc && childNames == other.childNames;
+}
