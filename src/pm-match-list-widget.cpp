@@ -85,6 +85,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setColumnCount((int)ColOrder::NumCols);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
+    //m_tableWidget->verticalHeader()->setSectionResizeMode(
+	//    QHeaderView::ResizeToContents);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
 
     // config editing buttons
@@ -108,7 +110,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     buttonsLayout->addItem(buttonSpacer2);
     buttonsLayout->addWidget(m_cfgRemoveBtn);
 
-    #if 0
+#if 0
     // no-match configuration UI
     QLabel* noMatchSceneLabel = new QLabel(
         obs_module_text("No-match Scene: "), this);
@@ -236,6 +238,7 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 {
     size_t oldSz = size_t(m_tableWidget->rowCount());
     m_tableWidget->setRowCount((int)sz + 1);
+
     // widgets in the new rows are constructed, when necessary
     for (size_t i = oldSz ? oldSz-1 : 0; i < sz; ++i) {
         constructRow((int)i);
@@ -257,12 +260,15 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 {
     int idx = (int)index;
 
+    int maxHeight = 0;
+
     auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::EnableBox);
     if (enableBox) {
         enableBox->blockSignals(true);
         enableBox->setChecked(cfg.filterCfg.is_enabled);
         enableBox->blockSignals(false);
+    	maxHeight = qMax(maxHeight, enableBox->sizeHint().height());
     }
 
     auto nameItem = m_tableWidget->item(idx, (int)ColOrder::ConfigName);
@@ -271,6 +277,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         nameItem->setText(cfg.label.data());
         nameItem->setToolTip(cfg.label.data());
         m_tableWidget->blockSignals(false);
+    	maxHeight = qMax(maxHeight, nameItem->sizeHint().height());
     }
 
 #if 0
@@ -318,11 +325,17 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 
     PmReactionDisplay *matchDisplay = (PmReactionDisplay *)
         m_tableWidget->cellWidget(idx, (int)ColOrder::MatchActions);
-    matchDisplay->updateReaction(reaction, PmReactionType::Match);
+    if (matchDisplay) {
+	    matchDisplay->updateReaction(reaction, PmReactionType::Match);
+	    maxHeight = qMax(maxHeight, matchDisplay->sizeHint().height());
+    }
 
     PmReactionDisplay *unmatchDisplay = (PmReactionDisplay *)
         m_tableWidget->cellWidget(idx, (int)ColOrder::UnmatchActions);
-    unmatchDisplay->updateReaction(reaction, PmReactionType::Unmatch);
+    if (unmatchDisplay) {
+	    unmatchDisplay->updateReaction(reaction, PmReactionType::Unmatch);
+	    maxHeight = qMax(maxHeight, unmatchDisplay->sizeHint().height());
+    }
 
     QSpinBox* lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
         idx, (int)ColOrder::Linger);
@@ -330,6 +343,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         lingerDelayBox->blockSignals(true);
         lingerDelayBox->setValue(reaction.lingerMs);
         lingerDelayBox->blockSignals(false);
+    	maxHeight = qMax(maxHeight, lingerDelayBox->sizeHint().height());
     }
 
     QSpinBox *cooldownDelayBox =
@@ -338,12 +352,13 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         cooldownDelayBox->blockSignals(true);
         cooldownDelayBox->setValue(reaction.cooldownMs);
         cooldownDelayBox->blockSignals(false);
+	    maxHeight = qMax(maxHeight, cooldownDelayBox->sizeHint().height());
     }
 
+    // workarounds to resize to contents...
     setMinWidth();
-
-    // workaround for a buggy behavior that automatic resizing isn't handling
     m_tableWidget->resizeColumnsToContents();
+    m_tableWidget->verticalHeader()->resizeSection(idx, maxHeight);
 
     // enable/disable control buttons
     updateAvailableButtons(
@@ -518,10 +533,12 @@ void PmMatchListWidget::constructRow(int idx)
         [this, idx](bool checked) { enableConfigToggled(idx, checked); });
     enableBox->installEventFilter(this);
     m_tableWidget->setCellWidget(idx, (int)ColOrder::EnableBox, enableBox);
+    //m_tableWidget->item(idx, (int)ColOrder::EnableBox))
 
     // config label edit
     QString placeholderName = QString("placeholder %1").arg(idx);
     auto labelItem = new QTableWidgetItem(placeholderName);
+    labelItem->setTextAlignment(Qt::AlignVCenter);
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
     m_tableWidget->setItem(
         idx, (int)ColOrder::ConfigName, labelItem);
@@ -593,6 +610,7 @@ void PmMatchListWidget::constructRow(int idx)
         [this, idx](int val) { lingerDelayChanged(idx, val); });
     m_tableWidget->setCellWidget(
         idx, (int)ColOrder::Linger, lingerDelayBox);
+    lingerDelayBox->setMaximumHeight(lingerDelayBox->sizeHint().height());
 
     // cooldown delay
     QSpinBox *cooldownDelayBox = new QSpinBox();
@@ -604,7 +622,9 @@ void PmMatchListWidget::constructRow(int idx)
         &QSpinBox::valueChanged;
     connect(cooldownDelayBox, sigcooldownValueChanged,
         [this, idx](int val) { cooldownChanged(idx, val); });
-    m_tableWidget->setCellWidget(idx, (int)ColOrder::Cooldown, cooldownDelayBox);
+    m_tableWidget->setCellWidget(
+        idx, (int)ColOrder::Cooldown, cooldownDelayBox);
+    cooldownDelayBox->setMaximumHeight(cooldownDelayBox->sizeHint().height());
 
     // result
     QLabel *resultLabel = new PmResultsLabel("--", parent);
@@ -915,8 +935,6 @@ PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
 {
     QFontMetrics fm(font());
     auto m = contentsMargins();
-    m_resultTextWidth = fm.width("100.0%")
-        + m.left() + m.right() + margin() * 2 + 10;
 };
 
 QSize PmResultsLabel::sizeHint() const
@@ -987,12 +1005,15 @@ void PmReactionDisplay::updateReaction(
     }
     setText(html);
     m_textWidth = maxLength;
+    m_textHeight = m_fontMetrics.height() * int(actions.size());
+    setMinimumSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
     updateGeometry();
 }
 
 QSize PmReactionDisplay::sizeHint() const
 {
-    QSize ret = QLabel::sizeHint();
-	ret.setWidth(m_textWidth + m_marginsWidth);
-    return ret;
+    //QSize ret = QLabel::sizeHint();
+	//ret.setWidth(m_textWidth + m_marginsWidth);
+    //return ret;
+    return QSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
 }

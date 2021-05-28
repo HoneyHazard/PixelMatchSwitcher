@@ -46,11 +46,9 @@ protected:
     static const QString k_defaultTransitionStr;
 
     void prepareSelections();
-
     void updateScenes();
-    //void updateSceneItems();
-    //void updateFilters();
     void updateTransitons();
+    void updateUiStyle(const PmAction& action);
 
     QComboBox *m_actionTypeCombo;
     QComboBox *m_targetCombo;
@@ -85,7 +83,6 @@ protected slots:
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig cfg);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onNoMatchReactionChanged(PmReaction reaction);
-    //void onActiveFilterChanged(PmFilterRef newAf);
     void onActionChanged(size_t actionIndex, PmAction action);
 
     // local UI events
@@ -103,16 +100,11 @@ protected:
     QListWidget *m_actionListWidget;
     QPushButton *m_insertActionButton;
     QPushButton *m_removeActionButton;
-    //QVBoxLayout *m_actionLayout;
-
-//  QLineEdit *m_lingerEdit;
-//  QLineEdit *m_cooldownEdit;
 
     PmReactionTarget m_reactionTarget;
     PmReactionType m_reactionType;
     size_t m_matchIndex = (size_t)-1;
     size_t m_multiConfigSz = 0;
-    //std::vector<QListWidgetItem*> m_actionItems;
 
     PmCore *m_core;
 };

@@ -107,7 +107,7 @@ public:
     QSize sizeHint() const override;
 
 protected:
-    int m_resultTextWidth;
+    int m_resultTextWidth = 0;
 };
 
 class PmReactionDisplay : public QLabel
@@ -121,6 +121,7 @@ public:
 
 protected:
     int m_textWidth = 0;
+	int m_textHeight = 0;
 	int m_marginsWidth = 0;
     QFontMetrics m_fontMetrics;
 };

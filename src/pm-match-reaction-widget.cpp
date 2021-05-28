@@ -242,6 +242,8 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_toggleCombo->blockSignals(false);
         break;
     }
+
+    updateUiStyle(action);
 }
 
 PmActionType PmActionEntryWidget::actionType() const
@@ -277,7 +279,8 @@ void PmActionEntryWidget::onActionTypeSelectionChanged()
 void PmActionEntryWidget::onUiChanged()
 {
     PmAction action;
-    action.m_actionType = PmActionType(m_actionTypeCombo->currentData().toInt());
+    action.m_actionType
+        = PmActionType(m_actionTypeCombo->currentData().toInt());
 
     switch (PmActionType(action.m_actionType)) {
     case PmActionType::None:
@@ -297,11 +300,23 @@ void PmActionEntryWidget::onUiChanged()
     }
 
     emit sigActionChanged(m_actionIndex, action);
+
+    updateUiStyle(action);
 }
 
 void PmActionEntryWidget::onScenesChanged()
 {
 	prepareSelections();
+}
+
+void PmActionEntryWidget::updateUiStyle(const PmAction &action)
+{
+	QString comboStyle = QString("color: %1").arg(action.actionColorStr());
+
+	m_actionTypeCombo->setStyleSheet(comboStyle);
+	m_targetCombo->setStyleSheet(comboStyle);
+	m_transitionsCombo->setStyleSheet(comboStyle);
+	m_toggleCombo->setStyleSheet(comboStyle);
 }
 
 //----------------------------------------------------
