@@ -56,7 +56,7 @@ public:
     bool operator!=(const PmAction &other) const { return !operator==(other); }
     QString actionColorStr() const;
 
-    PmActionType m_actionType = PmActionType::None;
+    PmActionType m_actionType = PmActionType::Scene;
     int m_actionCode = 0;
     std::string m_targetElement;
     std::string m_targetDetails;

@@ -21,18 +21,16 @@ PmActionEntryWidget::PmActionEntryWidget(
 , m_actionIndex(actionIndex)
 {
     m_actionTypeCombo = new QComboBox(this);
-    m_actionTypeCombo->addItem(
-        obs_module_text("<don't switch>"), int(PmActionType::None));
-    m_actionTypeCombo->addItem(
-        obs_module_text("Scene:"), int(PmActionType::Scene));
-    m_actionTypeCombo->addItem(
-        obs_module_text("SceneItem:"), int(PmActionType::SceneItem));
-    m_actionTypeCombo->addItem(
-        obs_module_text("Filter:"), int(PmActionType::Filter));
-    m_actionTypeCombo->addItem(
-        obs_module_text("Hotkey:"), int(PmActionType::Hotkey));
-    m_actionTypeCombo->addItem(
-        obs_module_text("FrontEndEvent:"), int(PmActionType::FrontEndEvent));
+	int typeStart = (int)PmActionType::Scene;
+    int typeEnd = (int)PmActionType::FrontEndEvent;
+	for (int i = typeStart; i <= typeEnd; i++) {
+	    PmActionType aType = (PmActionType)i;
+	    QString typeStr = QString("%1:")
+            .arg(obs_module_text(PmAction::actionStr(aType)));
+	    m_actionTypeCombo->addItem(typeStr, QVariant(i));
+        m_actionTypeCombo->setItemData(i - typeStart,
+            QBrush(PmAction::actionColor(aType)), Qt::TextColorRole);
+    }
 
     m_targetCombo = new QComboBox(this);
 
@@ -61,6 +59,8 @@ PmActionEntryWidget::PmActionEntryWidget(
             this, &PmActionEntryWidget::onUiChanged);
     connect(m_toggleCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
+
+    onScenesChanged();
 }
 
 void PmActionEntryWidget::updateScenes()
@@ -263,6 +263,8 @@ void PmActionEntryWidget::prepareSelections()
     case PmActionType::Filter:
         updateScenes();
         break;
+    default:
+	    break;
     }
 }
 
