@@ -261,6 +261,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     int idx = (int)index;
 
     int maxHeight = 0;
+    const int vertPad = 5;
 
     auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::EnableBox);
@@ -277,7 +278,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         nameItem->setText(cfg.label.data());
         nameItem->setToolTip(cfg.label.data());
         m_tableWidget->blockSignals(false);
-    	maxHeight = qMax(maxHeight, nameItem->sizeHint().height());
+        maxHeight = qMax(maxHeight, nameItem->sizeHint().height());
     }
 
 #if 0
@@ -337,8 +338,9 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 	    maxHeight = qMax(maxHeight, unmatchDisplay->sizeHint().height());
     }
 
-    QSpinBox* lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::Linger);
+    PmContainerWidget *lingerContainer = (PmContainerWidget *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::Linger);
+    QSpinBox* lingerDelayBox = (QSpinBox *)lingerContainer->containedWidget();
     if (lingerDelayBox) {
         lingerDelayBox->blockSignals(true);
         lingerDelayBox->setValue(reaction.lingerMs);
@@ -346,8 +348,10 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     	maxHeight = qMax(maxHeight, lingerDelayBox->sizeHint().height());
     }
 
-    QSpinBox *cooldownDelayBox =
-        (QSpinBox *)m_tableWidget->cellWidget(idx, (int)ColOrder::Cooldown);
+    PmContainerWidget *cooldownContainer = (PmContainerWidget *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::Cooldown);
+    QSpinBox *cooldownDelayBox
+        = (QSpinBox *)cooldownContainer->containedWidget();
     if (cooldownDelayBox) {
         cooldownDelayBox->blockSignals(true);
         cooldownDelayBox->setValue(reaction.cooldownMs);
@@ -358,7 +362,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     // workarounds to resize to contents...
     setMinWidth();
     m_tableWidget->resizeColumnsToContents();
-    m_tableWidget->verticalHeader()->resizeSection(idx, maxHeight);
+    m_tableWidget->verticalHeader()->resizeSection(idx, maxHeight + vertPad);
 
     // enable/disable control buttons
     updateAvailableButtons(
@@ -586,6 +590,7 @@ void PmMatchListWidget::constructRow(int idx)
     PmReactionDisplay *matchActionsDisplay
         = new PmReactionDisplay("--", parent);
     matchActionsDisplay->setStyleSheet(k_transpBgStyle);
+    matchActionsDisplay->setAlignment(Qt::AlignVCenter);
     matchActionsDisplay->installEventFilter(this);
     m_tableWidget->setCellWidget(idx, (int)ColOrder::MatchActions,
         matchActionsDisplay);
@@ -594,6 +599,7 @@ void PmMatchListWidget::constructRow(int idx)
     PmReactionDisplay *unmatchActionsDisplay =
         new PmReactionDisplay("--", parent);
     unmatchActionsDisplay->setStyleSheet(k_transpBgStyle);
+    unmatchActionsDisplay->setAlignment(Qt::AlignVCenter);
     unmatchActionsDisplay->installEventFilter(this);
     m_tableWidget->setCellWidget(idx, (int)ColOrder::UnmatchActions,
         unmatchActionsDisplay);
@@ -603,28 +609,32 @@ void PmMatchListWidget::constructRow(int idx)
     lingerDelayBox->setStyleSheet(k_transpBgStyle);
     lingerDelayBox->setRange(0, 10000);
     lingerDelayBox->setSingleStep(10);
-    lingerDelayBox->installEventFilter(this);
     void (QSpinBox::*sigLingerValueChanged)(int value)
         = &QSpinBox::valueChanged;
     connect(lingerDelayBox, sigLingerValueChanged,
         [this, idx](int val) { lingerDelayChanged(idx, val); });
-    m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::Linger, lingerDelayBox);
     lingerDelayBox->setMaximumHeight(lingerDelayBox->sizeHint().height());
+    lingerDelayBox->installEventFilter(this);
+    PmContainerWidget *lingerContainer = new PmContainerWidget(lingerDelayBox);
+    lingerContainer->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::Linger, lingerContainer);
 
     // cooldown delay
     QSpinBox *cooldownDelayBox = new QSpinBox();
     cooldownDelayBox->setStyleSheet(k_transpBgStyle);
     cooldownDelayBox->setRange(0, 10000);
     cooldownDelayBox->setSingleStep(10);
-    cooldownDelayBox->installEventFilter(this);
     void (QSpinBox::*sigcooldownValueChanged)(int value) =
         &QSpinBox::valueChanged;
     connect(cooldownDelayBox, sigcooldownValueChanged,
         [this, idx](int val) { cooldownChanged(idx, val); });
-    m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::Cooldown, cooldownDelayBox);
     cooldownDelayBox->setMaximumHeight(cooldownDelayBox->sizeHint().height());
+    cooldownDelayBox->installEventFilter(this);
+    PmContainerWidget *cooldownContainer
+        = new PmContainerWidget(cooldownDelayBox);
+    cooldownContainer->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::Cooldown,
+				 cooldownContainer);
 
     // result
     QLabel *resultLabel = new PmResultsLabel("--", parent);
@@ -1016,4 +1026,19 @@ QSize PmReactionDisplay::sizeHint() const
 	//ret.setWidth(m_textWidth + m_marginsWidth);
     //return ret;
     return QSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
+}
+
+PmContainerWidget::PmContainerWidget(QWidget *contained, QWidget *parent)
+: QWidget(parent)
+, m_contained(contained)
+{
+	m_contained->setParent(this);
+    m_mainLayout = new QVBoxLayout;
+    m_mainLayout->addWidget(contained);
+    setLayout(m_mainLayout);
+
+    m_mainLayout->setAlignment(Qt::AlignCenter);
+    m_mainLayout->setContentsMargins(0, 0, 0, 0);
+
+    
 }

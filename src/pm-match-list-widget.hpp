@@ -13,6 +13,7 @@ class QTableWidget;
 class QPushButton;
 class QComboBox;
 class QTableWidgetItem;
+class QVBoxLayout;
 
 /**
  * @brief Shows a list of match configuration entries and allows changing
@@ -108,6 +109,23 @@ public:
 
 protected:
     int m_resultTextWidth = 0;
+};
+
+class PmContainerWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    PmContainerWidget(QWidget *contained, QWidget *parent = nullptr);
+	QWidget *containedWidget() const { return m_contained; }
+    QVBoxLayout *mainLayout() const { return m_mainLayout; }
+
+protected:
+    void mouseReleaseEvent(QMouseEvent *event) override
+        { m_contained->setFocus(); }
+
+    QWidget *m_contained;
+    QVBoxLayout *m_mainLayout;
 };
 
 class PmReactionDisplay : public QLabel
