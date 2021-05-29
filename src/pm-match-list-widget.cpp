@@ -1022,9 +1022,6 @@ void PmReactionDisplay::updateReaction(
 
 QSize PmReactionDisplay::sizeHint() const
 {
-    //QSize ret = QLabel::sizeHint();
-	//ret.setWidth(m_textWidth + m_marginsWidth);
-    //return ret;
     return QSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
 }
 
@@ -1039,6 +1036,4 @@ PmContainerWidget::PmContainerWidget(QWidget *contained, QWidget *parent)
 
     m_mainLayout->setAlignment(Qt::AlignCenter);
     m_mainLayout->setContentsMargins(0, 0, 0, 0);
-
-    
 }
