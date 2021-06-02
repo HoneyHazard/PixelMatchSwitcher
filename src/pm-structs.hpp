@@ -200,10 +200,10 @@ protected:
  */
 struct PmSourceData
 {
-	bool operator==(const PmSourceData &other) const;
+    bool operator==(const PmSourceData &other) const;
 
     OBSWeakSource wsrc;
-	QList<std::string> childNames;
+    QList<std::string> childNames;
 };
 
 /*
@@ -240,6 +240,21 @@ public:
         : QHash<std::string, PmSceneItemData>(other) {}
 
     QSet<std::string> sceneItemNames() const { return keys().toSet(); };
+};
+
+/*
+ * @brief Holds the data structures while scene, scene items and filters 
+ *        are being scanned
+ */
+struct PmSceneScanInfo
+{
+    PmSourceHash scenes;
+    PmSceneItemsHash sceneItems;
+    PmSourceHash filters;
+    QSet<OBSWeakSource> pmFilters;
+
+    PmSourceData *lastSceneData = nullptr;
+    PmSceneItemData *lastSiData = nullptr;
 };
 
 /**

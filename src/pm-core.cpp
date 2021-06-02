@@ -285,20 +285,6 @@ PmReaction PmCore::reaction(size_t matchIdx) const
                : PmReaction();
 }
 
-#if 0
-std::string PmCore::noMatchScene() const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    return m_multiMatchConfig.noMatchScene;
-}
-
-std::string PmCore::noMatchTransition() const
-{
-    QMutexLocker locker(&m_matchConfigMutex);
-    return m_multiMatchConfig.noMatchTransition;
-}
-#endif
-
 PmReaction PmCore::noMatchReaction() const
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -902,8 +888,8 @@ QList<std::string> PmCore::sceneNames() const
 
 QList<std::string> PmCore::sceneItemNames(const std::string &sceneName) const
 {
-	QMutexLocker locker(&m_scenesMutex);
-	return m_scenes[sceneName].childNames;
+    QMutexLocker locker(&m_scenesMutex);
+    return m_scenes[sceneName].childNames;
 }
 
 PmSceneItemsHash PmCore::sceneItems() const
@@ -1016,120 +1002,77 @@ void PmCore::scanScenes()
     obs_frontend_source_list scenesInput = {};
     obs_frontend_get_scenes(&scenesInput);
 
-    PmSourceHash newScenes;
-    PmSceneItemsHash newSceneItems;
-    PmSourceHash newFilters;
-    QSet<OBSWeakSource> pixelMatchFilters;
+    PmSceneScanInfo scanInfo;
 
     for (size_t i = 0; i < scenesInput.sources.num; ++i) {
         auto &sceneSrc = scenesInput.sources.array[i];
         auto sceneName = obs_source_get_name(sceneSrc);
 
-        obs_weak_source_t* sceneWs = obs_source_get_weak_source(sceneSrc);
+        // map scene names to scene refs
+        obs_weak_source_t *sceneWs = obs_source_get_weak_source(sceneSrc);
         OBSWeakSource sceneWsWs(sceneWs);
         obs_weak_source_release(sceneWs);
 
-        // build a mapping of scenes to refs and scene items
+        // enumerate scene items
         obs_scene_t *scene = obs_scene_from_source(sceneSrc);
-	    PmSourceData sceneData = {sceneWsWs};
+        PmSourceData sceneData = {sceneWsWs};
+        scanInfo.lastSceneData = &sceneData;
         obs_scene_enum_items(
             scene,
-            [](obs_scene_t* scene, obs_sceneitem_t* item, void* p)->bool {
-                obs_source_t *sceneSrc = obs_scene_get_source(scene);
-                std::string sceneName = obs_source_get_name(sceneSrc);
-                obs_source_t *sceneItemSrc = obs_sceneitem_get_source(item);
-                std::string sceneItemName = obs_source_get_name(sceneItemSrc);
+            [](obs_scene_t *scene, obs_sceneitem_t *item,
+               void *p) -> bool {
+                PmSceneScanInfo *scanInfo = (PmSceneScanInfo *)p;
 
-                PmSourceData *sceneData = (PmSourceData *)p;
-                sceneData->childNames.push_back(sceneItemName);
-			    return true;
-            },
-            &sceneData);
-        newScenes.insert(sceneName, sceneData);
+                //obs_source_t *sceneSrc = obs_scene_get_source(scene);
+                //std::string sceneName = obs_source_get_name(sceneSrc);
+                obs_source_t *siSrc = obs_sceneitem_get_source(item);
+                std::string siName = obs_source_get_name(siSrc);
 
-        // build a mapping of scene items to refs and filters
-        obs_scene_enum_items(
-            scene,
-            [](obs_scene_t *scene, obs_sceneitem_t *item, void* p)->bool {
+                // map scenes to scene items
+                scanInfo->lastSceneData->childNames.push_back(siName);
+
+                // map scene items to scene item refs
                 OBSSceneItem sceneItemSi(item);
-                PmSceneItemsHash *sceneItems = (PmSceneItemsHash *)p;
-                obs_source_t *sceneItemSrc = obs_sceneitem_get_source(item);
-                PmSceneItemData siData {sceneItemSi, {}};
-                obs_source_enum_filters(sceneItemSrc,
-                    [](obs_source_t* parent, obs_source_t* child, void* p)
-                    {
-                        QList<std::string>* filterNames
-                            = (QList<std::string>*)p;
-                        filterNames->push_back(obs_source_get_name(child));
-                        UNUSED_PARAMETER(parent);
-                    },
-                    &siData.filtersNames);
+                PmSceneItemData siData{sceneItemSi, {}};
+                scanInfo->lastSiData = &siData;
+                scanInfo->sceneItems.insert(siName, siData);
 
-                sceneItems->insert(obs_source_get_name(sceneItemSrc), siData);
-                return true;
-            },
-            &newSceneItems);
+                // enumerate filters
+                obs_source_enum_filters(
+                    siSrc,
+                    [](obs_source_t *parent, obs_source_t *filterSrc, void *p) {
+                        PmSceneScanInfo *scanInfo = (PmSceneScanInfo *)p;
+                        std::string fiName = obs_source_get_name(filterSrc);
 
-        // build a mapping of filters
-        for (const auto& val : newSceneItems.values()) {
-            obs_sceneitem_t *sceneItem = val.si;
-            obs_source_t *sceneItemSrc = obs_sceneitem_get_source(sceneItem);
-            for (const std::string& filterName : val.filtersNames) {
-                obs_source_t* filterSrc = obs_source_get_filter_by_name(
-                    sceneItemSrc, filterName.data());
+                        // map filter names to filter refs
+                        obs_weak_source_t *filterWs
+                            = obs_source_get_weak_source(filterSrc);
+                        OBSWeakSource filterWsWs(filterWs);
+                        obs_weak_source_release(filterWs);
+                        scanInfo->filters.insert(fiName, {filterWsWs});
 
-                obs_weak_source_t *filterWs
-                    = obs_source_get_weak_source(filterSrc);
-                OBSWeakSource filterWsWs(filterWs);
-                obs_weak_source_release(filterWs);
-                newFilters.insert(filterName, {filterWsWs});
+                        // map scene items to filters
+                        scanInfo->lastSiData->filtersNames.push_back(fiName);
 
-                obs_source_release(filterSrc);
-            }
-        }
-
-        // find filters
-        obs_scene_enum_items(
-            scene,
-            [](obs_scene_t*, obs_sceneitem_t *item, void* p)->bool {
-
-                obs_source_t* sceneItemSrc = obs_sceneitem_get_source(item);
-
-                obs_weak_source_t *sceneItemWs
-                    = obs_source_get_weak_source(sceneItemSrc);
-                OBSWeakSource sceneItemWsWs(sceneItemWs);
-                obs_weak_source_release(sceneItemWs);
-
-                if (obs_source_active(sceneItemSrc)) {
-                    obs_source_enum_filters(
-                        sceneItemSrc,
-                        [](obs_source_t*, obs_source_t* filter, void* p) {
-                            auto id = obs_source_get_id(filter);
-                            if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
-                                if (obs_obj_get_data(filter)) {
-                                    auto filters
-                                        = (QSet<OBSWeakSource>*)(p);
-
-                                    obs_weak_source_t* filterWs
-                                        = obs_source_get_weak_source(filter);
-                                    OBSWeakSource filterWsWs(filterWs);
-                                    obs_weak_source_release(filterWs);
-
-                                    filters->insert(filterWsWs);
-                                }
+                        // locate pixel match filters
+                        auto id = obs_source_get_id(filterSrc);
+                        if (!strcmp(id, PIXEL_MATCH_FILTER_ID)) {
+                            if (obs_obj_get_data(filterSrc)) {
+                                scanInfo->pmFilters.insert(filterWsWs);
                             }
-                        },
-                        p
-                    );
-                }
+                        }
+                    },
+                    scanInfo);
+                scanInfo->sceneItems.insert(siName, siData);
                 return true;
             },
-            &pixelMatchFilters
-        );
+            &scanInfo);
+        scanInfo.scenes.insert(sceneName, sceneData);
     }
+
     obs_frontend_source_list_free(&scenesInput);
 
-    updateActiveFilter(pixelMatchFilters);
+    updateActiveFilter(scanInfo.pmFilters);
 
     bool scenesChanged = false;
     bool sceneItemsChanged = false;
@@ -1138,22 +1081,22 @@ void PmCore::scanScenes()
     QSet<std::string> oldFilterNames;
     {
         QMutexLocker locker(&m_scenesMutex);
-        if (m_scenes != newScenes) {
+        if (m_scenes != scanInfo.scenes) {
             oldSceneNames = m_scenes.sourceNames();
             scenesChanged = true;
         }
-        if (m_sceneItems != newSceneItems) {
+        if (m_sceneItems != scanInfo.sceneItems) {
             oldSceneItemNames = m_sceneItems.sceneItemNames();
             sceneItemsChanged = true;
         }
-        if (m_filters != newFilters) {
+        if (m_filters != scanInfo.filters) {
             oldFilterNames = m_filters.sourceNames();
             sceneItemsChanged = true;
         }
     }
 
     if (scenesChanged || sceneItemsChanged) {
-        emit sigScenesChanged(newScenes.keys(), newSceneItems.keys());
+        emit sigScenesChanged(scanInfo.scenes.keys(), scanInfo.sceneItems.keys());
     }
 
     // adjust for scene changes
@@ -1161,9 +1104,9 @@ void PmCore::scanScenes()
         QMutexLocker locker(&m_scenesMutex);
         size_t cfgSize = multiMatchConfigSize();
         for (const std::string& oldSceneName : oldSceneNames) {
-            if (!newScenes.contains(oldSceneName)) {
+            if (!scanInfo.scenes.contains(oldSceneName)) {
                 auto ws = m_scenes[oldSceneName];
-                std::string newSceneName = newScenes.key(ws);
+                std::string newSceneName = scanInfo.scenes.key(ws);
                 if (m_multiMatchConfig.noMatchReaction.hasSceneAction()) {
                     auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
                     if (noMatchReaction.renameElement(
@@ -1190,11 +1133,11 @@ void PmCore::scanScenes()
         size_t cfgSize = multiMatchConfigSize();
 
         // scene items
-        auto newSiNames = newSceneItems.keys();
+        auto newSiNames = scanInfo.sceneItems.keys();
         for (const std::string& oldSiName : oldSceneItemNames) {
             if (!newSiNames.contains(oldSiName)) {
                 auto src = m_sceneItems[oldSiName];
-                std::string newSiName = newSceneItems.key(src);
+                std::string newSiName = scanInfo.sceneItems.key(src);
                 if (m_multiMatchConfig.noMatchReaction.hasAction(
                         PmActionType::SceneItem)) {
                     auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
@@ -1216,11 +1159,11 @@ void PmCore::scanScenes()
         }
 
         // filters
-        auto newFiNames = newFilters.keys();
+        auto newFiNames = scanInfo.filters.keys();
         for (const std::string& oldFiName : oldFilterNames) {
             if (!newFiNames.contains(oldFiName)) {
                 auto ws = m_filters[oldFiName];
-                std::string newFiName = newFilters.key(ws);
+                std::string newFiName = scanInfo.filters.key(ws);
                 if (m_multiMatchConfig.noMatchReaction.hasAction(
                     PmActionType::SceneItem)) {
                     auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
@@ -1246,9 +1189,9 @@ void PmCore::scanScenes()
     if (scenesChanged || sceneItemsChanged)
     {
         QMutexLocker locker(&m_scenesMutex);
-        m_scenes = newScenes;
-        m_sceneItems = newSceneItems;
-        m_filters = newFilters;
+        m_scenes = scanInfo.scenes;
+        m_sceneItems = scanInfo.sceneItems;
+        m_filters = scanInfo.filters;
     }
 }
 
