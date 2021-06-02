@@ -8,8 +8,12 @@
 #include <QStackedWidget>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QToolButton>
 #include <QListWidget>
 #include <QStandardItemModel>
+#include <QWidgetAction>
+#include <QMenu>
+#include <QLabel>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -20,18 +24,6 @@ PmActionEntryWidget::PmActionEntryWidget(
 , m_core(core)
 , m_actionIndex(actionIndex)
 {
-    m_actionTypeCombo = new QComboBox(this);
-	int typeStart = (int)PmActionType::Scene;
-    int typeEnd = (int)PmActionType::FrontEndEvent;
-	for (int i = typeStart; i <= typeEnd; i++) {
-	    PmActionType aType = (PmActionType)i;
-	    QString typeStr = QString("%1:")
-            .arg(obs_module_text(PmAction::actionStr(aType)));
-	    m_actionTypeCombo->addItem(typeStr, QVariant(i));
-        m_actionTypeCombo->setItemData(i - typeStart,
-            QBrush(PmAction::actionColor(aType)), Qt::TextColorRole);
-    }
-
     m_targetCombo = new QComboBox(this);
 
     m_detailsStack = new QStackedWidget(this);
@@ -45,14 +37,14 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_detailsStack->addWidget(m_toggleCombo);
 
     QHBoxLayout *mainLayout = new QHBoxLayout;
-    mainLayout->addWidget(m_actionTypeCombo);
+    //mainLayout->addWidget(m_actionTypeCombo);
     mainLayout->addWidget(m_targetCombo);
     mainLayout->addWidget(m_detailsStack);
     setLayout(mainLayout);
 
     // local UI connections
-    connect(m_actionTypeCombo, &QComboBox::currentTextChanged,
-            this, &PmActionEntryWidget::onActionTypeSelectionChanged);
+    //connect(m_actionTypeCombo, &QComboBox::currentTextChanged,
+    //        this, &PmActionEntryWidget::onActionTypeSelectionChanged);
     connect(m_targetCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
     connect(m_transitionsCombo, &QComboBox::currentTextChanged,
@@ -65,29 +57,23 @@ PmActionEntryWidget::PmActionEntryWidget(
 
 void PmActionEntryWidget::updateScenes()
 {
-#if 0
-    QList < std::string> scenes = m_core->sceneNames();
-
-    // TODO: color
-    m_targetCombo->blockSignals(true);
-    m_targetCombo->clear();
-    for (const std::string& scene : scenes) {
-        m_targetCombo->addItem(scene.data());
-    }
-    m_targetCombo->blockSignals(false);
-#endif
-
-    PmActionType aType = actionType();
-	QBrush sceneBrush = PmAction::dimmedColor(PmActionType::Scene, aType);
-    QBrush siBrush = PmAction::dimmedColor(PmActionType::SceneItem, aType);
-	QBrush fiBrush = PmAction::dimmedColor(PmActionType::Filter, aType);
+	QBrush sceneBrush
+        = PmAction::dimmedColor(PmActionType::Scene, m_actionType);
+    QBrush siBrush = PmAction::dimmedColor(
+        PmActionType::SceneItem, m_actionType);
+	QBrush fiBrush = PmAction::dimmedColor(
+        PmActionType::Filter, m_actionType);
 
     QList<std::string> scenes = m_core->sceneNames();
     auto model = dynamic_cast<QStandardItemModel *>(m_targetCombo->model());
     int idx;
 
+    PmActionType aType = m_actionType;
     m_targetCombo->blockSignals(true);
     m_targetCombo->clear();
+    QString selStr = QString("<select %1>").arg(PmAction::actionStr(aType));
+    m_targetCombo->addItem(selStr, "");
+    model->item(0)->setEnabled(false);
     for (const std::string &scene : scenes) {
 	    m_targetCombo->addItem(scene.data(), scene.data());
 	    idx = m_targetCombo->count() - 1; 
@@ -126,33 +112,6 @@ void PmActionEntryWidget::updateScenes()
     m_targetCombo->blockSignals(false);
 }
 
-#if 0
-void PmActionEntryWidget::updateSceneItems()
-{
-    QList<std::string> sceneItems = m_core->sceneItemNames();
-
-    // TODO: color
-    m_targetCombo->clear();
-    m_targetCombo->blockSignals(true);
-    for (const std::string& sceneItem : sceneItems) {
-        m_targetCombo->addItem(sceneItem.data());
-    }
-    m_targetCombo->blockSignals(false);
-}
-
-void PmActionEntryWidget::updateFilters()
-{
-    QList<std::string> sceneFilters = m_core->allFilterNames();
-    // TODO: color; group by scene items
-    m_targetCombo->blockSignals(true);
-    m_targetCombo->clear();
-    for (const std::string& filter : sceneFilters) {
-        m_targetCombo->addItem(filter.data());
-    }
-    m_targetCombo->blockSignals(false);
-}
-#endif
-
 void PmActionEntryWidget::updateTransitons()
 {
     QList<std::string> transitions = m_core->availableTransitions();
@@ -169,11 +128,11 @@ void PmActionEntryWidget::updateTransitons()
 void PmActionEntryWidget::updateSizeHints(QList<QSize> &columnSizes)
 {
     QList<QSize> sizes = {
-        m_actionTypeCombo->sizeHint(),
+        //m_actionTypeCombo->sizeHint(),
         m_targetCombo->sizeHint(),
         m_detailsStack->sizeHint()
     };
-    while (columnSizes.size() < 3) {
+    while (columnSizes.size() < 2) {
         columnSizes.append({0, 0});
     }
     for (int i = 0; i < columnSizes.size(); ++i) {
@@ -188,13 +147,9 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 {
     if (m_actionIndex != actionIndex) return;
 
-    PmActionType prevType = actionType();
+    PmActionType prevType = m_actionType;
     if (prevType != action.m_actionType) {
-        int findIdx = m_actionTypeCombo->findData(int(action.m_actionType));
-        m_actionTypeCombo->blockSignals(true);
-        m_actionTypeCombo->setCurrentIndex(findIdx);
-        m_actionTypeCombo->blockSignals(false);
-
+	    m_actionType = action.m_actionType;
         prepareSelections();
     }
 
@@ -246,17 +201,9 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     updateUiStyle(action);
 }
 
-PmActionType PmActionEntryWidget::actionType() const
-{
-    return (PmActionType)m_actionTypeCombo->currentData().toInt();
-}
-
 void PmActionEntryWidget::prepareSelections()
 {
-    PmActionType actionType
-        = PmActionType(m_actionTypeCombo->currentData().toInt());
-
-    switch (actionType) {
+    switch (m_actionType) {
     case PmActionType::Scene:
         updateScenes();
         updateTransitons();
@@ -279,10 +226,9 @@ void PmActionEntryWidget::onActionTypeSelectionChanged()
 void PmActionEntryWidget::onUiChanged()
 {
     PmAction action;
-    action.m_actionType
-        = PmActionType(m_actionTypeCombo->currentData().toInt());
+	action.m_actionType = m_actionType;
 
-    switch (PmActionType(action.m_actionType)) {
+    switch (PmActionType(m_actionType)) {
     case PmActionType::None:
         break;
     case PmActionType::Scene:
@@ -313,7 +259,7 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 {
 	QString comboStyle = QString("color: %1").arg(action.actionColorStr());
 
-	m_actionTypeCombo->setStyleSheet(comboStyle);
+	//m_actionTypeCombo->setStyleSheet(comboStyle);
 	m_targetCombo->setStyleSheet(comboStyle);
 	m_transitionsCombo->setStyleSheet(comboStyle);
 	m_toggleCombo->setStyleSheet(comboStyle);
@@ -330,11 +276,54 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
 {
-    m_insertActionButton = prepareButton(obs_module_text("Insert New Match Entry"),
-        ":/res/images/add.png", "addIconSmall");
-    m_removeActionButton = prepareButton(obs_module_text("Remove Match Entry"),
-        ":/res/images/list_remove.png",
-        "removeIconSmall");
+	QMenu *insertMenu = new QMenu(this);
+	int typeStart = (int)PmActionType::Scene;
+	int typeEnd = (int)PmActionType::FrontEndEvent;
+	for (int i = typeStart; i <= typeEnd; i++) {
+		PmActionType actType = PmActionType(i);
+		QLabel *label = new QLabel(this);
+		label->setText(PmAction::actionStr(actType));
+		label->setStyleSheet(QString("color: %1").arg(
+            PmAction::actionColorStr(actType)));
+		label->setMouseTracking(true);
+
+        QWidgetAction *action = new QWidgetAction(this);
+        action->setDefaultWidget(label);
+		connect(action, &QWidgetAction::triggered,
+			    [this, i]() { onInsertReleased(i); });
+		insertMenu->addAction(action);
+		if (i != typeEnd)
+			insertMenu->addSeparator();
+	}
+
+	QIcon insertIcon;
+	insertIcon.addFile(
+        ":/res/images/add.png", QSize(), QIcon::Normal, QIcon::Off);
+	m_insertActionButton = new QToolButton(this);
+	m_insertActionButton->setIcon(insertIcon);
+	m_insertActionButton->setIconSize(QSize(16, 16));
+	m_insertActionButton->setMaximumSize(22, 22);
+	m_insertActionButton->setProperty("themeID", QVariant("addIconSmall"));
+	m_insertActionButton->setToolTip(obs_module_text("Insert New Match Entry"));
+	//m_insertActionButton->setFocusPolicy(Qt::NoFocus);
+	m_insertActionButton->setPopupMode(QToolButton::InstantPopup);
+	m_insertActionButton->setMenu(insertMenu);
+	m_insertActionButton->setStyleSheet(
+        "QToolButton { border: 0; } "
+        "QToolButton::menu-indicator { image: none; }");
+
+    QIcon removeIcon;
+	removeIcon.addFile(
+        ":/res/images/add.png", QSize(), QIcon::Normal, QIcon::Off);
+    m_removeActionButton = new QPushButton(this);
+	m_removeActionButton->setIcon(removeIcon);
+    m_removeActionButton->setIconSize(QSize(16, 16));
+	m_removeActionButton->setMaximumSize(22, 22);
+    m_removeActionButton->setFlat(true);
+    m_removeActionButton->setProperty("themeID", QVariant("removeIconSmall"));
+    m_removeActionButton->setToolTip(obs_module_text("Remove Match Entry"));
+    m_removeActionButton->setFocusPolicy(Qt::NoFocus);
+
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(m_insertActionButton);
     buttonLayout->addWidget(m_removeActionButton);
@@ -347,8 +336,8 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     setLayout(mainLayout);
 
     // local UI events
-    connect(m_insertActionButton, &QPushButton::released,
-            this, &PmMatchReactionWidget::onInsertReleased);
+    //connect(m_insertActionButton, &QPushButton::released,
+    //        this, &PmMatchReactionWidget::onInsertReleased);
     connect(m_removeActionButton, &QPushButton::released,
             this, &PmMatchReactionWidget::onRemoveReleased);
 
@@ -481,7 +470,7 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
     pushReaction(reaction);
 }
 
-void PmMatchReactionWidget::onInsertReleased()
+void PmMatchReactionWidget::onInsertReleased(int actionIdx)
 {
     size_t idx = 0;
     if (m_actionListWidget->count() > 0) {
@@ -493,13 +482,16 @@ void PmMatchReactionWidget::onInsertReleased()
         }
     }
 
+    PmAction newAction;
+    newAction.m_actionType = (PmActionType)actionIdx;
+
     PmReaction reaction = pullReaction();
     if (m_reactionType == PmReactionType::Match) {
         reaction.matchActions.insert(
-            reaction.matchActions.begin() + idx, PmAction());
+            reaction.matchActions.begin() + idx, newAction);
     } else { // Unmatch
         reaction.unmatchActions.insert(
-            reaction.unmatchActions.begin() + idx, PmAction());
+            reaction.unmatchActions.begin() + idx, newAction);
     }
     pushReaction(reaction);
 }
@@ -524,20 +516,4 @@ void PmMatchReactionWidget::onRemoveReleased()
     pushReaction(reaction);
 }
 
-QPushButton *PmMatchReactionWidget::prepareButton(
-    const char *tooltip, const char *icoPath, const char *themeId)
-{
-    QIcon icon;
-    icon.addFile(icoPath, QSize(), QIcon::Normal, QIcon::Off);
 
-    QPushButton *ret = new QPushButton(icon, "", this);
-    ret->setToolTip(tooltip);
-    ret->setIcon(icon);
-    ret->setIconSize(QSize(16, 16));
-    ret->setMaximumSize(22, 22);
-    ret->setFlat(true);
-    ret->setProperty("themeID", QVariant(themeId));
-    ret->setFocusPolicy(Qt::NoFocus);
-
-    return ret;
-}

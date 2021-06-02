@@ -11,6 +11,7 @@ class PmCore;
 
 class QLineEdit;
 class QPushButton;
+class QToolButton;
 class QComboBox;
 class QListWidget;
 class QListWidgetItem;
@@ -30,8 +31,6 @@ public:
     void updateHotkeys(); // TODO
     void updateFrontendEvents(); // TODO
 
-    PmActionType actionType() const;
-
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
 
@@ -50,7 +49,6 @@ protected:
     void updateTransitons();
     void updateUiStyle(const PmAction& action);
 
-    QComboBox *m_actionTypeCombo;
     QComboBox *m_targetCombo;
 
     QComboBox *m_transitionsCombo;
@@ -59,6 +57,7 @@ protected:
 
     PmCore *m_core;
     size_t m_actionIndex;
+    PmActionType m_actionType = PmActionType::None;
 };
 
 //----------------------------------------------------
@@ -86,19 +85,16 @@ protected slots:
     void onActionChanged(size_t actionIndex, PmAction action);
 
     // local UI events
-    void onInsertReleased();
+    void onInsertReleased(int actionTypeIndex);
     void onRemoveReleased();
 
 protected:
-    QPushButton *prepareButton(
-        const char *tooltip, const char *icoPath, const char *themeId);
-
     PmReaction pullReaction() const;
     void pushReaction(const PmReaction &reaction);
     void reactionToUi(const PmReaction &reaction);
 
     QListWidget *m_actionListWidget;
-    QPushButton *m_insertActionButton;
+    QToolButton *m_insertActionButton;
     QPushButton *m_removeActionButton;
 
     PmReactionTarget m_reactionTarget;

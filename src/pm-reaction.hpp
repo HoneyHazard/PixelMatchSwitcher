@@ -42,6 +42,8 @@ public:
 	static QColor actionColor(PmActionType actionType);
     static QColor dimmedColor(PmActionType actionType,
                               PmActionType active = PmActionType::None);
+	static QString actionColorStr(PmActionType actionType);
+
     PmAction() {}
     PmAction(obs_data_t *data);
     PmAction(QXmlStreamReader &reader);
@@ -56,7 +58,7 @@ public:
     bool operator!=(const PmAction &other) const { return !operator==(other); }
     QString actionColorStr() const;
 
-    PmActionType m_actionType = PmActionType::Scene;
+    PmActionType m_actionType = PmActionType::None;
     int m_actionCode = 0;
     std::string m_targetElement;
     std::string m_targetDetails;

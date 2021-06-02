@@ -5,19 +5,20 @@
 const char *PmAction::actionStr(PmActionType actionType)
 {
     switch (actionType) {
-    case PmActionType::None: return obs_module_text("None");
-    case PmActionType::Scene: return obs_module_text("Scene");
-    case PmActionType::SceneItem: return obs_module_text("SceneItem");
-    case PmActionType::Filter: return obs_module_text("Filter");
-    case PmActionType::Hotkey: return obs_module_text("Hotkey");
-    case PmActionType::FrontEndEvent: return obs_module_text("FrontEndEvent");
-    default: return obs_module_text("Unknown");
+    case PmActionType::None: return obs_module_text("none");
+    case PmActionType::Scene: return obs_module_text("scene");
+    case PmActionType::SceneItem: return obs_module_text("scene item");
+    case PmActionType::Filter: return obs_module_text("filter");
+    case PmActionType::Hotkey: return obs_module_text("hotkey");
+    case PmActionType::FrontEndEvent: return obs_module_text("front end event");
+    default: return obs_module_text("unknown");
     }
 }
 
 QColor PmAction::actionColor(PmActionType actionType)
 {
 	switch (actionType) {
+	case PmActionType::None: return Qt::white; 
 	case PmActionType::Scene: return Qt::cyan;
 	case PmActionType::SceneItem: return Qt::yellow;
 	case PmActionType::Filter: return QColor(255, 0, 255, 255);
@@ -37,6 +38,12 @@ QColor PmAction::dimmedColor(PmActionType actionType, PmActionType active)
 	}
 	return color;
 }
+
+QString PmAction::actionColorStr(PmActionType actionType)
+{
+	return actionColor(actionType).name();
+}
+
 
 PmAction::PmAction(obs_data_t *data)
 {
@@ -145,7 +152,7 @@ bool PmAction::operator==(const PmAction &other) const
 
 QString PmAction::actionColorStr() const
 {
-	return actionColor(m_actionType).name();
+	return actionColorStr(m_actionType);
 }
 
 

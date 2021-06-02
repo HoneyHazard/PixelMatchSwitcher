@@ -976,9 +976,6 @@ void PmReactionDisplay::updateReaction(
     QString html;
     for (size_t i = 0; i < actions.size(); ++i) {
         const auto &action = actions[i];
-        if (action.m_actionType == PmActionType::None)
-            continue;
-
         switch (action.m_actionType) {
         case PmActionType::Scene:
 		    line = QString("%1%2")
@@ -988,7 +985,6 @@ void PmReactionDisplay::updateReaction(
             html += QString("<font color=\"%1\">%2</font>")
 				.arg(action.actionColorStr())
                 .arg(line);
-		    maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
             break;
         case PmActionType::SceneItem:
         case PmActionType::Filter:
@@ -999,7 +995,6 @@ void PmReactionDisplay::updateReaction(
             html += QString("<font color=\"%1\">%2</font>")
                 .arg(action.actionColorStr())
                 .arg(line);
-            maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
             break;
         case PmActionType::Hotkey:
             // TODO
@@ -1007,8 +1002,14 @@ void PmReactionDisplay::updateReaction(
         case PmActionType::FrontEndEvent:
             // TODO
             break;
+	    default:
+    		line = obs_module_text("<not selected>");
+		    html += QString("<font color=\"%1\">%2</font>")
+			    .arg(action.actionColorStr())
+			    .arg(line);
+		    break;
         }
-
+	    maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
         if (i < actions.size() - 1) {
             html += "<br />";
         }
