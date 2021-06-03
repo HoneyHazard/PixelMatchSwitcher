@@ -273,7 +273,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     PmCore *core,
     PmReactionTarget reactionTarget, PmReactionType reactionType,
     QWidget *parent)
-: PmSpoilerWidget("PmReactionWidget", 300, parent)
+: PmSpoilerWidget(parent)
 , m_core(core)
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
@@ -329,6 +329,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(m_insertActionButton);
     buttonLayout->addWidget(m_removeActionButton);
+    setTopRightLayout(buttonLayout);
 
     m_actionListWidget = new QListWidget(this);
     //m_actionListWidget->setMinimumHeight(200);
@@ -337,24 +338,10 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
-#if 0
-    m_scrollArea = new QScrollArea(this);
-    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_scrollArea->setWidget(m_actionListWidget);
-#endif
-
     QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(buttonLayout);
     mainLayout->addWidget(m_actionListWidget);
     setContentLayout(mainLayout);
 
-    //setSizePolicy(
-    //    QSizePolicy::Preferred, QSizePolicy::Minimum);
-
-    // local UI events
-    //connect(m_insertActionButton, &QPushButton::released,
-    //        this, &PmMatchReactionWidget::onInsertReleased);
     connect(m_removeActionButton, &QPushButton::released,
             this, &PmMatchReactionWidget::onRemoveReleased);
 
@@ -457,9 +444,14 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
         delete item;
     }
 
-    int listMinHeight = (listSz == 0) ? 1 
-        : m_actionListWidget->sizeHintForRow(0);
-    m_actionListWidget->setMinimumHeight(listMinHeight);
+    if (listSz == 0) {
+        m_actionListWidget->setVisible(false);
+    } else {
+	    m_actionListWidget->setVisible(true);
+	    int listMinHeight = m_actionListWidget->sizeHintForRow(0);
+	    m_actionListWidget->setMinimumHeight(listMinHeight);
+    } 
+
 }
 
 void PmMatchReactionWidget::onMatchConfigSelect(

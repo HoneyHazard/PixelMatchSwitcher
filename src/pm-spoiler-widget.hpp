@@ -18,20 +18,22 @@ class PmSpoilerWidget : public QFrame
     Q_OBJECT
 
 public:
-    explicit PmSpoilerWidget(
-        const QString &title = "", const int animationDuration = 300,
-        QWidget *parent = 0);
+    static const int k_animationDuration = 300;
+
+    PmSpoilerWidget(QWidget *parent = nullptr);
     void setContentLayout(QLayout *contentLayout);
+    void setTopRightLayout(QLayout *topRightLayout);
     void setTitle(const QString &title);
+
+protected slots:
+    void collapseToggled(bool checked);
 
 protected:
     void updateContentHeight(int height);
 
     QGridLayout* m_mainLayout;
     QToolButton* m_toggleButton;
-    //QFrame* m_headerLine;
     QParallelAnimationGroup* m_toggleAnimation;
-    //QScrollArea* m_contentArea;
     QWidget *m_contentArea;
-    int m_animationDuration = 300;
+    QWidget *m_topRightArea;
 };
