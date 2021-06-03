@@ -52,19 +52,17 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
             PmReactionTarget::Entry,
             PmReactionType::Unmatch,
             this);
+#if 0
     QVBoxLayout *entryActionsLayout = new QVBoxLayout();
     entryActionsLayout->addWidget(entryMatchActions);
     entryActionsLayout->addWidget(entryUnmatchActions);
     auto actionsLayoutMargins = entryActionsLayout->contentsMargins();
-    //actionsLayoutMargins.setLeft(0);
-    //actionsLayoutMargins.setRight(0);
-    //actionsLayoutMargins.setBottom(0);
     entryActionsLayout->setContentsMargins(actionsLayoutMargins);
     QWidget *entryActionsWidget = new QWidget(this);
     entryActionsWidget->setLayout(entryActionsLayout);
     m_actionTargetsTab->addTab(entryActionsWidget,
         obs_module_text("Entry Match Actions"));
-
+#endif
     // match/unmatch for anything/nothing
     PmMatchReactionWidget *anythingMatchedActions
         = new PmMatchReactionWidget(core,
@@ -76,6 +74,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
             PmReactionTarget::Anything,
             PmReactionType::Unmatch,
             this);
+    #if 0
     QVBoxLayout *globalActionsLayout = new QVBoxLayout();
     globalActionsLayout->addWidget(anythingMatchedActions);
     globalActionsLayout->addWidget(nothingMatchedActions);
@@ -84,6 +83,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     globalActionsWidget->setLayout(globalActionsLayout);
     m_actionTargetsTab->addTab(globalActionsWidget,
         obs_module_text("Global Match/Unmatch"));
+    #endif
 
     PmMatchResultsWidget *resultsWidget 
         = new PmMatchResultsWidget(core, this);
@@ -101,7 +101,10 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
 
-    leftLayout->addWidget(m_actionTargetsTab);
+    leftLayout->addWidget(entryMatchActions);
+    leftLayout->addWidget(entryUnmatchActions);
+    leftLayout->addWidget(anythingMatchedActions);
+    leftLayout->addWidget(nothingMatchedActions);
 
     leftLayout->addWidget(resultsWidget);
 
@@ -110,6 +113,9 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->setStretch(2, 1);
     leftLayout->setStretch(3, 1);
     leftLayout->setStretch(4, 1);
+    leftLayout->setStretch(5, 1);
+    leftLayout->setStretch(6, 1);
+    leftLayout->setStretch(7, 1);
     QWidget *leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 

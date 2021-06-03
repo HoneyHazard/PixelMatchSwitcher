@@ -1,9 +1,8 @@
 #pragma once
 
-#include <QGroupBox>
-
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"
+#include "pm-spoiler-widget.hpp"
 
 #include <vector>
 
@@ -62,7 +61,7 @@ protected:
 
 //----------------------------------------------------
 
-class PmMatchReactionWidget : public QGroupBox
+class PmMatchReactionWidget : public PmSpoilerWidget
 {
     Q_OBJECT
 

@@ -19,6 +19,22 @@
 #include <QFileInfo>
 #include <QDir>
 
+/*
+ * @brief Holds the data structures while scene, scene items and filters 
+ *        are being scanned
+ */
+struct PmSceneScanInfo
+{
+    PmSourceHash scenes;
+    PmSceneItemsHash sceneItems;
+    PmSourceHash filters;
+    QSet<OBSWeakSource> pmFilters;
+
+    PmSourceData *lastSceneData = nullptr;
+    PmSceneItemData *lastSiData = nullptr;
+};
+
+
 PmCore* PmCore::m_instance = nullptr;
 
 void init_pixel_match_switcher()

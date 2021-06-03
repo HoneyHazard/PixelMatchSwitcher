@@ -87,6 +87,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-filter.h
         src/pm-filter-ref.hpp
         src/pm-core.hpp
+        src/pm-spoiler-widget.hpp
         src/pm-match-config-widget.hpp
         src/pm-match-reaction-widget.hpp
         src/pm-match-results-widget.hpp
@@ -117,6 +118,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-filter.c
         src/pm-filter-ref.cpp
         src/pm-core.cpp
+        src/pm-spoiler-widget.cpp
         src/pm-match-config-widget.cpp
         src/pm-match-results-widget.cpp
         src/pm-match-reaction-widget.cpp

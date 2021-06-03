@@ -24,6 +24,8 @@ PmActionEntryWidget::PmActionEntryWidget(
 , m_core(core)
 , m_actionIndex(actionIndex)
 {
+	//setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     m_targetCombo = new QComboBox(this);
 
     m_detailsStack = new QStackedWidget(this);
@@ -271,7 +273,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     PmCore *core,
     PmReactionTarget reactionTarget, PmReactionType reactionType,
     QWidget *parent)
-: QGroupBox(parent)
+: PmSpoilerWidget("PmReactionWidget", 300, parent)
 , m_core(core)
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
@@ -328,12 +330,16 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     buttonLayout->addWidget(m_insertActionButton);
     buttonLayout->addWidget(m_removeActionButton);
 
-    m_actionListWidget = new QListWidget();
+    m_actionListWidget = new QListWidget(this);
+    m_actionListWidget->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Minimum);
 
-    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addLayout(buttonLayout);
     mainLayout->addWidget(m_actionListWidget);
-    setLayout(mainLayout);
+    setContentLayout(mainLayout);
+
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     // local UI events
     //connect(m_insertActionButton, &QPushButton::released,

@@ -242,21 +242,6 @@ public:
     QSet<std::string> sceneItemNames() const { return keys().toSet(); };
 };
 
-/*
- * @brief Holds the data structures while scene, scene items and filters 
- *        are being scanned
- */
-struct PmSceneScanInfo
-{
-    PmSourceHash scenes;
-    PmSceneItemsHash sceneItems;
-    PmSourceHash filters;
-    QSet<OBSWeakSource> pmFilters;
-
-    PmSourceData *lastSceneData = nullptr;
-    PmSceneItemData *lastSiData = nullptr;
-};
-
 /**
  * @brief Configuration for the preview state of the dialog.
  * 
