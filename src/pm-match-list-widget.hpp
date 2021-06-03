@@ -1,8 +1,8 @@
 #pragma once
 
+#include "pm-spoiler-widget.hpp"
 #include "pm-structs.hpp"
 
-#include <QGroupBox>
 #include <QSet>
 #include <QLabel>
 
@@ -19,7 +19,7 @@ class QVBoxLayout;
  * @brief Shows a list of match configuration entries and allows changing
  *        some of their parameters
   */
-class PmMatchListWidget : public QGroupBox
+class PmMatchListWidget : public PmSpoilerWidget
 {
     Q_OBJECT
 

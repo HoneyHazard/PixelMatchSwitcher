@@ -329,6 +329,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(m_insertActionButton);
     buttonLayout->addWidget(m_removeActionButton);
+    buttonLayout->setContentsMargins(0, 0, 0, 0);
     setTopRightLayout(buttonLayout);
 
     m_actionListWidget = new QListWidget(this);
@@ -339,6 +340,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addWidget(m_actionListWidget);
     setContentLayout(mainLayout);
 
@@ -507,6 +509,8 @@ void PmMatchReactionWidget::onInsertReleased(int actionIdx)
             reaction.unmatchActions.begin() + idx, newAction);
     }
     pushReaction(reaction);
+
+    expand(true);
 }
 
 void PmMatchReactionWidget::onRemoveReleased()

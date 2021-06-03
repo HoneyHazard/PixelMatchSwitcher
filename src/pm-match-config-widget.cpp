@@ -25,7 +25,7 @@ const char* PmMatchConfigWidget::k_failedImgStr
     = obs_module_text("[FAILED]");
 
 PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
-: QGroupBox(parent)
+: PmSpoilerWidget(parent)
 , m_core(pixelMatcher)
 {   
     const Qt::ConnectionType qc = Qt::QueuedConnection;
@@ -208,7 +208,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     mainLayout->addRow(obs_module_text("Invert Result: "), m_invertResultCheckbox);
 
-    setLayout(mainLayout);
+    setContentLayout(mainLayout);
 
     // core signals -> local slots
     connect(m_core, &PmCore::sigMatchImageLoadSuccess,
@@ -243,6 +243,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onCaptureStateChanged(m_core->captureState(), 0, 0);
     onActiveFilterChanged(m_core->activeFilterRef());
+
+    expand(true);
 }
 
 void PmMatchConfigWidget::onMatchConfigSelect(

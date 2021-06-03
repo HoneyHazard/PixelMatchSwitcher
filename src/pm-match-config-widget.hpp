@@ -1,7 +1,6 @@
 #pragma once
 
-#include <QGroupBox>
-
+#include "pm-spoiler-widget.hpp"
 #include "pm-structs.hpp"
 #include "pm-filter-ref.hpp"
 
@@ -19,7 +18,7 @@ class QStackedWidget;
 /*!
  * @brief UI tab that shows match settings, UI preview and preview settings
  */
-class PmMatchConfigWidget : public QGroupBox
+class PmMatchConfigWidget : public PmSpoilerWidget
 {
     Q_OBJECT
 

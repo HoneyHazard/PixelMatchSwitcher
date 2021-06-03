@@ -105,9 +105,11 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(entryUnmatchActions);
     leftLayout->addWidget(anythingMatchedActions);
     leftLayout->addWidget(nothingMatchedActions);
-
+    leftLayout->addItem(
+        new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     leftLayout->addWidget(resultsWidget);
 
+    #if 0
     leftLayout->setStretch(0, 1);
     leftLayout->setStretch(1, 1000);
     leftLayout->setStretch(2, 1);
@@ -116,6 +118,7 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->setStretch(5, 1);
     leftLayout->setStretch(6, 1);
     leftLayout->setStretch(7, 1);
+    #endif
     QWidget *leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 

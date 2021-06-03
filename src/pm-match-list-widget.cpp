@@ -71,9 +71,11 @@ const QString PmMatchListWidget::k_semiTranspBgStyle
     = "background-color: rgba(0, 0, 0, 0.6);";
 
 PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
-: QGroupBox(obs_module_text("Active Match Entries"), parent)
+: PmSpoilerWidget(parent)
 , m_core(core)
 {
+	setTitle(obs_module_text("Active Match Entries"));
+
     // table widget
     m_tableWidget = new QTableWidget(this);
     m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -85,8 +87,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setColumnCount((int)ColOrder::NumCols);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
-    //m_tableWidget->verticalHeader()->setSectionResizeMode(
-	//    QHeaderView::ResizeToContents);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
 
     // config editing buttons
@@ -99,8 +99,8 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_cfgRemoveBtn = prepareButton(obs_module_text("Remove Match Entry"),
         ":/res/images/list_remove.png", "removeIconSmall");
 
-    QSpacerItem* buttonSpacer1 = new QSpacerItem(0, 0, QSizePolicy::Expanding);
-    QSpacerItem* buttonSpacer2 = new QSpacerItem(0, 0, QSizePolicy::Expanding);
+    QSpacerItem* buttonSpacer1 = new QSpacerItem(20, 0);
+    QSpacerItem* buttonSpacer2 = new QSpacerItem(20, 0);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->addWidget(m_cfgInsertBtn);
@@ -109,20 +109,19 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     buttonsLayout->addWidget(m_cfgMoveDownBtn);
     buttonsLayout->addItem(buttonSpacer2);
     buttonsLayout->addWidget(m_cfgRemoveBtn);
+    buttonsLayout->setContentsMargins(0, 0, 0, 0);
+    setTopRightLayout(buttonsLayout);
 
     // top-level layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
-    //mainLayout->addLayout(noMatchLayout);
-    setLayout(mainLayout);
+    setContentLayout(mainLayout);
 
     // init state
     auto multiConfig = m_core->multiMatchConfig();
     size_t cfgSz = multiConfig.size();
     onMultiMatchConfigSizeChanged(cfgSz);
-
-    //onScenesChanged(m_core->sceneNames(), m_core->sceneItemNames());
 
     for (size_t i = 0; i < multiConfig.size(); ++i) {
         onMatchConfigChanged(i, multiConfig[i]);
@@ -130,8 +129,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     size_t selIdx = m_core->selectedConfigIndex();
     onMatchConfigSelect(
         selIdx, selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
-
-    //onNoMatchReactionChanged(multiConfig.noMatchReaction);
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {

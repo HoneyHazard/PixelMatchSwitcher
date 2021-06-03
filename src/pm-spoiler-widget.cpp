@@ -14,7 +14,6 @@ PmSpoilerWidget::PmSpoilerWidget(QWidget *parent)
     m_toggleButton->setChecked(false);
 
     m_topRightArea = new QWidget(this);
-    m_topRightArea->setVisible(false);
 
     m_contentArea = new QWidget(this);
     m_contentArea->setMaximumHeight(0);
@@ -29,8 +28,9 @@ PmSpoilerWidget::PmSpoilerWidget(QWidget *parent)
         new QPropertyAnimation(m_contentArea, "maximumHeight"));
 
     m_mainLayout = new QGridLayout;
+    m_verticalSpacing = m_mainLayout->verticalSpacing();
     m_mainLayout->setVerticalSpacing(0);
-    m_mainLayout->setContentsMargins(0, 0, 0, 0);
+    //m_mainLayout->setContentsMargins(0, 0, 0, 0);
 
     m_mainLayout->addWidget(
         m_toggleButton, 0, 0, 1, 1, Qt::AlignTop | Qt::AlignLeft);
@@ -48,15 +48,22 @@ PmSpoilerWidget::PmSpoilerWidget(QWidget *parent)
 
 void PmSpoilerWidget::collapseToggled(bool checked)
 {
-    // auto contentHeight =
-    //    m_contentArea->layout()->sizeHint().height();
-    //updateContentHeight(contentHeight);
-    m_toggleButton->setArrowType(checked ? Qt::ArrowType::DownArrow
-                         : Qt::ArrowType::RightArrow);
-    m_toggleAnimation->setDirection(checked ? QAbstractAnimation::Forward
-                        : QAbstractAnimation::Backward);
+	expand(checked);
+}
+
+void PmSpoilerWidget::expand(bool on)
+{
+    m_toggleButton->setArrowType(
+        on ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
+    m_toggleAnimation->setDirection(
+        on ? QAbstractAnimation::Forward : QAbstractAnimation::Backward);
     m_toggleAnimation->start();
-    m_topRightArea->setVisible(checked);
+
+    m_toggleButton->blockSignals(true);
+    m_toggleButton->setChecked(on);
+    m_toggleButton->blockSignals(false);
+
+    m_mainLayout->setVerticalSpacing(on ? m_verticalSpacing : 0);
 }
 
 void PmSpoilerWidget::updateContentHeight(int contentHeight)
@@ -64,6 +71,7 @@ void PmSpoilerWidget::updateContentHeight(int contentHeight)
     int collapsedHeight = qMax(m_toggleButton->sizeHint().height(),
                                m_topRightArea->sizeHint().height());
 
+    #if 0
     for (int i = 0; i < m_toggleAnimation->animationCount() - 1; ++i) {
         QPropertyAnimation *spoilerAnimation =
             static_cast<QPropertyAnimation *>(
@@ -72,6 +80,7 @@ void PmSpoilerWidget::updateContentHeight(int contentHeight)
         spoilerAnimation->setStartValue(contentHeight);
         spoilerAnimation->setEndValue(collapsedHeight + contentHeight);
     }
+    #endif
     QPropertyAnimation *contentAnimation =
         static_cast<QPropertyAnimation *>(
             m_toggleAnimation->animationAt(

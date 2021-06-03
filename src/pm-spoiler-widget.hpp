@@ -25,6 +25,8 @@ public:
     void setTopRightLayout(QLayout *topRightLayout);
     void setTitle(const QString &title);
 
+    virtual void expand(bool on);
+
 protected slots:
     void collapseToggled(bool checked);
 
@@ -36,4 +38,5 @@ protected:
     QParallelAnimationGroup* m_toggleAnimation;
     QWidget *m_contentArea;
     QWidget *m_topRightArea;
+    int m_verticalSpacing = 0;
 };
