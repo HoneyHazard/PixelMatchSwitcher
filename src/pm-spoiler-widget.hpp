@@ -12,9 +12,8 @@
 #include <QParallelAnimationGroup>
 #include <QScrollArea>
 #include <QToolButton>
-#include <QWidget>
 
-class PmSpoilerWidget : public QWidget
+class PmSpoilerWidget : public QFrame
 {
     Q_OBJECT
 
@@ -30,8 +29,9 @@ protected:
 
     QGridLayout* m_mainLayout;
     QToolButton* m_toggleButton;
-    QFrame* m_headerLine;
+    //QFrame* m_headerLine;
     QParallelAnimationGroup* m_toggleAnimation;
-    QScrollArea* m_contentArea;
+    //QScrollArea* m_contentArea;
+    QWidget *m_contentArea;
     int m_animationDuration = 300;
 };

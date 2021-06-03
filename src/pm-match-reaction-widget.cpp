@@ -331,15 +331,26 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     buttonLayout->addWidget(m_removeActionButton);
 
     m_actionListWidget = new QListWidget(this);
+    //m_actionListWidget->setMinimumHeight(200);
     m_actionListWidget->setSizePolicy(
         QSizePolicy::Preferred, QSizePolicy::Minimum);
+    m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+#if 0
+    m_scrollArea = new QScrollArea(this);
+    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_scrollArea->setWidget(m_actionListWidget);
+#endif
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addLayout(buttonLayout);
     mainLayout->addWidget(m_actionListWidget);
     setContentLayout(mainLayout);
 
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+    //setSizePolicy(
+    //    QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     // local UI events
     //connect(m_insertActionButton, &QPushButton::released,
@@ -445,6 +456,10 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
             m_actionListWidget->count() - 1);
         delete item;
     }
+
+    int listMinHeight = (listSz == 0) ? 1 
+        : m_actionListWidget->sizeHintForRow(0);
+    m_actionListWidget->setMinimumHeight(listMinHeight);
 }
 
 void PmMatchReactionWidget::onMatchConfigSelect(

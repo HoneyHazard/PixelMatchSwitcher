@@ -16,6 +16,7 @@ class QListWidget;
 class QListWidgetItem;
 class QStackedWidget;
 class QVBoxLayout;
+class QScrollArea;
 
 class PmActionEntryWidget : public QWidget
 {
@@ -92,6 +93,7 @@ protected:
     void pushReaction(const PmReaction &reaction);
     void reactionToUi(const PmReaction &reaction);
 
+    //QScrollArea *m_scrollArea;
     QListWidget *m_actionListWidget;
     QToolButton *m_insertActionButton;
     QPushButton *m_removeActionButton;

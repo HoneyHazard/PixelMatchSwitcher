@@ -4,7 +4,7 @@
 
 PmSpoilerWidget::PmSpoilerWidget(
     const QString &title, const int animationDuration, QWidget *parent)
-: QWidget(parent)
+: QFrame(parent)
 , m_animationDuration(animationDuration)
 {
 	m_toggleButton = new QToolButton(this);
@@ -15,25 +15,26 @@ PmSpoilerWidget::PmSpoilerWidget(
     m_toggleButton->setCheckable(true);
 	m_toggleButton->setChecked(false);
 
-    //m_headerLine.setFrameShape(QFrame::HLine);
-    //m_headerLine.setFrameShadow(QFrame::Sunken);
-	m_headerLine = new QFrame(this);
-	m_headerLine->setSizePolicy(
-        QSizePolicy::Expanding, QSizePolicy::Maximum);
+	//m_headerLine = new QFrame(this);
+	//m_headerLine->setFrameShadow(QFrame::Sunken);
+	//m_headerLine->setFrameShape(QFrame::HLine);
+	//m_headerLine->setSizePolicy(
+    //    QSizePolicy::Expanding, QSizePolicy::Maximum);
 
     //m_contentArea.setStyleSheet(
     //    "QScrollArea { background-color: white; border: none; }");
     // start out collapsed
-	m_contentArea = new QScrollArea(this);
-	m_contentArea->setSizePolicy(
-        QSizePolicy::Preferred, QSizePolicy::Minimum);
+	//m_contentArea = new QScrollArea(this);
+	m_contentArea = new QWidget(this);
+	//m_contentArea->setSizePolicy(
+    //    QSizePolicy::Preferred, QSizePolicy::Minimum);
 	m_contentArea->setMaximumHeight(0);
 	m_contentArea->setMinimumHeight(0);
     // let the entire widget grow and shrink with its content
 
     m_toggleAnimation = new QParallelAnimationGroup(this);
-	m_toggleAnimation->addAnimation(
-        new QPropertyAnimation(this, "minimumHeight"));
+	//m_toggleAnimation->addAnimation(
+    //    new QPropertyAnimation(this, "minimumHeight"));
     m_toggleAnimation->addAnimation(
         new QPropertyAnimation(this, "maximumHeight"));
 	m_toggleAnimation->addAnimation(
@@ -44,17 +45,19 @@ PmSpoilerWidget::PmSpoilerWidget(
     m_mainLayout->setVerticalSpacing(0);
     m_mainLayout->setContentsMargins(0, 0, 0, 0);
     int row = 0;
-    m_mainLayout->addWidget(m_toggleButton, row, 0, 1, 1, Qt::AlignLeft);
-    m_mainLayout->addWidget(m_headerLine, row++, 2, 1, 1);
+    m_mainLayout->addWidget(m_toggleButton, row++, 0, 1, 1, Qt::AlignLeft);
+    //m_mainLayout->addWidget(m_headerLine, row++, 2, 1, 1);
     m_mainLayout->addWidget(m_contentArea, row, 0, 1, 3);
     setLayout(m_mainLayout);
+
+    setFrameShape(QFrame::StyledPanel);
 
     QObject::connect(
         m_toggleButton, &QToolButton::clicked,
         [this](const bool checked) {
-		    auto contentHeight =
-			    m_contentArea->layout()->sizeHint().height();
-		    updateContentHeight(contentHeight);
+		   // auto contentHeight =
+			//    m_contentArea->layout()->sizeHint().height();
+		    //updateContentHeight(contentHeight);
 
             m_toggleButton->setArrowType(checked
                 ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
@@ -69,7 +72,7 @@ void PmSpoilerWidget::updateContentHeight(int contentHeight)
 {
 	//const int collapsedHeight =
 	//	sizeHint().height() - m_contentArea->maximumHeight();
-	int collapsedHeight = m_headerLine->height();
+	int collapsedHeight = m_toggleButton->sizeHint().height();
 	for (int i = 0; i < m_toggleAnimation->animationCount() - 1; ++i) {
 		QPropertyAnimation *spoilerAnimation =
 			static_cast<QPropertyAnimation *>(
