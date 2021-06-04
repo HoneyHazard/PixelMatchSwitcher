@@ -30,8 +30,7 @@ public:
     void collapse() { toggleExpand(false); }
     bool isExpanded() const { return m_toggleButton->isChecked(); }
 
-    QSize minimumSizeHint()() override;
-
+    QSize sizeHint() const override;
 
 protected slots:
     void collapseToggled(bool checked);
@@ -47,4 +46,5 @@ protected:
 
     int m_verticalSpacing = 0;
     int m_marginsSpace = 0;
+    int m_heightHint = 0;
 };

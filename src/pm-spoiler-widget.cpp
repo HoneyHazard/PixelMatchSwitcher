@@ -18,6 +18,8 @@ PmSpoilerWidget::PmSpoilerWidget(QWidget *parent)
     m_contentArea = new QWidget(this);
     m_contentArea->setMaximumHeight(0);
     m_contentArea->setMinimumHeight(0);
+    m_contentArea->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Maximum);
 
 #if 0
     m_toggleAnimation = new QParallelAnimationGroup(this);
@@ -76,6 +78,13 @@ void PmSpoilerWidget::toggleExpand(bool on)
 #endif
 }
 
+QSize PmSpoilerWidget::sizeHint() const
+{
+	QSize sz = QFrame::sizeHint();
+	//sz.setHeight(m_heightHint);
+	return sz;
+}
+
 void PmSpoilerWidget::updateContentHeight()
 {
 	bool contentOn = isExpanded();
@@ -112,6 +121,7 @@ void PmSpoilerWidget::updateContentHeight()
     m_contentArea->setMaximumHeight(contentMax);
     //setMinimumHeight(contentMin + collapsed);
     setMaximumHeight(contentMax + collapsed);
+    //m_heightHint = contentMax + collapsed;
 }
 
 void PmSpoilerWidget::setContentLayout(QLayout *contentLayout)

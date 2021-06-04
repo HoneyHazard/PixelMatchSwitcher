@@ -334,8 +334,8 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 
     m_actionListWidget = new QListWidget(this);
     //m_actionListWidget->setMinimumHeight(200);
-    m_actionListWidget->setSizePolicy(
-        QSizePolicy::Preferred, QSizePolicy::Minimum);
+    //m_actionListWidget->setSizePolicy(
+    //    QSizePolicy::Preferred, QSizePolicy::Minimum);
     m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
@@ -378,9 +378,9 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 
 void PmMatchReactionWidget::toggleExpand(bool on)
 {
-
+	PmSpoilerWidget::toggleExpand(on);
+    // TODO buttons
 }
-
 
 void PmMatchReactionWidget::onMatchConfigChanged(
     size_t matchIdx, PmMatchConfig cfg)
@@ -452,14 +452,16 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
         delete item;
     }
 
-    if (listSz == 0) {
-        m_actionListWidget->setVisible(false);
-    } else {
-	    m_actionListWidget->setVisible(true);
-	    int listMinHeight = m_actionListWidget->sizeHintForRow(0);
-	    m_actionListWidget->setMinimumHeight(listMinHeight);
+    int listMinHeight = 10;
+    int listMaxHeight = 10;
+    if (listSz > 0) {
+        
+	    listMinHeight = m_actionListWidget->sizeHintForRow(0);
+        listMaxHeight = listMinHeight * (listSz+1);
     } 
-
+    m_actionListWidget->setMinimumHeight(listMinHeight);
+    m_actionListWidget->setMaximumHeight(listMaxHeight);
+    updateContentHeight();
 }
 
 void PmMatchReactionWidget::onMatchConfigSelect(
