@@ -71,6 +71,7 @@ public:
         PmCore *core,
         PmReactionTarget reactionTarget, PmReactionType reactionType,
         QWidget *parent);
+	void toggleExpand(bool on) override;
 
 signals:
     void sigMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);

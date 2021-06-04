@@ -121,7 +121,7 @@ public:
     QVBoxLayout *mainLayout() const { return m_mainLayout; }
 
 protected:
-    void mouseReleaseEvent(QMouseEvent *event) override
+    void mouseReleaseEvent(QMouseEvent *) override
         { m_contained->setFocus(); }
 
     QWidget *m_contained;

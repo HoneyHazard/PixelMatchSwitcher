@@ -33,10 +33,10 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // UI modules
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
     m_presetsWidget = new PmPresetsWidget(core, this);
-    PmMatchListWidget *listWidget 
-        = new PmMatchListWidget(core, this);
-    PmMatchConfigWidget *configWidget 
-        = new PmMatchConfigWidget(core, this);
+    PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
+    listWidget->expand();
+    PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
+    configWidget->expand();
 
     m_actionTargetsTab = new QTabWidget(this);
 

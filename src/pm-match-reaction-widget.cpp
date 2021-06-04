@@ -376,6 +376,12 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     }
 }
 
+void PmMatchReactionWidget::toggleExpand(bool on)
+{
+
+}
+
+
 void PmMatchReactionWidget::onMatchConfigChanged(
     size_t matchIdx, PmMatchConfig cfg)
 {
@@ -510,7 +516,7 @@ void PmMatchReactionWidget::onInsertReleased(int actionIdx)
     }
     pushReaction(reaction);
 
-    expand(true);
+    toggleExpand(true);
 }
 
 void PmMatchReactionWidget::onRemoveReleased()

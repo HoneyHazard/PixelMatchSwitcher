@@ -25,18 +25,26 @@ public:
     void setTopRightLayout(QLayout *topRightLayout);
     void setTitle(const QString &title);
 
-    virtual void expand(bool on);
+    virtual void toggleExpand(bool on);
+    void expand() { toggleExpand(true); }
+    void collapse() { toggleExpand(false); }
+    bool isExpanded() const { return m_toggleButton->isChecked(); }
+
+    QSize minimumSizeHint()() override;
+
 
 protected slots:
     void collapseToggled(bool checked);
 
 protected:
-    void updateContentHeight(int height);
+    virtual void updateContentHeight();
 
     QGridLayout* m_mainLayout;
     QToolButton* m_toggleButton;
-    QParallelAnimationGroup* m_toggleAnimation;
+    //QParallelAnimationGroup* m_toggleAnimation;
     QWidget *m_contentArea;
     QWidget *m_topRightArea;
+
     int m_verticalSpacing = 0;
+    int m_marginsSpace = 0;
 };

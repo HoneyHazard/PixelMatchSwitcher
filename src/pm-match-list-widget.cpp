@@ -48,23 +48,6 @@ const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Result")
 };
 
-#if 0
-const QString PmMatchListWidget::k_dontSwitchStr 
-    = obs_module_text("<don't switch>");
-const QString PmMatchListWidget::k_scenesLabelStr
-    = obs_module_text("--- Scenes ---");
-const QString PmMatchListWidget::k_sceneItemsLabelStr
-    = obs_module_text("--- Scene Items & Filters ---");
-const QString PmMatchListWidget::k_showLabelStr = obs_module_text("Show");
-const QString PmMatchListWidget::k_hideLabelStr = obs_module_text("Hide");
-
-const QColor PmMatchListWidget::k_dontSwitchColor = Qt::lightGray;
-const QColor PmMatchListWidget::k_scenesLabelColor = Qt::darkCyan;
-const QColor PmMatchListWidget::k_scenesColor = Qt::cyan;
-const QColor PmMatchListWidget::k_sceneItemsLabelColor = Qt::darkYellow;
-const QColor PmMatchListWidget::k_sceneItemsColor = Qt::yellow;
-#endif
-
 const QString PmMatchListWidget::k_transpBgStyle
     = "background-color: rgba(0, 0, 0, 0);";
 const QString PmMatchListWidget::k_semiTranspBgStyle
@@ -85,9 +68,13 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setColumnCount((int)ColOrder::NumCols);
+    m_tableWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
+    m_tableWidget->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Maximum);
 
     // config editing buttons
     m_cfgInsertBtn = prepareButton(obs_module_text("Insert New Match Entry"),
@@ -117,6 +104,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
     setContentLayout(mainLayout);
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     // init state
     auto multiConfig = m_core->multiMatchConfig();
@@ -226,6 +214,7 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 
     // workaround for a buggy behavior that automatic resizing isn't handling
     m_tableWidget->resizeColumnsToContents();
+    updateContentHeight();
 }
 
 void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
@@ -335,6 +324,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     setMinWidth();
     m_tableWidget->resizeColumnsToContents();
     m_tableWidget->verticalHeader()->resizeSection(idx, maxHeight + vertPad);
+    updateContentHeight();
 
     // enable/disable control buttons
     updateAvailableButtons(

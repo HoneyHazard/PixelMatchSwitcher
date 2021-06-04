@@ -244,7 +244,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onCaptureStateChanged(m_core->captureState(), 0, 0);
     onActiveFilterChanged(m_core->activeFilterRef());
 
-    expand(true);
+    toggleExpand(true);
 }
 
 void PmMatchConfigWidget::onMatchConfigSelect(
