@@ -34,56 +34,38 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
     m_presetsWidget = new PmPresetsWidget(core, this);
     PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
-    //listWidget->expand();
+    listWidget->expand();
     PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
-    //configWidget->expand();
+    configWidget->expand();
 
-    m_actionTargetsTab = new QTabWidget(this);
-
-    // match/unmatch for an entry
+    // match for an entry
     QSizePolicy minPol(QSizePolicy::Minimum, QSizePolicy::Minimum);
     PmMatchReactionWidget *entryMatchActions
         = new PmMatchReactionWidget(core,
             PmReactionTarget::Entry,
             PmReactionType::Match,
             this);
+
+    // unmatch for an entry
     PmMatchReactionWidget *entryUnmatchActions
         = new PmMatchReactionWidget(core,
             PmReactionTarget::Entry,
             PmReactionType::Unmatch,
             this);
-#if 0
-    QVBoxLayout *entryActionsLayout = new QVBoxLayout();
-    entryActionsLayout->addWidget(entryMatchActions);
-    entryActionsLayout->addWidget(entryUnmatchActions);
-    auto actionsLayoutMargins = entryActionsLayout->contentsMargins();
-    entryActionsLayout->setContentsMargins(actionsLayoutMargins);
-    QWidget *entryActionsWidget = new QWidget(this);
-    entryActionsWidget->setLayout(entryActionsLayout);
-    m_actionTargetsTab->addTab(entryActionsWidget,
-        obs_module_text("Entry Match Actions"));
-#endif
-    // match/unmatch for anything/nothing
+
+    // global match (anything matched)
     PmMatchReactionWidget *anythingMatchedActions
         = new PmMatchReactionWidget(core,
             PmReactionTarget::Anything,
             PmReactionType::Match,
             this);
+
+    // global unmatch (nothing matched)
     PmMatchReactionWidget *nothingMatchedActions
         = new PmMatchReactionWidget(core,
             PmReactionTarget::Anything,
             PmReactionType::Unmatch,
             this);
-    #if 0
-    QVBoxLayout *globalActionsLayout = new QVBoxLayout();
-    globalActionsLayout->addWidget(anythingMatchedActions);
-    globalActionsLayout->addWidget(nothingMatchedActions);
-    globalActionsLayout->setContentsMargins(actionsLayoutMargins);
-    QWidget *globalActionsWidget = new QWidget(this);
-    globalActionsWidget->setLayout(globalActionsLayout);
-    m_actionTargetsTab->addTab(globalActionsWidget,
-        obs_module_text("Global Match/Unmatch"));
-    #endif
 
     PmMatchResultsWidget *resultsWidget 
         = new PmMatchResultsWidget(core, this);

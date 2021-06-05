@@ -70,12 +70,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setColumnCount((int)ColOrder::NumCols);
     m_tableWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    //m_tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
-    m_tableWidget->setSizePolicy(
-        QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     // config editing buttons
     m_cfgInsertBtn = prepareButton(obs_module_text("Insert New Match Entry"),
@@ -102,10 +100,11 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 
     // top-level layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
     setContentLayout(mainLayout);
-    //setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    m_contentArea->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     // init state
     auto multiConfig = m_core->multiMatchConfig();
@@ -137,10 +136,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMatchConfigSelect,
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
-    //connect(m_core, &PmCore::sigScenesChanged,
-    //    this, &PmMatchListWidget::onScenesChanged, qc);
-    //connect(m_core, &PmCore::sigNoMatchReactionChanged,
-    //    this, &PmMatchListWidget::onNoMatchReactionChanged, qc);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
@@ -155,8 +150,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onMatchConfigInsert, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigRemove,
         m_core, &PmCore::onMatchConfigRemove, qc);
-    //connect(this, &PmMatchListWidget::sigNoMatchReactionChanged,
-    //    m_core, &PmCore::onNoMatchReactionChanged, qc);
 
     // connections: local ui
     connect(m_tableWidget, &QTableWidget::itemChanged,
@@ -287,7 +280,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     setMinWidth();
 
     // control vertical sizing
-    rowHeight += 5; // padding
+    rowHeight += k_rowPadding; // padding
     m_tableWidget->verticalHeader()->resizeSection(idx, rowHeight);
     updateContentHeight();
 
@@ -700,22 +693,20 @@ void PmMatchListWidget::setMinWidth()
 
 int PmMatchListWidget::contentHeight() const
 {
+	//return PmSpoilerWidget::contentHeight();
+
 	auto vertHeader = m_tableWidget->verticalHeader();
 	auto horizHeader = m_tableWidget->horizontalHeader();
 
 	int count = vertHeader->count();
-	int scrollBarHeight = m_tableWidget->horizontalScrollBar()->height();
+	//int scrollBarHeight = m_tableWidget->horizontalScrollBar()->height();
 	int horizontalHeaderHeight = horizHeader->height();
 	int rowTotalHeight = 0;
 	for (int i = 0; i < count; ++i) {
 		rowTotalHeight += vertHeader->sectionSize(i);
+		rowTotalHeight += k_rowPadding;
 	}
-	return rowTotalHeight;
-}
-
-void PmMatchListWidget::updateContentHeight()
-{
-    PmSpoilerWidget::updateContentHeight();
+	return rowTotalHeight + horizontalHeaderHeight;
 }
 
 bool PmMatchListWidget::selectRowAtGlobalPos(QPoint globalPos)

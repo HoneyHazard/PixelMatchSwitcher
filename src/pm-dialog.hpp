@@ -33,5 +33,4 @@ protected:
 
     PmCore* m_core;
     PmPresetsWidget* m_presetsWidget;
-    QTabWidget *m_actionTargetsTab;
 };

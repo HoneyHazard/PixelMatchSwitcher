@@ -72,6 +72,7 @@ protected:
 
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;
+    static const int k_rowPadding = 5;
 
     QPushButton* prepareButton(
         const char *tooltip, const char* icoPath, const char* themeId);
@@ -85,10 +86,10 @@ protected:
     void cooldownChanged(int idx, int cooldown);
 
     void setMinWidth();
-    int contentHeight() const override;
-    void updateContentHeight() override;
     bool selectRowAtGlobalPos(QPoint globalPos);
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
+
+    int contentHeight() const override;
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;

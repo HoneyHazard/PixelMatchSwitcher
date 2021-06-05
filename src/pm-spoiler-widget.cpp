@@ -39,7 +39,8 @@ PmSpoilerWidget::PmSpoilerWidget(QWidget *parent)
         m_toggleButton, 0, 0, 1, 1, Qt::AlignTop | Qt::AlignLeft);
     m_mainLayout->addWidget(
         m_topRightArea, 0, 1, 1, 1, Qt::AlignTop | Qt::AlignRight);
-    m_mainLayout->addWidget(m_contentArea, 1, 0, 1, 2);
+    m_mainLayout->addWidget(
+        m_contentArea, 1, 0, 1, 2);
     setLayout(m_mainLayout);
 
     setFrameStyle(QFrame::Box);
@@ -76,13 +77,6 @@ void PmSpoilerWidget::toggleExpand(bool on)
         on ? QAbstractAnimation::Forward : QAbstractAnimation::Backward);
     m_toggleAnimation->start();
 #endif
-}
-
-QSize PmSpoilerWidget::sizeHint() const
-{
-	QSize sz = QFrame::sizeHint();
-	//sz.setHeight(m_heightHint);
-	return sz;
 }
 
 int PmSpoilerWidget::contentHeight() const

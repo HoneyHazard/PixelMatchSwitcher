@@ -208,6 +208,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     mainLayout->addRow(obs_module_text("Invert Result: "), m_invertResultCheckbox);
 
+    mainLayout->setContentsMargins(0, 0, 0, 0);
     setContentLayout(mainLayout);
 
     // core signals -> local slots

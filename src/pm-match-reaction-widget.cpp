@@ -517,8 +517,6 @@ void PmMatchReactionWidget::onInsertReleased(int actionIdx)
             reaction.unmatchActions.begin() + idx, newAction);
     }
     pushReaction(reaction);
-
-    toggleExpand(true);
 }
 
 void PmMatchReactionWidget::onRemoveReleased()

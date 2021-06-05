@@ -30,8 +30,6 @@ public:
     void collapse() { toggleExpand(false); }
     bool isExpanded() const { return m_toggleButton->isChecked(); }
 
-    QSize sizeHint() const override;
-
 protected slots:
     void collapseToggled(bool checked);
 
@@ -41,10 +39,10 @@ protected:
 
     QGridLayout* m_mainLayout;
     QToolButton* m_toggleButton;
-    //QParallelAnimationGroup* m_toggleAnimation;
     QWidget *m_contentArea;
     QWidget *m_topRightArea;
 
     int m_verticalSpacing = 0;
-    int m_heightHint = 0;
+
+    //QParallelAnimationGroup* m_toggleAnimation;
 };
