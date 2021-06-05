@@ -36,6 +36,7 @@ protected slots:
     void collapseToggled(bool checked);
 
 protected:
+    virtual int contentHeight() const;
     virtual void updateContentHeight();
 
     QGridLayout* m_mainLayout;
@@ -45,6 +46,5 @@ protected:
     QWidget *m_topRightArea;
 
     int m_verticalSpacing = 0;
-    int m_marginsSpace = 0;
     int m_heightHint = 0;
 };

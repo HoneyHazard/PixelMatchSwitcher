@@ -34,9 +34,9 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
     m_presetsWidget = new PmPresetsWidget(core, this);
     PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
-    listWidget->expand();
+    //listWidget->expand();
     PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
-    configWidget->expand();
+    //configWidget->expand();
 
     m_actionTargetsTab = new QTabWidget(this);
 
@@ -109,16 +109,18 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
         new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     leftLayout->addWidget(resultsWidget);
 
-    #if 0
+    #if 1
     leftLayout->setStretch(0, 1);
-    leftLayout->setStretch(1, 1000);
+    leftLayout->setStretch(1, 10000);
     leftLayout->setStretch(2, 1);
     leftLayout->setStretch(3, 1);
     leftLayout->setStretch(4, 1);
     leftLayout->setStretch(5, 1);
     leftLayout->setStretch(6, 1);
-    leftLayout->setStretch(7, 1);
+    leftLayout->setStretch(7, 100);
+    leftLayout->setStretch(8, 1);
     #endif
+
     QWidget *leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 

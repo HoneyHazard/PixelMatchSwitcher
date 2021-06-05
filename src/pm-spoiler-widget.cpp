@@ -85,21 +85,29 @@ QSize PmSpoilerWidget::sizeHint() const
 	return sz;
 }
 
+int PmSpoilerWidget::contentHeight() const
+{
+	return m_contentArea->layout()->maximumSize().height();
+}
+
 void PmSpoilerWidget::updateContentHeight()
 {
 	bool contentOn = isExpanded();
-	QMargins margins = m_mainLayout->contentsMargins();
-	m_marginsSpace = margins.top() + margins.bottom();
 
+	QMargins margins = m_mainLayout->contentsMargins();
+	int marginsSpace = margins.top() + margins.bottom();
+
+#if 0
 	int contentMin = contentOn
         ? m_contentArea->layout()->minimumSize().height()
         : 0;
-	int contentMax = contentOn
-        ? m_contentArea->layout()->maximumSize().height()
-        : 0;
+#endif
+
+	int contentMax = contentOn ? contentHeight() : 0;
+
     int collapsed
         = qMax(m_toggleButton->sizeHint().height(),
-               m_topRightArea->sizeHint().height()) + m_marginsSpace;
+               m_topRightArea->sizeHint().height()) + marginsSpace;
 #if 0
     auto minHeightAnim = (QPropertyAnimation *)m_toggleAnimation->animationAt(0);
     minHeightAnim->setDuration(k_animationDuration);
@@ -117,10 +125,11 @@ void PmSpoilerWidget::updateContentHeight()
     contentMaxAnim->setEndValue(contentMax);
 #endif
 
-    //m_contentArea->setMinimumHeight(contentMin);
     m_contentArea->setMaximumHeight(contentMax);
-    //setMinimumHeight(contentMin + collapsed);
     setMaximumHeight(contentMax + collapsed);
+
+    //m_contentArea->setMinimumHeight(contentMin);
+    //setMinimumHeight(contentMin + collapsed);
     //m_heightHint = contentMax + collapsed;
 }
 

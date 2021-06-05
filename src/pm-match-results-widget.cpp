@@ -14,6 +14,7 @@ PmMatchResultsWidget::PmMatchResultsWidget(PmCore* core, QWidget* parent)
     QHBoxLayout* mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_matchResultDisplay);
     setLayout(mainLayout);
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 
     // core event handlers
     connect(m_core, &PmCore::sigMatchConfigSelect,

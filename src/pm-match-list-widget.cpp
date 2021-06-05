@@ -14,6 +14,7 @@
 #include <QStackedWidget>
 #include <QIcon>
 #include <QStandardItemModel>
+#include <QScrollBar>
 
 #include <QMouseEvent>
 #include <QTimer> // for QTimer::singleShot()
@@ -69,12 +70,12 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_tableWidget->setSortingEnabled(false);
     m_tableWidget->setColumnCount((int)ColOrder::NumCols);
     m_tableWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    //m_tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
     m_tableWidget->setSizePolicy(
-        QSizePolicy::Preferred, QSizePolicy::Maximum);
+        QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     // config editing buttons
     m_cfgInsertBtn = prepareButton(obs_module_text("Insert New Match Entry"),
@@ -104,7 +105,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
     setContentLayout(mainLayout);
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    //setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     // init state
     auto multiConfig = m_core->multiMatchConfig();
@@ -221,8 +222,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 {
     int idx = (int)index;
 
-    int maxHeight = 0;
-    const int vertPad = 5;
+    int rowHeight = 0;
 
     auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::EnableBox);
@@ -230,7 +230,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         enableBox->blockSignals(true);
         enableBox->setChecked(cfg.filterCfg.is_enabled);
         enableBox->blockSignals(false);
-    	maxHeight = qMax(maxHeight, enableBox->sizeHint().height());
+    	rowHeight = qMax(rowHeight, enableBox->sizeHint().height());
     }
 
     auto nameItem = m_tableWidget->item(idx, (int)ColOrder::ConfigName);
@@ -239,49 +239,8 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         nameItem->setText(cfg.label.data());
         nameItem->setToolTip(cfg.label.data());
         m_tableWidget->blockSignals(false);
-        maxHeight = qMax(maxHeight, nameItem->sizeHint().height());
+        rowHeight = qMax(rowHeight, nameItem->sizeHint().height());
     }
-
-#if 0
-    const PmReactionOld &reaction = cfg.reactionOld;
-    auto targetCombo = (QComboBox*)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::TargetSelect);
-    if (targetCombo) {
-        updateTargetSelection(targetCombo, reaction, true);
-    }
-
-    auto actionStack = (QStackedWidget*)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::ActionSelect);
-    if (actionStack) {
-        if (reaction.type == PmActionType::SwitchScene) {
-            int idx = int(ActionStackOrder::SceneTarget);
-            actionStack->setCurrentIndex(idx);
-            auto sceneTransCombo = (QComboBox *)actionStack->widget(idx);
-            actionStack->setCurrentWidget(sceneTransCombo);
-            if (sceneTransCombo) {
-                sceneTransCombo->blockSignals(true);
-                sceneTransCombo->setCurrentText(
-                    reaction.sceneTransition.data());
-                sceneTransCombo->setToolTip(
-                    sceneTransCombo->currentText());
-                sceneTransCombo->blockSignals(false);
-            }
-        } else {
-            int idx = int(ActionStackOrder::SceneItemTarget);
-            actionStack->setCurrentIndex(idx);
-            auto sceneItemActionCombo = (QComboBox* )actionStack->widget(idx);
-            if (sceneItemActionCombo) {
-                sceneItemActionCombo->blockSignals(true);
-                bool show = reaction.type == PmActionType::ShowSceneItem
-                         || reaction.type == PmActionType::ShowFilter;
-                QString selStr = show ? k_showLabelStr : k_hideLabelStr;
-                sceneItemActionCombo->setCurrentText(selStr);
-                sceneItemActionCombo->blockSignals(false);
-            }
-        }
-    }
-
-#endif
 
     const PmReaction &reaction = cfg.reaction;
 
@@ -289,14 +248,15 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         m_tableWidget->cellWidget(idx, (int)ColOrder::MatchActions);
     if (matchDisplay) {
 	    matchDisplay->updateReaction(reaction, PmReactionType::Match);
-	    maxHeight = qMax(maxHeight, matchDisplay->sizeHint().height());
+	    rowHeight = qMax(rowHeight, matchDisplay->sizeHint().height());
     }
 
     PmReactionDisplay *unmatchDisplay = (PmReactionDisplay *)
         m_tableWidget->cellWidget(idx, (int)ColOrder::UnmatchActions);
     if (unmatchDisplay) {
 	    unmatchDisplay->updateReaction(reaction, PmReactionType::Unmatch);
-	    maxHeight = qMax(maxHeight, unmatchDisplay->sizeHint().height());
+	    rowHeight
+            = qMax(rowHeight, unmatchDisplay->sizeHint().height());
     }
 
     PmContainerWidget *lingerContainer = (PmContainerWidget *)
@@ -306,7 +266,8 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         lingerDelayBox->blockSignals(true);
         lingerDelayBox->setValue(reaction.lingerMs);
         lingerDelayBox->blockSignals(false);
-    	maxHeight = qMax(maxHeight, lingerDelayBox->sizeHint().height());
+    	rowHeight
+            = qMax(rowHeight, lingerDelayBox->sizeHint().height());
     }
 
     PmContainerWidget *cooldownContainer = (PmContainerWidget *)
@@ -317,13 +278,17 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         cooldownDelayBox->blockSignals(true);
         cooldownDelayBox->setValue(reaction.cooldownMs);
         cooldownDelayBox->blockSignals(false);
-	    maxHeight = qMax(maxHeight, cooldownDelayBox->sizeHint().height());
+	    rowHeight
+            = qMax(rowHeight, cooldownDelayBox->sizeHint().height());
     }
 
-    // workarounds to resize to contents...
-    setMinWidth();
+    // control horizontal sizing
     m_tableWidget->resizeColumnsToContents();
-    m_tableWidget->verticalHeader()->resizeSection(idx, maxHeight + vertPad);
+    setMinWidth();
+
+    // control vertical sizing
+    rowHeight += 5; // padding
+    m_tableWidget->verticalHeader()->resizeSection(idx, rowHeight);
     updateContentHeight();
 
     // enable/disable control buttons
@@ -620,127 +585,6 @@ void PmMatchListWidget::updateAvailableButtons(
     //m_cfgClearBtn->setEnabled(numConfigs > 0);
 }
 
-#if 0
-void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
-    const QList<std::string> &scenes, const QList<std::string> &sceneItems)
-{
-    if (!combo) return;
-
-    auto model = dynamic_cast<QStandardItemModel *>(combo->model());
-
-    combo->blockSignals(true);
-    auto currText = combo->currentText();
-    combo->clear();
-
-    QFont mainFont = font();
-    mainFont.setBold(true);
-
-    int idx = 0;
-
-    combo->addItem(k_dontSwitchStr);
-    combo->setItemData(idx, "", Qt::UserRole);
-    combo->setItemData(idx, mainFont, Qt::FontRole);
-    combo->setItemData(idx, QBrush(k_dontSwitchColor), Qt::TextColorRole);
-    idx++;
-
-    combo->addItem(k_scenesLabelStr);
-    combo->setItemData(idx, QBrush(k_scenesLabelColor), Qt::TextColorRole);
-    model->item(idx)->setEnabled(false);
-    idx++;
-
-    for (const std::string &sceneName : scenes) {
-        combo->addItem(sceneName.data());
-        combo->setItemData(idx, sceneName.data(), Qt::UserRole);
-        combo->setItemData(idx, mainFont, Qt::FontRole);
-        combo->setItemData(idx, QBrush(k_scenesColor), Qt::TextColorRole);
-        idx++;
-    }
-
-    if (sceneItems.size()) {
-        combo->addItem(k_sceneItemsLabelStr);
-        combo->setItemData(
-            idx, QBrush(k_sceneItemsLabelColor), Qt::TextColorRole);
-        model->item(idx)->setEnabled(false);
-        idx++;
-
-        QFont filtersFont = font();
-        filtersFont.setBold(false);
-
-        for (const std::string &siName : sceneItems) {
-            combo->addItem(siName.data());
-            combo->setItemData(idx, siName.data(), Qt::UserRole);
-            combo->setItemData(idx, mainFont, Qt::FontRole);
-            combo->setItemData(
-                idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
-            idx++;
-
-            QList<std::string> filterNames = m_core->filters(siName);
-            for (const std::string& fiName : filterNames) {
-                QString fiLabel
-                    = QString(" ") + QChar(0x25CF) + ' ' + fiName.data();
-                combo->addItem(fiLabel);
-                combo->setItemData(idx, fiName.data(), Qt::UserRole);
-                combo->setItemData(
-                    idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
-                combo->setItemData(idx, filtersFont, Qt::FontRole);
-                idx++;
-            }
-        }
-    }
-
-    combo->setCurrentText(currText);
-    combo->setToolTip(combo->currentText());
-    combo->blockSignals(false);
-}
-
-void PmMatchListWidget::updateTargetSelection(
-    QComboBox *targetCombo, const PmReactionOld &reaction, bool transparent)
-{
-    QColor targetColor;
-    std::string targetStr;
-    if (reaction.isSet()) {
-        if (reaction.type == PmActionType::SwitchScene) {
-            targetStr = reaction.targetScene;
-            targetColor = k_scenesColor;
-        } else if (reaction.type == PmActionType::ShowSceneItem
-                || reaction.type == PmActionType::HideSceneItem) {
-            targetStr = reaction.targetSceneItem;
-            targetColor = k_sceneItemsColor;
-        } else {
-            targetStr = reaction.targetFilter;
-            targetColor = k_sceneItemsColor;
-        }
-    } else {
-        targetColor = k_dontSwitchColor;
-        targetStr = "";
-    }
-    QString stylesheet = QString("%1; color: %2")
-        .arg(transparent ? k_transpBgStyle : "")
-        .arg(targetColor.name());
-
-    targetCombo->blockSignals(true);
-    int idx = targetCombo->findData(targetStr.data(), Qt::UserRole);
-    targetCombo->setCurrentIndex(idx);
-    targetCombo->setStyleSheet(stylesheet);
-    targetCombo->setToolTip(targetCombo->currentText());
-    targetCombo->blockSignals(false);
-}
-
-void PmMatchListWidget::updateTransitionChoices(QComboBox* combo)
-{
-    combo->blockSignals(true);
-    auto currText = combo->currentText();
-    combo->clear();
-    auto availableTransitions = m_core->availableTransitions();
-    for (const auto& val : availableTransitions) {
-        combo->addItem(val.data());
-    }
-    combo->setCurrentText(currText);
-    combo->setToolTip(combo->currentText());
-    combo->blockSignals(false);
-}
-#endif
-
 int PmMatchListWidget::currentIndex() const
 {
     return m_tableWidget->currentIndex().row();
@@ -852,6 +696,26 @@ void PmMatchListWidget::setMinWidth()
 {
     int width = m_tableWidget->horizontalHeader()->length() + 20;
     m_tableWidget->setMinimumWidth(width);
+}
+
+int PmMatchListWidget::contentHeight() const
+{
+	auto vertHeader = m_tableWidget->verticalHeader();
+	auto horizHeader = m_tableWidget->horizontalHeader();
+
+	int count = vertHeader->count();
+	int scrollBarHeight = m_tableWidget->horizontalScrollBar()->height();
+	int horizontalHeaderHeight = horizHeader->height();
+	int rowTotalHeight = 0;
+	for (int i = 0; i < count; ++i) {
+		rowTotalHeight += vertHeader->sectionSize(i);
+	}
+	return rowTotalHeight;
+}
+
+void PmMatchListWidget::updateContentHeight()
+{
+    PmSpoilerWidget::updateContentHeight();
 }
 
 bool PmMatchListWidget::selectRowAtGlobalPos(QPoint globalPos)
