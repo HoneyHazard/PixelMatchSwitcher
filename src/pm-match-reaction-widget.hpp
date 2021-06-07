@@ -17,6 +17,8 @@ class QListWidgetItem;
 class QStackedWidget;
 class QVBoxLayout;
 class QScrollArea;
+class QWidgetAction;
+class QEvent;
 
 class PmActionEntryWidget : public QWidget
 {
@@ -96,7 +98,7 @@ protected:
 
     //QScrollArea *m_scrollArea;
     QListWidget *m_actionListWidget;
-    QToolButton *m_insertActionButton;
+    QPushButton *m_insertActionButton;
     QPushButton *m_removeActionButton;
 
     PmReactionTarget m_reactionTarget;
@@ -105,4 +107,23 @@ protected:
     size_t m_multiConfigSz = 0;
 
     PmCore *m_core;
+};
+
+
+/**
+ * @brief https://stackoverflow.com/questions/55086498/highlighting-custom-qwidgetaction-on-hover
+ */
+class PmMenuHelper : public QObject
+{
+    Q_OBJECT
+
+public:
+    PmMenuHelper(QMenu *menu, QObject *parent);
+
+protected:
+    bool eventFilter(QObject *target, QEvent *e) override;
+    void highlight(QWidgetAction *qwa, bool h);
+
+	QMenu *m_menu;
+	QWidgetAction *m_lastQwa = nullptr;
 };

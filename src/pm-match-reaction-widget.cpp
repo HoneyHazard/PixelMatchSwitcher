@@ -14,6 +14,8 @@
 #include <QWidgetAction>
 #include <QMenu>
 #include <QLabel>
+#include <QEvent>
+#include <QMouseEvent>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -269,6 +271,7 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 
 //----------------------------------------------------
 
+
 PmMatchReactionWidget::PmMatchReactionWidget(
     PmCore *core,
     PmReactionTarget reactionTarget, PmReactionType reactionType,
@@ -278,41 +281,46 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
 {
-	QMenu *insertMenu = new QMenu(this);
-	int typeStart = (int)PmActionType::Scene;
-	int typeEnd = (int)PmActionType::FrontEndEvent;
-	for (int i = typeStart; i <= typeEnd; i++) {
-		PmActionType actType = PmActionType(i);
-		QLabel *label = new QLabel(this);
-		label->setText(PmAction::actionStr(actType));
-		label->setStyleSheet(QString("color: %1").arg(
-            PmAction::actionColorStr(actType)));
-		label->setMouseTracking(true);
-
-        QWidgetAction *action = new QWidgetAction(this);
-        action->setDefaultWidget(label);
-		connect(action, &QWidgetAction::triggered,
-			    [this, i]() { onInsertReleased(i); });
-		insertMenu->addAction(action);
-		if (i != typeEnd)
-			insertMenu->addSeparator();
-	}
-
 	QIcon insertIcon;
 	insertIcon.addFile(
         ":/res/images/add.png", QSize(), QIcon::Normal, QIcon::Off);
-	m_insertActionButton = new QToolButton(this);
+	m_insertActionButton = new QPushButton(this);
 	m_insertActionButton->setIcon(insertIcon);
 	m_insertActionButton->setIconSize(QSize(16, 16));
 	m_insertActionButton->setMaximumSize(22, 22);
 	m_insertActionButton->setProperty("themeID", QVariant("addIconSmall"));
 	m_insertActionButton->setToolTip(obs_module_text("Insert New Match Entry"));
-	//m_insertActionButton->setFocusPolicy(Qt::NoFocus);
-	m_insertActionButton->setPopupMode(QToolButton::InstantPopup);
-	m_insertActionButton->setMenu(insertMenu);
-	m_insertActionButton->setStyleSheet(
-        "QToolButton { border: 0; } "
-        "QToolButton::menu-indicator { image: none; }");
+	m_insertActionButton->setFocusPolicy(Qt::NoFocus);
+	//m_insertActionButton->setPopupMode(QToolButton::InstantPopup);
+	//m_insertActionButton->setStyleSheet(
+    //    "QToolButton { border: 0; } "
+    //    "QToolButton::menu-indicator { image: none; }");
+
+    QMenu *insertMenu = new QMenu(this);
+	int typeStart = (int)PmActionType::Scene;
+	int typeEnd = (int)PmActionType::FrontEndEvent;
+	for (int i = typeStart; i <= typeEnd; i++) {
+		PmActionType actType = PmActionType(i);
+		//QString labelText = QString("<font color=\"%1\">%2</font>")
+        //    .arg(PmAction::actionColor(actType).name())
+		//	.arg(PmAction::actionStr(actType));
+		QLabel *itemLabel = new QLabel(this);
+		//itemLabel->setTextFormat(Qt::RichText);
+		//itemLabel->setText(labelText);
+		itemLabel->setText(PmAction::actionStr(actType));
+		itemLabel->setMouseTracking(true);
+
+        QWidgetAction *qwa = new QWidgetAction(this);
+		qwa->setDefaultWidget(itemLabel);
+		insertMenu->addAction(qwa);
+
+		if (i != typeEnd)
+			insertMenu->addSeparator();
+	}
+	PmMenuHelper *menuHelper = new PmMenuHelper(insertMenu, this);
+
+    connect(m_insertActionButton, &QPushButton::released,
+		[insertMenu]() { insertMenu->popup(QCursor::pos()); });
 
     QIcon removeIcon;
 	removeIcon.addFile(
@@ -539,4 +547,46 @@ void PmMatchReactionWidget::onRemoveReleased()
     pushReaction(reaction);
 }
 
+//----------------------------------------------
 
+PmMenuHelper::PmMenuHelper(QMenu *menu, QObject *parent)
+	: QObject(parent), m_menu(menu)
+{
+	menu->installEventFilter(this);
+}
+
+bool PmMenuHelper::eventFilter(QObject *target, QEvent *e)
+{
+	if (e->type() == QEvent::Type::MouseMove) {
+		QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(e);
+		QAction *a = static_cast<QMenu *>(target)->actionAt(
+			mouseEvent->pos());
+		QWidgetAction *qwa = dynamic_cast<QWidgetAction *>(a);
+		if (qwa) {
+			if (m_lastQwa && qwa != m_lastQwa) {
+				highlight(m_lastQwa, false);
+			}
+			highlight(qwa, true);
+			m_lastQwa = qwa;
+		} else {
+			if (m_lastQwa) {
+				highlight(m_lastQwa, false);
+				m_lastQwa = nullptr;
+			}
+		}
+	}
+	return QObject::eventFilter(target, e);
+}
+
+void PmMenuHelper::highlight(QWidgetAction *qwa, bool h)
+{
+	QWidget *mainWidget = qwa->defaultWidget();
+	QString styleSheet = h ? "font-weight: bold" : "";
+	mainWidget->setStyleSheet(styleSheet);
+
+#if 0
+	mainWidget->setBackgroundRole(h ? QPalette::Highlight
+					: QPalette::Window);
+	mainWidget->setAutoFillBackground(h);
+#endif
+}
