@@ -288,6 +288,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 	m_insertActionButton->setIcon(insertIcon);
 	m_insertActionButton->setIconSize(QSize(16, 16));
 	m_insertActionButton->setMaximumSize(22, 22);
+	m_insertActionButton->setFlat(true);
 	m_insertActionButton->setProperty("themeID", QVariant("addIconSmall"));
 	m_insertActionButton->setToolTip(obs_module_text("Insert New Match Entry"));
 	m_insertActionButton->setFocusPolicy(Qt::NoFocus);
@@ -301,16 +302,13 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 	int typeEnd = (int)PmActionType::FrontEndEvent;
 	for (int i = typeStart; i <= typeEnd; i++) {
 		PmActionType actType = PmActionType(i);
-		//QString labelText = QString("<font color=\"%1\">%2</font>")
-        //    .arg(PmAction::actionColor(actType).name())
-		//	.arg(PmAction::actionStr(actType));
-		QLabel *itemLabel = new QLabel(this);
-		//itemLabel->setTextFormat(Qt::RichText);
-		//itemLabel->setText(labelText);
-		itemLabel->setText(PmAction::actionStr(actType));
+		QString labelText = PmAction::actionStr(actType);
+		QLabel *itemLabel = new QLabel(labelText, this);
+		QString colorStr = PmAction::actionColorStr(actType);
+		itemLabel->setStyleSheet(QString("color: ") + colorStr);
 		itemLabel->setMouseTracking(true);
-
         QWidgetAction *qwa = new QWidgetAction(this);
+		qwa->setData(colorStr);
 		qwa->setDefaultWidget(itemLabel);
 		insertMenu->addAction(qwa);
 
@@ -319,8 +317,9 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 	}
 	PmMenuHelper *menuHelper = new PmMenuHelper(insertMenu, this);
 
-    connect(m_insertActionButton, &QPushButton::released,
-		[insertMenu]() { insertMenu->popup(QCursor::pos()); });
+    //connect(m_insertActionButton, &QPushButton::released,
+	//	[insertMenu]() { insertMenu->popup(QCursor::pos()); });
+	m_insertActionButton->setMenu(insertMenu);
 
     QIcon removeIcon;
 	removeIcon.addFile(
@@ -580,9 +579,12 @@ bool PmMenuHelper::eventFilter(QObject *target, QEvent *e)
 
 void PmMenuHelper::highlight(QWidgetAction *qwa, bool h)
 {
-	QWidget *mainWidget = qwa->defaultWidget();
-	QString styleSheet = h ? "font-weight: bold" : "";
-	mainWidget->setStyleSheet(styleSheet);
+	QString colorStr = qwa->data().toString();
+	QLabel *label = (QLabel*)qwa->defaultWidget();
+	QString styleSheet =QString("color: %1 %2")
+        .arg(colorStr)
+        .arg(h ? "; font-weight: bold" : "");
+	label->setStyleSheet(styleSheet);
 
 #if 0
 	mainWidget->setBackgroundRole(h ? QPalette::Highlight
