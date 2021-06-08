@@ -281,17 +281,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
 {
-	QIcon insertIcon;
-	insertIcon.addFile(
-        ":/res/images/add.png", QSize(), QIcon::Normal, QIcon::Off);
-	m_insertActionButton = new QPushButton(this);
-	m_insertActionButton->setIcon(insertIcon);
-	m_insertActionButton->setIconSize(QSize(16, 16));
-	m_insertActionButton->setMaximumSize(22, 22);
-	m_insertActionButton->setFlat(true);
-	m_insertActionButton->setProperty("themeID", QVariant("addIconSmall"));
-	m_insertActionButton->setToolTip(obs_module_text("Insert New Match Entry"));
-	m_insertActionButton->setFocusPolicy(Qt::NoFocus);
+
 	//m_insertActionButton->setPopupMode(QToolButton::InstantPopup);
 	//m_insertActionButton->setStyleSheet(
     //    "QToolButton { border: 0; } "
@@ -318,22 +308,34 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 			insertMenu->addSeparator();
 	}
 	PmMenuHelper *menuHelper = new PmMenuHelper(insertMenu, this);
-
-    //connect(m_insertActionButton, &QPushButton::released,
-	//	[insertMenu]() { insertMenu->popup(QCursor::pos()); });
-	m_insertActionButton->setMenu(insertMenu);
+	QIcon insertIcon;
+	insertIcon.addFile(":/res/images/add.png", QSize(), QIcon::Normal,
+			   QIcon::Off);
+	m_insertActionButton = new QPushButton(this);
+	m_insertActionButton->setIcon(insertIcon);
+	m_insertActionButton->setIconSize(QSize(16, 16));
+	m_insertActionButton->setMaximumSize(22, 22);
+	m_insertActionButton->setFlat(true);
+	m_insertActionButton->setProperty("themeID", QVariant("addIconSmall"));
+	m_insertActionButton->setToolTip(
+		obs_module_text("Insert New Action"));
+	m_insertActionButton->setFocusPolicy(Qt::NoFocus);
+	connect(m_insertActionButton, &QPushButton::released,
+            [insertMenu]() { insertMenu->popup(QCursor::pos()); });
 
     QIcon removeIcon;
 	removeIcon.addFile(
-        ":/res/images/add.png", QSize(), QIcon::Normal, QIcon::Off);
+        ":/res/images/list_remove.png", QSize(), QIcon::Normal, QIcon::Off);
     m_removeActionButton = new QPushButton(this);
 	m_removeActionButton->setIcon(removeIcon);
     m_removeActionButton->setIconSize(QSize(16, 16));
 	m_removeActionButton->setMaximumSize(22, 22);
     m_removeActionButton->setFlat(true);
     m_removeActionButton->setProperty("themeID", QVariant("removeIconSmall"));
-    m_removeActionButton->setToolTip(obs_module_text("Remove Match Entry"));
+    m_removeActionButton->setToolTip(obs_module_text("Remove Action"));
     m_removeActionButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_removeActionButton, &QPushButton::released, this,
+	        &PmMatchReactionWidget::onRemoveReleased);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(m_insertActionButton);
@@ -352,9 +354,6 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addWidget(m_actionListWidget);
     setContentLayout(mainLayout);
-
-    connect(m_removeActionButton, &QPushButton::released,
-            this, &PmMatchReactionWidget::onRemoveReleased);
 
     // entry vs no-match specific
     const auto qc = Qt::QueuedConnection;
