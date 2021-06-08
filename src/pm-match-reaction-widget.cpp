@@ -310,6 +310,8 @@ PmMatchReactionWidget::PmMatchReactionWidget(
         QWidgetAction *qwa = new QWidgetAction(this);
 		qwa->setData(colorStr);
 		qwa->setDefaultWidget(itemLabel);
+		connect(qwa, &QWidgetAction::triggered,
+			    [this, i]() { onInsertReleased(i); });
 		insertMenu->addAction(qwa);
 
 		if (i != typeEnd)
