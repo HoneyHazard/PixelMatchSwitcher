@@ -289,20 +289,6 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         (size_t)currentIndex(), m_core->multiMatchConfigSize());
 }
 
-#if 0
-void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
-{
-    updateTargetSelection(m_noMatchSceneCombo, noMatchReaction);
-
-    m_noMatchTransitionCombo->blockSignals(true);
-    m_noMatchTransitionCombo->setCurrentText(
-        noMatchReaction.sceneTransition.data());
-    m_noMatchTransitionCombo->setToolTip(
-        m_noMatchTransitionCombo->currentText());
-    m_noMatchTransitionCombo->blockSignals(false);
-}
-#endif
-
 void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
 {
     int idx = (int)index;
@@ -400,26 +386,6 @@ void PmMatchListWidget::onConfigMoveDownButtonReleased()
     emit sigMatchConfigMoveDown(idx);
 }
 
-#if 0
-void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
-{
-    std::string noMatchScene = 
-        (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
-
-    
-    PmReaction noMatchReaction = m_core->noMatchReaction();
-    noMatchReaction.targetScene = noMatchScene;
-    emit sigNoMatchReactionChanged(noMatchReaction);
-}
-
-void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
-{
-    PmReaction noMatchReaction = m_core->noMatchReaction();
-    noMatchReaction.sceneTransition = str.toUtf8().data();
-    emit sigNoMatchReactionChanged(noMatchReaction);
-}
-#endif
-
 void PmMatchListWidget::onCellChanged(int row, int col)
 {
     int numRows = m_tableWidget->rowCount();
@@ -466,45 +432,6 @@ void PmMatchListWidget::constructRow(int idx)
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
     m_tableWidget->setItem(
         idx, (int)ColOrder::ConfigName, labelItem);
-
-    #if 0
-    // target scene or scene item
-    QComboBox* targetCombo = new QComboBox(parent);
-    targetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
-    targetCombo->setStyleSheet(k_transpBgStyle);
-    targetCombo->setAttribute(Qt::WA_TranslucentBackground);
-    targetCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    updateTargetChoices(targetCombo, scenes, sceneItems);
-    targetCombo->installEventFilter(this);
-    connect(targetCombo, &QComboBox::currentTextChanged,
-        [this, targetCombo, idx](){ targetSelected(idx, targetCombo); });
-    m_tableWidget->setCellWidget(idx, (int)ColOrder::TargetSelect, targetCombo);
-
-    // scene transition or scene item action
-    QComboBox* sceneTransitionCombo = new QComboBox(parent);
-    sceneTransitionCombo->setStyleSheet(k_transpBgStyle);
-    updateTransitionChoices(sceneTransitionCombo);
-    sceneTransitionCombo->installEventFilter(this);
-    connect(sceneTransitionCombo, &QComboBox::currentTextChanged,
-        [this, idx](const QString& str) { sceneTransitionSelected(idx, str); });
-
-    QComboBox *sceneItemActionCombo = new QComboBox(parent);
-    sceneItemActionCombo->setStyleSheet(k_transpBgStyle);
-    sceneItemActionCombo->addItem(k_showLabelStr);
-    sceneItemActionCombo->addItem(k_hideLabelStr);
-    sceneItemActionCombo->installEventFilter(this);
-    connect(sceneItemActionCombo, &QComboBox::currentTextChanged,
-        [this, idx](const QString &str) { sceneItemActionSelected(idx, str); });
-
-    QStackedWidget *targetActionStack = new QStackedWidget(parent);
-    targetActionStack->setStyleSheet(
-        QString("QWidget { %1 }").arg(k_transpBgStyle));
-    targetActionStack->setContentsMargins(0, 0, 0, 0);
-    targetActionStack->addWidget(sceneTransitionCombo);
-    targetActionStack->addWidget(sceneItemActionCombo);
-    m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::ActionSelect, targetActionStack);
-    #endif
 
     // match actions
     PmReactionDisplay *matchActionsDisplay
