@@ -89,7 +89,7 @@ protected:
     bool selectRowAtGlobalPos(QPoint globalPos);
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
 
-    int contentHeight() const override;
+    int maxContentHeight() const override;
 
     PmCore* m_core;
     QTableWidget *m_tableWidget;

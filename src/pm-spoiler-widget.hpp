@@ -34,7 +34,7 @@ protected slots:
     void collapseToggled(bool checked);
 
 protected:
-    virtual int contentHeight() const;
+    virtual int maxContentHeight() const;
     virtual void updateContentHeight();
 
     QGridLayout* m_mainLayout;

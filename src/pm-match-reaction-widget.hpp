@@ -73,7 +73,6 @@ public:
         PmCore *core,
         PmReactionTarget reactionTarget, PmReactionType reactionType,
         QWidget *parent);
-	void toggleExpand(bool on) override;
 
 signals:
     void sigMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
@@ -95,6 +94,7 @@ protected:
     PmReaction pullReaction() const;
     void pushReaction(const PmReaction &reaction);
     void reactionToUi(const PmReaction &reaction);
+    int maxContentHeight() const override;
 
     //QScrollArea *m_scrollArea;
     QListWidget *m_actionListWidget;

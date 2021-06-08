@@ -79,7 +79,7 @@ void PmSpoilerWidget::toggleExpand(bool on)
 #endif
 }
 
-int PmSpoilerWidget::contentHeight() const
+int PmSpoilerWidget::maxContentHeight() const
 {
 	return m_contentArea->layout()->maximumSize().height();
 }
@@ -97,7 +97,7 @@ void PmSpoilerWidget::updateContentHeight()
         : 0;
 #endif
 
-	int contentMax = contentOn ? contentHeight() : 0;
+	int contentMax = contentOn ? maxContentHeight() : 0;
 
     int collapsed
         = qMax(m_toggleButton->sizeHint().height(),

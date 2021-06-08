@@ -345,8 +345,8 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 
     m_actionListWidget = new QListWidget(this);
     //m_actionListWidget->setMinimumHeight(200);
-    //m_actionListWidget->setSizePolicy(
-    //    QSizePolicy::Preferred, QSizePolicy::Minimum);
+    m_actionListWidget->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Expanding);
     m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
@@ -354,6 +354,8 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addWidget(m_actionListWidget);
     setContentLayout(mainLayout);
+    m_contentArea->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     // entry vs no-match specific
     const auto qc = Qt::QueuedConnection;
@@ -382,12 +384,6 @@ PmMatchReactionWidget::PmMatchReactionWidget(
             : obs_module_text("Nothing Matched"));
         onNoMatchReactionChanged(m_core->noMatchReaction());
     }
-}
-
-void PmMatchReactionWidget::toggleExpand(bool on)
-{
-	PmSpoilerWidget::toggleExpand(on);
-    // TODO buttons
 }
 
 void PmMatchReactionWidget::onMatchConfigChanged(
@@ -461,16 +457,28 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     }
 
     int listMinHeight = 10;
-    int listMaxHeight = 10;
     if (listSz > 0) {
-        
+	    int idx = m_actionListWidget->currentRow();
+	    if (idx < 0) idx = 0;
 	    listMinHeight = m_actionListWidget->sizeHintForRow(0);
-        listMaxHeight = listMinHeight * (listSz+1);
+        //listMaxHeight = listMinHeight * (listSz+1);
     } 
     m_actionListWidget->setMinimumHeight(listMinHeight);
-    m_actionListWidget->setMaximumHeight(listMaxHeight);
+    m_actionListWidget->setMaximumHeight(maxContentHeight());
+
     updateContentHeight();
 }
+
+int PmMatchReactionWidget::maxContentHeight() const
+{
+	int ret = 0;
+	int count = m_actionListWidget->count();
+	for (int i = 0; i < count; i++) {
+		ret += m_actionListWidget->sizeHintForRow(i);
+    }
+	return ret;
+}
+
 
 void PmMatchReactionWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig cfg)
@@ -503,6 +511,8 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
 
 void PmMatchReactionWidget::onInsertReleased(int actionIdx)
 {
+	expand();
+
     size_t idx = 0;
     if (m_actionListWidget->count() > 0) {
         int currRow = m_actionListWidget->currentRow();

@@ -550,7 +550,7 @@ void PmMatchListWidget::setMinWidth()
     m_tableWidget->setMinimumWidth(width);
 }
 
-int PmMatchListWidget::contentHeight() const
+int PmMatchListWidget::maxContentHeight() const
 {
 	//return PmSpoilerWidget::contentHeight();
 

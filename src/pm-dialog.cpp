@@ -95,11 +95,11 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->setStretch(0, 1);
     leftLayout->setStretch(1, 10000);
     leftLayout->setStretch(2, 1);
-    leftLayout->setStretch(3, 1);
-    leftLayout->setStretch(4, 1);
-    leftLayout->setStretch(5, 1);
-    leftLayout->setStretch(6, 1);
-    leftLayout->setStretch(7, 100);
+    leftLayout->setStretch(3, 100);
+    leftLayout->setStretch(4, 100);
+    leftLayout->setStretch(5, 100);
+    leftLayout->setStretch(6, 100);
+    leftLayout->setStretch(7, 10);
     leftLayout->setStretch(8, 1);
     #endif
 
