@@ -78,6 +78,9 @@ signals:
     void sigMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
     void sigNoMatchReactionChanged(PmReaction reaction);
 
+public slots:
+    void toggleExpand(bool on) override;
+
 protected slots:
     // core events
     void onMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg);
@@ -90,6 +93,7 @@ protected slots:
     void onInsertReleased(int actionTypeIndex);
     void onRemoveReleased();
     void updateButtonsState();
+    void updateTitle();
 
 protected:
     PmReaction pullReaction() const;

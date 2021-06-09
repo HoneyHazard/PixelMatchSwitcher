@@ -380,9 +380,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
                 this, &PmMatchReactionWidget::onNoMatchReactionChanged, qc);
         connect(this, &PmMatchReactionWidget::sigNoMatchReactionChanged,
                 m_core, &PmCore::onNoMatchReactionChanged, qc);
-        setTitle((m_reactionType == PmReactionType::Match)
-            ? obs_module_text("Anything Matched")
-            : obs_module_text("Nothing Matched"));
+
         onNoMatchReactionChanged(m_core->noMatchReaction());
     }
 }
@@ -391,12 +389,6 @@ void PmMatchReactionWidget::onMatchConfigChanged(
     size_t matchIdx, PmMatchConfig cfg)
 {
     if (matchIdx != m_matchIndex) return;
-
-    setTitle(QString(obs_module_text("%1 Actions #%2: %3"))
-        .arg((m_reactionType == PmReactionType::Match) ?
-                obs_module_text("Match") : obs_module_text("Unmatch"))
-        .arg(matchIdx + 1)
-        .arg(cfg.label.data()));
 
     const PmReaction &reaction = cfg.reaction;
     reactionToUi(reaction);
@@ -467,13 +459,9 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     m_actionListWidget->setMinimumHeight(listMinHeight);
     m_actionListWidget->setMaximumHeight(maxContentHeight());
 
-    if (listSz > 0) {
-	    if (!isExpanded()) expand();
-    } else {
-	    if (isExpanded()) collapse();
-    }
-    updateButtonsState();
-    updateContentHeight();
+    bool expand = (listSz > 0);
+    toggleExpand(expand); // calls updateButtonsState() and updateContentHeight()
+    updateTitle();
 }
 
 int PmMatchReactionWidget::maxContentHeight() const
@@ -497,6 +485,38 @@ void PmMatchReactionWidget::updateButtonsState()
 
     int actionIdx = m_actionListWidget->currentRow();
     m_removeActionButton->setEnabled(actionIdx >= 0);
+}
+
+void PmMatchReactionWidget::updateTitle()
+{
+	QString str;
+	if (m_reactionTarget == PmReactionTarget::Anything) {
+		str = (m_reactionType == PmReactionType::Match)
+		    ? obs_module_text("Anything Matched")
+		    : obs_module_text("Nothing Matched");
+	} else {
+		str = QString(obs_module_text("%1 Actions #%2: %3"))
+			.arg((m_reactionType == PmReactionType::Match)
+				     ? obs_module_text("Match")
+				     : obs_module_text("Unmatch"))
+			.arg(m_matchIndex + 1)
+			.arg(m_core->matchConfigLabel(m_matchIndex).data());
+	}
+
+    if (m_actionListWidget->count() > 0) {
+		str += QString(" [%1]").arg(m_actionListWidget->count());
+    }
+    setTitle(str);
+}
+
+void PmMatchReactionWidget::toggleExpand(bool on)
+{
+	if (m_actionListWidget->count() == 0)
+		on = false;
+
+	PmSpoilerWidget::toggleExpand(on);
+
+    updateButtonsState();
 }
 
 void PmMatchReactionWidget::onMatchConfigSelect(
@@ -530,8 +550,6 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
 
 void PmMatchReactionWidget::onInsertReleased(int actionIdx)
 {
-	expand();
-
     size_t idx = 0;
     if (m_actionListWidget->count() > 0) {
         int currRow = m_actionListWidget->currentRow();

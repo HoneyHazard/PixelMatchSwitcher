@@ -286,6 +286,13 @@ PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
                                                 : PmMatchConfig();
 }
 
+std::string PmCore::matchConfigLabel(size_t matchIdx) const
+{
+	QMutexLocker locker(&m_matchConfigMutex);
+	return matchIdx < m_multiMatchConfig.size()
+        ? m_multiMatchConfig[matchIdx].label : "";
+}
+
 bool PmCore::hasAction(size_t matchIdx, PmActionType actionType) const
 {
     QMutexLocker locker(&m_matchConfigMutex);

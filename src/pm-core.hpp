@@ -64,6 +64,7 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
+    std::string matchConfigLabel(size_t matchIdx) const;
     bool hasSceneAction(size_t matchIdx) const
         { return hasAction(matchIdx, PmActionType::Scene); }
     bool hasAction(size_t matchIdx, PmActionType actionType) const;
