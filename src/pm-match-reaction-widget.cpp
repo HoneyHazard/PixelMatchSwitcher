@@ -271,7 +271,6 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 
 //----------------------------------------------------
 
-
 PmMatchReactionWidget::PmMatchReactionWidget(
     PmCore *core,
     PmReactionTarget reactionTarget, PmReactionType reactionType,
@@ -349,6 +348,8 @@ PmMatchReactionWidget::PmMatchReactionWidget(
         QSizePolicy::Preferred, QSizePolicy::Expanding);
     m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    connect(m_actionListWidget, &QListWidget::currentRowChanged,
+            this, &PmMatchReactionWidget::updateButtonsState);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -466,6 +467,12 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     m_actionListWidget->setMinimumHeight(listMinHeight);
     m_actionListWidget->setMaximumHeight(maxContentHeight());
 
+    if (listSz > 0) {
+	    if (!isExpanded()) expand();
+    } else {
+	    if (isExpanded()) collapse();
+    }
+    updateButtonsState();
     updateContentHeight();
 }
 
@@ -479,6 +486,18 @@ int PmMatchReactionWidget::maxContentHeight() const
 	return ret;
 }
 
+void PmMatchReactionWidget::updateButtonsState()
+{
+	bool available = true;
+	if (m_reactionTarget == PmReactionTarget::Entry) {
+		available = m_matchIndex < m_multiConfigSz;
+    }
+    m_insertActionButton->setVisible(available);
+    m_removeActionButton->setVisible(available && isExpanded());
+
+    int actionIdx = m_actionListWidget->currentRow();
+    m_removeActionButton->setEnabled(actionIdx >= 0);
+}
 
 void PmMatchReactionWidget::onMatchConfigSelect(
     size_t matchIndex, PmMatchConfig cfg)

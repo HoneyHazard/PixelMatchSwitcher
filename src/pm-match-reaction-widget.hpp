@@ -89,6 +89,7 @@ protected slots:
     // local UI events
     void onInsertReleased(int actionTypeIndex);
     void onRemoveReleased();
+    void updateButtonsState();
 
 protected:
     PmReaction pullReaction() const;

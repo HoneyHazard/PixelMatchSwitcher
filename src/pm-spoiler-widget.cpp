@@ -62,11 +62,10 @@ void PmSpoilerWidget::toggleExpand(bool on)
 {
 	m_mainLayout->setVerticalSpacing(on ? m_verticalSpacing : 0);
 
-    m_toggleButton->setArrowType(
-        on ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
-
     m_toggleButton->blockSignals(true);
     m_toggleButton->setChecked(on);
+    m_toggleButton->setArrowType(
+        on ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
     m_toggleButton->blockSignals(false);
 
     updateContentHeight();
