@@ -456,10 +456,12 @@ int PmMatchReactionWidget::maxContentHeight() const
 {
 	int ret = 0;
 	int count = m_actionListWidget->count();
+	const int extraPadding = 10; // TODO: figure out where it's coming from
+
 	for (int i = 0; i < count; i++) {
 		ret += m_actionListWidget->sizeHintForRow(i);
     }
-	return ret;
+	return ret + extraPadding;
 }
 
 void PmMatchReactionWidget::updateButtonsState()
