@@ -110,6 +110,7 @@ protected:
     PmReactionType m_reactionType;
     size_t m_matchIndex = (size_t)-1;
     size_t m_multiConfigSz = 0;
+    int m_lastActionCount = -1;
 
     PmCore *m_core;
 };

@@ -648,12 +648,15 @@ void PmReactionDisplay::updateReaction(
         ? reaction.matchActions : reaction.unmatchActions;
     QString line;
     QString html;
+    QString tmp;
     for (size_t i = 0; i < actions.size(); ++i) {
         const auto &action = actions[i];
         switch (action.m_actionType) {
         case PmActionType::Scene:
+            tmp = action.isSet() ? action.m_targetElement.data()
+                : QString("[%1]").arg(PmAction::actionStr(action.m_actionType));
 		    line = QString("%1%2")
-			    .arg(action.m_targetElement.data())
+                .arg(tmp)
                 .arg(action.m_targetDetails.size() ?
                     QString(" [%1]").arg(action.m_targetDetails.data()) : "");
             html += QString("<font color=\"%1\">%2</font>")
@@ -662,8 +665,10 @@ void PmReactionDisplay::updateReaction(
             break;
         case PmActionType::SceneItem:
         case PmActionType::Filter:
+            tmp = action.isSet() ? action.m_targetElement.data()
+                : QString("[%1]").arg(PmAction::actionStr(action.m_actionType));
             line = QString("%1 [%2]")
-                .arg(action.m_targetElement.data())
+                .arg(tmp)
                 .arg(action.m_actionCode == int(PmToggleCode::Show) ?
                     obs_module_text("show") : obs_module_text("hide"));
             html += QString("<font color=\"%1\">%2</font>")

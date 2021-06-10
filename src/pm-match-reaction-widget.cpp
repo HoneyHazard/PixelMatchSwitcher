@@ -331,9 +331,6 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     setTopRightLayout(buttonLayout);
 
     m_actionListWidget = new QListWidget(this);
-    //m_actionListWidget->setMinimumHeight(200);
-    m_actionListWidget->setSizePolicy(
-        QSizePolicy::Preferred, QSizePolicy::Expanding);
     m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     connect(m_actionListWidget, &QListWidget::currentRowChanged,
@@ -442,14 +439,20 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
 	    int idx = m_actionListWidget->currentRow();
 	    if (idx < 0) idx = 0;
 	    listMinHeight = m_actionListWidget->sizeHintForRow(0);
-        //listMaxHeight = listMinHeight * (listSz+1);
     } 
     m_actionListWidget->setMinimumHeight(listMinHeight);
-    m_actionListWidget->setMaximumHeight(maxContentHeight());
 
     bool expand = (listSz > 0);
     toggleExpand(expand); // calls updateButtonsState() and updateContentHeight()
     updateTitle();
+
+    if (m_lastActionCount != listSz
+     && listSz > 0
+     && !actionList[listSz-1].isSet()) {
+	    auto lastItem = m_actionListWidget->item(listSz - 1);
+	    m_actionListWidget->scrollToItem(lastItem);
+    }
+    m_lastActionCount = listSz;
 }
 
 int PmMatchReactionWidget::maxContentHeight() const
