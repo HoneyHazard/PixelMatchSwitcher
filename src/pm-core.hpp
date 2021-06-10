@@ -68,6 +68,8 @@ public:
     bool hasSceneAction(size_t matchIdx) const
         { return hasAction(matchIdx, PmActionType::Scene); }
     bool hasAction(size_t matchIdx, PmActionType actionType) const;
+	bool hasMatchAction(size_t matchIdx, PmActionType actionType) const;
+    bool hasUnmatchAction(size_t matchIdx, PmActionType actionType) const;
     PmReaction reaction(size_t matchIdx) const;
     PmReaction noMatchReaction() const;
     std::string matchImgFilename(size_t matchIdx) const;

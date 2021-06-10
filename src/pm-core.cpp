@@ -300,6 +300,22 @@ bool PmCore::hasAction(size_t matchIdx, PmActionType actionType) const
         ? m_multiMatchConfig[matchIdx].reaction.hasAction(actionType) : false;
 }
 
+bool PmCore::hasMatchAction(size_t matchIdx, PmActionType actionType) const
+{
+	QMutexLocker locker(&m_matchConfigMutex);
+    return matchIdx < m_multiMatchConfig.size()
+        ? m_multiMatchConfig[matchIdx].reaction.hasMatchAction(actionType)
+        : false;
+}
+
+bool PmCore::hasUnmatchAction(size_t matchIdx, PmActionType actionType) const
+{
+	QMutexLocker locker(&m_matchConfigMutex);
+    return matchIdx < m_multiMatchConfig.size()
+        ? m_multiMatchConfig[matchIdx].reaction.hasUnmatchAction(actionType)
+        : false;
+}
+
 PmReaction PmCore::reaction(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);

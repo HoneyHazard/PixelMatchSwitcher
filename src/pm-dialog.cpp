@@ -35,9 +35,13 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     PmAddActionMenu *addActionMenu = new PmAddActionMenu(core, this);
 
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
+
     m_presetsWidget = new PmPresetsWidget(core, this);
-    PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
+
+    PmMatchListWidget *listWidget
+        = new PmMatchListWidget(core, addActionMenu, this);
     listWidget->expand();
+
     PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
     configWidget->expand();
 
@@ -57,13 +61,13 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // global match (anything matched)
     PmMatchReactionWidget *anythingMatchedActions
         = new PmMatchReactionWidget(core, addActionMenu,
-            PmReactionTarget::Anything, PmReactionType::Match,
+            PmReactionTarget::Global, PmReactionType::Match,
             this);
 
     // global unmatch (nothing matched)
     PmMatchReactionWidget *nothingMatchedActions
         = new PmMatchReactionWidget(core, addActionMenu,
-            PmReactionTarget::Anything, PmReactionType::Unmatch,
+            PmReactionTarget::Global, PmReactionType::Unmatch,
             this);
 
     PmMatchResultsWidget *resultsWidget 

@@ -17,7 +17,8 @@ enum class PmActionType : char {
     SceneItem = 2,
     Filter = 3,
     Hotkey = 4,
-    FrontEndEvent = 5
+    FrontEndEvent = 5,
+    ANY = 6
 };
 
 /**
@@ -28,7 +29,7 @@ enum class PmToggleCode : int { Show = 0, Hide = 1 };
 /**
  * @brief Match entry actions vs global match/unmatch
  */
-enum class PmReactionTarget { Entry, Anything };
+enum class PmReactionTarget { Entry, Global };
 
 enum class PmReactionType { Match, Unmatch };
 

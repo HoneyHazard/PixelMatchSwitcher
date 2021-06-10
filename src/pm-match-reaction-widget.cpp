@@ -311,6 +311,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     m_actionListWidget = new QListWidget(this);
     m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_actionListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     connect(m_actionListWidget, &QListWidget::currentRowChanged,
             this, &PmMatchReactionWidget::updateButtonsState);
 
@@ -424,12 +425,13 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     toggleExpand(expand); // calls updateButtonsState() and updateContentHeight()
     updateTitle();
 
-    // will ensure the last item is visible after being added
+    // will ensure the last item is visible and selected after being added
     if (m_lastActionCount != listSz
      && listSz > 0
      && !actionList[listSz-1].isSet()) {
 	    auto lastItem = m_actionListWidget->item(listSz - 1);
 	    m_actionListWidget->scrollToItem(lastItem);
+	    m_actionListWidget->setItemSelected(lastItem, true);
     }
     m_lastActionCount = listSz;
 }
@@ -462,7 +464,7 @@ void PmMatchReactionWidget::updateButtonsState()
 void PmMatchReactionWidget::updateTitle()
 {
 	QString str;
-	if (m_reactionTarget == PmReactionTarget::Anything) {
+	if (m_reactionTarget == PmReactionTarget::Global) {
 		str = (m_reactionType == PmReactionType::Match)
 		    ? obs_module_text("Anything Matched Actions")
 		    : obs_module_text("Nothing Matched Actions");

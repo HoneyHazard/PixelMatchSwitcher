@@ -28,7 +28,7 @@ protected:
 	void pushReaction(const PmReaction &reaction);
 
     PmCore *m_core;
-    PmReactionTarget m_reactionTarget = PmReactionTarget::Anything;
+    PmReactionTarget m_reactionTarget = PmReactionTarget::Global;
 	PmReactionType m_reactionType = PmReactionType::Match;
     size_t m_matchIndex = 0;
 };

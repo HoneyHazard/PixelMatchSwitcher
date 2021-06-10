@@ -1,5 +1,6 @@
 #include "pm-match-list-widget.hpp"
 #include "pm-core.hpp"
+#include "pm-add-action-menu.hpp"
 
 #include <QTableWidget>
 #include <QHeaderView>
@@ -54,9 +55,11 @@ const QString PmMatchListWidget::k_transpBgStyle
 const QString PmMatchListWidget::k_semiTranspBgStyle
     = "background-color: rgba(0, 0, 0, 0.6);";
 
-PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
+PmMatchListWidget::PmMatchListWidget(
+    PmCore* core, PmAddActionMenu *addActionMenu, QWidget* parent)
 : PmSpoilerWidget(parent)
 , m_core(core)
+, m_addActionMenu(addActionMenu)
 {
     // table widget
     m_tableWidget = new QTableWidget(this);
@@ -151,20 +154,23 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 
     // connections: local ui
     connect(m_tableWidget, &QTableWidget::itemChanged,
-        this, &PmMatchListWidget::onItemChanged, qc);
-    connect(m_tableWidget->selectionModel(),
-        &QItemSelectionModel::selectionChanged,
-        this, &PmMatchListWidget::onRowSelected, qc);
+        this, &PmMatchListWidget::onItemChanged);
     connect(m_tableWidget, &QTableWidget::cellChanged,
-        this, &PmMatchListWidget::onCellChanged, qc);
+        this, &PmMatchListWidget::onCellChanged);
+    connect(m_tableWidget, &QTableWidget::cellDoubleClicked,
+        this, &PmMatchListWidget::onCellDoubleClicked);
+    connect(
+        m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
+        this, &PmMatchListWidget::onRowSelected);
+
     connect(m_cfgMoveUpBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigMoveUpButtonReleased, qc);
+        this, &PmMatchListWidget::onConfigMoveUpButtonReleased);
     connect(m_cfgMoveDownBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigMoveDownButtonReleased, qc);
+        this, &PmMatchListWidget::onConfigMoveDownButtonReleased);
     connect(m_cfgInsertBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigInsertButtonReleased, qc);
+        this, &PmMatchListWidget::onConfigInsertButtonReleased);
     connect(m_cfgRemoveBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigRemoveButtonReleased, qc);
+        this, &PmMatchListWidget::onConfigRemoveButtonReleased);
 }
 
 void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
@@ -381,6 +387,32 @@ void PmMatchListWidget::onCellChanged(int row, int col)
     int numRows = m_tableWidget->rowCount();
     if (row == numRows - 1) {
         m_tableWidget->setItem(row, col, nullptr);
+    }
+}
+
+void PmMatchListWidget::onCellDoubleClicked(int row, int column)
+{
+	bool addAction = false;
+    PmReactionType reactType;
+
+    if (row < 0 || row >= (int)m_core->multiMatchConfigSize()) return;
+
+	if (column == (int)ColOrder::MatchActions) {
+		if (!m_core->hasMatchAction((size_t)row, PmActionType::ANY)) {
+			addAction = true;
+			reactType = PmReactionType::Match;
+        }
+	} else if (column == (int)ColOrder::UnmatchActions) {
+		if (!m_core->hasUnmatchAction((size_t)row, PmActionType::ANY)) {
+			addAction = true;
+			reactType = PmReactionType::Unmatch;
+		}
+    }
+
+    if (addAction) {
+	    m_addActionMenu->setTypeAndTarget(PmReactionTarget::Entry, reactType);
+	    m_addActionMenu->setMatchIndex((size_t)row);
+	    m_addActionMenu->popup(QCursor::pos());
     }
 }
 
@@ -705,7 +737,8 @@ QSize PmReactionDisplay::sizeHint() const
 void PmReactionDisplay::enterEvent(QEvent *event)
 {
 	if (!m_hasActions) {
-		QString line = QString("[ %1 ]").arg(obs_module_text("click to add"));
+		QString line = QString("&#60; %1 &#62;")
+            .arg(obs_module_text("d.clk to add"));
 		QString html =
 			QString("<font color=\"%1\">%2</font>")
 				.arg(PmAction::actionColorStr(PmActionType::None))

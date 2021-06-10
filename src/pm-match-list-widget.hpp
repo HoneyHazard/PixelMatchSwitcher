@@ -8,6 +8,7 @@
 
 class PmCore;
 class PmReactionWidget;
+class PmAddActionMenu;
 
 class QTableWidget;
 class QPushButton;
@@ -25,7 +26,8 @@ class PmMatchListWidget : public PmSpoilerWidget
     Q_OBJECT
 
 public:
-    PmMatchListWidget(PmCore* core, QWidget* parent);
+    PmMatchListWidget(PmCore* core, PmAddActionMenu *addActionMenu,
+                      QWidget* parent);
 
     int currentIndex() const;
 
@@ -56,6 +58,7 @@ protected slots:
     void onConfigMoveUpButtonReleased();
     void onConfigMoveDownButtonReleased();
     void onCellChanged(int row, int col);
+    void onCellDoubleClicked(int row, int column);
 
 protected:
     enum class ColOrder;
@@ -96,6 +99,7 @@ protected:
     int maxContentHeight() const override;
 
     PmCore* m_core;
+    PmAddActionMenu *m_addActionMenu;
     QTableWidget *m_tableWidget;
 
     QPushButton* m_cfgMoveUpBtn;

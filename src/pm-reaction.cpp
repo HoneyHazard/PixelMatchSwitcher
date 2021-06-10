@@ -272,7 +272,8 @@ bool PmReaction::hasAction(PmActionType actionType) const
 bool PmReaction::hasMatchAction(PmActionType actionType) const
 {
     for (const PmAction& action : matchActions) {
-        if (action.m_actionType == actionType) {
+		if (actionType == PmActionType::ANY
+         || action.m_actionType == actionType) {
             return true;
         }
     }
@@ -282,7 +283,8 @@ bool PmReaction::hasMatchAction(PmActionType actionType) const
 bool PmReaction::hasUnmatchAction(PmActionType actionType) const
 {
     for (const PmAction& action : unmatchActions) {
-        if (action.m_actionType == actionType) {
+        if (actionType == PmActionType::ANY
+         || action.m_actionType == actionType) {
             return true;
         }
     }
