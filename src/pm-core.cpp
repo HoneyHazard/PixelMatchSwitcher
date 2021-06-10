@@ -378,6 +378,8 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
 {
     size_t sz = multiMatchConfigSize();
 
+    if (!newCfg.reaction.hasAction(PmActionType::ANY)) return false;
+
     // enforce reaction type order
     if (m_enforceReactionTypeOrder && sz > 1) {
         if (!newCfg.reaction.hasSceneAction()

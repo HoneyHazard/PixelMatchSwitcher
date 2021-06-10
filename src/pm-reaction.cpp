@@ -257,12 +257,14 @@ bool PmReaction::renameElement(PmActionType actionType,
 bool PmReaction::hasAction(PmActionType actionType) const
 {
     for (const PmAction& action : matchActions) {
-        if (action.m_actionType == actionType) {
+        if (actionType == PmActionType::ANY
+         || action.m_actionType == actionType) {
             return true;
         }
     }
     for (const PmAction &action : matchActions) {
-        if (action.m_actionType == actionType) {
+        if (actionType == PmActionType::ANY
+         || action.m_actionType == actionType) {
             return true;
         }
     }
