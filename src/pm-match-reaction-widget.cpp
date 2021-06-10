@@ -540,6 +540,7 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
 
 void PmMatchReactionWidget::onInsertReleased(int actionIdx)
 {
+#if 0
     size_t idx = 0;
     if (m_actionListWidget->count() > 0) {
         int currRow = m_actionListWidget->currentRow();
@@ -549,17 +550,20 @@ void PmMatchReactionWidget::onInsertReleased(int actionIdx)
             idx = (size_t)currRow;
         }
     }
+#endif
 
     PmAction newAction;
     newAction.m_actionType = (PmActionType)actionIdx;
 
     PmReaction reaction = pullReaction();
     if (m_reactionType == PmReactionType::Match) {
-        reaction.matchActions.insert(
-            reaction.matchActions.begin() + idx, newAction);
+        //reaction.matchActions.insert(
+        //    reaction.matchActions.begin() + idx, newAction);
+	    reaction.matchActions.push_back(newAction);
     } else { // Unmatch
-        reaction.unmatchActions.insert(
-            reaction.unmatchActions.begin() + idx, newAction);
+        //reaction.unmatchActions.insert(
+        //    reaction.unmatchActions.begin() + idx, newAction);
+	    reaction.unmatchActions.push_back(newAction);
     }
     pushReaction(reaction);
 }
