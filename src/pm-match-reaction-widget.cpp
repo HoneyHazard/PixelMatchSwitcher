@@ -25,8 +25,6 @@ PmActionEntryWidget::PmActionEntryWidget(
 , m_core(core)
 , m_actionIndex(actionIndex)
 {
-	//setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
     m_targetCombo = new QComboBox(this);
 
     m_detailsStack = new QStackedWidget(this);
@@ -40,14 +38,11 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_detailsStack->addWidget(m_toggleCombo);
 
     QHBoxLayout *mainLayout = new QHBoxLayout;
-    //mainLayout->addWidget(m_actionTypeCombo);
     mainLayout->addWidget(m_targetCombo);
     mainLayout->addWidget(m_detailsStack);
     setLayout(mainLayout);
 
     // local UI connections
-    //connect(m_actionTypeCombo, &QComboBox::currentTextChanged,
-    //        this, &PmActionEntryWidget::onActionTypeSelectionChanged);
     connect(m_targetCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
     connect(m_transitionsCombo, &QComboBox::currentTextChanged,
