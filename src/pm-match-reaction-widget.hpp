@@ -102,7 +102,6 @@ protected:
     void reactionToUi(const PmReaction &reaction);
     int maxContentHeight() const override;
 
-    //QScrollArea *m_scrollArea;
     QListWidget *m_actionListWidget;
     QPushButton *m_insertActionButton;
     QPushButton *m_removeActionButton;

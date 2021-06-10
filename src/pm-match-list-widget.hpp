@@ -149,8 +149,15 @@ public:
     QSize sizeHint() const override;
 
 protected:
+    void enterEvent(QEvent *event) override;
+	void leaveEvent(QEvent *event) override;
+
+protected:
+	void updateContents(const QString &html, int textWidthMax, int textRows);
+
     int m_textWidth = 0;
 	int m_textHeight = 0;
 	int m_marginsWidth = 0;
     QFontMetrics m_fontMetrics;
+    bool m_hasActions = false;
 };

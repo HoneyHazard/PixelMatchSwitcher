@@ -693,16 +693,44 @@ void PmReactionDisplay::updateReaction(
             html += "<br />";
         }
     }
-    setText(html);
-    m_textWidth = maxLength;
-    m_textHeight = m_fontMetrics.height() * int(actions.size());
-    setMinimumSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
-    updateGeometry();
+     m_hasActions = actions.size() > 0;
+     updateContents(html, maxLength, actions.size());
 }
 
 QSize PmReactionDisplay::sizeHint() const
 {
     return QSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
+}
+
+void PmReactionDisplay::enterEvent(QEvent *event)
+{
+	if (!m_hasActions) {
+		QString line = QString("[ %1 ]").arg(obs_module_text("click to add"));
+		QString html =
+			QString("<font color=\"%1\">%2</font>")
+				.arg(PmAction::actionColorStr(PmActionType::None))
+                .arg(line);
+		updateContents(html, m_fontMetrics.size(0, line).width(), 1);
+    }
+	QLabel::enterEvent(event);
+}
+
+void PmReactionDisplay::leaveEvent(QEvent *event)
+{
+	if (!m_hasActions) {
+		updateContents("", 0, 0);
+	}
+	QLabel::leaveEvent(event);
+}
+
+void PmReactionDisplay::updateContents(
+    const QString &html, int textWidthMax, int textRows)
+{
+	setText(html);
+	m_textWidth = textWidthMax;
+	m_textHeight = m_fontMetrics.height() * textRows;
+	setMinimumSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
+	updateGeometry();
 }
 
 PmContainerWidget::PmContainerWidget(QWidget *contained, QWidget *parent)
