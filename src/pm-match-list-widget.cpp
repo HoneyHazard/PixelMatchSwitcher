@@ -344,11 +344,12 @@ void PmMatchListWidget::onRowSelected()
 
 void PmMatchListWidget::onConfigInsertButtonReleased()
 {
-    size_t idx = isExpanded() ? (size_t)(currentIndex())
-                              : m_tableWidget->rowCount() - 1;
-
-    emit sigMatchConfigInsert(idx, PmMatchConfig());
-    emit sigMatchConfigSelect(idx);
+	int idx = currentIndex();
+	if (!isExpanded() || idx < 0) {
+		idx = m_tableWidget->rowCount() - 1;
+    }
+    emit sigMatchConfigInsert((size_t)idx, PmMatchConfig());
+    emit sigMatchConfigSelect((size_t)idx);
 
     if (!isExpanded()) expand();
 
