@@ -1,6 +1,7 @@
 #include "pm-dialog.hpp"
 #include "pm-version.hpp"
 #include "pm-core.hpp"
+#include "pm-add-action-menu.hpp"
 #include "pm-toggles-widget.hpp"
 #include "pm-presets-widget.hpp"
 #include "pm-match-list-widget.hpp"
@@ -31,6 +32,8 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // UI modules
+    PmAddActionMenu *addActionMenu = new PmAddActionMenu(core, this);
+
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
     m_presetsWidget = new PmPresetsWidget(core, this);
     PmMatchListWidget *listWidget = new PmMatchListWidget(core, this);
@@ -41,30 +44,26 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     // match for an entry
     QSizePolicy minPol(QSizePolicy::Minimum, QSizePolicy::Minimum);
     PmMatchReactionWidget *entryMatchActions
-        = new PmMatchReactionWidget(core,
-            PmReactionTarget::Entry,
-            PmReactionType::Match,
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Entry, PmReactionType::Match,
             this);
 
     // unmatch for an entry
     PmMatchReactionWidget *entryUnmatchActions
-        = new PmMatchReactionWidget(core,
-            PmReactionTarget::Entry,
-            PmReactionType::Unmatch,
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Entry, PmReactionType::Unmatch,
             this);
 
     // global match (anything matched)
     PmMatchReactionWidget *anythingMatchedActions
-        = new PmMatchReactionWidget(core,
-            PmReactionTarget::Anything,
-            PmReactionType::Match,
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Anything, PmReactionType::Match,
             this);
 
     // global unmatch (nothing matched)
     PmMatchReactionWidget *nothingMatchedActions
-        = new PmMatchReactionWidget(core,
-            PmReactionTarget::Anything,
-            PmReactionType::Unmatch,
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Anything, PmReactionType::Unmatch,
             this);
 
     PmMatchResultsWidget *resultsWidget 

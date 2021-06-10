@@ -7,6 +7,7 @@
 #include <vector>
 
 class PmCore;
+class PmAddActionMenu;
 
 class QLineEdit;
 class QPushButton;
@@ -70,7 +71,7 @@ class PmMatchReactionWidget : public PmSpoilerWidget
 
 public:
     PmMatchReactionWidget(
-        PmCore *core,
+        PmCore *core, PmAddActionMenu *addActionMenu,
         PmReactionTarget reactionTarget, PmReactionType reactionType,
         QWidget *parent);
 
@@ -90,7 +91,7 @@ protected slots:
     void onActionChanged(size_t actionIndex, PmAction action);
 
     // local UI events
-    void onInsertReleased(int actionTypeIndex);
+    void onInsertReleased();
     void onRemoveReleased();
     void updateButtonsState();
     void updateTitle();
@@ -113,23 +114,6 @@ protected:
     int m_lastActionCount = -1;
 
     PmCore *m_core;
+    PmAddActionMenu *m_addActionMenu;
 };
 
-
-/**
- * @brief https://stackoverflow.com/questions/55086498/highlighting-custom-qwidgetaction-on-hover
- */
-class PmMenuHelper : public QObject
-{
-    Q_OBJECT
-
-public:
-    PmMenuHelper(QMenu *menu, QObject *parent);
-
-protected:
-    bool eventFilter(QObject *target, QEvent *e) override;
-    void highlight(QWidgetAction *qwa, bool h);
-
-	QMenu *m_menu;
-	QWidgetAction *m_lastQwa = nullptr;
-};

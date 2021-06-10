@@ -1,6 +1,7 @@
 #include "pm-match-reaction-widget.hpp"
 #include "pm-structs.hpp"
 #include "pm-core.hpp"
+#include "pm-add-action-menu.hpp"
 
 #include <obs-module.h>
 
@@ -10,11 +11,6 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QStandardItemModel>
-#include <QWidgetAction>
-#include <QMenu>
-#include <QLabel>
-#include <QEvent>
-#include <QMouseEvent>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -266,35 +262,17 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 //----------------------------------------------------
 
 PmMatchReactionWidget::PmMatchReactionWidget(
-    PmCore *core,
+    PmCore *core, PmAddActionMenu *addActionMenu,
     PmReactionTarget reactionTarget, PmReactionType reactionType,
     QWidget *parent)
 : PmSpoilerWidget(parent)
 , m_core(core)
+, m_addActionMenu(addActionMenu)
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
 {
     QMenu *insertMenu = new QMenu(this);
-	int typeStart = (int)PmActionType::Scene;
-	int typeEnd = (int)PmActionType::FrontEndEvent;
-	for (int i = typeStart; i <= typeEnd; i++) {
-		PmActionType actType = PmActionType(i);
-		QString labelText = PmAction::actionStr(actType);
-		QLabel *itemLabel = new QLabel(labelText, this);
-		QString colorStr = PmAction::actionColorStr(actType);
-		itemLabel->setStyleSheet(QString("color: ") + colorStr);
-		itemLabel->setMouseTracking(true);
-        QWidgetAction *qwa = new QWidgetAction(this);
-		qwa->setData(colorStr);
-		qwa->setDefaultWidget(itemLabel);
-		connect(qwa, &QWidgetAction::triggered,
-			    [this, i]() { onInsertReleased(i); });
-		insertMenu->addAction(qwa);
 
-		if (i != typeEnd)
-			insertMenu->addSeparator();
-	}
-	PmMenuHelper *menuHelper = new PmMenuHelper(insertMenu, this);
 	QIcon insertIcon;
 	insertIcon.addFile(":/res/images/add.png", QSize(), QIcon::Normal,
 			   QIcon::Off);
@@ -308,7 +286,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 		obs_module_text("Insert New Action"));
 	m_insertActionButton->setFocusPolicy(Qt::NoFocus);
 	connect(m_insertActionButton, &QPushButton::released,
-            [insertMenu]() { insertMenu->popup(QCursor::pos()); });
+            this, &PmMatchReactionWidget::onInsertReleased);
 
     QIcon removeIcon;
 	removeIcon.addFile(
@@ -355,7 +333,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
                 this, &PmMatchReactionWidget::onMultiMatchConfigSizeChanged, qc);
 
         connect(this, &PmMatchReactionWidget::sigMatchConfigChanged,
-                m_core, &PmCore::onMatchConfigChanged);
+                m_core, &PmCore::onMatchConfigChanged, qc);
 
         onMultiMatchConfigSizeChanged(m_core->multiMatchConfigSize());
         size_t idx = m_core->selectedConfigIndex();
@@ -542,34 +520,11 @@ void PmMatchReactionWidget::onActionChanged(size_t actionIndex, PmAction action)
     pushReaction(reaction);
 }
 
-void PmMatchReactionWidget::onInsertReleased(int actionIdx)
+void PmMatchReactionWidget::onInsertReleased()
 {
-#if 0
-    size_t idx = 0;
-    if (m_actionListWidget->count() > 0) {
-        int currRow = m_actionListWidget->currentRow();
-        if (currRow == -1) {
-            idx = m_actionListWidget->count();
-        } else {
-            idx = (size_t)currRow;
-        }
-    }
-#endif
-
-    PmAction newAction;
-    newAction.m_actionType = (PmActionType)actionIdx;
-
-    PmReaction reaction = pullReaction();
-    if (m_reactionType == PmReactionType::Match) {
-        //reaction.matchActions.insert(
-        //    reaction.matchActions.begin() + idx, newAction);
-	    reaction.matchActions.push_back(newAction);
-    } else { // Unmatch
-        //reaction.unmatchActions.insert(
-        //    reaction.unmatchActions.begin() + idx, newAction);
-	    reaction.unmatchActions.push_back(newAction);
-    }
-    pushReaction(reaction);
+	m_addActionMenu->setTypeAndTarget(m_reactionTarget, m_reactionType);
+	m_addActionMenu->setMatchIndex(m_matchIndex);
+	m_addActionMenu->popup(QCursor::pos());
 }
 
 void PmMatchReactionWidget::onRemoveReleased()
@@ -592,49 +547,3 @@ void PmMatchReactionWidget::onRemoveReleased()
     pushReaction(reaction);
 }
 
-//----------------------------------------------
-
-PmMenuHelper::PmMenuHelper(QMenu *menu, QObject *parent)
-	: QObject(parent), m_menu(menu)
-{
-	menu->installEventFilter(this);
-}
-
-bool PmMenuHelper::eventFilter(QObject *target, QEvent *e)
-{
-	if (e->type() == QEvent::Type::MouseMove) {
-		QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(e);
-		QAction *a = static_cast<QMenu *>(target)->actionAt(
-			mouseEvent->pos());
-		QWidgetAction *qwa = dynamic_cast<QWidgetAction *>(a);
-		if (qwa) {
-			if (m_lastQwa && qwa != m_lastQwa) {
-				highlight(m_lastQwa, false);
-			}
-			highlight(qwa, true);
-			m_lastQwa = qwa;
-		} else {
-			if (m_lastQwa) {
-				highlight(m_lastQwa, false);
-				m_lastQwa = nullptr;
-			}
-		}
-	}
-	return QObject::eventFilter(target, e);
-}
-
-void PmMenuHelper::highlight(QWidgetAction *qwa, bool h)
-{
-	QString colorStr = qwa->data().toString();
-	QLabel *label = (QLabel*)qwa->defaultWidget();
-	QString styleSheet =QString("color: %1 %2")
-        .arg(colorStr)
-        .arg(h ? "; font-weight: bold" : "");
-	label->setStyleSheet(styleSheet);
-
-#if 0
-	mainWidget->setBackgroundRole(h ? QPalette::Highlight
-					: QPalette::Window);
-	mainWidget->setAutoFillBackground(h);
-#endif
-}
