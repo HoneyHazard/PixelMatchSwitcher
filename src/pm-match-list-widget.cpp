@@ -58,8 +58,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
 : PmSpoilerWidget(parent)
 , m_core(core)
 {
-	setTitle(obs_module_text("Active Match Entries"));
-
     // table widget
     m_tableWidget = new QTableWidget(this);
     m_tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -190,6 +188,11 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
     // workaround for a buggy behavior that automatic resizing isn't handling
     m_tableWidget->resizeColumnsToContents();
     updateContentHeight();
+
+    QString title = obs_module_text("Active Match Entries");
+    if (sz > 0)
+	    title += QString(" [%1]").arg(sz);
+    setTitle(title);
 }
 
 void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
@@ -341,12 +344,13 @@ void PmMatchListWidget::onRowSelected()
 
 void PmMatchListWidget::onConfigInsertButtonReleased()
 {
-    PmMatchConfig newCfg;
+    size_t idx = isExpanded() ? (size_t)(currentIndex())
+                              : m_tableWidget->rowCount() - 1;
 
-    size_t idx = (size_t)(currentIndex());
-
-    emit sigMatchConfigInsert(idx, newCfg);
+    emit sigMatchConfigInsert(idx, PmMatchConfig());
     emit sigMatchConfigSelect(idx);
+
+    if (!isExpanded()) expand();
 }
 
 void PmMatchListWidget::onConfigRemoveButtonReleased()

@@ -8,7 +8,6 @@
 #include <QStackedWidget>
 #include <QHBoxLayout>
 #include <QPushButton>
-#include <QToolButton>
 #include <QListWidget>
 #include <QStandardItemModel>
 #include <QWidgetAction>
@@ -280,12 +279,6 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
 {
-
-	//m_insertActionButton->setPopupMode(QToolButton::InstantPopup);
-	//m_insertActionButton->setStyleSheet(
-    //    "QToolButton { border: 0; } "
-    //    "QToolButton::menu-indicator { image: none; }");
-
     QMenu *insertMenu = new QMenu(this);
 	int typeStart = (int)PmActionType::Scene;
 	int typeEnd = (int)PmActionType::FrontEndEvent;
@@ -492,8 +485,8 @@ void PmMatchReactionWidget::updateTitle()
 	QString str;
 	if (m_reactionTarget == PmReactionTarget::Anything) {
 		str = (m_reactionType == PmReactionType::Match)
-		    ? obs_module_text("Anything Matched")
-		    : obs_module_text("Nothing Matched");
+		    ? obs_module_text("Anything Matched Actions")
+		    : obs_module_text("Nothing Matched Actions");
 	} else {
 		str = QString(obs_module_text("%1 Actions #%2: %3"))
 			.arg((m_reactionType == PmReactionType::Match)
