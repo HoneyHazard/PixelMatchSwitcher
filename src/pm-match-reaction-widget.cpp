@@ -11,6 +11,7 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QStandardItemModel>
+#include <QMouseEvent>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -193,6 +194,13 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     }
 
     updateUiStyle(action);
+}
+
+void PmActionEntryWidget::installEventFilterAll(QObject *obj)
+{
+	for (QWidget *w : QObject::findChildren<QWidget *>()) {
+		w->installEventFilter(obj);
+    }
 }
 
 void PmActionEntryWidget::prepareSelections()
@@ -391,6 +399,7 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
         if (i >= m_actionListWidget->count()) {
             const auto qc = Qt::QueuedConnection;
             entryWidget = new PmActionEntryWidget(m_core, i, this);
+            entryWidget->installEventFilterAll(this);
             connect(m_core, &PmCore::sigScenesChanged,
                     entryWidget, &PmActionEntryWidget::onScenesChanged, qc);
             connect(entryWidget, &PmActionEntryWidget::sigActionChanged,
@@ -446,6 +455,19 @@ int PmMatchReactionWidget::maxContentHeight() const
 		ret += m_actionListWidget->sizeHintForRow(i);
     }
 	return ret + extraPadding;
+}
+
+bool PmMatchReactionWidget::eventFilter(QObject *obj, QEvent *event)
+{
+	if (event->type() == QEvent::MouseButtonPress) {
+        auto mouseEvent = (QMouseEvent *)event;
+		auto listPos = m_actionListWidget->mapFromGlobal(
+            mouseEvent->globalPos());
+        //auto listRow = m_actionListWidget->indexAt(listPos).row();
+		m_actionListWidget->setItemSelected(
+            m_actionListWidget->itemAt(listPos), true);
+	}
+	return QObject::eventFilter(obj, event);
 }
 
 void PmMatchReactionWidget::updateButtonsState()

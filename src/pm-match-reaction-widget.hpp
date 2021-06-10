@@ -34,6 +34,8 @@ public:
     void updateHotkeys(); // TODO
     void updateFrontendEvents(); // TODO
 
+    void installEventFilterAll(QObject *obj);
+
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
 
@@ -101,6 +103,8 @@ protected:
     void pushReaction(const PmReaction &reaction);
     void reactionToUi(const PmReaction &reaction);
     int maxContentHeight() const override;
+    bool eventFilter(QObject *obj, QEvent *event) override; // for display events
+
 
     QListWidget *m_actionListWidget;
     QPushButton *m_insertActionButton;
