@@ -446,6 +446,7 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     toggleExpand(expand); // calls updateButtonsState() and updateContentHeight()
     updateTitle();
 
+    // will ensure the last item is visible after being added
     if (m_lastActionCount != listSz
      && listSz > 0
      && !actionList[listSz-1].isSet()) {
