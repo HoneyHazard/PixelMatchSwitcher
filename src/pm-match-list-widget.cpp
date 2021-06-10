@@ -351,6 +351,10 @@ void PmMatchListWidget::onConfigInsertButtonReleased()
     emit sigMatchConfigSelect(idx);
 
     if (!isExpanded()) expand();
+
+    QTableWidgetItem* cellItem = m_tableWidget->item(idx, 0);
+    if (cellItem)
+        m_tableWidget->scrollToItem(cellItem);
 }
 
 void PmMatchListWidget::onConfigRemoveButtonReleased()
