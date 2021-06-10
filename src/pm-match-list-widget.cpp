@@ -85,18 +85,18 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_cfgRemoveBtn = prepareButton(obs_module_text("Remove Match Entry"),
         ":/res/images/list_remove.png", "removeIconSmall");
 
-    QSpacerItem* buttonSpacer1 = new QSpacerItem(20, 0);
-    QSpacerItem* buttonSpacer2 = new QSpacerItem(20, 0);
+    m_buttonSpacer1 = new QSpacerItem(20, 0);
+    m_buttonSpacer2 = new QSpacerItem(20, 0);
 
-    QHBoxLayout* buttonsLayout = new QHBoxLayout;
-    buttonsLayout->addWidget(m_cfgInsertBtn);
-    buttonsLayout->addItem(buttonSpacer1);
-    buttonsLayout->addWidget(m_cfgMoveUpBtn);
-    buttonsLayout->addWidget(m_cfgMoveDownBtn);
-    buttonsLayout->addItem(buttonSpacer2);
-    buttonsLayout->addWidget(m_cfgRemoveBtn);
-    buttonsLayout->setContentsMargins(0, 0, 0, 0);
-    setTopRightLayout(buttonsLayout);
+    m_buttonsLayout = new QHBoxLayout;
+    m_buttonsLayout->addWidget(m_cfgInsertBtn);
+    m_buttonsLayout->addItem(m_buttonSpacer1);
+    m_buttonsLayout->addWidget(m_cfgMoveUpBtn);
+    m_buttonsLayout->addWidget(m_cfgMoveDownBtn);
+    m_buttonsLayout->addItem(m_buttonSpacer2);
+    m_buttonsLayout->addWidget(m_cfgRemoveBtn);
+    m_buttonsLayout->setContentsMargins(0, 0, 0, 0);
+    setTopRightLayout(m_buttonsLayout);
 
     // top-level layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -167,26 +167,7 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onConfigInsertButtonReleased, qc);
     connect(m_cfgRemoveBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigRemoveButtonReleased, qc);
-    //connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
-    //    this, &PmMatchListWidget::onNoMatchSceneSelected, qc);
-    //connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
-    //    this, &PmMatchListWidget::onNoMatchTransitionSelected, qc);
 }
-
-#if 0
-void PmMatchListWidget::onScenesChanged(
-    QList<std::string> scenes, QList<std::string> sceneItems)
-{
-    int sz = (int)m_core->multiMatchConfigSize();
-    for (int i = 0; i < sz; ++i) {
-        QComboBox* sceneBox = (QComboBox*)m_tableWidget->cellWidget(
-            i, (int)ColOrder::TargetSelect);
-        updateTargetChoices(sceneBox, scenes, sceneItems);
-    }
-
-    updateTargetChoices(m_noMatchSceneCombo, scenes, {});
-}
-#endif
 
 void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 {
@@ -204,7 +185,7 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
     }
 
     // enable/disable control buttons
-    updateAvailableButtons((size_t)currentIndex(), sz);
+    updateButtonsState();
 
     // workaround for a buggy behavior that automatic resizing isn't handling
     m_tableWidget->resizeColumnsToContents();
@@ -285,8 +266,17 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     updateContentHeight();
 
     // enable/disable control buttons
-    updateAvailableButtons(
-        (size_t)currentIndex(), m_core->multiMatchConfigSize());
+    updateButtonsState();
+}
+
+void PmMatchListWidget::toggleExpand(bool on)
+{
+	if (m_tableWidget->rowCount() <= 1)
+		on = false;
+
+	PmSpoilerWidget::toggleExpand(on);
+
+    updateButtonsState();
 }
 
 void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
@@ -333,7 +323,7 @@ void PmMatchListWidget::onMatchConfigSelect(
 
     m_tableWidget->selectRow((int)matchIndex);
 
-    updateAvailableButtons(matchIndex, mmSz);
+    updateButtonsState();
 
     UNUSED_PARAMETER(config);
 }
@@ -354,15 +344,6 @@ void PmMatchListWidget::onConfigInsertButtonReleased()
     PmMatchConfig newCfg;
 
     size_t idx = (size_t)(currentIndex());
-
-#if 0
-    size_t sz = m_core->multiMatchConfigSize();
-    if (sz > 0) {
-        size_t closestIdx = std::min(idx, sz-1);
-        PmReaction closestReaction = m_core->reaction(closestIdx);
-        newCfg.reactionOld.type = closestReaction.type;
-    }
-#endif
 
     emit sigMatchConfigInsert(idx, newCfg);
     emit sigMatchConfigSelect(idx);
@@ -496,13 +477,21 @@ void PmMatchListWidget::constructRow(int idx)
     m_tableWidget->setStyleSheet("QTableWidget::item { padding: 2px };");
 }
 
-void PmMatchListWidget::updateAvailableButtons(
-    size_t currIdx, size_t numConfigs)
+void PmMatchListWidget::updateButtonsState()
 {
+	bool expanded = isExpanded();
+    m_cfgInsertBtn->setVisible(true);
+	m_cfgMoveUpBtn->setVisible(expanded);
+    m_cfgMoveDownBtn->setVisible(expanded);
+	m_cfgRemoveBtn->setVisible(expanded);
+    m_buttonSpacer1->changeSize(expanded ? 20 : 0, 0);
+	m_buttonSpacer2->changeSize(expanded ? 20 : 0, 0);
+    m_buttonsLayout->update();
+
+    int currIdx = currentIndex();
     m_cfgMoveUpBtn->setEnabled(m_core->matchConfigCanMoveUp(currIdx));
     m_cfgMoveDownBtn->setEnabled(m_core->matchConfigCanMoveDown(currIdx));
-    m_cfgRemoveBtn->setEnabled(currIdx < numConfigs);
-    //m_cfgClearBtn->setEnabled(numConfigs > 0);
+    m_cfgRemoveBtn->setEnabled(currIdx < m_tableWidget->rowCount()-1);
 }
 
 int PmMatchListWidget::currentIndex() const

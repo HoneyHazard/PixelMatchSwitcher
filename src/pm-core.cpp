@@ -337,7 +337,7 @@ bool PmCore::matchConfigCanMoveUp(size_t idx) const
     QMutexLocker locker(&m_matchConfigMutex);
     size_t sz = m_multiMatchConfig.size();
 
-    if (sz <= 1 || idx == 0) return false;
+    if (sz <= 1 || idx == 0 || idx >= sz) return false;
 
     if (!hasSceneAction(idx - 1) && hasSceneAction(idx))
         return false;

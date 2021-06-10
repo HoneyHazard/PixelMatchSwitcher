@@ -14,6 +14,7 @@ class QPushButton;
 class QComboBox;
 class QTableWidgetItem;
 class QVBoxLayout;
+class QSpacerItem;
 
 /**
  * @brief Shows a list of match configuration entries and allows changing
@@ -36,6 +37,9 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
+
+public slots:
+    void toggleExpand(bool on) override;
 
 protected slots:
     // core event handlers
@@ -76,7 +80,7 @@ protected:
 
     QPushButton* prepareButton(
         const char *tooltip, const char* icoPath, const char* themeId);
-    void updateAvailableButtons(size_t currIdx, size_t numConfigs);
+    void updateButtonsState();
     void constructRow(int idx);
     void enableConfigToggled(int idx, bool enable);
     void sceneTransitionSelected(int idx, const QString &transTr);
@@ -98,6 +102,10 @@ protected:
     QPushButton* m_cfgMoveDownBtn;
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
+
+    QSpacerItem *m_buttonSpacer1;
+    QSpacerItem *m_buttonSpacer2;
+    QHBoxLayout *m_buttonsLayout;
 
     int m_prevMatchIndex = 0;
 };
