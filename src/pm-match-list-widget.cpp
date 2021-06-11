@@ -331,6 +331,9 @@ void PmMatchListWidget::onMatchConfigSelect(
     m_prevMatchIndex = int(matchIndex);
 
     m_tableWidget->selectRow((int)matchIndex);
+    auto item = m_tableWidget->item((int)matchIndex, 0);
+    if (item)
+	    m_tableWidget->scrollToItem(item);
 
     updateButtonsState();
 
