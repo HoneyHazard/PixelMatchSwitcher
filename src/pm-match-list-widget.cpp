@@ -393,7 +393,7 @@ void PmMatchListWidget::onCellChanged(int row, int col)
 void PmMatchListWidget::onCellDoubleClicked(int row, int column)
 {
 	bool addAction = false;
-    PmReactionType reactType;
+    PmReactionType reactType = PmReactionType::Match;
 
     if (row < 0 || row >= (int)m_core->multiMatchConfigSize()) return;
 
@@ -726,7 +726,7 @@ void PmReactionDisplay::updateReaction(
         }
     }
      m_hasActions = actions.size() > 0;
-     updateContents(html, maxLength, actions.size());
+     updateContents(html, maxLength, (int)actions.size());
 }
 
 QSize PmReactionDisplay::sizeHint() const

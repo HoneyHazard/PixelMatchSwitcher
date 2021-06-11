@@ -279,8 +279,6 @@ PmMatchReactionWidget::PmMatchReactionWidget(
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
 {
-    QMenu *insertMenu = new QMenu(this);
-
 	QIcon insertIcon;
 	insertIcon.addFile(":/res/images/add.png", QSize(), QIcon::Normal,
 			   QIcon::Off);
@@ -438,9 +436,9 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     if (m_lastActionCount != listSz
      && listSz > 0
      && !actionList[listSz-1].isSet()) {
-	    auto lastItem = m_actionListWidget->item(listSz - 1);
+	    auto lastItem = m_actionListWidget->item((int)listSz - 1);
 	    m_actionListWidget->scrollToItem(lastItem);
-	    m_actionListWidget->setItemSelected(lastItem, true);
+	    lastItem->setSelected(true);
     }
     m_lastActionCount = listSz;
 }
@@ -463,9 +461,9 @@ bool PmMatchReactionWidget::eventFilter(QObject *obj, QEvent *event)
         auto mouseEvent = (QMouseEvent *)event;
 		auto listPos = m_actionListWidget->mapFromGlobal(
             mouseEvent->globalPos());
-        //auto listRow = m_actionListWidget->indexAt(listPos).row();
-		m_actionListWidget->setItemSelected(
-            m_actionListWidget->itemAt(listPos), true);
+		auto item = m_actionListWidget->itemAt(listPos);
+		if (item)
+			item->setSelected(true);
 	}
 	return QObject::eventFilter(obj, event);
 }

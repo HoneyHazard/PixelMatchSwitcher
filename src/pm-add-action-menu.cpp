@@ -16,6 +16,9 @@ PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
 	connect(this, &PmAddActionMenu::sigNoMatchReactionChanged,
 			m_core, &PmCore::onNoMatchReactionChanged, qc);
 
+    connect(this, &QMenu::aboutToShow,
+            this, &PmAddActionMenu::updateActionsState);
+
     int typeStart = (int)PmActionType::Scene;
 	int typeEnd = (int)PmActionType::FrontEndEvent;
 	for (int i = typeStart; i <= typeEnd; i++) {
@@ -34,8 +37,11 @@ PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
 
 		if (i != typeEnd)
             addSeparator();
+
+        if (i == (int)PmActionType::Scene)
+            m_sceneAction = qwa;
 	}
-	PmMenuHelper *menuHelper = new PmMenuHelper(this, this);
+	new PmAddActionMenuHelper(this, this);
 }
 
 void PmAddActionMenu::itemTriggered(int actionIndex)
@@ -43,9 +49,18 @@ void PmAddActionMenu::itemTriggered(int actionIndex)
 	PmAction newAction;
 	newAction.m_actionType = (PmActionType)actionIndex;
 	PmReaction reaction = pullReaction();
+
 	if (m_reactionType == PmReactionType::Match) {
+		if (newAction.m_actionType == PmActionType::Scene
+         && reaction.hasMatchAction(PmActionType::Scene)) {
+			return; // enforce one scene action
+        }
 		reaction.matchActions.push_back(newAction);
 	} else { // Unmatch
+		if (newAction.m_actionType == PmActionType::Scene
+         || reaction.hasUnmatchAction(PmActionType::Scene)) {
+			return; // enforce one scene action
+		}
 		reaction.unmatchActions.push_back(newAction);
 	}
 	pushReaction(reaction);
@@ -69,15 +84,50 @@ void PmAddActionMenu::pushReaction(const PmReaction &reaction)
 	}
 }
 
+void PmAddActionMenu::updateActionsState()
+{
+	if (m_sceneAction) {
+		bool enableSceneAction;
+		if (m_reactionTarget == PmReactionTarget::Entry) {
+			if (m_reactionType == PmReactionType::Match) {
+				enableSceneAction = !m_core->hasMatchAction(
+					m_matchIndex, PmActionType::Scene);
+			} else { // Unmatch
+				enableSceneAction = !m_core->hasUnmatchAction(
+					m_matchIndex, PmActionType::Scene);
+			}
+		} else { // Global
+			if (m_reactionType == PmReactionType::Match) {
+				enableSceneAction =
+					!m_core->hasGlobalMatchAction(PmActionType::Scene);
+			} else { // Unmatch
+				enableSceneAction =
+					!m_core->hasGlobalUnmatchAction(PmActionType::Scene);
+			}
+		}
+		m_sceneAction->setEnabled(enableSceneAction);
+		QString colorStr;
+		if (enableSceneAction) {
+			colorStr = m_sceneAction->data().toString();
+		} else {
+            colorStr = palette().color(
+                QPalette::Disabled, QPalette::Text).name();
+        }
+		QString styleSheetStr = QString("color: %1").arg(colorStr);
+	    QLabel *label = (QLabel *)m_sceneAction->defaultWidget();
+		label->setStyleSheet(styleSheetStr);
+    }
+}
+
 //----------------------------------------------
 
-PmMenuHelper::PmMenuHelper(QMenu *menu, QObject *parent)
+PmAddActionMenuHelper::PmAddActionMenuHelper(QMenu *menu, QObject *parent)
 	: QObject(parent), m_menu(menu)
 {
 	menu->installEventFilter(this);
 }
 
-bool PmMenuHelper::eventFilter(QObject *target, QEvent *e)
+bool PmAddActionMenuHelper::eventFilter(QObject *target, QEvent *e)
 {
 	if (e->type() == QEvent::Type::MouseMove) {
 		QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(e);
@@ -100,8 +150,10 @@ bool PmMenuHelper::eventFilter(QObject *target, QEvent *e)
 	return QObject::eventFilter(target, e);
 }
 
-void PmMenuHelper::highlight(QWidgetAction *qwa, bool h)
+void PmAddActionMenuHelper::highlight(QWidgetAction *qwa, bool h)
 {
+	if (!qwa->isEnabled()) return;
+
 	QString colorStr = qwa->data().toString();
 	QLabel *label = (QLabel *)qwa->defaultWidget();
 	QString styleSheet = QString("color: %1 %2")

@@ -316,6 +316,18 @@ bool PmCore::hasUnmatchAction(size_t matchIdx, PmActionType actionType) const
         : false;
 }
 
+bool PmCore::hasGlobalMatchAction(PmActionType actionType) const
+{
+	QMutexLocker locker(&m_matchConfigMutex);
+	return m_multiMatchConfig.noMatchReaction.hasMatchAction(actionType);
+}
+
+bool PmCore::hasGlobalUnmatchAction(PmActionType actionType) const
+{
+	QMutexLocker locker(&m_matchConfigMutex);
+	return m_multiMatchConfig.noMatchReaction.hasUnmatchAction(actionType);
+}
+
 PmReaction PmCore::reaction(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -391,6 +403,7 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
                 matchIdx++;
             }
             onMatchConfigInsert(matchIdx, newCfg);
+	        onMatchConfigSelect(matchIdx);
             return true;
         } else if (newCfg.reaction.hasSceneAction()
                 && matchIdx > 0
@@ -401,6 +414,7 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
                 matchIdx--;
             }
             onMatchConfigInsert(matchIdx, newCfg);
+    	    onMatchConfigSelect(matchIdx);
             return true;
         }
     }
