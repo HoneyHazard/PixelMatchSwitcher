@@ -137,6 +137,8 @@ bool PmAction::isSet() const
     switch (m_actionType) {
     case PmActionType::None:
         return false; break;
+    case PmActionType::Hotkey:
+	    return m_actionCode != (size_t)-1; break;
     default:
         return m_targetElement.size() > 0; break;
     }
@@ -154,7 +156,6 @@ QString PmAction::actionColorStr() const
 {
 	return actionColorStr(m_actionType);
 }
-
 
 //---------------------------------------------------------
 

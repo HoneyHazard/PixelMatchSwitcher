@@ -30,8 +30,10 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_detailsStack->addWidget(m_transitionsCombo);
 
     m_toggleCombo = new QComboBox(this);
-    m_toggleCombo->addItem(obs_module_text("Show"), int(PmToggleCode::Show));
-    m_toggleCombo->addItem(obs_module_text("Hide"), int(PmToggleCode::Hide));
+    m_toggleCombo->addItem(
+        obs_module_text("Show"), (unsigned int)(PmToggleCode::Show));
+    m_toggleCombo->addItem(
+        obs_module_text("Hide"), (unsigned int)PmToggleCode::Hide);
     m_detailsStack->addWidget(m_toggleCombo);
 
     QHBoxLayout *mainLayout = new QHBoxLayout;
@@ -66,7 +68,9 @@ void PmActionEntryWidget::updateScenes()
     PmActionType aType = m_actionType;
     m_targetCombo->blockSignals(true);
     m_targetCombo->clear();
-    QString selStr = QString("<select %1>").arg(PmAction::actionStr(aType));
+    QString selStr = QString("<%1 %2>")
+		.arg(obs_module_text("select"))
+        .arg(PmAction::actionStr(aType));
     m_targetCombo->addItem(selStr, "");
     model->item(0)->setEnabled(false);
     for (const std::string &scene : scenes) {
@@ -98,7 +102,6 @@ void PmActionEntryWidget::updateScenes()
 			            idx = m_targetCombo->count() - 1;
                         m_targetCombo->setItemData(
                             idx, fiBrush, Qt::ForegroundRole);
-
                     }
                 }
             }
@@ -191,9 +194,52 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
             m_toggleCombo->findData(action.m_actionCode));
         m_toggleCombo->blockSignals(false);
         break;
+    case PmActionType::Hotkey:
+	    m_targetCombo->setVisible(true);
+	    m_targetCombo->blockSignals(true);
+	    m_targetCombo->setCurrentIndex(action.isSet()
+            ? m_targetCombo->findData((size_t)action.m_actionCode) : 0);
+        m_targetCombo->blockSignals(false);
+        m_detailsStack->setVisible(false);
+        break;
     }
 
     updateUiStyle(action);
+}
+
+void PmActionEntryWidget::updateHotkeys()
+{
+	auto model = dynamic_cast<QStandardItemModel *>(m_targetCombo->model());
+
+    m_targetCombo->blockSignals(true);
+	m_targetCombo->clear();
+    QString selStr = QString("<%1 %2>")
+        .arg(obs_module_text("select"))
+        .arg(PmAction::actionStr(PmActionType::Hotkey));
+	m_targetCombo->addItem(selStr, (unsigned int)-1);
+    model->item(0)->setEnabled(false);
+	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
+    m_targetCombo->setItemData(0, dimmedBrush, Qt::ForegroundRole);
+
+    obs_enum_hotkeys(
+        [](void *data, obs_hotkey_id id, obs_hotkey_t *key) -> bool
+        {
+		    QBrush hotkeyBrush = PmAction::actionColor(PmActionType::Hotkey);
+		    QComboBox *targetCombo = (QComboBox *)data;
+		    targetCombo->addItem(
+                obs_hotkey_get_description(key), QVariant((size_t)id));
+		    int idx = targetCombo->count() - 1;
+		    targetCombo->setItemData(idx, hotkeyBrush, Qt::ForegroundRole);
+		    return true;
+        },
+        (void*)m_targetCombo);
+
+    m_targetCombo->blockSignals(false);
+}
+
+void PmActionEntryWidget::updateFrontendEvents()
+{
+
 }
 
 void PmActionEntryWidget::installEventFilterAll(QObject *obj)
@@ -213,6 +259,9 @@ void PmActionEntryWidget::prepareSelections()
     case PmActionType::SceneItem:
     case PmActionType::Filter:
         updateScenes();
+        break;
+    case PmActionType::Hotkey:
+	    updateHotkeys();
         break;
     default:
 	    break;
@@ -245,6 +294,9 @@ void PmActionEntryWidget::onUiChanged()
             = m_targetCombo->currentData().toString().toUtf8().data();
 	    action.m_actionCode = (size_t)m_toggleCombo->currentData().toUInt();
         break;
+    case PmActionType::Hotkey:
+	    action.m_actionCode = (size_t)m_targetCombo->currentData().toUInt();
+	    break;
     }
 
     emit sigActionChanged(m_actionIndex, action);

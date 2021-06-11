@@ -50,7 +50,6 @@ public:
 protected:
 	bool eventFilter(QObject *target, QEvent *e) override;
 	void highlight(QWidgetAction *qwa, bool h);
-	void defaultFormat(QWidgetAction *qwa);
 
 	QMenu *m_menu;
 	QWidgetAction *m_lastQwa = nullptr;

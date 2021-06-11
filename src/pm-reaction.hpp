@@ -60,7 +60,7 @@ public:
     QString actionColorStr() const;
 
     PmActionType m_actionType = PmActionType::None;
-    size_t m_actionCode = 0;
+    size_t m_actionCode = (size_t)-1;
     std::string m_targetElement;
     std::string m_targetDetails;
 };
