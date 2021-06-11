@@ -421,7 +421,6 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
     return false;
 }
 
-
 void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
 {
     size_t sz = multiMatchConfigSize();
@@ -1116,6 +1115,7 @@ void PmCore::scanScenes()
                                 scanInfo->pmFilters.insert(filterWsWs);
                             }
                         }
+                        UNUSED_PARAMETER(parent);
                     },
                     scanInfo);
                 scanInfo->sceneItems.insert(siName, siData);
@@ -1669,10 +1669,10 @@ void PmCore::execIndependentActions(
             }
             if (sceneItem) {
                 if (switchedOn
-                 && action.m_actionCode == (int)PmToggleCode::Show) {
+                 && action.m_actionCode == (size_t)PmToggleCode::Show) {
                     obs_sceneitem_set_visible(sceneItem, true);
                 } else if (!switchedOn
-                 && action.m_actionCode == (int)PmToggleCode::Hide) {
+                 && action.m_actionCode == (size_t)PmToggleCode::Hide) {
                     obs_sceneitem_set_visible(sceneItem, false);
                 }
                 obs_sceneitem_release(sceneItem);
@@ -1689,10 +1689,10 @@ void PmCore::execIndependentActions(
             }
             if (filterSrc) {
                 if (switchedOn
-                 && action.m_actionCode == (int)PmToggleCode::Show) {
+                 && action.m_actionCode == (size_t)PmToggleCode::Show) {
                     obs_source_set_enabled(filterSrc, true);
                 } else if (!switchedOn
-                 && action.m_actionCode == (int)PmToggleCode::Hide) {
+                 && action.m_actionCode == (size_t)PmToggleCode::Hide) {
                     obs_source_set_enabled(filterSrc, false);
                 }
                 obs_source_release(filterSrc);

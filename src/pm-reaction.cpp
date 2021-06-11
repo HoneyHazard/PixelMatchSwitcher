@@ -50,8 +50,8 @@ PmAction::PmAction(obs_data_t *data)
     obs_data_set_default_int(data, "action_type", (long long)m_actionType);
     m_actionType = (PmActionType)obs_data_get_int(data, "action_type");
 
-    obs_data_set_default_int(data, "action_code", m_actionCode);
-    m_actionCode = (int)obs_data_get_int(data, "action_code");
+    obs_data_set_default_int(data, "action_code", (long long)m_actionCode);
+    m_actionCode = (size_t)obs_data_get_int(data, "action_code");
 
     m_targetElement = obs_data_get_string(data, "target_element");
     m_targetDetails = obs_data_get_string(data, "target_details");
@@ -77,7 +77,7 @@ PmAction::PmAction(QXmlStreamReader &reader)
             if (name == "action_type") {
                 m_actionType = (PmActionType)(elementText.toInt());
             } else if (name == "action_code") {
-                m_actionCode = int(elementText.toInt());
+                m_actionCode = (size_t)elementText.toUInt();
             } else if (name == "target_element") {
                 m_targetElement = elementText.toUtf8().data();
             } else if (name == "target_details") {
@@ -100,8 +100,8 @@ obs_data_t *PmAction::saveData() const
 void PmAction::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("action");
-    writer.writeTextElement("action_type", QString::number(int(m_actionType)));
-    writer.writeTextElement("action_code", QString::number(int(m_actionCode)));
+    writer.writeTextElement("action_type", QString::number(size_t(m_actionType)));
+    writer.writeTextElement("action_code", QString::number(size_t(m_actionCode)));
     writer.writeTextElement("target_element", m_targetElement.data());
     writer.writeTextElement("target_details", m_targetDetails.data());
     writer.writeEndElement();

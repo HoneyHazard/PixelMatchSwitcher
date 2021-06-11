@@ -701,7 +701,7 @@ void PmReactionDisplay::updateReaction(
                 : QString("[%1]").arg(PmAction::actionStr(action.m_actionType));
             line = QString("%1 [%2]")
                 .arg(tmp)
-                .arg(action.m_actionCode == int(PmToggleCode::Show) ?
+                .arg(action.m_actionCode == (size_t)PmToggleCode::Show ?
                     obs_module_text("show") : obs_module_text("hide"));
             html += QString("<font color=\"%1\">%2</font>")
                 .arg(action.actionColorStr())

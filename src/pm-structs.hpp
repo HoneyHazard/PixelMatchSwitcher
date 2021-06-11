@@ -216,7 +216,7 @@ public:
     PmSourceHash(const PmSourceHash &other)
         : QHash<std::string, PmSourceData>(other) {}
 
-    QSet<std::string> sourceNames() const { return keys().toSet(); };
+    QSet<std::string> sourceNames() const;
 };
 
 /**
@@ -239,7 +239,7 @@ public:
     PmSceneItemsHash(const PmSceneItemsHash &other)
         : QHash<std::string, PmSceneItemData>(other) {}
 
-    QSet<std::string> sceneItemNames() const { return keys().toSet(); };
+    QSet<std::string> sceneItemNames() const;
 };
 
 /**

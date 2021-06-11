@@ -24,7 +24,7 @@ enum class PmActionType : char {
 /**
  * @brief Scene items and filters can be shown or hidden
  */
-enum class PmToggleCode : int { Show = 0, Hide = 1 };
+enum class PmToggleCode : size_t { Show = 0, Hide = 1 };
 
 /**
  * @brief Match entry actions vs global match/unmatch
@@ -60,7 +60,7 @@ public:
     QString actionColorStr() const;
 
     PmActionType m_actionType = PmActionType::None;
-    int m_actionCode = 0;
+    size_t m_actionCode = 0;
     std::string m_targetElement;
     std::string m_targetDetails;
 };

@@ -72,7 +72,7 @@ void PmActionEntryWidget::updateScenes()
     for (const std::string &scene : scenes) {
 	    m_targetCombo->addItem(scene.data(), scene.data());
 	    idx = m_targetCombo->count() - 1; 
-	    m_targetCombo->setItemData(idx, sceneBrush, Qt::TextColorRole);
+	    m_targetCombo->setItemData(idx, sceneBrush, Qt::ForegroundRole);
 	    if (aType != PmActionType::Scene) {
 		    QList<std::string> siNames = m_core->sceneItemNames(scene);
 		    if (siNames.empty()) {
@@ -84,7 +84,7 @@ void PmActionEntryWidget::updateScenes()
 			    m_targetCombo->addItem(
                     QString("  ") + siName.data(), siName.data());
 			    idx = m_targetCombo->count() - 1;
-                m_targetCombo->setItemData(idx, siBrush, Qt::TextColorRole);
+                m_targetCombo->setItemData(idx, siBrush, Qt::ForegroundRole);
 			    if (aType != PmActionType::SceneItem) {
                     QList<std::string> fiNames = m_core->filterNames(siName);
 				    if (fiNames.empty()) {
@@ -97,7 +97,7 @@ void PmActionEntryWidget::updateScenes()
                             QString("    ") + fiName.data(), fiName.data());
 			            idx = m_targetCombo->count() - 1;
                         m_targetCombo->setItemData(
-                            idx, fiBrush, Qt::TextColorRole);
+                            idx, fiBrush, Qt::ForegroundRole);
 
                     }
                 }
@@ -243,7 +243,7 @@ void PmActionEntryWidget::onUiChanged()
     case PmActionType::Filter:
         action.m_targetElement
             = m_targetCombo->currentData().toString().toUtf8().data();
-        action.m_actionCode = int(m_toggleCombo->currentData().toInt());
+	    action.m_actionCode = (size_t)m_toggleCombo->currentData().toUInt();
         break;
     }
 
