@@ -19,6 +19,7 @@ class QStackedWidget;
 class QVBoxLayout;
 class QScrollArea;
 class QWidgetAction;
+class QLabel;
 class QEvent;
 
 class PmActionEntryWidget : public QWidget
@@ -45,19 +46,31 @@ public slots:
 protected slots:
     void onActionTypeSelectionChanged();
     void onUiChanged();
+    void onHotkeySelectionChanged();
 
 protected:
     static const QString k_defaultTransitionStr;
+	static const int k_hotkeyInfoRole;
+
+    typedef std::tuple<obs_hotkey_t *, obs_hotkey_id, std::string> HotkeyData;
+	typedef QList<HotkeyData> HotkeysList;
+	typedef QMultiHash<std::string, HotkeyData> HotkeysGroup;
+
+    void insertHotkeysList(
+        int &idx, const QString &info, HotkeysList list);
+    void insertHotkeysGroup(
+        int &idx, const QString &category, const HotkeysGroup &group);
 
     void prepareSelections();
     void updateScenes();
     void updateTransitons();
-    void updateUiStyle(const PmAction& action);
+    void updateUiStyle(const PmAction &action);
 
     QComboBox *m_targetCombo;
 
     QComboBox *m_transitionsCombo;
     QComboBox *m_toggleCombo;
+    QLabel *m_detailsLabel;
     QStackedWidget *m_detailsStack;
 
     PmCore *m_core;

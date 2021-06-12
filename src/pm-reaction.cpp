@@ -117,20 +117,6 @@ bool PmAction::renameElement(PmActionType actionType,
     return false;
 }
 
-/*
-void PmAction::execute()
-{
-    switch (m_actionType) {
-    case PmActionType::None: break;
-    case PmActionType::Scene: switchScene(); break;
-    case PmActionType::SceneItem: toggleSceneItem(); break;
-    case PmActionType::Filter: toggleFilter(); break;
-    case PmActionType::Hotkey: triggerHotkey(); break;
-    case PmActionType::FrontEndEvent: triggerFrontEndEvent(); break;
-    }
-}
-*/
-
 bool PmAction::isSet() const
 {
     // TODO: revisit

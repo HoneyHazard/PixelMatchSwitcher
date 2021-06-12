@@ -12,9 +12,14 @@
 #include <QListWidget>
 #include <QStandardItemModel>
 #include <QMouseEvent>
+#include <QMultiHash>
+#include <QLabel>
+
+#include <tuple>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
+const int PmActionEntryWidget::k_hotkeyInfoRole = Qt::UserRole + 1;
 
 PmActionEntryWidget::PmActionEntryWidget(
     PmCore* core, size_t actionIndex, QWidget *parent)
@@ -36,6 +41,9 @@ PmActionEntryWidget::PmActionEntryWidget(
         obs_module_text("Hide"), (unsigned int)PmToggleCode::Hide);
     m_detailsStack->addWidget(m_toggleCombo);
 
+    m_detailsLabel = new QLabel(this);
+    m_detailsStack->addWidget(m_detailsLabel);
+
     QHBoxLayout *mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_targetCombo);
     mainLayout->addWidget(m_detailsStack);
@@ -48,6 +56,8 @@ PmActionEntryWidget::PmActionEntryWidget(
             this, &PmActionEntryWidget::onUiChanged);
     connect(m_toggleCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
+    connect(m_toggleCombo, &QComboBox::currentTextChanged,
+            this, &PmActionEntryWidget::onHotkeySelectionChanged);
 
     onScenesChanged();
 }
@@ -197,42 +207,156 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     case PmActionType::Hotkey:
 	    m_targetCombo->setVisible(true);
 	    m_targetCombo->blockSignals(true);
-	    m_targetCombo->setCurrentIndex(action.isSet()
-            ? m_targetCombo->findData((size_t)action.m_actionCode) : 0);
+	    if (action.isSet()) {
+		    int idx = m_targetCombo ->findData((size_t)action.m_actionCode);
+			m_targetCombo->setCurrentIndex(idx);
+	    } else {
+		    m_targetCombo->setCurrentIndex(0);
+        }
         m_targetCombo->blockSignals(false);
-        m_detailsStack->setVisible(false);
+        m_detailsStack->setVisible(true);
+        m_detailsStack->setCurrentWidget(m_detailsLabel);
+	    onHotkeySelectionChanged();
         break;
     }
 
     updateUiStyle(action);
 }
 
+void PmActionEntryWidget::insertHotkeysList(
+    int &idx, const QString &info, HotkeysList list)
+{
+	std::stable_sort(begin(list), end(list),
+		[&](const HotkeyData &a, const HotkeyData &b) {
+		const auto &nameA = std::get<2>(a);
+		const auto &nameB = std::get<2>(b);
+		return nameA < nameB;
+	});
+
+    auto model = (QStandardItemModel *)m_targetCombo->model();
+	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
+    QString header = QString("---- %1 ----").arg(info);
+    m_targetCombo->addItem(header);
+	model->item(idx)->setEnabled(false);
+    m_targetCombo->setItemData(idx, dimmedBrush, Qt::ForegroundRole);
+    idx++;
+
+    QBrush selBrush = PmAction::actionColor(PmActionType::Hotkey);
+    for (const auto &tuple : list) {
+	    m_targetCombo->addItem(
+            std::get<2>(tuple).data(), (unsigned int)std::get<0>(tuple));
+	    m_targetCombo->setItemData(idx, selBrush, Qt::ForegroundRole);
+	    m_targetCombo->setItemData(idx, info, k_hotkeyInfoRole);
+	    idx++;
+    }
+}
+
+void PmActionEntryWidget::insertHotkeysGroup(
+    int &idx, const QString &category, const HotkeysGroup &group)
+{
+	auto model = (QStandardItemModel *)m_targetCombo->model();
+	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
+
+	for (const auto &key : group.keys()) {
+		QString info = QString("[%1] %2").arg(category).arg(key.data());
+		insertHotkeysList(idx, info, group.values(key));
+    }
+}
+
 void PmActionEntryWidget::updateHotkeys()
 {
-	auto model = dynamic_cast<QStandardItemModel *>(m_targetCombo->model());
-
-    m_targetCombo->blockSignals(true);
-	m_targetCombo->clear();
-    QString selStr = QString("<%1 %2>")
-        .arg(obs_module_text("select"))
-        .arg(PmAction::actionStr(PmActionType::Hotkey));
-	m_targetCombo->addItem(selStr, (unsigned int)-1);
-    model->item(0)->setEnabled(false);
-	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
-    m_targetCombo->setItemData(0, dimmedBrush, Qt::ForegroundRole);
+    HotkeysList allKeys;
+    HotkeysList frontendKeys;
+    HotkeysGroup outputsKeys;
+    HotkeysGroup encodersKeys;
+    HotkeysGroup servicesKeys;
+    HotkeysGroup scenesKeys;
+    HotkeysGroup sourcesKeys;
 
     obs_enum_hotkeys(
         [](void *data, obs_hotkey_id id, obs_hotkey_t *key) -> bool
         {
-		    QBrush hotkeyBrush = PmAction::actionColor(PmActionType::Hotkey);
-		    QComboBox *targetCombo = (QComboBox *)data;
-		    targetCombo->addItem(
-                obs_hotkey_get_description(key), QVariant((size_t)id));
-		    int idx = targetCombo->count() - 1;
-		    targetCombo->setItemData(idx, hotkeyBrush, Qt::ForegroundRole);
+		    HotkeysList *hotkeys = (HotkeysList *)data;
+		    hotkeys->push_back(
+                std::make_tuple(key, id, obs_hotkey_get_description(key)));
 		    return true;
         },
-        (void*)m_targetCombo);
+        (void*)&allKeys);
+
+    for (const auto &tuple : allKeys) {
+	    auto hkey = std::get<0>(tuple);
+	    obs_hotkey_registerer_type rtype =
+		    obs_hotkey_get_registerer_type(hkey);
+	    void *registerer = obs_hotkey_get_registerer(hkey);
+	    switch (rtype) {
+	    case OBS_HOTKEY_REGISTERER_FRONTEND:
+		    frontendKeys.push_back(tuple);
+		    break;
+
+	    case OBS_HOTKEY_REGISTERER_SOURCE: {
+		    auto weakSource =
+			    static_cast<obs_weak_source_t *>(registerer);
+		    auto source = OBSGetStrongRef(weakSource);
+		    if (source) {
+			    auto name = obs_source_get_name(source);
+			    if (obs_scene_t *scene =
+					obs_scene_from_source(source)) {
+				    scenesKeys.insert(name, tuple);
+			    } else {
+				    sourcesKeys.insert(name, tuple);
+			    }
+		    }
+	    } break;
+
+	    case OBS_HOTKEY_REGISTERER_OUTPUT: {
+		    auto weakOutput =
+			    static_cast<obs_weak_output_t *>(registerer);
+		    auto output = OBSGetStrongRef(weakOutput);
+		    if (output) {
+			    auto name = obs_output_get_name(output);
+			    outputsKeys.insert(name, tuple);
+		    }
+	    } break;
+
+	    case OBS_HOTKEY_REGISTERER_ENCODER: {
+		    auto weakEncoder =
+			    static_cast<obs_weak_encoder_t *>(registerer);
+		    auto encoder = OBSGetStrongRef(weakEncoder);
+		    if (encoder) {
+			    auto name = obs_encoder_get_name(encoder);
+			    encodersKeys.insert(name, tuple);
+		    }
+	    } break;
+
+	    case OBS_HOTKEY_REGISTERER_SERVICE: {
+		    auto weakService =
+			    static_cast<obs_weak_service_t *>(registerer);
+		    auto service = OBSGetStrongRef(weakService);
+		    if (service) {
+			    auto name = obs_service_get_name(service);
+			    servicesKeys.insert(name, tuple);
+		    }
+	    } break;
+	    }
+    }
+
+    auto model = (QStandardItemModel *)m_targetCombo->model();
+    QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
+
+    m_targetCombo->blockSignals(true);
+    m_targetCombo->clear();
+    int idx = 0;
+    m_targetCombo->addItem(obs_module_text("<select hotkey>"), (unsigned int)-1);
+    model->item(idx)->setEnabled(false);
+    m_targetCombo->setItemData(idx, dimmedBrush, Qt::ForegroundRole);
+    idx++;
+
+    insertHotkeysList(idx, obs_module_text("[frontend]"), frontendKeys);
+    insertHotkeysGroup(idx, obs_module_text("output"), outputsKeys);
+    insertHotkeysGroup(idx, obs_module_text("encoder"), encodersKeys);
+    insertHotkeysGroup(idx, obs_module_text("service"), servicesKeys);
+    insertHotkeysGroup(idx, obs_module_text("scene"), scenesKeys);
+    insertHotkeysGroup(idx, obs_module_text("source"), sourcesKeys);
 
     m_targetCombo->blockSignals(false);
 }
@@ -304,6 +428,14 @@ void PmActionEntryWidget::onUiChanged()
     updateUiStyle(action);
 }
 
+void PmActionEntryWidget::onHotkeySelectionChanged()
+{
+	if (m_actionType == PmActionType::Hotkey) {
+		QString info = m_targetCombo->currentData(k_hotkeyInfoRole).toString();
+		m_detailsLabel->setText(info);
+    }
+}
+
 void PmActionEntryWidget::onScenesChanged()
 {
 	prepareSelections();
@@ -311,12 +443,12 @@ void PmActionEntryWidget::onScenesChanged()
 
 void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 {
-	QString comboStyle = QString("color: %1").arg(action.actionColorStr());
+	QString colorStyle = QString("color: %1").arg(action.actionColorStr());
 
-	//m_actionTypeCombo->setStyleSheet(comboStyle);
-	m_targetCombo->setStyleSheet(comboStyle);
-	m_transitionsCombo->setStyleSheet(comboStyle);
-	m_toggleCombo->setStyleSheet(comboStyle);
+	m_targetCombo->setStyleSheet(colorStyle);
+	m_transitionsCombo->setStyleSheet(colorStyle);
+	m_toggleCombo->setStyleSheet(colorStyle);
+	m_detailsLabel->setStyleSheet(colorStyle);
 }
 
 //----------------------------------------------------
