@@ -52,7 +52,11 @@ protected:
     static const QString k_defaultTransitionStr;
 	static const int k_hotkeyInfoRole;
 
-    typedef std::tuple<obs_hotkey_t *, obs_hotkey_id, std::string> HotkeyData;
+    struct HotkeyData {
+	    obs_hotkey_t *hkey;
+	    std::string comboStr;
+    };
+
 	typedef QList<HotkeyData> HotkeysList;
 	typedef QMultiHash<std::string, HotkeyData> HotkeysGroup;
 
@@ -72,6 +76,8 @@ protected:
     QComboBox *m_toggleCombo;
     QLabel *m_detailsLabel;
     QStackedWidget *m_detailsStack;
+
+
 
     PmCore *m_core;
     size_t m_actionIndex;

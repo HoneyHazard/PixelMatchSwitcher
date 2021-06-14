@@ -4,6 +4,7 @@
 #include "pm-add-action-menu.hpp"
 
 #include <obs-module.h>
+#include <util/dstr.hpp>
 
 #include <QComboBox>
 #include <QStackedWidget>
@@ -14,8 +15,6 @@
 #include <QMouseEvent>
 #include <QMultiHash>
 #include <QLabel>
-
-#include <tuple>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -226,12 +225,16 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 void PmActionEntryWidget::insertHotkeysList(
     int &idx, const QString &info, HotkeysList list)
 {
+	if (list.isEmpty()) return;
+
+    #if 0
 	std::stable_sort(begin(list), end(list),
 		[&](const HotkeyData &a, const HotkeyData &b) {
 		const auto &nameA = std::get<2>(a);
 		const auto &nameB = std::get<2>(b);
 		return nameA < nameB;
 	});
+    #endif
 
     auto model = (QStandardItemModel *)m_targetCombo->model();
 	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
@@ -242,9 +245,11 @@ void PmActionEntryWidget::insertHotkeysList(
     idx++;
 
     QBrush selBrush = PmAction::actionColor(PmActionType::Hotkey);
-    for (const auto &tuple : list) {
-	    m_targetCombo->addItem(
-            std::get<2>(tuple).data(), (unsigned int)std::get<0>(tuple));
+    for (const auto &hkeyData : list) {
+	    const char *descr = obs_hotkey_get_description(hkeyData.hkey);
+	    QString targetStr = QString("%1 (%2)")
+            .arg(descr).arg(hkeyData.comboStr.data());
+	    m_targetCombo->addItem(targetStr, hkeyData.comboStr.data());
 	    m_targetCombo->setItemData(idx, selBrush, Qt::ForegroundRole);
 	    m_targetCombo->setItemData(idx, info, k_hotkeyInfoRole);
 	    idx++;
@@ -254,8 +259,8 @@ void PmActionEntryWidget::insertHotkeysList(
 void PmActionEntryWidget::insertHotkeysGroup(
     int &idx, const QString &category, const HotkeysGroup &group)
 {
-	auto model = (QStandardItemModel *)m_targetCombo->model();
-	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
+	//auto model = (QStandardItemModel *)m_targetCombo->model();
+	//QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
 
 	for (const auto &key : group.keys()) {
 		QString info = QString("[%1] %2").arg(category).arg(key.data());
@@ -273,6 +278,7 @@ void PmActionEntryWidget::updateHotkeys()
     HotkeysGroup scenesKeys;
     HotkeysGroup sourcesKeys;
 
+    #if 0
     obs_enum_hotkeys(
         [](void *data, obs_hotkey_id id, obs_hotkey_t *key) -> bool
         {
@@ -282,15 +288,35 @@ void PmActionEntryWidget::updateHotkeys()
 		    return true;
         },
         (void*)&allKeys);
+    #endif
 
-    for (const auto &tuple : allKeys) {
-	    auto hkey = std::get<0>(tuple);
+    obs_enum_hotkey_bindings(
+	    [](void *data, size_t idx, obs_hotkey_binding_t *binding) -> bool {
+		    HotkeysList *hotkeys = (HotkeysList *)data;
+		    //obs_hotkey_id id =
+			//    obs_hotkey_binding_get_hotkey_id(binding);
+		    obs_hotkey_t* key = obs_hotkey_binding_get_hotkey(binding);
+
+            obs_key_combination_t combo =
+			    obs_hotkey_binding_get_key_combination(binding);
+            DStr str;
+		    obs_key_combination_to_str(combo, str);
+
+            HotkeyData hkeyData = { key, str };
+		    hotkeys->push_back(hkeyData);
+            return true;
+	    },
+	    (void *)&allKeys);
+
+
+    for (const auto &hkeyData : allKeys) {
+	    auto hkey = hkeyData.hkey;
 	    obs_hotkey_registerer_type rtype =
 		    obs_hotkey_get_registerer_type(hkey);
 	    void *registerer = obs_hotkey_get_registerer(hkey);
 	    switch (rtype) {
 	    case OBS_HOTKEY_REGISTERER_FRONTEND:
-		    frontendKeys.push_back(tuple);
+		    frontendKeys.push_back(hkeyData);
 		    break;
 
 	    case OBS_HOTKEY_REGISTERER_SOURCE: {
@@ -301,9 +327,9 @@ void PmActionEntryWidget::updateHotkeys()
 			    auto name = obs_source_get_name(source);
 			    if (obs_scene_t *scene =
 					obs_scene_from_source(source)) {
-				    scenesKeys.insert(name, tuple);
+				    scenesKeys.insert(name, hkeyData);
 			    } else {
-				    sourcesKeys.insert(name, tuple);
+				    sourcesKeys.insert(name, hkeyData);
 			    }
 		    }
 	    } break;
@@ -314,7 +340,7 @@ void PmActionEntryWidget::updateHotkeys()
 		    auto output = OBSGetStrongRef(weakOutput);
 		    if (output) {
 			    auto name = obs_output_get_name(output);
-			    outputsKeys.insert(name, tuple);
+			    outputsKeys.insert(name, hkeyData);
 		    }
 	    } break;
 
@@ -324,7 +350,7 @@ void PmActionEntryWidget::updateHotkeys()
 		    auto encoder = OBSGetStrongRef(weakEncoder);
 		    if (encoder) {
 			    auto name = obs_encoder_get_name(encoder);
-			    encodersKeys.insert(name, tuple);
+			    encodersKeys.insert(name, hkeyData);
 		    }
 	    } break;
 
@@ -334,7 +360,7 @@ void PmActionEntryWidget::updateHotkeys()
 		    auto service = OBSGetStrongRef(weakService);
 		    if (service) {
 			    auto name = obs_service_get_name(service);
-			    servicesKeys.insert(name, tuple);
+			    servicesKeys.insert(name, hkeyData);
 		    }
 	    } break;
 	    }
