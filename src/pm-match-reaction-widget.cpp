@@ -26,22 +26,38 @@ PmActionEntryWidget::PmActionEntryWidget(
 , m_core(core)
 , m_actionIndex(actionIndex)
 {
+    // for all types of targets
     m_targetCombo = new QComboBox(this);
 
-    m_detailsStack = new QStackedWidget(this);
-
+    // transitions for scenes
     m_transitionsCombo = new QComboBox(this);
-    m_detailsStack->addWidget(m_transitionsCombo);
 
+    // toggle scene items and filters on and off
     m_toggleCombo = new QComboBox(this);
     m_toggleCombo->addItem(
         obs_module_text("Show"), (unsigned int)(PmToggleCode::Show));
     m_toggleCombo->addItem(
         obs_module_text("Hide"), (unsigned int)PmToggleCode::Hide);
-    m_detailsStack->addWidget(m_toggleCombo);
 
-    m_detailsLabel = new QLabel(this);
-    m_detailsStack->addWidget(m_detailsLabel);
+    // hotkeys
+    m_hotkeyPressReleaseCombo = new QComboBox(this);
+    m_hotkeyPressReleaseCombo->addItem(obs_module_text("Press"), true);
+    m_hotkeyPressReleaseCombo->addItem(obs_module_text("Release"), false);
+    m_hotkeyDetailsLabel = new QLabel(this);
+    m_hotkeyDetailsLabel->setAlignment(Qt::AlignRight | Qt::AlignCenter);
+    QHBoxLayout *hotkeyLayout = new QHBoxLayout;
+    hotkeyLayout->addWidget(m_hotkeyPressReleaseCombo);
+    hotkeyLayout->addSpacerItem(new QSpacerItem(10, 0));
+    hotkeyLayout->addWidget(m_hotkeyDetailsLabel);
+    hotkeyLayout->setContentsMargins(0, 0, 0, 0);
+    m_hotkeyWidget = new QWidget(this);
+    m_hotkeyWidget->setLayout(hotkeyLayout);
+
+    // selectively shows and selects details for different types of targets
+    m_detailsStack = new QStackedWidget(this);
+    m_detailsStack->addWidget(m_transitionsCombo);
+    m_detailsStack->addWidget(m_toggleCombo);
+    m_detailsStack->addWidget(m_hotkeyWidget);
 
     QHBoxLayout *mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_targetCombo);
@@ -171,50 +187,61 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_targetCombo->setCurrentText(action.m_targetElement.data());
         m_targetCombo->blockSignals(false);
 
-        m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_transitionsCombo);
         m_transitionsCombo->blockSignals(true);
         m_transitionsCombo->setCurrentText(action.m_targetDetails.data());
         m_transitionsCombo->blockSignals(false);
+
+        m_detailsStack->setVisible(true);
+	    m_detailsStack->setCurrentWidget(m_transitionsCombo);
         break;
     case PmActionType::SceneItem:
-        m_targetCombo->setVisible(true);
-        m_targetCombo->blockSignals(true);
-        m_targetCombo->setCurrentText(action.m_targetElement.data());
-        m_targetCombo->blockSignals(false);
-
-        m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_toggleCombo);
-        m_toggleCombo->blockSignals(true);
-        m_toggleCombo->setCurrentIndex(
-            m_toggleCombo->findData(action.m_actionCode));
-        m_toggleCombo->blockSignals(false);
-        break;
     case PmActionType::Filter:
-        m_targetCombo->setVisible(true);
+         m_targetCombo->setVisible(true);
+         m_targetCombo->blockSignals(true);
+         m_targetCombo->setCurrentText(action.m_targetElement.data());
+         m_targetCombo->blockSignals(false);
+
+         m_toggleCombo->blockSignals(true);
+         m_toggleCombo->setCurrentIndex(
+            m_toggleCombo->findData(action.m_actionCode));
+         m_toggleCombo->blockSignals(false);
+
+         m_detailsStack->setVisible(true);
+	     m_detailsStack->setCurrentWidget(m_toggleCombo);
+         break;
+#if 0
+    case PmActionType::Filter:
+        //m_targetCombo->setVisible(true);
         m_targetCombo->blockSignals(true);
         m_targetCombo->setCurrentText(action.m_targetElement.data());
         m_targetCombo->blockSignals(false);
 
-        m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_toggleCombo);
         m_toggleCombo->blockSignals(true);
         m_toggleCombo->setCurrentIndex(
             m_toggleCombo->findData(action.m_actionCode));
         m_toggleCombo->blockSignals(false);
         break;
+#endif
     case PmActionType::Hotkey:
 	    m_targetCombo->setVisible(true);
 	    m_targetCombo->blockSignals(true);
+	    m_hotkeyPressReleaseCombo->blockSignals(true);
 	    if (action.isSet()) {
-		    int idx = m_targetCombo ->findData((size_t)action.m_actionCode);
-			m_targetCombo->setCurrentIndex(idx);
+		    int targetIdx
+                = m_targetCombo ->findData(action.m_targetElement.data());
+			m_targetCombo->setCurrentIndex(targetIdx);
+		    int pressReleaseIdx
+                = m_hotkeyPressReleaseCombo->findData(action.m_actionCode);
+			m_hotkeyPressReleaseCombo->setCurrentIndex(pressReleaseIdx);
 	    } else {
 		    m_targetCombo->setCurrentIndex(0);
+		    m_hotkeyPressReleaseCombo->setCurrentIndex(0);
         }
         m_targetCombo->blockSignals(false);
+	    m_hotkeyPressReleaseCombo->blockSignals(false);
+
         m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_detailsLabel);
+        m_detailsStack->setCurrentWidget(m_hotkeyWidget);
 	    onHotkeySelectionChanged();
         break;
     }
@@ -445,7 +472,10 @@ void PmActionEntryWidget::onUiChanged()
 	    action.m_actionCode = (size_t)m_toggleCombo->currentData().toUInt();
         break;
     case PmActionType::Hotkey:
-	    action.m_actionCode = (size_t)m_targetCombo->currentData().toUInt();
+	    action.m_targetElement
+            = m_targetCombo->currentData().toString().toUtf8().data();
+	    action.m_actionCode =
+		    m_hotkeyPressReleaseCombo->currentData().toBool();
 	    break;
     }
 
@@ -458,7 +488,7 @@ void PmActionEntryWidget::onHotkeySelectionChanged()
 {
 	if (m_actionType == PmActionType::Hotkey) {
 		QString info = m_targetCombo->currentData(k_hotkeyInfoRole).toString();
-		m_detailsLabel->setText(info);
+		m_hotkeyDetailsLabel->setText(info);
     }
 }
 
@@ -471,10 +501,15 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 {
 	QString colorStyle = QString("color: %1").arg(action.actionColorStr());
 
-	m_targetCombo->setStyleSheet(colorStyle);
-	m_transitionsCombo->setStyleSheet(colorStyle);
-	m_toggleCombo->setStyleSheet(colorStyle);
-	m_detailsLabel->setStyleSheet(colorStyle);
+    for (QWidget *w : findChildren<QWidget *>()) {
+		if (w != m_hotkeyDetailsLabel)
+            w->setStyleSheet(colorStyle);
+    }
+
+    m_detailsStack->setStyleSheet(
+	    "QStackedWidget { background-color: rgba(0, 0, 0, 0) }");
+    m_hotkeyWidget->setStyleSheet(
+	    "QWidget { background-color: rgba(0, 0, 0, 0) }");
 }
 
 //----------------------------------------------------

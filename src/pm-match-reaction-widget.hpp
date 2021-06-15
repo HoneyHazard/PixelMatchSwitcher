@@ -74,10 +74,12 @@ protected:
 
     QComboBox *m_transitionsCombo;
     QComboBox *m_toggleCombo;
-    QLabel *m_detailsLabel;
+
+    QComboBox *m_hotkeyPressReleaseCombo;
+    QLabel *m_hotkeyDetailsLabel;
+    QWidget *m_hotkeyWidget;
+
     QStackedWidget *m_detailsStack;
-
-
 
     PmCore *m_core;
     size_t m_actionIndex;

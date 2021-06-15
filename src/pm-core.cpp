@@ -1708,8 +1708,13 @@ void PmCore::execIndependentActions(
 				obs_source_release(filterSrc);
 			}
 		} else if (action.m_actionType == PmActionType::Hotkey) {
-			obs_hotkey_id hkey = (obs_hotkey_id)action.m_actionCode;
-			obs_hotkey_trigger_routed_callback(hkey, true);
+			obs_hotkey_id hkey = (obs_hotkey_id)action.m_targetCode;
+			bool press = (bool)action.m_actionCode;
+			obs_key_combination combo = {}
+			// obs_hotkey_trigger_routed_callback(hkey, true);
+            // obs_hotkey_combination_t combo = obs_key_combination_t
+
+			obs_hotkey_inject_event()
 		}
 	}
 }
