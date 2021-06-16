@@ -43,8 +43,13 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     // hotkeys
     m_hotkeyPressReleaseCombo = new QComboBox(this);
-    m_hotkeyPressReleaseCombo->addItem(obs_module_text("Press"), true);
-    m_hotkeyPressReleaseCombo->addItem(obs_module_text("Release"), false);
+    m_hotkeyPressReleaseCombo->addItem(
+        obs_module_text("Press + Release"), size_t(PmHotkeyActionCode::Both));
+    m_hotkeyPressReleaseCombo->addItem(
+        obs_module_text("Press"), size_t(PmHotkeyActionCode::Press));
+    m_hotkeyPressReleaseCombo->addItem(
+        obs_module_text("Release"), size_t(PmHotkeyActionCode::Release));
+    
     m_hotkeyDetailsLabel = new QLabel(this);
     m_hotkeyDetailsLabel->setAlignment(Qt::AlignRight | Qt::AlignCenter);
     QHBoxLayout *hotkeyLayout = new QHBoxLayout;
@@ -234,7 +239,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 		    int targetIdx = m_targetCombo->findData((const char*)dstr);
 			m_targetCombo->setCurrentIndex(targetIdx);
 		    int pressReleaseIdx
-                = m_hotkeyPressReleaseCombo->findData((bool)action.actionCode);
+                = m_hotkeyPressReleaseCombo->findData((size_t)action.actionCode);
 			m_hotkeyPressReleaseCombo->setCurrentIndex(pressReleaseIdx);
 	    } else {
 		    m_targetCombo->setCurrentIndex(0);
@@ -479,13 +484,12 @@ void PmActionEntryWidget::onUiChanged()
 	    action.actionCode = (size_t)m_toggleCombo->currentData().toUInt();
         break;
     case PmActionType::Hotkey:
-	    action.keyCombo.key = (obs_key_t)
-		    m_targetCombo->currentData(k_keyRole).toInt();
-	    action.keyCombo.modifiers = (uint32_t)
-            m_targetCombo->currentData(k_modifierRole).toInt();
-	    action.actionCode = 
-		    m_hotkeyPressReleaseCombo->currentData().toBool();
-
+	    action.keyCombo.key
+            = (obs_key_t) m_targetCombo->currentData(k_keyRole).toInt();
+	    action.keyCombo.modifiers
+            = (uint32_t) m_targetCombo->currentData(k_modifierRole).toInt();
+	    action.actionCode
+            = (size_t) m_hotkeyPressReleaseCombo->currentData().toUInt();
 	    break;
     }
 

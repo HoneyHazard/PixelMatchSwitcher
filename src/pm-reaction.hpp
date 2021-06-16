@@ -30,6 +30,11 @@ enum class PmActionType : char {
 enum class PmToggleCode : size_t { Show = 0, Hide = 1 };
 
 /**
+ * @brief Hotkey injection behavior
+ */
+enum class PmHotkeyActionCode : size_t { Both = 0, Press = 1, Release = 2};
+
+/**
  * @brief Match entry actions vs global match/unmatch
  */
 enum class PmReactionTarget { Entry, Global };
