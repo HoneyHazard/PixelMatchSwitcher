@@ -8,6 +8,9 @@
 #include <QXmlStreamWriter>
 #include <QColor>
 
+#include <obs-module.h>
+#include <obs-hotkey.h>
+
 /**
  * @brief Types of reactions provided by the plugin
  */
@@ -59,10 +62,13 @@ public:
     bool operator!=(const PmAction &other) const { return !operator==(other); }
     QString actionColorStr() const;
 
-    PmActionType m_actionType = PmActionType::None;
-    size_t m_actionCode = (size_t)-1;
-    std::string m_targetElement;
-    std::string m_targetDetails;
+    PmActionType actionType = PmActionType::None;
+    std::string targetElement;
+    std::string targetDetails;
+
+    size_t actionCode = (size_t)-1;
+
+    obs_key_combination_t keyCombo;
 };
 
 /**

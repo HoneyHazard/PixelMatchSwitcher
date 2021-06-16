@@ -686,25 +686,25 @@ void PmReactionDisplay::updateReaction(
     QString tmp;
     for (size_t i = 0; i < actions.size(); ++i) {
         const auto &action = actions[i];
-        switch (action.m_actionType) {
+        switch (action.actionType) {
         case PmActionType::Scene:
-            tmp = action.isSet() ? action.m_targetElement.data()
-                : QString("[%1]").arg(PmAction::actionStr(action.m_actionType));
+            tmp = action.isSet() ? action.targetElement.data()
+                : QString("[%1]").arg(PmAction::actionStr(action.actionType));
 		    line = QString("%1%2")
                 .arg(tmp)
-                .arg(action.m_targetDetails.size() ?
-                    QString(" [%1]").arg(action.m_targetDetails.data()) : "");
+                .arg(action.targetDetails.size() ?
+                    QString(" [%1]").arg(action.targetDetails.data()) : "");
             html += QString("<font color=\"%1\">%2</font>")
 				.arg(action.actionColorStr())
                 .arg(line);
             break;
         case PmActionType::SceneItem:
         case PmActionType::Filter:
-            tmp = action.isSet() ? action.m_targetElement.data()
-                : QString("[%1]").arg(PmAction::actionStr(action.m_actionType));
+            tmp = action.isSet() ? action.targetElement.data()
+                : QString("[%1]").arg(PmAction::actionStr(action.actionType));
             line = QString("%1 [%2]")
                 .arg(tmp)
-                .arg(action.m_actionCode == (size_t)PmToggleCode::Show ?
+                .arg(action.actionCode == (size_t)PmToggleCode::Show ?
                     obs_module_text("show") : obs_module_text("hide"));
             html += QString("<font color=\"%1\">%2</font>")
                 .arg(action.actionColorStr())

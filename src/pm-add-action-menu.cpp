@@ -47,17 +47,17 @@ PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
 void PmAddActionMenu::itemTriggered(int actionIndex)
 {
 	PmAction newAction;
-	newAction.m_actionType = (PmActionType)actionIndex;
+	newAction.actionType = (PmActionType)actionIndex;
 	PmReaction reaction = pullReaction();
 
 	if (m_reactionType == PmReactionType::Match) {
-		if (newAction.m_actionType == PmActionType::Scene
+		if (newAction.actionType == PmActionType::Scene
          && reaction.hasMatchAction(PmActionType::Scene)) {
 			return; // enforce one scene action
         }
 		reaction.matchActions.push_back(newAction);
 	} else { // Unmatch
-		if (newAction.m_actionType == PmActionType::Scene
+		if (newAction.actionType == PmActionType::Scene
          || reaction.hasUnmatchAction(PmActionType::Scene)) {
 			return; // enforce one scene action
 		}

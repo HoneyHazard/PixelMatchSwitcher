@@ -18,7 +18,9 @@
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
-const int PmActionEntryWidget::k_hotkeyInfoRole = Qt::UserRole + 1;
+const int PmActionEntryWidget::k_keyRole = Qt::UserRole + 1;
+const int PmActionEntryWidget::k_modifierRole = Qt::UserRole + 2;
+const int PmActionEntryWidget::k_keyHintRole = Qt::UserRole + 3;
 
 PmActionEntryWidget::PmActionEntryWidget(
     PmCore* core, size_t actionIndex, QWidget *parent)
@@ -171,12 +173,12 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     if (m_actionIndex != actionIndex) return;
 
     PmActionType prevType = m_actionType;
-    if (prevType != action.m_actionType) {
-	    m_actionType = action.m_actionType;
+    if (prevType != action.actionType) {
+        m_actionType = action.actionType;
         prepareSelections();
     }
 
-    switch (action.m_actionType) {
+    switch (action.actionType) {
     case PmActionType::None:
         m_targetCombo->setVisible(false);
         m_detailsStack->setVisible(false);
@@ -184,11 +186,11 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     case PmActionType::Scene:
         m_targetCombo->setVisible(true);
         m_targetCombo->blockSignals(true);
-        m_targetCombo->setCurrentText(action.m_targetElement.data());
+        m_targetCombo->setCurrentText(action.targetElement.data());
         m_targetCombo->blockSignals(false);
 
         m_transitionsCombo->blockSignals(true);
-        m_transitionsCombo->setCurrentText(action.m_targetDetails.data());
+        m_transitionsCombo->setCurrentText(action.targetDetails.data());
         m_transitionsCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
@@ -198,12 +200,12 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     case PmActionType::Filter:
          m_targetCombo->setVisible(true);
          m_targetCombo->blockSignals(true);
-         m_targetCombo->setCurrentText(action.m_targetElement.data());
+         m_targetCombo->setCurrentText(action.targetElement.data());
          m_targetCombo->blockSignals(false);
 
          m_toggleCombo->blockSignals(true);
          m_toggleCombo->setCurrentIndex(
-            m_toggleCombo->findData(action.m_actionCode));
+            m_toggleCombo->findData(action.actionCode));
          m_toggleCombo->blockSignals(false);
 
          m_detailsStack->setVisible(true);
@@ -227,11 +229,12 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 	    m_targetCombo->blockSignals(true);
 	    m_hotkeyPressReleaseCombo->blockSignals(true);
 	    if (action.isSet()) {
-		    int targetIdx
-                = m_targetCombo ->findData(action.m_targetElement.data());
+		    DStr dstr;
+		    obs_key_combination_to_str(action.keyCombo, dstr);
+		    int targetIdx = m_targetCombo->findData((const char*)dstr);
 			m_targetCombo->setCurrentIndex(targetIdx);
 		    int pressReleaseIdx
-                = m_hotkeyPressReleaseCombo->findData(action.m_actionCode);
+                = m_hotkeyPressReleaseCombo->findData((bool)action.actionCode);
 			m_hotkeyPressReleaseCombo->setCurrentIndex(pressReleaseIdx);
 	    } else {
 		    m_targetCombo->setCurrentIndex(0);
@@ -267,18 +270,25 @@ void PmActionEntryWidget::insertHotkeysList(
 	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
     QString header = QString("---- %1 ----").arg(info);
     m_targetCombo->addItem(header);
-	model->item(idx)->setEnabled(false);
-    m_targetCombo->setItemData(idx, dimmedBrush, Qt::ForegroundRole);
+	model->item(idx)->setEnabled(false);    m_targetCombo->setItemData(idx, dimmedBrush, Qt::ForegroundRole);
     idx++;
 
     QBrush selBrush = PmAction::actionColor(PmActionType::Hotkey);
     for (const auto &hkeyData : list) {
 	    const char *descr = obs_hotkey_get_description(hkeyData.hkey);
+	    DStr comboStr;
+	    obs_key_combination_to_str(hkeyData.keyCombo, comboStr);
+
 	    QString targetStr = QString("%1 (%2)")
-            .arg(descr).arg(hkeyData.comboStr.data());
-	    m_targetCombo->addItem(targetStr, hkeyData.comboStr.data());
+            .arg(descr).arg((const char*)comboStr);
+
+        m_targetCombo->addItem(targetStr, (const char*)comboStr);
 	    m_targetCombo->setItemData(idx, selBrush, Qt::ForegroundRole);
-	    m_targetCombo->setItemData(idx, info, k_hotkeyInfoRole);
+	    m_targetCombo->setItemData(
+            idx, (int)hkeyData.keyCombo.key, k_keyRole);
+        m_targetCombo->setItemData(
+            idx, (uint32_t)hkeyData.keyCombo.modifiers, k_modifierRole);
+	    m_targetCombo->setItemData(idx, info, k_keyHintRole);
 	    idx++;
     }
 }
@@ -323,14 +333,11 @@ void PmActionEntryWidget::updateHotkeys()
 		    //obs_hotkey_id id =
 			//    obs_hotkey_binding_get_hotkey_id(binding);
 		    obs_hotkey_t* key = obs_hotkey_binding_get_hotkey(binding);
-
-            obs_key_combination_t combo =
+		    obs_key_combination_t combo =
 			    obs_hotkey_binding_get_key_combination(binding);
-            DStr str;
-		    obs_key_combination_to_str(combo, str);
-
-            HotkeyData hkeyData = { key, str };
+            HotkeyData hkeyData = { key, combo };
 		    hotkeys->push_back(hkeyData);
+            UNUSED_PARAMETER(idx);
             return true;
 	    },
 	    (void *)&allKeys);
@@ -454,28 +461,31 @@ void PmActionEntryWidget::onActionTypeSelectionChanged()
 void PmActionEntryWidget::onUiChanged()
 {
     PmAction action;
-	action.m_actionType = m_actionType;
+	action.actionType = m_actionType;
 
     switch (PmActionType(m_actionType)) {
     case PmActionType::None:
         break;
     case PmActionType::Scene:
-        action.m_targetElement
+        action.targetElement
             = m_targetCombo->currentData().toString().toUtf8().data();
-        action.m_targetDetails
+        action.targetDetails
             = m_transitionsCombo->currentData().toString().toUtf8().data();
         break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
-        action.m_targetElement
+        action.targetElement
             = m_targetCombo->currentData().toString().toUtf8().data();
-	    action.m_actionCode = (size_t)m_toggleCombo->currentData().toUInt();
+	    action.actionCode = (size_t)m_toggleCombo->currentData().toUInt();
         break;
     case PmActionType::Hotkey:
-	    action.m_targetElement
-            = m_targetCombo->currentData().toString().toUtf8().data();
-	    action.m_actionCode =
+	    action.keyCombo.key = (obs_key_t)
+		    m_targetCombo->currentData(k_keyRole).toInt();
+	    action.keyCombo.modifiers = (uint32_t)
+            m_targetCombo->currentData(k_modifierRole).toInt();
+	    action.actionCode = 
 		    m_hotkeyPressReleaseCombo->currentData().toBool();
+
 	    break;
     }
 
@@ -487,7 +497,7 @@ void PmActionEntryWidget::onUiChanged()
 void PmActionEntryWidget::onHotkeySelectionChanged()
 {
 	if (m_actionType == PmActionType::Hotkey) {
-		QString info = m_targetCombo->currentData(k_hotkeyInfoRole).toString();
+		QString info = m_targetCombo->currentData(k_keyHintRole).toString();
 		m_hotkeyDetailsLabel->setText(info);
     }
 }
@@ -508,8 +518,8 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 
     m_detailsStack->setStyleSheet(
 	    "QStackedWidget { background-color: rgba(0, 0, 0, 0) }");
-    m_hotkeyWidget->setStyleSheet(
-	    "QWidget { background-color: rgba(0, 0, 0, 0) }");
+    //m_hotkeyWidget->setStyleSheet(
+	//    "QWidget { background-color: rgba(0, 0, 0, 0) }");
 }
 
 //----------------------------------------------------

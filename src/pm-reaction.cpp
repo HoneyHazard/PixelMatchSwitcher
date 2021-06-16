@@ -47,14 +47,22 @@ QString PmAction::actionColorStr(PmActionType actionType)
 
 PmAction::PmAction(obs_data_t *data)
 {
-    obs_data_set_default_int(data, "action_type", (long long)m_actionType);
-    m_actionType = (PmActionType)obs_data_get_int(data, "action_type");
+    obs_data_set_default_int(data, "action_type", (long long)actionType);
+    actionType = (PmActionType)obs_data_get_int(data, "action_type");
 
-    obs_data_set_default_int(data, "action_code", (long long)m_actionCode);
-    m_actionCode = (size_t)obs_data_get_int(data, "action_code");
+    obs_data_set_default_int(data, "action_code", (long long)actionCode);
+    actionCode = (size_t)obs_data_get_int(data, "action_code");
 
-    m_targetElement = obs_data_get_string(data, "target_element");
-    m_targetDetails = obs_data_get_string(data, "target_details");
+    targetElement = obs_data_get_string(data, "target_element");
+    targetDetails = obs_data_get_string(data, "target_details");
+
+    if (actionType == PmActionType::Hotkey) {
+	    obs_data_set_default_int(data, "hotkey_key", 0L);
+	    obs_data_set_default_int(data, "hotkey_modifiers", 0L);
+	    keyCombo.key = (obs_key_t)obs_data_get_int(data, "hotkey_key");
+	    keyCombo.modifiers
+            = (uint32_t)obs_data_get_int(data, "hotkey_modifiers");
+    }
 
     obs_data_release(data);
 }
@@ -75,14 +83,18 @@ PmAction::PmAction(QXmlStreamReader &reader)
         } else if (reader.isStartElement()) {
             QString elementText = reader.readElementText();
             if (name == "action_type") {
-                m_actionType = (PmActionType)(elementText.toInt());
+                actionType = (PmActionType)(elementText.toInt());
             } else if (name == "action_code") {
-                m_actionCode = (size_t)elementText.toUInt();
+                actionCode = (size_t)elementText.toUInt();
             } else if (name == "target_element") {
-                m_targetElement = elementText.toUtf8().data();
+                targetElement = elementText.toUtf8().data();
             } else if (name == "target_details") {
-                m_targetDetails = elementText.toUtf8().data();
-            }
+                targetDetails = elementText.toUtf8().data();
+		    } else if (name == "hotkey_key") {
+                keyCombo.key = (obs_key_t)elementText.toInt();
+		    } else if (name == "hotkey_modifiers") {
+			    keyCombo.modifiers = (uint32_t)elementText.toUInt();
+		    }
         }
     }
 }
@@ -90,28 +102,43 @@ PmAction::PmAction(QXmlStreamReader &reader)
 obs_data_t *PmAction::saveData() const
 {
     obs_data_t *ret = obs_data_create();
-    obs_data_set_int(ret, "action_type", (long long)m_actionType);
-    obs_data_set_int(ret, "action_code", (long long)m_actionCode);
-    obs_data_set_string(ret, "target_element", m_targetElement.data());
-    obs_data_set_string(ret, "target_details", m_targetDetails.data());
+    obs_data_set_int(ret, "action_type", (long long)actionType);
+    obs_data_set_int(ret, "action_code", (long long)actionCode);
+    if (targetElement.size())
+        obs_data_set_string(ret, "target_element", targetElement.data());
+    if (targetDetails.size())
+        obs_data_set_string(ret, "target_details", targetDetails.data());
+    if (actionType == PmActionType::Hotkey) {
+	    obs_data_set_int(
+            ret, "hotkey_modifiers", (long long)keyCombo.modifiers);
+	    obs_data_set_int(ret, "hotkey_key", (long long)keyCombo.key);
+    }
     return ret;
 }
 
 void PmAction::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("action");
-    writer.writeTextElement("action_type", QString::number(size_t(m_actionType)));
-    writer.writeTextElement("action_code", QString::number(size_t(m_actionCode)));
-    writer.writeTextElement("target_element", m_targetElement.data());
-    writer.writeTextElement("target_details", m_targetDetails.data());
+    writer.writeTextElement("action_type", QString::number(size_t(actionType)));
+    writer.writeTextElement("action_code", QString::number(size_t(actionCode)));
+    if (targetElement.size())
+        writer.writeTextElement("target_element", targetElement.data());
+    if (targetDetails.size())
+        writer.writeTextElement("target_details", targetDetails.data());
+    if (actionType == PmActionType::Hotkey) {
+	    writer.writeTextElement(
+            "hotkey_key", QString::number(int(keyCombo.key)));
+	    writer.writeTextElement(
+            "hotkey_modifiers", QString::number(keyCombo.modifiers));
+    }
     writer.writeEndElement();
 }
 
 bool PmAction::renameElement(PmActionType actionType,
     const std::string &oldName, const std::string &newName)
 {
-    if (m_actionType == actionType && m_targetElement == oldName) {
-        m_targetElement = newName;
+    if (actionType == actionType && targetElement == oldName) {
+        targetElement = newName;
         return true;
     }
     return false;
@@ -120,27 +147,30 @@ bool PmAction::renameElement(PmActionType actionType,
 bool PmAction::isSet() const
 {
     // TODO: revisit
-    switch (m_actionType) {
+    switch (actionType) {
     case PmActionType::None:
         return false; break;
     case PmActionType::Hotkey:
-	    return m_actionCode != (size_t)-1; break;
+	    return actionCode != (size_t)-1; break;
     default:
-        return m_targetElement.size() > 0; break;
+        return targetElement.size() > 0; break;
     }
 }
 
 bool PmAction::operator==(const PmAction &other) const
 {
-    return m_actionType == other.m_actionType
-        && m_actionCode == other.m_actionCode
-        && m_targetElement == other.m_targetElement
-        && m_targetDetails == other.m_targetDetails;
+    return actionType == other.actionType
+        && actionCode == other.actionCode
+        && targetElement == other.targetElement
+        && targetDetails == other.targetDetails
+        && (actionType != PmActionType::Hotkey ||
+            (keyCombo.key == other.keyCombo.key
+                && keyCombo.modifiers == other.keyCombo.modifiers));
 }
 
 QString PmAction::actionColorStr() const
 {
-	return actionColorStr(m_actionType);
+	return actionColorStr(actionType);
 }
 
 //---------------------------------------------------------
@@ -245,13 +275,13 @@ bool PmReaction::hasAction(PmActionType actionType) const
 {
     for (const PmAction& action : matchActions) {
         if (actionType == PmActionType::ANY
-         || action.m_actionType == actionType) {
+         || action.actionType == actionType) {
             return true;
         }
     }
     for (const PmAction &action : matchActions) {
         if (actionType == PmActionType::ANY
-         || action.m_actionType == actionType) {
+         || action.actionType == actionType) {
             return true;
         }
     }
@@ -262,7 +292,7 @@ bool PmReaction::hasMatchAction(PmActionType actionType) const
 {
     for (const PmAction& action : matchActions) {
 		if (actionType == PmActionType::ANY
-         || action.m_actionType == actionType) {
+         || action.actionType == actionType) {
             return true;
         }
     }
@@ -273,7 +303,7 @@ bool PmReaction::hasUnmatchAction(PmActionType actionType) const
 {
     for (const PmAction& action : unmatchActions) {
         if (actionType == PmActionType::ANY
-         || action.m_actionType == actionType) {
+         || action.actionType == actionType) {
             return true;
         }
     }
@@ -325,9 +355,9 @@ void PmReaction::getMatchScene(
     std::string &sceneName, std::string &transition) const
 {
     for (const PmAction& action : matchActions) {
-        if (action.m_actionType == PmActionType::Scene) {
-            sceneName = action.m_targetElement;
-            transition = action.m_targetDetails;
+        if (action.actionType == PmActionType::Scene) {
+            sceneName = action.targetElement;
+            transition = action.targetDetails;
             return;
         }
     }
@@ -337,9 +367,9 @@ void PmReaction::getUnmatchScene(
     std::string &sceneName, std::string &transition) const
 {
     for (const PmAction& action : unmatchActions) {
-        if (action.m_actionType == PmActionType::Scene) {
-            sceneName = action.m_targetElement;
-            transition = action.m_targetDetails;
+        if (action.actionType == PmActionType::Scene) {
+            sceneName = action.targetElement;
+            transition = action.targetDetails;
             return;
         }
     }

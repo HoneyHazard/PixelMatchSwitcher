@@ -1657,12 +1657,12 @@ void PmCore::execIndependentActions(
     const auto &actions
         = switchedOn ? reaction.matchActions : reaction.unmatchActions;
 	for (const auto &action : actions) {
-		if (action.m_actionType == PmActionType::SceneItem) {
+		if (action.actionType == PmActionType::SceneItem) {
 			obs_sceneitem_t *sceneItem = nullptr;
 			{
 				QMutexLocker locker(&m_scenesMutex);
 				auto find = m_sceneItems.find(
-					action.m_targetElement);
+					action.targetElement);
 				if (find != m_sceneItems.end()) {
 					OBSSceneItem sceneItemSi = find->si;
 					sceneItem = sceneItemSi;
@@ -1670,24 +1670,24 @@ void PmCore::execIndependentActions(
 			}
 			if (sceneItem) {
 				if (switchedOn &&
-				    action.m_actionCode ==
+				    action.actionCode ==
 					    (size_t)PmToggleCode::Show) {
 					obs_sceneitem_set_visible(sceneItem,
 								  true);
 				} else if (!switchedOn &&
-					   action.m_actionCode ==
+					   action.actionCode ==
 						   (size_t)PmToggleCode::Hide) {
 					obs_sceneitem_set_visible(sceneItem,
 								  false);
 				}
 				obs_sceneitem_release(sceneItem);
 			}
-		} else if (action.m_actionType == PmActionType::Filter) {
+		} else if (action.actionType == PmActionType::Filter) {
 			obs_source_t *filterSrc = nullptr;
 			{
 				QMutexLocker locker(&m_scenesMutex);
 				auto find =
-					m_filters.find(action.m_targetElement);
+					m_filters.find(action.targetElement);
 				if (find != m_filters.end()) {
 					OBSWeakSource filterWs = find->wsrc;
 					filterSrc = obs_weak_source_get_source(
@@ -1696,25 +1696,21 @@ void PmCore::execIndependentActions(
 			}
 			if (filterSrc) {
 				if (switchedOn &&
-				    action.m_actionCode ==
+				    action.actionCode ==
 					    (size_t)PmToggleCode::Show) {
 					obs_source_set_enabled(filterSrc, true);
 				} else if (!switchedOn &&
-					   action.m_actionCode ==
+					   action.actionCode ==
 						   (size_t)PmToggleCode::Hide) {
 					obs_source_set_enabled(filterSrc,
 							       false);
 				}
 				obs_source_release(filterSrc);
 			}
-		} else if (action.m_actionType == PmActionType::Hotkey) {
-			obs_hotkey_id hkey = (obs_hotkey_id)action.m_targetCode;
-			bool press = (bool)action.m_actionCode;
-			obs_key_combination combo = {}
-			// obs_hotkey_trigger_routed_callback(hkey, true);
-            // obs_hotkey_combination_t combo = obs_key_combination_t
-
-			obs_hotkey_inject_event()
+		} else if (action.actionType == PmActionType::Hotkey) {
+			bool press = (bool)action.actionType;
+			//obs_hotkey_inject_event(action.keyCombo, true);
+			obs_hotkey_inject_event(action.keyCombo, press);
 		}
 	}
 }

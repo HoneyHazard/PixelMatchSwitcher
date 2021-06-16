@@ -50,11 +50,13 @@ protected slots:
 
 protected:
     static const QString k_defaultTransitionStr;
-	static const int k_hotkeyInfoRole;
+	static const int k_keyRole;
+    static const int k_modifierRole;
+	static const int k_keyHintRole;
 
     struct HotkeyData {
 	    obs_hotkey_t *hkey;
-	    std::string comboStr;
+	    obs_key_combination_t keyCombo;
     };
 
 	typedef QList<HotkeyData> HotkeysList;
