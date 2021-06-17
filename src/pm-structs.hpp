@@ -84,39 +84,6 @@ struct PmMatchResults
 typedef std::vector<PmMatchResults> PmMultiMatchResults;
 
 /**
- * @brief Describes what will happen in reaction to a condition
- */
-#if 0
-struct PmReactionOld
-{
-public:
-    PmReactionOld() {}
-    PmReactionOld(obs_data_t *data);
-    PmReactionOld(QXmlStreamReader &reader);
-
-    obs_data_t *save() const;
-    void saveXml(QXmlStreamWriter &writer) const;
-
-    bool isSet() const;
-
-public:
-    PmReactionType type = PmReactionType::SwitchScene;
-
-    std::string targetScene;
-    std::string sceneTransition = "Cut";
-
-    std::string targetSceneItem;
-    std::string targetFilter;
-
-    uint32_t lingerMs = 0;
-
-    bool operator==(const PmReactionOld &) const;
-    bool operator!=(const PmReactionOld &other) const
-        { return !operator==(other); }
-};
-#endif
-
-/**
  * @brief Describes matching configuration of an individual match entry, 
  *        as well as switching behavior in case of a match
  */

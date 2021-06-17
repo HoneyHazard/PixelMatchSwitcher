@@ -1708,16 +1708,9 @@ void PmCore::execIndependentActions(
 				obs_source_release(filterSrc);
 			}
 		} else if (action.actionType == PmActionType::Hotkey) {
-			PmHotkeyActionCode hkeyCode = (PmHotkeyActionCode)action.actionCode;
-			//obs_hotkey_inject_event(action.keyCombo, true);
-			if (hkeyCode == PmHotkeyActionCode::Press
-             || hkeyCode == PmHotkeyActionCode::Both) {
-    			obs_hotkey_inject_event(action.keyCombo, true);
-            }
-			if (hkeyCode == PmHotkeyActionCode::Release
-             || hkeyCode == PmHotkeyActionCode::Both) {
-				obs_hotkey_inject_event(action.keyCombo, false);
-			}
+        	obs_hotkey_inject_event(action.keyCombo, false);
+			obs_hotkey_inject_event(action.keyCombo, true);
+		    obs_hotkey_inject_event(action.keyCombo, false);
 		}
 	}
 }

@@ -5,6 +5,7 @@
 #include "pm-spoiler-widget.hpp"
 
 #include <vector>
+#include <QMultiHash>
 
 class PmCore;
 class PmAddActionMenu;
@@ -58,7 +59,6 @@ protected:
 	    obs_hotkey_t *hkey;
 	    obs_key_combination_t keyCombo;
     };
-
 	typedef QList<HotkeyData> HotkeysList;
 	typedef QMultiHash<std::string, HotkeyData> HotkeysGroup;
 
@@ -77,9 +77,7 @@ protected:
     QComboBox *m_transitionsCombo;
     QComboBox *m_toggleCombo;
 
-    QComboBox *m_hotkeyPressReleaseCombo;
     QLabel *m_hotkeyDetailsLabel;
-    QWidget *m_hotkeyWidget;
 
     QStackedWidget *m_detailsStack;
 

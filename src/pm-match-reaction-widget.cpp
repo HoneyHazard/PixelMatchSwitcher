@@ -13,7 +13,6 @@
 #include <QListWidget>
 #include <QStandardItemModel>
 #include <QMouseEvent>
-#include <QMultiHash>
 #include <QLabel>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
@@ -41,30 +40,15 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_toggleCombo->addItem(
         obs_module_text("Hide"), (unsigned int)PmToggleCode::Hide);
 
-    // hotkeys
-    m_hotkeyPressReleaseCombo = new QComboBox(this);
-    m_hotkeyPressReleaseCombo->addItem(
-        obs_module_text("Press + Release"), size_t(PmHotkeyActionCode::Both));
-    m_hotkeyPressReleaseCombo->addItem(
-        obs_module_text("Press"), size_t(PmHotkeyActionCode::Press));
-    m_hotkeyPressReleaseCombo->addItem(
-        obs_module_text("Release"), size_t(PmHotkeyActionCode::Release));
-    
+    // hotkeys   
     m_hotkeyDetailsLabel = new QLabel(this);
-    m_hotkeyDetailsLabel->setAlignment(Qt::AlignRight | Qt::AlignCenter);
-    QHBoxLayout *hotkeyLayout = new QHBoxLayout;
-    hotkeyLayout->addWidget(m_hotkeyPressReleaseCombo);
-    hotkeyLayout->addSpacerItem(new QSpacerItem(10, 0));
-    hotkeyLayout->addWidget(m_hotkeyDetailsLabel);
-    hotkeyLayout->setContentsMargins(0, 0, 0, 0);
-    m_hotkeyWidget = new QWidget(this);
-    m_hotkeyWidget->setLayout(hotkeyLayout);
-
+    //m_hotkeyDetailsLabel->setAlignment(Qt::AlignRight | Qt::AlignCenter);
+ 
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
     m_detailsStack->addWidget(m_transitionsCombo);
     m_detailsStack->addWidget(m_toggleCombo);
-    m_detailsStack->addWidget(m_hotkeyWidget);
+    m_detailsStack->addWidget(m_hotkeyDetailsLabel);
 
     QHBoxLayout *mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_targetCombo);
@@ -232,24 +216,18 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     case PmActionType::Hotkey:
 	    m_targetCombo->setVisible(true);
 	    m_targetCombo->blockSignals(true);
-	    m_hotkeyPressReleaseCombo->blockSignals(true);
 	    if (action.isSet()) {
 		    DStr dstr;
 		    obs_key_combination_to_str(action.keyCombo, dstr);
 		    int targetIdx = m_targetCombo->findData((const char*)dstr);
 			m_targetCombo->setCurrentIndex(targetIdx);
-		    int pressReleaseIdx
-                = m_hotkeyPressReleaseCombo->findData((size_t)action.actionCode);
-			m_hotkeyPressReleaseCombo->setCurrentIndex(pressReleaseIdx);
 	    } else {
 		    m_targetCombo->setCurrentIndex(0);
-		    m_hotkeyPressReleaseCombo->setCurrentIndex(0);
         }
         m_targetCombo->blockSignals(false);
-	    m_hotkeyPressReleaseCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_hotkeyWidget);
+        m_detailsStack->setCurrentWidget(m_hotkeyDetailsLabel);
 	    onHotkeySelectionChanged();
         break;
     }
@@ -304,7 +282,7 @@ void PmActionEntryWidget::insertHotkeysGroup(
 	//auto model = (QStandardItemModel *)m_targetCombo->model();
 	//QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::Hotkey);
 
-	for (const auto &key : group.keys()) {
+	for (const auto &key : group.uniqueKeys()) {
 		QString info = QString("[%1] %2").arg(category).arg(key.data());
 		insertHotkeysList(idx, info, group.values(key));
     }
@@ -488,8 +466,6 @@ void PmActionEntryWidget::onUiChanged()
             = (obs_key_t) m_targetCombo->currentData(k_keyRole).toInt();
 	    action.keyCombo.modifiers
             = (uint32_t) m_targetCombo->currentData(k_modifierRole).toInt();
-	    action.actionCode
-            = (size_t) m_hotkeyPressReleaseCombo->currentData().toUInt();
 	    break;
     }
 
@@ -519,11 +495,6 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 		if (w != m_hotkeyDetailsLabel)
             w->setStyleSheet(colorStyle);
     }
-
-    m_detailsStack->setStyleSheet(
-	    "QStackedWidget { background-color: rgba(0, 0, 0, 0) }");
-    //m_hotkeyWidget->setStyleSheet(
-	//    "QWidget { background-color: rgba(0, 0, 0, 0) }");
 }
 
 //----------------------------------------------------
