@@ -2,6 +2,8 @@
 #include "pm-core.hpp"
 #include "pm-add-action-menu.hpp"
 
+#include <util/dstr.hpp>
+
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QHBoxLayout>
@@ -711,7 +713,17 @@ void PmReactionDisplay::updateReaction(
                 .arg(line);
             break;
         case PmActionType::Hotkey:
-            // TODO
+            if (action.isSet()) {
+                DStr dstr;
+                obs_key_combination_to_str(action.keyCombo, dstr);
+                line = dstr;
+            } else {
+                line = QString("[%1]").arg(
+                    PmAction::actionStr(action.actionType));
+            }
+	        html += QString("<font color=\"%1\">%2</font>")
+			    .arg(action.actionColorStr())
+			    .arg(line);
             break;
         case PmActionType::FrontEndEvent:
             // TODO
