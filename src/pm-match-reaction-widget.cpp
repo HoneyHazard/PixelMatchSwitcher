@@ -230,6 +230,20 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_detailsStack->setCurrentWidget(m_hotkeyDetailsLabel);
 	    onHotkeySelectionChanged();
         break;
+    case PmActionType::FrontEndAction:
+	    m_targetCombo->setVisible(true);
+	    m_targetCombo->blockSignals(true);
+	    if (action.isSet()) {
+		    int targetIdx
+                = m_targetCombo->findData((unsigned int)action.actionCode);
+		    m_targetCombo->setCurrentIndex(targetIdx);
+	    } else {
+		    m_targetCombo->setCurrentIndex(0);
+	    }
+	    m_targetCombo->blockSignals(false);
+
+        m_detailsStack->setVisible(false);
+	    break;
     }
 
     updateUiStyle(action);
@@ -404,9 +418,54 @@ void PmActionEntryWidget::updateHotkeys()
     m_targetCombo->blockSignals(false);
 }
 
-void PmActionEntryWidget::updateFrontendEvents()
+void PmActionEntryWidget::insertFrontendEntries(
+    int &comboIdx, const QString &category,
+    PmFrontEndAction start, PmFrontEndAction end)
 {
+	auto model = (QStandardItemModel *)m_targetCombo->model();
+    QBrush colorBrush = PmAction::actionColor(PmActionType::FrontEndAction);
+    QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::FrontEndAction);
 
+    QString title = QString("--- %1 ---").arg(category);
+    m_targetCombo->addItem(title);
+    m_targetCombo->setItemData(comboIdx, dimmedBrush, Qt::ForegroundRole);
+    model->item(comboIdx)->setEnabled(false);
+    comboIdx++;
+
+    for (int feaIdx = (int)start; feaIdx <= (int)end; feaIdx++) {
+	    PmFrontEndAction fea = (PmFrontEndAction)feaIdx;
+	    m_targetCombo->addItem(PmAction::frontEndActionStr(fea), feaIdx);
+	    m_targetCombo->setItemData(comboIdx, colorBrush, Qt::ForegroundRole);
+	    comboIdx++;
+    }
+}
+
+void PmActionEntryWidget::updateFrontendActions()
+{
+	auto model = (QStandardItemModel *)m_targetCombo->model();
+	int idx = 0;
+
+	QBrush dimmedBrush = PmAction::dimmedColor(PmActionType::FrontEndAction);
+
+	m_targetCombo->blockSignals(true);
+	m_targetCombo->clear();
+
+	m_targetCombo->addItem(obs_module_text("<select front end action>"));
+	m_targetCombo->setItemData(idx, dimmedBrush, Qt::ForegroundRole);
+	model->item(idx)->setEnabled(false);
+	idx++;
+
+	insertFrontendEntries(idx, obs_module_text("streaming"),
+	    PmFrontEndAction::StreamingStart, PmFrontEndAction::StreamingStop);
+	insertFrontendEntries(idx, obs_module_text("recording"),
+		PmFrontEndAction::RecordingStart, PmFrontEndAction::RecordingUnpause);
+	insertFrontendEntries(idx, obs_module_text("replay buffer"),
+        PmFrontEndAction::ReplayBufferStart,
+        PmFrontEndAction::ReplayBufferStop);
+	insertFrontendEntries(idx, obs_module_text("other"),
+        PmFrontEndAction::TakeScreenshot, PmFrontEndAction::ResetVideo);
+
+    m_targetCombo->blockSignals(false);
 }
 
 void PmActionEntryWidget::installEventFilterAll(QObject *obj)
@@ -430,6 +489,9 @@ void PmActionEntryWidget::prepareSelections()
     case PmActionType::Hotkey:
 	    updateHotkeys();
         break;
+    case PmActionType::FrontEndAction:
+	    updateFrontendActions();
+	    break;
     default:
 	    break;
     }
@@ -466,6 +528,9 @@ void PmActionEntryWidget::onUiChanged()
             = (obs_key_t) m_targetCombo->currentData(k_keyRole).toInt();
 	    action.keyCombo.modifiers
             = (uint32_t) m_targetCombo->currentData(k_modifierRole).toInt();
+	    break;
+    case PmActionType::FrontEndAction:
+	    action.actionCode = (size_t)m_targetCombo->currentData().toUInt();
 	    break;
     }
 

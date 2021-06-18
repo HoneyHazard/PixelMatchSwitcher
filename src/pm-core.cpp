@@ -1711,7 +1711,36 @@ void PmCore::execIndependentActions(
         	obs_hotkey_inject_event(action.keyCombo, false);
 			obs_hotkey_inject_event(action.keyCombo, true);
 		    obs_hotkey_inject_event(action.keyCombo, false);
-		}
+		} else if (action.actionType == PmActionType::FrontEndAction) {
+			switch ((PmFrontEndAction)action.actionCode) {
+			case PmFrontEndAction::StreamingStart:
+				obs_frontend_streaming_start(); break;
+			case PmFrontEndAction::StreamingStop:
+				obs_frontend_streaming_stop(); break;
+			case PmFrontEndAction::RecordingStart:
+				obs_frontend_recording_start(); break;
+			case PmFrontEndAction::RecordingStop:
+				obs_frontend_recording_stop(); break;
+			case PmFrontEndAction::RecordingPause:
+				obs_frontend_recording_pause(true); break;
+			case PmFrontEndAction::RecordingUnpause:
+				obs_frontend_recording_pause(false); break;
+			case PmFrontEndAction::ReplayBufferStart:
+				obs_frontend_replay_buffer_start(); break;
+			case PmFrontEndAction::ReplayBufferSave:
+				obs_frontend_replay_buffer_save(); break;
+			case PmFrontEndAction::ReplayBufferStop:
+				obs_frontend_replay_buffer_stop(); break;
+			case PmFrontEndAction::TakeScreenshot:
+				obs_frontend_take_screenshot(); break;
+			case PmFrontEndAction::StartVirtualCam:
+				obs_frontend_start_virtualcam(); break;
+			case PmFrontEndAction::StopVirtualCam:
+				obs_frontend_stop_virtualcam(); break;
+			case PmFrontEndAction::ResetVideo:
+				obs_frontend_reset_video();
+            }
+        }
 	}
 }
 

@@ -20,7 +20,7 @@ enum class PmActionType : char {
     SceneItem = 2,
     Filter = 3,
     Hotkey = 4,
-    FrontEndEvent = 5,
+    FrontEndAction = 5,
     ANY = 6
 };
 
@@ -32,9 +32,19 @@ enum class PmToggleCode : size_t { Show = 0, Hide = 1 };
 /**
  * @brief Match entry actions vs global match/unmatch
  */
-enum class PmReactionTarget { Entry, Global };
+enum class PmReactionTarget { Entry, Global }; 
 
 enum class PmReactionType { Match, Unmatch };
+
+enum class PmFrontEndAction : size_t {
+    StreamingStart = 0, StreamingStop = 1,
+    RecordingStart = 2, RecordingStop = 3,
+	RecordingPause = 4, RecordingUnpause = 5,
+    ReplayBufferStart = 6, ReplayBufferSave = 7, ReplayBufferStop = 8,
+    TakeScreenshot,
+    StartVirtualCam, StopVirtualCam,
+    ResetVideo
+};
 
 /**
  * @brief Individual unit of action that is part of a reaction
@@ -47,6 +57,7 @@ public:
     static QColor dimmedColor(PmActionType actionType,
                               PmActionType active = PmActionType::None);
 	static QString actionColorStr(PmActionType actionType);
+    static QString frontEndActionStr(PmFrontEndAction fea);
 
     PmAction() {}
     PmAction(obs_data_t *data);
@@ -68,7 +79,7 @@ public:
 
     size_t actionCode = (size_t)-1;
 
-    obs_key_combination_t keyCombo;
+    obs_key_combination_t keyCombo = {(uint32_t)-1, (obs_key_t)-1};
 };
 
 /**

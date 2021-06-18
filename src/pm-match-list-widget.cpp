@@ -686,55 +686,46 @@ void PmReactionDisplay::updateReaction(
     QString line;
     QString html;
     QString tmp;
+
     for (size_t i = 0; i < actions.size(); ++i) {
         const auto &action = actions[i];
-        switch (action.actionType) {
-        case PmActionType::Scene:
-            tmp = action.isSet() ? action.targetElement.data()
-                : QString("[%1]").arg(PmAction::actionStr(action.actionType));
-		    line = QString("%1%2")
-                .arg(tmp)
-                .arg(action.targetDetails.size() ?
-                    QString(" [%1]").arg(action.targetDetails.data()) : "");
-            html += QString("<font color=\"%1\">%2</font>")
-				.arg(action.actionColorStr())
-                .arg(line);
-            break;
-        case PmActionType::SceneItem:
-        case PmActionType::Filter:
-            tmp = action.isSet() ? action.targetElement.data()
-                : QString("[%1]").arg(PmAction::actionStr(action.actionType));
-            line = QString("%1 [%2]")
-                .arg(tmp)
-                .arg(action.actionCode == (size_t)PmToggleCode::Show ?
-                    obs_module_text("show") : obs_module_text("hide"));
-            html += QString("<font color=\"%1\">%2</font>")
-                .arg(action.actionColorStr())
-                .arg(line);
-            break;
-        case PmActionType::Hotkey:
-            if (action.isSet()) {
-                DStr dstr;
-                obs_key_combination_to_str(action.keyCombo, dstr);
-                line = dstr;
-            } else {
-                line = QString("[%1]").arg(
-                    PmAction::actionStr(action.actionType));
+	    if (!action.isSet()) {
+            line = QString("[%1]").arg(PmAction::actionStr(action.actionType));
+	    } else {
+            switch (action.actionType) {
+            case PmActionType::Scene:
+		        line = QString("%1%2")
+			        .arg(action.targetElement.data())
+                    .arg(action.targetDetails.size() ?
+                        QString(" [%1]").arg(action.targetDetails.data()) : "");
+                break;
+            case PmActionType::SceneItem:
+            case PmActionType::Filter:
+                line = QString("%1 [%2]")
+			        .arg(action.targetElement.data())
+                    .arg(action.actionCode == (size_t)PmToggleCode::Show ?
+                        obs_module_text("show") : obs_module_text("hide"));
+                break;
+            case PmActionType::Hotkey:
+                {
+                    DStr dstr;
+                    obs_key_combination_to_str(action.keyCombo, dstr);
+                    line = dstr;
+                }
+                break;
+            case PmActionType::FrontEndAction:
+                line = PmAction::frontEndActionStr(
+                    (PmFrontEndAction)action.actionCode);
+                break;
+	        default:
+    		    line = obs_module_text("<not selected>");
+		        break;
             }
-	        html += QString("<font color=\"%1\">%2</font>")
-			    .arg(action.actionColorStr())
-			    .arg(line);
-            break;
-        case PmActionType::FrontEndEvent:
-            // TODO
-            break;
-	    default:
-    		line = obs_module_text("<not selected>");
-		    html += QString("<font color=\"%1\">%2</font>")
-			    .arg(action.actionColorStr())
-			    .arg(line);
-		    break;
         }
+        html += QString("<font color=\"%1\">%2</font>")
+			.arg(action.actionColorStr())
+			.arg(line);
+
 	    maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
         if (i < actions.size() - 1) {
             html += "<br />";

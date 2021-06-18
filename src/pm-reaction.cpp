@@ -10,7 +10,7 @@ const char *PmAction::actionStr(PmActionType actionType)
     case PmActionType::SceneItem: return obs_module_text("scene item");
     case PmActionType::Filter: return obs_module_text("filter");
     case PmActionType::Hotkey: return obs_module_text("hotkey");
-    case PmActionType::FrontEndEvent: return obs_module_text("front end event");
+    case PmActionType::FrontEndAction: return obs_module_text("front end event");
     default: return obs_module_text("unknown");
     }
 }
@@ -23,7 +23,7 @@ QColor PmAction::actionColor(PmActionType actionType)
 	case PmActionType::SceneItem: return Qt::yellow;
 	case PmActionType::Filter: return QColor(255, 0, 255, 255);
 	case PmActionType::Hotkey: return Qt::red;
-	case PmActionType::FrontEndEvent: return Qt::green;
+	case PmActionType::FrontEndAction: return Qt::green;
 	default: return Qt::white;
     }
 }
@@ -42,6 +42,38 @@ QColor PmAction::dimmedColor(PmActionType actionType, PmActionType active)
 QString PmAction::actionColorStr(PmActionType actionType)
 {
 	return actionColor(actionType).name();
+}
+
+QString PmAction::frontEndActionStr(PmFrontEndAction fea)
+{
+	switch (fea) {
+	case PmFrontEndAction::StreamingStart:
+		return obs_module_text("Streaming: Start");
+	case PmFrontEndAction::StreamingStop:
+		return obs_module_text("Streaming: Stop");
+	case PmFrontEndAction::RecordingStart:
+		return obs_module_text("Recording: Start");
+	case PmFrontEndAction::RecordingStop:
+		return obs_module_text("Recording: Stop");
+	case PmFrontEndAction::RecordingPause:
+		return obs_module_text("Recording: Pause");
+	case PmFrontEndAction::RecordingUnpause:
+		return obs_module_text("Recording: Unpause");
+	case PmFrontEndAction::ReplayBufferStart:
+		return obs_module_text("Replay Buffer: Start");
+	case PmFrontEndAction::ReplayBufferSave:
+		return obs_module_text("Replay Buffer: Save");
+	case PmFrontEndAction::ReplayBufferStop:
+		return obs_module_text("Replay Buffer: Stop");
+	case PmFrontEndAction::TakeScreenshot:
+		return obs_module_text("Take Screenshot");
+	case PmFrontEndAction::StartVirtualCam:
+		return obs_module_text("Virtual Cam: Start");
+	case PmFrontEndAction::StopVirtualCam:
+		return obs_module_text("Virtual Cam: Stop");
+	case PmFrontEndAction::ResetVideo:
+		return obs_module_text("Reset Video");
+    }
 }
 
 
@@ -150,8 +182,11 @@ bool PmAction::isSet() const
     switch (actionType) {
     case PmActionType::None:
         return false; break;
-    case PmActionType::Hotkey:
+    case PmActionType::FrontEndAction:
 	    return actionCode != (size_t)-1; break;
+    case PmActionType::Hotkey:
+	    return keyCombo.key != (obs_key_t)-1
+            || keyCombo.modifiers != (obs_key_t)-1;
     default:
         return targetElement.size() > 0; break;
     }

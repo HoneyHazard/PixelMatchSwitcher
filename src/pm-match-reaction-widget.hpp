@@ -30,13 +30,11 @@ class PmActionEntryWidget : public QWidget
 public:
     PmActionEntryWidget(PmCore *core, size_t actionIndex, QWidget *parent);
 
-    void updateSizeHints(QList<QSize> &columnSizes);
-
     void updateAction(size_t actionIndex, PmAction action);
-    void updateHotkeys(); // TODO
-    void updateFrontendEvents(); // TODO
 
     void installEventFilterAll(QObject *obj);
+
+    void updateSizeHints(QList<QSize> &columnSizes);
 
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
@@ -66,10 +64,15 @@ protected:
         int &idx, const QString &info, HotkeysList list);
     void insertHotkeysGroup(
         int &idx, const QString &category, const HotkeysGroup &group);
+    void insertFrontendEntries(
+        int &idx, const QString &category,
+        PmFrontEndAction start, PmFrontEndAction end); 
 
     void prepareSelections();
     void updateScenes();
     void updateTransitons();
+    void updateHotkeys();
+    void updateFrontendActions();
     void updateUiStyle(const PmAction &action);
 
     QComboBox *m_targetCombo;
