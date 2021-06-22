@@ -92,6 +92,7 @@ public:
     QList<std::string> allFilterNames() const;
     QList<std::string> filterNames(const std::string &sceneItemName) const;
     QList<std::string> sceneItemNames() const;
+    QList<std::string> audioSourcesNames() const;
     QList<std::string> availableTransitions() const 
         { return m_availableTransitions.keys(); }
     QImage matchImage(size_t matchIdx) const;
@@ -106,6 +107,7 @@ signals:
     void sigActiveFilterChanged(PmFilterRef newAf);
     void sigScenesChanged(
         QList<std::string> scenes, QList<std::string> sceneItems);
+    void sigAudioSourcesChanged(QList<std::string> audioSources);
 
     void sigFrameProcessed(PmMultiMatchResults);
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
@@ -207,6 +209,7 @@ protected:
     PmSourceHash m_scenes;
     PmSceneItemsHash m_sceneItems;
     PmSourceHash m_filters;
+    PmSourceHash m_audioSources;
 
     PmLingerQueue m_sceneLingerQueue;
     PmLingerList m_sceneItemLingerList;

@@ -34,11 +34,17 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_transitionsCombo = new QComboBox(this);
 
     // toggle scene items and filters on and off
-    m_toggleCombo = new QComboBox(this);
-    m_toggleCombo->addItem(
-        obs_module_text("Show"), (unsigned int)(PmToggleCode::Show));
-    m_toggleCombo->addItem(
-        obs_module_text("Hide"), (unsigned int)PmToggleCode::Hide);
+    m_toggleSourceCombo = new QComboBox(this);
+    m_toggleSourceCombo->addItem(
+        obs_module_text("Show"), (unsigned int)(PmToggleCode::On));
+    m_toggleSourceCombo->addItem(
+        obs_module_text("Hide"), (unsigned int)PmToggleCode::Off);
+
+    m_toggleMuteCombo = new QComboBox(this);
+    m_toggleMuteCombo->addItem(
+        obs_module_text("Unmute"), (unsigned int)(PmToggleCode::On));
+    m_toggleMuteCombo->addItem(
+        obs_module_text("Mute"), (unsigned int)PmToggleCode::Off);
 
     // hotkeys   
     m_hotkeyDetailsLabel = new QLabel(this);
@@ -47,8 +53,9 @@ PmActionEntryWidget::PmActionEntryWidget(
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
     m_detailsStack->addWidget(m_transitionsCombo);
-    m_detailsStack->addWidget(m_toggleCombo);
+    m_detailsStack->addWidget(m_toggleSourceCombo);
     m_detailsStack->addWidget(m_hotkeyDetailsLabel);
+    m_detailsStack->addWidget(m_toggleMuteCombo);
 
     QHBoxLayout *mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_targetCombo);
@@ -60,9 +67,11 @@ PmActionEntryWidget::PmActionEntryWidget(
             this, &PmActionEntryWidget::onUiChanged);
     connect(m_transitionsCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
-    connect(m_toggleCombo, &QComboBox::currentTextChanged,
+    connect(m_toggleSourceCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
-    connect(m_toggleCombo, &QComboBox::currentTextChanged,
+    connect(m_toggleMuteCombo, &QComboBox::currentTextChanged,
+            this, &PmActionEntryWidget::onUiChanged);
+    connect(m_toggleSourceCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onHotkeySelectionChanged);
 
     onScenesChanged();
@@ -124,6 +133,31 @@ void PmActionEntryWidget::updateScenes()
 	    }
     }
     m_targetCombo->blockSignals(false);
+}
+
+void PmActionEntryWidget::updateAudioSources()
+{
+	QBrush dimmedBrush =
+		PmAction::dimmedColor(PmActionType::ToggleMute, m_actionType);
+	QBrush colorBrush =
+		PmAction::dimmedColor(PmActionType::ToggleMute, m_actionType);
+
+	QList<std::string> audioSources = m_core->audioSourcesNames();
+	auto model = dynamic_cast<QStandardItemModel *>(m_targetCombo->model());
+	int idx;
+
+	m_targetCombo->blockSignals(true);
+	m_targetCombo->clear();
+	QString selStr =
+		QString("<%1>").arg(obs_module_text("select audio source"));
+	m_targetCombo->addItem(selStr, "");
+	model->item(0)->setEnabled(false);
+
+	for (const std::string &audioSrc : audioSources) {
+		m_targetCombo->addItem(audioSrc.data(), audioSrc.data());
+		idx = m_targetCombo->count() - 1;
+		m_targetCombo->setItemData(idx, colorBrush, Qt::ForegroundRole);
+	}
 }
 
 void PmActionEntryWidget::updateTransitons()
@@ -192,27 +226,28 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
          m_targetCombo->setCurrentText(action.targetElement.data());
          m_targetCombo->blockSignals(false);
 
-         m_toggleCombo->blockSignals(true);
-         m_toggleCombo->setCurrentIndex(
-            m_toggleCombo->findData(action.actionCode));
-         m_toggleCombo->blockSignals(false);
+         m_toggleSourceCombo->blockSignals(true);
+         m_toggleSourceCombo->setCurrentIndex(
+            m_toggleSourceCombo->findData(action.actionCode));
+         m_toggleSourceCombo->blockSignals(false);
 
          m_detailsStack->setVisible(true);
-	     m_detailsStack->setCurrentWidget(m_toggleCombo);
+	     m_detailsStack->setCurrentWidget(m_toggleSourceCombo);
          break;
-#if 0
-    case PmActionType::Filter:
-        //m_targetCombo->setVisible(true);
-        m_targetCombo->blockSignals(true);
-        m_targetCombo->setCurrentText(action.m_targetElement.data());
-        m_targetCombo->blockSignals(false);
+    case PmActionType::ToggleMute:
+	    m_targetCombo->setVisible(true);
+	    m_targetCombo->blockSignals(true);
+	    m_targetCombo->setCurrentText(action.targetElement.data());
+	    m_targetCombo->blockSignals(false);
 
-        m_toggleCombo->blockSignals(true);
-        m_toggleCombo->setCurrentIndex(
-            m_toggleCombo->findData(action.m_actionCode));
-        m_toggleCombo->blockSignals(false);
+        m_toggleMuteCombo->blockSignals(true);
+        m_toggleMuteCombo->setCurrentIndex(
+            m_toggleMuteCombo->findData(action.actionCode));
+        m_toggleMuteCombo->blockSignals(false);
+
+        m_detailsStack->setVisible(true);
+        m_detailsStack->setCurrentWidget(m_toggleMuteCombo);
         break;
-#endif
     case PmActionType::Hotkey:
 	    m_targetCombo->setVisible(true);
 	    m_targetCombo->blockSignals(true);
@@ -492,6 +527,9 @@ void PmActionEntryWidget::prepareSelections()
     case PmActionType::FrontEndAction:
 	    updateFrontendActions();
 	    break;
+    case PmActionType::ToggleMute:
+	    updateAudioSources();
+	    break;
     default:
 	    break;
     }
@@ -521,8 +559,13 @@ void PmActionEntryWidget::onUiChanged()
     case PmActionType::Filter:
         action.targetElement
             = m_targetCombo->currentData().toString().toUtf8().data();
-	    action.actionCode = (size_t)m_toggleCombo->currentData().toUInt();
+	    action.actionCode = (size_t)m_toggleSourceCombo->currentData().toUInt();
         break;
+    case PmActionType::ToggleMute:
+	    action.targetElement =
+		    m_targetCombo->currentData().toString().toUtf8().data();
+	    action.actionCode = (size_t)m_toggleMuteCombo->currentData().toUInt();
+	    break;
     case PmActionType::Hotkey:
 	    action.keyCombo.key
             = (obs_key_t) m_targetCombo->currentData(k_keyRole).toInt();

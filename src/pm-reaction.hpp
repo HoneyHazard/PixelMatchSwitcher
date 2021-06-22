@@ -21,13 +21,14 @@ enum class PmActionType : char {
     Filter = 3,
     Hotkey = 4,
     FrontEndAction = 5,
-    ANY = 6
+    ToggleMute = 6,
+    ANY = 7
 };
 
 /**
  * @brief Scene items and filters can be shown or hidden
  */
-enum class PmToggleCode : size_t { Show = 0, Hide = 1 };
+enum class PmToggleCode : size_t { On = 0, Off = 1 };
 
 /**
  * @brief Match entry actions vs global match/unmatch

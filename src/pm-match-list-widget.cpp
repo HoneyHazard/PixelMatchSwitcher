@@ -703,8 +703,14 @@ void PmReactionDisplay::updateReaction(
             case PmActionType::Filter:
                 line = QString("%1 [%2]")
 			        .arg(action.targetElement.data())
-                    .arg(action.actionCode == (size_t)PmToggleCode::Show ?
+                    .arg(action.actionCode == (size_t)PmToggleCode::On ?
                         obs_module_text("show") : obs_module_text("hide"));
+                break;
+	        case PmActionType::ToggleMute:
+		        line = QString("%1 [%2]")
+				   .arg(action.targetElement.data())
+				   .arg(action.actionCode == (size_t)PmToggleCode::On
+					    ? obs_module_text("unmute") : obs_module_text("mute"));  
                 break;
             case PmActionType::Hotkey:
                 {

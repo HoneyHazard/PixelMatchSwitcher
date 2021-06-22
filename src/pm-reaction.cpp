@@ -11,6 +11,7 @@ const char *PmAction::actionStr(PmActionType actionType)
     case PmActionType::Filter: return obs_module_text("filter");
     case PmActionType::Hotkey: return obs_module_text("hotkey");
     case PmActionType::FrontEndAction: return obs_module_text("front end event");
+    case PmActionType::ToggleMute: return obs_module_text("toggle mute");
     default: return obs_module_text("unknown");
     }
 }
@@ -24,6 +25,7 @@ QColor PmAction::actionColor(PmActionType actionType)
 	case PmActionType::Filter: return QColor(255, 0, 255, 255);
 	case PmActionType::Hotkey: return Qt::red;
 	case PmActionType::FrontEndAction: return Qt::green;
+	case PmActionType::ToggleMute: return QColor(255, 127, 0, 255); break;
 	default: return Qt::white;
     }
 }
@@ -75,7 +77,6 @@ QString PmAction::frontEndActionStr(PmFrontEndAction fea)
 		return obs_module_text("Reset Video");
     }
 }
-
 
 PmAction::PmAction(obs_data_t *data)
 {
@@ -178,7 +179,6 @@ bool PmAction::renameElement(PmActionType actionType,
 
 bool PmAction::isSet() const
 {
-    // TODO: revisit
     switch (actionType) {
     case PmActionType::None:
         return false; break;

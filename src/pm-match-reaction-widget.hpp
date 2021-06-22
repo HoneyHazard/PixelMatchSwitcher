@@ -70,6 +70,7 @@ protected:
 
     void prepareSelections();
     void updateScenes();
+    void updateAudioSources();
     void updateTransitons();
     void updateHotkeys();
     void updateFrontendActions();
@@ -78,7 +79,8 @@ protected:
     QComboBox *m_targetCombo;
 
     QComboBox *m_transitionsCombo;
-    QComboBox *m_toggleCombo;
+    QComboBox *m_toggleSourceCombo;
+    QComboBox *m_toggleMuteCombo;
 
     QLabel *m_hotkeyDetailsLabel;
 

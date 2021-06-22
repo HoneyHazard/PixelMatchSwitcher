@@ -20,7 +20,7 @@ PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
             this, &PmAddActionMenu::updateActionsState);
 
     int typeStart = (int)PmActionType::Scene;
-	int typeEnd = (int)PmActionType::FrontEndAction;
+    int typeEnd = (int)PmActionType::ANY - 1;
 	for (int i = typeStart; i <= typeEnd; i++) {
 		PmActionType actType = PmActionType(i);
 		QString labelText = PmAction::actionStr(actType);

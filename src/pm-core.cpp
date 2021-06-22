@@ -28,6 +28,7 @@ struct PmSceneScanInfo
     PmSourceHash scenes;
     PmSceneItemsHash sceneItems;
     PmSourceHash filters;
+    PmSourceHash audioSources;
     QSet<OBSWeakSource> pmFilters;
 
     PmSourceData *lastSceneData = nullptr;
@@ -979,6 +980,12 @@ QList<std::string> PmCore::sceneItemNames() const
     return m_sceneItems.keys();
 }
 
+QList<std::string> PmCore::audioSourcesNames() const
+{
+	QMutexLocker locker(&m_scenesMutex);
+	return m_audioSources.keys();
+}
+
 QImage PmCore::matchImage(size_t matchIdx) const
 { 
     QMutexLocker locker(&m_matchImagesMutex);
@@ -1127,13 +1134,31 @@ void PmCore::scanScenes()
 
     obs_frontend_source_list_free(&scenesInput);
 
+    obs_enum_sources(
+        [](void *data, obs_source_t* source) -> bool
+        {
+		    uint32_t flags = obs_source_get_output_flags(source);
+		    if ((flags & OBS_SOURCE_AUDIO) != 0) {
+			    std::string audioName = obs_source_get_name(source);
+			    obs_weak_source_t *audioWs = obs_source_get_weak_source(source);
+			    OBSWeakSource audioWsWs(audioWs);
+			    obs_weak_source_release(audioWs);
+                PmSceneScanInfo *scanInfo = (PmSceneScanInfo *)data;
+			    scanInfo->audioSources.insert(audioName, {audioWsWs});
+            }
+		    return true;
+        },
+        &scanInfo);
+
     updateActiveFilter(scanInfo.pmFilters);
 
     bool scenesChanged = false;
     bool sceneItemsChanged = false;
+    bool audioSourcesChanged = false;
     QSet<std::string> oldSceneNames;
     QSet<std::string> oldSceneItemNames;
     QSet<std::string> oldFilterNames;
+    QSet<std::string> oldAudioNames;
     {
         QMutexLocker locker(&m_scenesMutex);
         if (m_scenes != scanInfo.scenes) {
@@ -1148,10 +1173,17 @@ void PmCore::scanScenes()
             oldFilterNames = m_filters.sourceNames();
             sceneItemsChanged = true;
         }
+        if (m_audioSources != scanInfo.audioSources) {
+            oldAudioNames = m_audioSources.sourceNames();
+            audioSourcesChanged = true;
+        }
     }
 
     if (scenesChanged || sceneItemsChanged) {
         emit sigScenesChanged(scanInfo.scenes.keys(), scanInfo.sceneItems.keys());
+    }
+    if (audioSourcesChanged) {
+	    emit sigAudioSourcesChanged(scanInfo.audioSources.keys());
     }
 
     // adjust for scene changes
@@ -1240,13 +1272,41 @@ void PmCore::scanScenes()
         }
     }
 
+    if (audioSourcesChanged) {
+	    QMutexLocker locker(&m_scenesMutex);
+	    size_t cfgSize = multiMatchConfigSize();
+	    for (const std::string &oldAudioName : oldAudioNames) {
+		    if (!scanInfo.audioSources.contains(oldAudioName)) {
+			    auto ws = m_audioSources[oldAudioName];
+                std::string newAudioName = scanInfo.audioSources.key(ws);
+			    if (m_multiMatchConfig.noMatchReaction.hasAction(
+                    PmActionType::ToggleMute));
+                auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
+			    if (noMatchReaction.renameElement(
+                        PmActionType::ToggleMute, oldAudioName, newAudioName)) {
+                    onNoMatchReactionChanged(noMatchReaction);
+        		}
+                for (size_t i = 0; i < cfgSize; i++) {
+                    if (hasAction(i, PmActionType::ToggleMute)) {
+                        PmMatchConfig cfg = m_multiMatchConfig[i];
+                        if (cfg.reaction.renameElement(PmActionType::ToggleMute,
+                                oldAudioName, newAudioName)) {
+                            onMatchConfigChanged(i, cfg);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // save state
-    if (scenesChanged || sceneItemsChanged)
+    if (scenesChanged || sceneItemsChanged || audioSourcesChanged)
     {
         QMutexLocker locker(&m_scenesMutex);
         m_scenes = scanInfo.scenes;
         m_sceneItems = scanInfo.sceneItems;
         m_filters = scanInfo.filters;
+        m_audioSources = scanInfo.audioSources;
     }
 }
 
@@ -1671,12 +1731,12 @@ void PmCore::execIndependentActions(
 			if (sceneItem) {
 				if (switchedOn &&
 				    action.actionCode ==
-					    (size_t)PmToggleCode::Show) {
+					    (size_t)PmToggleCode::On) {
 					obs_sceneitem_set_visible(sceneItem,
 								  true);
 				} else if (!switchedOn &&
 					   action.actionCode ==
-						   (size_t)PmToggleCode::Hide) {
+						   (size_t)PmToggleCode::Off) {
 					obs_sceneitem_set_visible(sceneItem,
 								  false);
 				}
@@ -1695,18 +1755,35 @@ void PmCore::execIndependentActions(
 				}
 			}
 			if (filterSrc) {
-				if (switchedOn &&
-				    action.actionCode ==
-					    (size_t)PmToggleCode::Show) {
+				if (switchedOn
+                 && action.actionCode == (size_t)PmToggleCode::On) {
 					obs_source_set_enabled(filterSrc, true);
-				} else if (!switchedOn &&
-					   action.actionCode ==
-						   (size_t)PmToggleCode::Hide) {
-					obs_source_set_enabled(filterSrc,
-							       false);
+				} else if (!switchedOn
+                        && action.actionCode == (size_t)PmToggleCode::Off) {
+					obs_source_set_enabled(filterSrc, false);
 				}
 				obs_source_release(filterSrc);
 			}
+		} else if (action.actionType == PmActionType::ToggleMute) {
+			obs_source_t *audioSrc = nullptr;
+			{
+				QMutexLocker locker(&m_scenesMutex);
+				auto find = m_audioSources.find(action.targetElement);
+				if (find != m_audioSources.end()) {
+					OBSWeakSource audioWs = find->wsrc;
+					audioSrc = obs_weak_source_get_source(audioWs);
+				}
+			}
+			if (audioSrc) {
+                if (switchedOn
+                 && action.actionCode == (size_t)PmToggleCode::On) {
+					obs_source_set_muted(audioSrc, false);
+		        } else if (!switchedOn
+                        && action.actionCode == (size_t)PmToggleCode::Off) {
+                    obs_source_set_muted(audioSrc, true);
+		        }
+                obs_source_release(audioSrc);
+            }
 		} else if (action.actionType == PmActionType::Hotkey) {
         	obs_hotkey_inject_event(action.keyCombo, false);
 			obs_hotkey_inject_event(action.keyCombo, true);
