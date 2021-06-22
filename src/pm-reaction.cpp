@@ -2,6 +2,9 @@
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 
+const char *PmAction::k_dateTimeMarker = "[time]";
+const char *PmAction::k_matchNameLabel = "[label]";
+
 const char *PmAction::actionStr(PmActionType actionType)
 {
     switch (actionType) {
@@ -10,8 +13,9 @@ const char *PmAction::actionStr(PmActionType actionType)
     case PmActionType::SceneItem: return obs_module_text("scene item");
     case PmActionType::Filter: return obs_module_text("filter");
     case PmActionType::Hotkey: return obs_module_text("hotkey");
-    case PmActionType::FrontEndAction: return obs_module_text("front end event");
+    case PmActionType::FrontEndAction: return obs_module_text("frontend event");
     case PmActionType::ToggleMute: return obs_module_text("toggle mute");
+    case PmActionType::File: return obs_module_text("file"); break;
     default: return obs_module_text("unknown");
     }
 }
@@ -26,7 +30,8 @@ QColor PmAction::actionColor(PmActionType actionType)
 	case PmActionType::Hotkey: return Qt::red;
 	case PmActionType::FrontEndAction: return Qt::green;
 	case PmActionType::ToggleMute: return QColor(255, 127, 0, 255); break;
-	default: return Qt::white;
+	case PmActionType::File: return Qt::white; break;
+    default : return Qt::lightGray;
     }
 }
 
@@ -75,6 +80,8 @@ QString PmAction::frontEndActionStr(PmFrontEndAction fea)
 		return obs_module_text("Virtual Cam: Stop");
 	case PmFrontEndAction::ResetVideo:
 		return obs_module_text("Reset Video");
+	default:
+		return obs_module_text("unknown");
     }
 }
 
@@ -95,6 +102,12 @@ PmAction::PmAction(obs_data_t *data)
 	    keyCombo.key = (obs_key_t)obs_data_get_int(data, "hotkey_key");
 	    keyCombo.modifiers
             = (uint32_t)obs_data_get_int(data, "hotkey_modifiers");
+    }
+    if (actionType == PmActionType::File) {
+	    if (targetElement.find(k_dateTimeMarker) != std::string::npos
+         || targetDetails.find(k_dateTimeMarker) != std::string::npos) {
+	        dateTimeFormat = obs_data_get_string(data, "date_time_format");
+        }
     }
 
     obs_data_release(data);
@@ -127,7 +140,9 @@ PmAction::PmAction(QXmlStreamReader &reader)
                 keyCombo.key = (obs_key_t)elementText.toInt();
 		    } else if (name == "hotkey_modifiers") {
 			    keyCombo.modifiers = (uint32_t)elementText.toUInt();
-		    }
+		    } else if (name == "date_time_format") {
+			    dateTimeFormat = elementText.toUtf8().data();
+            }
         }
     }
 }
@@ -146,6 +161,12 @@ obs_data_t *PmAction::saveData() const
             ret, "hotkey_modifiers", (long long)keyCombo.modifiers);
 	    obs_data_set_int(ret, "hotkey_key", (long long)keyCombo.key);
     }
+    if (actionType == PmActionType::File) {
+	    if (targetElement.find(k_dateTimeMarker) != std::string::npos
+         || targetDetails.find(k_dateTimeMarker) != std::string::npos) {
+		    obs_data_set_string(ret, "date_time_format", dateTimeFormat.data());
+        }
+    }
     return ret;
 }
 
@@ -163,6 +184,12 @@ void PmAction::saveXml(QXmlStreamWriter &writer) const
             "hotkey_key", QString::number(int(keyCombo.key)));
 	    writer.writeTextElement(
             "hotkey_modifiers", QString::number(keyCombo.modifiers));
+    }
+    if (actionType == PmActionType::File) {
+	    if (targetElement.find(k_dateTimeMarker) != std::string::npos
+         || targetDetails.find(k_dateTimeMarker) != std::string::npos) {
+		    writer.writeTextElement("date_time_format", dateTimeFormat.data());
+        }
     }
     writer.writeEndElement();
 }

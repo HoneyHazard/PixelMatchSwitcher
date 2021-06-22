@@ -18,6 +18,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
+#include <QTextStream>
 
 /*
  * @brief Holds the data structures while scene, scene items and filters 
@@ -1541,7 +1542,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     auto expiredSceneItems = m_sceneItemLingerList.removeExpired(currTime);
     for (size_t siIdx : expiredSceneItems) {
         PmReaction siReaction = reaction(siIdx);
-        execIndependentActions(siReaction, false);
+        execIndependentActions(matchConfigLabel(siIdx), siReaction, false);
     }
 
     bool sceneSelected = false;
@@ -1605,7 +1606,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
                     execSceneAction(0, nmr, anythingIsMatched);
                 }
             }
-            execIndependentActions(nmr, anythingIsMatched);
+            execIndependentActions("global", nmr, anythingIsMatched);
         }
     }
 
@@ -1644,7 +1645,7 @@ void PmCore::execReaction(
     }
 
     // activate independent match/unmatch actions
-    execIndependentActions(reaction, switchedOn);
+    execIndependentActions(matchConfigLabel(matchIdx), reaction, switchedOn);
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:
@@ -1711,7 +1712,7 @@ bool PmCore::execSceneAction(
     return true;
 }
 
-void PmCore::execIndependentActions(
+void PmCore::execIndependentActions(const std::string &cfgName,
     const PmReaction &reaction, bool switchedOn)
 {
     const auto &actions
@@ -1816,6 +1817,40 @@ void PmCore::execIndependentActions(
 				obs_frontend_stop_virtualcam(); break;
 			case PmFrontEndAction::ResetVideo:
 				obs_frontend_reset_video();
+            }
+		} else if (action.actionType == PmActionType::File) {
+			PmFileActionType fileAction = (PmFileActionType)action.actionCode;
+			QString filename = action.targetElement.data();
+			QString dateTimeStr;
+			if (!action.dateTimeFormat.empty()) {
+				dateTimeStr = QDateTime::currentDateTime().toString(
+				    action.dateTimeFormat.data());
+			}
+            filename.replace(PmAction::k_matchNameLabel, cfgName.data());
+			filename.replace(PmAction::k_dateTimeMarker, dateTimeStr);
+
+            if (fileAction == PmFileActionType::WriteAppend
+	         || fileAction == PmFileActionType::WriteTruncate) {
+			    //QFileInfo fileInfo(action.targetElement.data());
+		        QFile file(filename);
+                QIODevice::OpenMode flags = QIODevice::WriteOnly;
+			    if (fileAction == PmFileActionType::WriteAppend) {
+				    flags |= QIODevice::Append;
+			    } else if (fileAction == PmFileActionType::WriteTruncate) {
+				    flags |= QIODevice::Truncate;
+                }
+			    file.open(flags);
+                if (!file.isOpen()) {
+				    blog(LOG_ERROR, "Error opening %s: %s",
+                         filename.data(), file.errorString().toUtf8().data());
+                    continue;
+                }
+                QString entry = action.targetDetails.data();
+		        entry.replace(action.k_matchNameLabel, cfgName.data());
+		        entry.replace(action.k_dateTimeMarker, dateTimeStr);
+		        QTextStream stream(&file);
+                stream << entry << Qt::endl;
+                file.close();
             }
         }
 	}

@@ -22,7 +22,8 @@ enum class PmActionType : char {
     Hotkey = 4,
     FrontEndAction = 5,
     ToggleMute = 6,
-    ANY = 7
+    File = 7,
+    ANY = 8
 };
 
 /**
@@ -33,9 +34,9 @@ enum class PmToggleCode : size_t { On = 0, Off = 1 };
 /**
  * @brief Match entry actions vs global match/unmatch
  */
-enum class PmReactionTarget { Entry, Global }; 
+enum class PmReactionTarget : unsigned char { Entry = 0, Global = 1 }; 
 
-enum class PmReactionType { Match, Unmatch };
+enum class PmReactionType : unsigned char { Match = 0, Unmatch = 1};
 
 enum class PmFrontEndAction : size_t {
     StreamingStart = 0, StreamingStop = 1,
@@ -45,6 +46,11 @@ enum class PmFrontEndAction : size_t {
     TakeScreenshot,
     StartVirtualCam, StopVirtualCam,
     ResetVideo
+};
+
+enum class PmFileActionType : size_t {
+    WriteAppend = 0,
+    WriteTruncate = 1,
 };
 
 /**
@@ -59,6 +65,9 @@ public:
                               PmActionType active = PmActionType::None);
 	static QString actionColorStr(PmActionType actionType);
     static QString frontEndActionStr(PmFrontEndAction fea);
+
+    static const char *k_dateTimeMarker;
+    static const char *k_matchNameLabel;
 
     PmAction() {}
     PmAction(obs_data_t *data);
@@ -81,6 +90,7 @@ public:
     size_t actionCode = (size_t)-1;
 
     obs_key_combination_t keyCombo = {(uint32_t)-1, (obs_key_t)-1};
+    std::string dateTimeFormat;
 };
 
 /**

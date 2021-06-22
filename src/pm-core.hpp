@@ -179,7 +179,8 @@ protected:
         const PmReaction &reaction, bool switchedOn);
     bool execSceneAction(
         size_t matchIdx, const PmReaction &reaction, bool switchedOn);
-    void execIndependentActions(const PmReaction &reaction, bool switchedOn);
+    void execIndependentActions(const std::string &cfgName,
+        const PmReaction &reaction, bool switchedOn);
 
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);
