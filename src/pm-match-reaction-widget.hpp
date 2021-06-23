@@ -45,7 +45,6 @@ public slots:
 protected slots:
     //void onActionTypeSelectionChanged();
     void onUiChanged();
-
     // ui customization
     void onHotkeySelectionChanged();
     void onFileBrowseReleased();
@@ -58,6 +57,7 @@ protected:
 	static const int k_keyRole;
     static const int k_modifierRole;
 	static const int k_keyHintRole;
+    static const char *k_timeFormatHelpUrl;
 
     struct HotkeyData {
 	    obs_hotkey_t *hkey;
@@ -81,6 +81,7 @@ protected:
     void updateHotkeys();
     void updateFrontendActions();
     void updateUiStyle(const PmAction &action);
+    void selectDetailsWidget(QWidget *widget);
 
     QComboBox *m_targetCombo;
 

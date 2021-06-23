@@ -66,7 +66,7 @@ public:
 	static QString actionColorStr(PmActionType actionType);
     static QString frontEndActionStr(PmFrontEndAction fea);
 
-    static const char *k_dateTimeMarker;
+    static const char *k_timeMarker;
     static const char *k_matchNameLabel;
     static const char *k_defaultFileText;
     static const char *k_defaultFileTimeFormat;

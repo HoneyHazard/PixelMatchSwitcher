@@ -237,6 +237,8 @@ namespace PmConstants
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
     const QString k_xmlFilenameFilter
         = "XML (*.xml);; All files (*.*)";
+    const QString k_writeFilenameFilter
+        = "TXT (*.txt);; All files (*.*)";
 
     const QString k_problemCharacterStr
         = QString("[") + QRegExp::escape("\\/:*?\"<>|\"") + QString("]");

@@ -2,7 +2,7 @@
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 
-const char *PmAction::k_dateTimeMarker = "[time]";
+const char *PmAction::k_timeMarker = "[time]";
 const char *PmAction::k_matchNameLabel = "[label]";
 
 const char *PmAction::actionStr(PmActionType actionType)
@@ -104,8 +104,8 @@ PmAction::PmAction(obs_data_t *data)
             = (uint32_t)obs_data_get_int(data, "hotkey_modifiers");
     }
     if (actionType == PmActionType::File) {
-	    if (targetElement.find(k_dateTimeMarker) != std::string::npos
-         || targetDetails.find(k_dateTimeMarker) != std::string::npos) {
+	    if (targetElement.find(k_timeMarker) != std::string::npos
+         || targetDetails.find(k_timeMarker) != std::string::npos) {
 	        dateTimeFormat = obs_data_get_string(data, "date_time_format");
         }
     }
@@ -162,8 +162,8 @@ obs_data_t *PmAction::saveData() const
 	    obs_data_set_int(ret, "hotkey_key", (long long)keyCombo.key);
     }
     if (actionType == PmActionType::File) {
-	    if (targetElement.find(k_dateTimeMarker) != std::string::npos
-         || targetDetails.find(k_dateTimeMarker) != std::string::npos) {
+	    if (targetElement.find(k_timeMarker) != std::string::npos
+         || targetDetails.find(k_timeMarker) != std::string::npos) {
 		    obs_data_set_string(ret, "date_time_format", dateTimeFormat.data());
         }
     }
@@ -186,8 +186,8 @@ void PmAction::saveXml(QXmlStreamWriter &writer) const
             "hotkey_modifiers", QString::number(keyCombo.modifiers));
     }
     if (actionType == PmActionType::File) {
-	    if (targetElement.find(k_dateTimeMarker) != std::string::npos
-         || targetDetails.find(k_dateTimeMarker) != std::string::npos) {
+	    if (targetElement.find(k_timeMarker) != std::string::npos
+         || targetDetails.find(k_timeMarker) != std::string::npos) {
 		    writer.writeTextElement("date_time_format", dateTimeFormat.data());
         }
     }

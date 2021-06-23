@@ -1827,7 +1827,7 @@ void PmCore::execIndependentActions(const std::string &cfgName,
 				    action.dateTimeFormat.data());
 			}
             filename.replace(PmAction::k_matchNameLabel, cfgName.data());
-			filename.replace(PmAction::k_dateTimeMarker, dateTimeStr);
+			filename.replace(PmAction::k_timeMarker, dateTimeStr);
 
             if (fileAction == PmFileActionType::WriteAppend
 	         || fileAction == PmFileActionType::WriteTruncate) {
@@ -1847,7 +1847,7 @@ void PmCore::execIndependentActions(const std::string &cfgName,
                 }
                 QString entry = action.targetDetails.data();
 		        entry.replace(action.k_matchNameLabel, cfgName.data());
-		        entry.replace(action.k_dateTimeMarker, dateTimeStr);
+		        entry.replace(action.k_timeMarker, dateTimeStr);
 		        QTextStream stream(&file);
                 stream << entry << Qt::endl;
                 file.close();

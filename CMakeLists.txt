@@ -47,6 +47,7 @@ if(BUILD_OUT_OF_TREE)
 
     include(external/FindLibObs.cmake)
     include(external/ObsPluginHelpers.cmake)
+    include(external/FindCEF.cmake)
 
     find_package(LibObs REQUIRED)
     find_package(Qt5Core REQUIRED)
@@ -188,6 +189,12 @@ else()
         endif()
         set_target_properties(pixel-match-switcher PROPERTIES FOLDER "plugins")
         install_obs_plugin_with_data(pixel-match-switcher data)
+endif()
+
+if(BROWSER_AVAILABLE_INTERNAL)
+    target_compile_definitions(pixel-match-switcher PUBLIC BROWSER_AVAILABLE=1)
+else()
+    target_compile_definitions(pixel-match-switcher PUBLIC BROWSER_AVAILABLE=0)
 endif()
 
 target_compile_options(pixel-match-switcher PUBLIC

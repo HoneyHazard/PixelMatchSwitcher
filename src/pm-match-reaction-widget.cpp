@@ -2,6 +2,7 @@
 #include "pm-structs.hpp"
 #include "pm-core.hpp"
 #include "pm-add-action-menu.hpp"
+#include "pm-version.hpp"
 
 #include <obs-module.h>
 #include <util/dstr.hpp>
@@ -15,12 +16,24 @@
 #include <QMouseEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QFileDialog>
+#include <QMessageBox>
+
+
+#if BROWSER_AVAILABLE
+#include <browser-panel.hpp>
+extern QCef *cef;
+#endif
+#include <QDesktopServices>
+#include <QUrl>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
 const int PmActionEntryWidget::k_keyRole = Qt::UserRole + 1;
 const int PmActionEntryWidget::k_modifierRole = Qt::UserRole + 2;
 const int PmActionEntryWidget::k_keyHintRole = Qt::UserRole + 3;
+const char *PmActionEntryWidget::k_timeFormatHelpUrl
+    = "https://doc.qt.io/qt-5/qdatetime.html#toString";
 
 PmActionEntryWidget::PmActionEntryWidget(
     PmCore* core, size_t actionIndex, QWidget *parent)
@@ -52,6 +65,7 @@ PmActionEntryWidget::PmActionEntryWidget(
  
     // file operations
     QHBoxLayout *fileTopLayout = new QHBoxLayout;
+    fileTopLayout->setContentsMargins(0, 0, 0, 0);
     QLabel *fileActionLabel = new QLabel(
         obs_module_text("File Action: "), this);
     fileTopLayout->addWidget(fileActionLabel);
@@ -73,6 +87,7 @@ PmActionEntryWidget::PmActionEntryWidget(
     fileTopLayout->addWidget(m_fileBrowseButton);
 
     QGridLayout *fileBottomLayout = new QGridLayout;
+    fileBottomLayout->setContentsMargins(0, 0, 0, 0);
 
     QLabel *textLabel = new QLabel(obs_module_text("Text: "), this);
     fileBottomLayout->addWidget(textLabel, 0, 0, 1, 1);
@@ -96,10 +111,13 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
+    m_detailsStack->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
     m_detailsStack->addWidget(m_transitionsCombo);
     m_detailsStack->addWidget(m_toggleSourceCombo);
     m_detailsStack->addWidget(m_hotkeyDetailsLabel);
     m_detailsStack->addWidget(m_toggleMuteCombo);
+    m_detailsStack->addWidget(m_fileActionsWidget);
+    selectDetailsWidget(m_transitionsCombo);
 
     // main layout
     QHBoxLayout *mainLayout = new QHBoxLayout;
@@ -284,7 +302,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_transitionsCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
-	    m_detailsStack->setCurrentWidget(m_transitionsCombo);
+	    selectDetailsWidget(m_transitionsCombo);
         break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
@@ -299,7 +317,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
          m_toggleSourceCombo->blockSignals(false);
 
          m_detailsStack->setVisible(true);
-	     m_detailsStack->setCurrentWidget(m_toggleSourceCombo);
+	     selectDetailsWidget(m_toggleSourceCombo);
          break;
     case PmActionType::ToggleMute:
 	    m_targetCombo->setVisible(true);
@@ -313,7 +331,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_toggleMuteCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_toggleMuteCombo);
+	    selectDetailsWidget(m_toggleMuteCombo);
         break;
     case PmActionType::Hotkey:
 	    m_targetCombo->setVisible(true);
@@ -329,7 +347,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_targetCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
-        m_detailsStack->setCurrentWidget(m_hotkeyDetailsLabel);
+	    selectDetailsWidget(m_hotkeyDetailsLabel);
 	    onHotkeySelectionChanged();
         break;
     case PmActionType::FrontEndAction:
@@ -343,13 +361,11 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 		    m_targetCombo->setCurrentIndex(0);
 	    }
 	    m_targetCombo->blockSignals(false);
-
         m_detailsStack->setVisible(false);
 	    break;
     case PmActionType::File:
 	    m_targetCombo->setVisible(false);
 	    m_detailsStack->setVisible(true);
-	    m_detailsStack->setCurrentWidget(m_fileActionsWidget);
 
         m_fileActionCombo->blockSignals(true);
 	    if (action.isSet()) {
@@ -372,6 +388,8 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
         m_fileTimeFormatEdit->blockSignals(true);
 	    m_fileTimeFormatEdit->setText(action.dateTimeFormat.data());
 	    m_fileTimeFormatEdit->blockSignals(false);
+
+        selectDetailsWidget(m_fileActionsWidget);
 
 	    onFileStringsChanged();
 	    break;
@@ -696,7 +714,51 @@ void PmActionEntryWidget::onHotkeySelectionChanged()
 
 void PmActionEntryWidget::onFileBrowseReleased()
 {
+	QString curPath =
+		QFileInfo(m_filenameEdit->text()).absoluteDir().path();
 
+	QString filename = QFileDialog::getSaveFileName(
+		this, obs_module_text("Choose file save location"), curPath,
+		PmConstants::k_writeFilenameFilter);
+	if (!filename.isEmpty()) {
+		m_filenameEdit->setText(filename); // will trigger onUiChanged()
+    }
+}
+
+void PmActionEntryWidget::onFileStringsChanged()
+{
+	bool timeUsed = m_filenameEdit->text().contains(PmAction::k_timeMarker)
+                 || m_fileTextEdit->text().contains(PmAction::k_timeMarker);
+	m_fileTimeFormatLabel->setVisible(timeUsed);
+	m_fileTimeFormatEdit->setVisible(timeUsed);
+	m_fileTimeFormatPreviewButton->setVisible(timeUsed);
+	m_fileTimeFormatHelpButton->setVisible(timeUsed);
+}
+
+void PmActionEntryWidget::onShowTimeFormatPreview()
+{
+	QString nowStr = QDateTime::currentDateTime().toString(
+		m_fileTimeFormatEdit->text());
+	QMessageBox::information(
+        this, obs_module_text("Time Format Preview"), nowStr, QMessageBox::Ok);
+}
+
+void PmActionEntryWidget::onShowTimeFormatHelp()
+{
+#if BROWSER_AVAILABLE
+	QCef *cef = obs_browser_init_panel();
+	if (!cef)
+		goto fallback;
+
+    QCefWidget *cefWidget = cef->create_widget(this, k_timeFormatHelpUrl);
+	if (!cefWidget)
+		goto fallback;
+	cefWidget->show();
+
+#endif
+
+fallback:
+    ;
 }
 
 void PmActionEntryWidget::onScenesChanged()
@@ -712,6 +774,21 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 		if (w != m_hotkeyDetailsLabel)
             w->setStyleSheet(colorStyle);
     }
+}
+
+void PmActionEntryWidget::selectDetailsWidget(QWidget *widget)
+{
+	QWidget *currWidget = m_detailsStack->currentWidget();
+	if (currWidget) {
+        currWidget->setSizePolicy(
+            QSizePolicy::Ignored, QSizePolicy::Ignored);
+    }
+	m_detailsStack->setCurrentWidget(widget);
+    widget->setSizePolicy(
+        QSizePolicy::Expanding, QSizePolicy::Expanding);
+	m_detailsStack->setMaximumSize(widget->sizeHint());
+	m_detailsStack->adjustSize();
+	updateGeometry();
 }
 
 //----------------------------------------------------
