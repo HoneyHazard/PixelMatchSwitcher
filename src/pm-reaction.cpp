@@ -227,7 +227,9 @@ bool PmAction::operator==(const PmAction &other) const
         && targetDetails == other.targetDetails
         && (actionType != PmActionType::Hotkey ||
             (keyCombo.key == other.keyCombo.key
-                && keyCombo.modifiers == other.keyCombo.modifiers));
+                && keyCombo.modifiers == other.keyCombo.modifiers))
+        && (actionType != PmActionType::File ||
+            dateTimeFormat == other.dateTimeFormat);
 }
 
 QString PmAction::actionColorStr() const

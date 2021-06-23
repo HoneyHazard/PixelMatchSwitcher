@@ -68,6 +68,8 @@ public:
 
     static const char *k_dateTimeMarker;
     static const char *k_matchNameLabel;
+    static const char *k_defaultFileText;
+    static const char *k_defaultFileTimeFormat;
 
     PmAction() {}
     PmAction(obs_data_t *data);

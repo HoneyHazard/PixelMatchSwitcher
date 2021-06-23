@@ -14,6 +14,7 @@
 #include <QStandardItemModel>
 #include <QMouseEvent>
 #include <QLabel>
+#include <QLineEdit>
 
 const QString PmActionEntryWidget::k_defaultTransitionStr
     = obs_module_text("<default transition>");
@@ -48,8 +49,51 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     // hotkeys   
     m_hotkeyDetailsLabel = new QLabel(this);
-    //m_hotkeyDetailsLabel->setAlignment(Qt::AlignRight | Qt::AlignCenter);
  
+    // file operations
+    QHBoxLayout *fileTopLayout = new QHBoxLayout;
+    QLabel *fileActionLabel = new QLabel(
+        obs_module_text("File Action: "), this);
+    fileTopLayout->addWidget(fileActionLabel);
+
+    m_fileActionCombo = new QComboBox(this);
+    m_fileActionCombo->addItem(
+        obs_module_text("Append"), (size_t)PmFileActionType::WriteAppend);
+    m_fileActionCombo->addItem(
+        obs_module_text("Truncate"), (size_t)PmFileActionType::WriteTruncate);
+    fileTopLayout->addWidget(m_fileActionCombo);
+
+    QLabel *filenameLabel = new QLabel(obs_module_text("Filename: "), this);
+    fileTopLayout->addWidget(filenameLabel);
+
+    m_filenameEdit = new QLineEdit(this);
+    fileTopLayout->addWidget(m_filenameEdit);
+
+    m_fileBrowseButton = new QPushButton("...", this);
+    fileTopLayout->addWidget(m_fileBrowseButton);
+
+    QGridLayout *fileBottomLayout = new QGridLayout;
+
+    QLabel *textLabel = new QLabel(obs_module_text("Text: "), this);
+    fileBottomLayout->addWidget(textLabel, 0, 0, 1, 1);
+    m_fileTextEdit = new QLineEdit(this);
+    fileBottomLayout->addWidget(m_fileTextEdit, 0, 1, 1, 3);
+    m_fileTimeFormatLabel = new QLabel(obs_module_text("Time Format: "), this);
+    fileBottomLayout->addWidget(m_fileTimeFormatLabel, 1, 0, 1, 1);
+    m_fileTimeFormatEdit = new QLineEdit(this);
+    fileBottomLayout->addWidget(m_fileTimeFormatEdit, 1, 1);
+    m_fileTimeFormatPreviewButton
+        = new QPushButton(obs_module_text("preview"), this);
+    fileBottomLayout->addWidget(m_fileTimeFormatPreviewButton);
+    m_fileTimeFormatHelpButton = new QPushButton(obs_module_text("help"), this);
+    fileBottomLayout->addWidget(m_fileTimeFormatHelpButton);
+
+    QVBoxLayout *fileMainLayout = new QVBoxLayout;
+    fileMainLayout->addLayout(fileTopLayout);
+    fileMainLayout->addLayout(fileBottomLayout);
+    m_fileActionsWidget = new QWidget(this);
+    m_fileActionsWidget->setLayout(fileMainLayout);
+
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
     m_detailsStack->addWidget(m_transitionsCombo);
@@ -57,12 +101,13 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_detailsStack->addWidget(m_hotkeyDetailsLabel);
     m_detailsStack->addWidget(m_toggleMuteCombo);
 
+    // main layout
     QHBoxLayout *mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_targetCombo);
     mainLayout->addWidget(m_detailsStack);
     setLayout(mainLayout);
 
-    // local UI connections
+    // connections: local UI -> action
     connect(m_targetCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
     connect(m_transitionsCombo, &QComboBox::currentTextChanged,
@@ -71,9 +116,31 @@ PmActionEntryWidget::PmActionEntryWidget(
             this, &PmActionEntryWidget::onUiChanged);
     connect(m_toggleMuteCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
+
+    connect(m_fileActionCombo, &QComboBox::currentTextChanged,
+            this, &PmActionEntryWidget::onUiChanged);
+    connect(m_filenameEdit, &QLineEdit::textChanged,
+            this, &PmActionEntryWidget::onUiChanged);
+    connect(m_fileTextEdit, &QLineEdit::textChanged,
+            this, &PmActionEntryWidget::onUiChanged);
+    connect(m_fileTimeFormatEdit, &QLineEdit::textChanged,
+            this, &PmActionEntryWidget::onUiChanged);
+
+    // connections: local UI customization
     connect(m_toggleSourceCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onHotkeySelectionChanged);
+    connect(m_filenameEdit, &QLineEdit::textChanged,
+            this, &PmActionEntryWidget::onFileStringsChanged);
+    connect(m_fileBrowseButton, &QPushButton::released,
+            this, &PmActionEntryWidget::onFileBrowseReleased);
+    connect(m_fileTextEdit, &QLineEdit::textChanged,
+            this, &PmActionEntryWidget::onFileStringsChanged);
+    connect(m_fileTimeFormatPreviewButton, &QPushButton::released,
+            this, &PmActionEntryWidget::onShowTimeFormatPreview);
+    connect(m_fileTimeFormatHelpButton, &QPushButton::released,
+            this, &PmActionEntryWidget::onShowTimeFormatHelp);
 
+    // init state
     onScenesChanged();
 }
 
@@ -278,6 +345,35 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 	    m_targetCombo->blockSignals(false);
 
         m_detailsStack->setVisible(false);
+	    break;
+    case PmActionType::File:
+	    m_targetCombo->setVisible(false);
+	    m_detailsStack->setVisible(true);
+	    m_detailsStack->setCurrentWidget(m_fileActionsWidget);
+
+        m_fileActionCombo->blockSignals(true);
+	    if (action.isSet()) {
+	        int targetIdx = m_fileActionCombo->findData(
+    		    (unsigned int)action.actionCode);
+            m_fileActionCombo->setCurrentIndex(targetIdx);
+        } else {
+            m_fileActionCombo->setCurrentIndex(0);
+        }
+        m_fileActionCombo->blockSignals(false);
+
+        m_filenameEdit->blockSignals(true);
+	    m_filenameEdit->setText(action.targetElement.data());
+        m_filenameEdit->blockSignals(false);
+
+        m_fileTextEdit->blockSignals(true);
+        m_fileTextEdit->setText(action.targetDetails.data());
+	    m_fileTextEdit->blockSignals(false);
+
+        m_fileTimeFormatEdit->blockSignals(true);
+	    m_fileTimeFormatEdit->setText(action.dateTimeFormat.data());
+	    m_fileTimeFormatEdit->blockSignals(false);
+
+	    onFileStringsChanged();
 	    break;
     }
 
@@ -535,11 +631,13 @@ void PmActionEntryWidget::prepareSelections()
     }
 }
 
+#if 0
 void PmActionEntryWidget::onActionTypeSelectionChanged()
 {
     prepareSelections();
     onUiChanged();
 }
+#endif
 
 void PmActionEntryWidget::onUiChanged()
 {
@@ -551,19 +649,19 @@ void PmActionEntryWidget::onUiChanged()
         break;
     case PmActionType::Scene:
         action.targetElement
-            = m_targetCombo->currentData().toString().toUtf8().data();
+            = m_targetCombo->currentData().toString().toUtf8();
         action.targetDetails
-            = m_transitionsCombo->currentData().toString().toUtf8().data();
+            = m_transitionsCombo->currentData().toString().toUtf8();
         break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
         action.targetElement
-            = m_targetCombo->currentData().toString().toUtf8().data();
+            = m_targetCombo->currentData().toString().toUtf8();
 	    action.actionCode = (size_t)m_toggleSourceCombo->currentData().toUInt();
         break;
     case PmActionType::ToggleMute:
 	    action.targetElement =
-		    m_targetCombo->currentData().toString().toUtf8().data();
+		    m_targetCombo->currentData().toString().toUtf8();
 	    action.actionCode = (size_t)m_toggleMuteCombo->currentData().toUInt();
 	    break;
     case PmActionType::Hotkey:
@@ -574,6 +672,12 @@ void PmActionEntryWidget::onUiChanged()
 	    break;
     case PmActionType::FrontEndAction:
 	    action.actionCode = (size_t)m_targetCombo->currentData().toUInt();
+	    break;
+    case PmActionType::File:
+	    action.actionCode = (size_t)m_fileActionCombo->currentData().toUInt();
+	    action.targetElement = m_filenameEdit->text().toUtf8();
+	    action.targetDetails = m_fileTextEdit->text().toUtf8();
+	    action.dateTimeFormat = m_fileTimeFormatEdit->text().toUtf8();
 	    break;
     }
 
@@ -588,6 +692,11 @@ void PmActionEntryWidget::onHotkeySelectionChanged()
 		QString info = m_targetCombo->currentData(k_keyHintRole).toString();
 		m_hotkeyDetailsLabel->setText(info);
     }
+}
+
+void PmActionEntryWidget::onFileBrowseReleased()
+{
+
 }
 
 void PmActionEntryWidget::onScenesChanged()

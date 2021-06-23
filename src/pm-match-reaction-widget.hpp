@@ -43,9 +43,15 @@ public slots:
     void onScenesChanged();
 
 protected slots:
-    void onActionTypeSelectionChanged();
+    //void onActionTypeSelectionChanged();
     void onUiChanged();
+
+    // ui customization
     void onHotkeySelectionChanged();
+    void onFileBrowseReleased();
+    void onFileStringsChanged();
+    void onShowTimeFormatPreview();
+    void onShowTimeFormatHelp();
 
 protected:
     static const QString k_defaultTransitionStr;
@@ -83,6 +89,16 @@ protected:
     QComboBox *m_toggleMuteCombo;
 
     QLabel *m_hotkeyDetailsLabel;
+
+    QComboBox *m_fileActionCombo;
+    QLineEdit *m_filenameEdit;
+    QPushButton *m_fileBrowseButton;
+    QLineEdit *m_fileTextEdit;
+    QLabel *m_fileTimeFormatLabel;
+    QLineEdit *m_fileTimeFormatEdit;
+    QPushButton *m_fileTimeFormatPreviewButton;
+    QPushButton *m_fileTimeFormatHelpButton;
+    QWidget *m_fileActionsWidget;
 
     QStackedWidget *m_detailsStack;
 
