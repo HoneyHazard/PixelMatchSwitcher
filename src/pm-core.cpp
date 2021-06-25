@@ -1081,8 +1081,7 @@ void PmCore::scanScenes()
         scanInfo.lastSceneData = &sceneData;
         obs_scene_enum_items(
             scene,
-            [](obs_scene_t *scene, obs_sceneitem_t *item,
-               void *p) -> bool {
+            [](obs_scene_t *scene, obs_sceneitem_t *item, void *p) -> bool {
                 PmSceneScanInfo *scanInfo = (PmSceneScanInfo *)p;
 
                 //obs_source_t *sceneSrc = obs_scene_get_source(scene);

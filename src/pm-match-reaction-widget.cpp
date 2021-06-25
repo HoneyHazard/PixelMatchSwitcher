@@ -18,6 +18,7 @@
 #include <QLineEdit>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QScrollBar>
 
 
 #if BROWSER_AVAILABLE
@@ -111,7 +112,7 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
-    m_detailsStack->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+    m_detailsStack->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
     m_detailsStack->addWidget(m_transitionsCombo);
     m_detailsStack->addWidget(m_toggleSourceCombo);
     m_detailsStack->addWidget(m_hotkeyDetailsLabel);
@@ -147,11 +148,11 @@ PmActionEntryWidget::PmActionEntryWidget(
     // connections: local UI customization
     connect(m_toggleSourceCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onHotkeySelectionChanged);
-    connect(m_filenameEdit, &QLineEdit::textChanged,
+    connect(m_filenameEdit, &QLineEdit::textEdited,
             this, &PmActionEntryWidget::onFileStringsChanged);
     connect(m_fileBrowseButton, &QPushButton::released,
             this, &PmActionEntryWidget::onFileBrowseReleased);
-    connect(m_fileTextEdit, &QLineEdit::textChanged,
+    connect(m_fileTextEdit, &QLineEdit::textEdited,
             this, &PmActionEntryWidget::onFileStringsChanged);
     connect(m_fileTimeFormatPreviewButton, &QPushButton::released,
             this, &PmActionEntryWidget::onShowTimeFormatPreview);
@@ -160,6 +161,8 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     // init state
     onScenesChanged();
+    onHotkeySelectionChanged();
+    onFileStringsChanged();
 }
 
 void PmActionEntryWidget::updateScenes()
@@ -727,12 +730,14 @@ void PmActionEntryWidget::onFileBrowseReleased()
 
 void PmActionEntryWidget::onFileStringsChanged()
 {
-	bool timeUsed = m_filenameEdit->text().contains(PmAction::k_timeMarker)
-                 || m_fileTextEdit->text().contains(PmAction::k_timeMarker);
-	m_fileTimeFormatLabel->setVisible(timeUsed);
-	m_fileTimeFormatEdit->setVisible(timeUsed);
-	m_fileTimeFormatPreviewButton->setVisible(timeUsed);
-	m_fileTimeFormatHelpButton->setVisible(timeUsed);
+	if (m_actionType == PmActionType::File) {
+		bool timeUsed = m_filenameEdit->text().contains(PmAction::k_timeMarker)
+                     || m_fileTextEdit->text().contains(PmAction::k_timeMarker);
+		m_fileTimeFormatLabel->setVisible(timeUsed);
+		m_fileTimeFormatEdit->setVisible(timeUsed);
+		m_fileTimeFormatPreviewButton->setVisible(timeUsed);
+		m_fileTimeFormatHelpButton->setVisible(timeUsed);
+	}
 }
 
 void PmActionEntryWidget::onShowTimeFormatPreview()
@@ -778,17 +783,21 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 
 void PmActionEntryWidget::selectDetailsWidget(QWidget *widget)
 {
-	QWidget *currWidget = m_detailsStack->currentWidget();
-	if (currWidget) {
-        currWidget->setSizePolicy(
-            QSizePolicy::Ignored, QSizePolicy::Ignored);
-    }
+	//QWidget *currWidget = m_detailsStack->currentWidget();
+	//if (currWidget) {
+    //    currWidget->setSizePolicy(
+    //        QSizePolicy::Ignored, QSizePolicy::Ignored);
+    //}
 	m_detailsStack->setCurrentWidget(widget);
-    widget->setSizePolicy(
-        QSizePolicy::Expanding, QSizePolicy::Expanding);
-	m_detailsStack->setMaximumSize(widget->sizeHint());
-	m_detailsStack->adjustSize();
-	updateGeometry();
+    //widget->setSizePolicy(
+    //    QSizePolicy::Preferred, QSizePolicy::Preferred);
+	//m_detailsStack->setMinimumSize(widget->minimumSize());
+	//m_detailsStack->adjustSize();
+    //m_detailsStack->setFixedSize(widget->sizeHint());
+    m_detailsStack->setFixedHeight(widget->sizeHint().height());
+	m_detailsStack->updateGeometry();
+	//adjustSize();
+	//updateGeometry();
 }
 
 //----------------------------------------------------
@@ -842,6 +851,7 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     m_actionListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actionListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_actionListWidget->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     connect(m_actionListWidget, &QListWidget::currentRowChanged,
             this, &PmMatchReactionWidget::updateButtonsState);
 
@@ -917,6 +927,7 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
 
     size_t listSz = actionList.size();
     for (size_t i = 0; i < listSz; ++i) {
+	    QListWidgetItem *item = nullptr;
         PmActionEntryWidget *entryWidget = nullptr;
         if (i >= m_actionListWidget->count()) {
             const auto qc = Qt::QueuedConnection;
@@ -927,16 +938,17 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
             connect(entryWidget, &PmActionEntryWidget::sigActionChanged,
                     this, &PmMatchReactionWidget::onActionChanged, qc);
 
-            QListWidgetItem *item = new QListWidgetItem(m_actionListWidget);
+            item = new QListWidgetItem(m_actionListWidget);
             m_actionListWidget->addItem(item);
-            item->setSizeHint(entryWidget->sizeHint());
+            //item->setSizeHint(entryWidget->sizeHint());
             m_actionListWidget->setItemWidget(item, entryWidget);
         } else {
-            QListWidgetItem* item = m_actionListWidget->item(int(i));
+            item = m_actionListWidget->item(int(i));
             entryWidget
                 = (PmActionEntryWidget*) m_actionListWidget->itemWidget(item);
         }
         entryWidget->updateAction(i, actionList[i]);
+	    item->setSizeHint(entryWidget->sizeHint());
     }
     while (m_actionListWidget->count() > listSz) {
         QListWidgetItem *item = m_actionListWidget->takeItem(
@@ -948,9 +960,10 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
     if (listSz > 0) {
 	    int idx = m_actionListWidget->currentRow();
 	    if (idx < 0) idx = 0;
-	    listMinHeight = m_actionListWidget->sizeHintForRow(0);
-    } 
+	    listMinHeight = m_actionListWidget->sizeHintForRow(idx);
+    }
     m_actionListWidget->setMinimumHeight(listMinHeight);
+    //m_actionListWidget->updateGeometry();
 
     bool expand = (listSz > 0);
     toggleExpand(expand); // calls updateButtonsState() and updateContentHeight()
@@ -975,6 +988,9 @@ int PmMatchReactionWidget::maxContentHeight() const
 
 	for (int i = 0; i < count; i++) {
 		ret += m_actionListWidget->sizeHintForRow(i);
+    }
+	if (m_actionListWidget->horizontalScrollBar()->isVisible()) {
+	    ret += m_actionListWidget->horizontalScrollBar()->sizeHint().height();
     }
 	return ret + extraPadding;
 }
