@@ -82,6 +82,7 @@ protected:
     void updateFrontendActions();
     void updateUiStyle(const PmAction &action);
     void selectDetailsWidget(QWidget *widget);
+    void showFileActionsUi(bool on);
 
     QComboBox *m_targetCombo;
 

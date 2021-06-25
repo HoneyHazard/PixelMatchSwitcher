@@ -112,18 +112,22 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
-    m_detailsStack->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    //m_detailsStack->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
     m_detailsStack->addWidget(m_transitionsCombo);
     m_detailsStack->addWidget(m_toggleSourceCombo);
     m_detailsStack->addWidget(m_hotkeyDetailsLabel);
     m_detailsStack->addWidget(m_toggleMuteCombo);
-    m_detailsStack->addWidget(m_fileActionsWidget);
-    selectDetailsWidget(m_transitionsCombo);
+    //m_detailsStack->addWidget(m_fileActionsWidget);
+    //selectDetailsWidget(m_transitionsCombo);
 
     // main layout
     QHBoxLayout *mainLayout = new QHBoxLayout;
     mainLayout->addWidget(m_targetCombo);
     mainLayout->addWidget(m_detailsStack);
+    mainLayout->addWidget(m_fileActionsWidget);
+    mainLayout->setStretch(0, 1);
+    mainLayout->setStretch(1, 1);
+    mainLayout->setStretch(2, 1);
     setLayout(mainLayout);
 
     // connections: local UI -> action
@@ -163,6 +167,7 @@ PmActionEntryWidget::PmActionEntryWidget(
     onScenesChanged();
     onHotkeySelectionChanged();
     onFileStringsChanged();
+    showFileActionsUi(false);
 }
 
 void PmActionEntryWidget::updateScenes()
@@ -293,6 +298,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
     case PmActionType::None:
         m_targetCombo->setVisible(false);
         m_detailsStack->setVisible(false);
+        showFileActionsUi(false);
         break;
     case PmActionType::Scene:
         m_targetCombo->setVisible(true);
@@ -306,7 +312,8 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 
         m_detailsStack->setVisible(true);
 	    selectDetailsWidget(m_transitionsCombo);
-        break;
+    	showFileActionsUi(false);
+	    break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
          m_targetCombo->setVisible(true);
@@ -321,6 +328,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 
          m_detailsStack->setVisible(true);
 	     selectDetailsWidget(m_toggleSourceCombo);
+         showFileActionsUi(false);
          break;
     case PmActionType::ToggleMute:
 	    m_targetCombo->setVisible(true);
@@ -335,6 +343,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 
         m_detailsStack->setVisible(true);
 	    selectDetailsWidget(m_toggleMuteCombo);
+	    showFileActionsUi(false);
         break;
     case PmActionType::Hotkey:
 	    m_targetCombo->setVisible(true);
@@ -348,10 +357,10 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 		    m_targetCombo->setCurrentIndex(0);
         }
         m_targetCombo->blockSignals(false);
-
         m_detailsStack->setVisible(true);
-	    selectDetailsWidget(m_hotkeyDetailsLabel);
 	    onHotkeySelectionChanged();
+    	selectDetailsWidget(m_hotkeyDetailsLabel);
+	    showFileActionsUi(false);
         break;
     case PmActionType::FrontEndAction:
 	    m_targetCombo->setVisible(true);
@@ -365,10 +374,12 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 	    }
 	    m_targetCombo->blockSignals(false);
         m_detailsStack->setVisible(false);
+	    showFileActionsUi(false);
 	    break;
     case PmActionType::File:
 	    m_targetCombo->setVisible(false);
-	    m_detailsStack->setVisible(true);
+	    m_detailsStack->setVisible(false);
+	    showFileActionsUi(true);
 
         m_fileActionCombo->blockSignals(true);
 	    if (action.isSet()) {
@@ -377,7 +388,7 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
             m_fileActionCombo->setCurrentIndex(targetIdx);
         } else {
             m_fileActionCombo->setCurrentIndex(0);
-        }
+        } 
         m_fileActionCombo->blockSignals(false);
 
         m_filenameEdit->blockSignals(true);
@@ -392,13 +403,14 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 	    m_fileTimeFormatEdit->setText(action.dateTimeFormat.data());
 	    m_fileTimeFormatEdit->blockSignals(false);
 
-        selectDetailsWidget(m_fileActionsWidget);
+        //selectDetailsWidget(m_fileActionsWidget);
 
 	    onFileStringsChanged();
 	    break;
     }
 
     updateUiStyle(action);
+    //adjustSize();
 }
 
 void PmActionEntryWidget::insertHotkeysList(
@@ -652,14 +664,6 @@ void PmActionEntryWidget::prepareSelections()
     }
 }
 
-#if 0
-void PmActionEntryWidget::onActionTypeSelectionChanged()
-{
-    prepareSelections();
-    onUiChanged();
-}
-#endif
-
 void PmActionEntryWidget::onUiChanged()
 {
     PmAction action;
@@ -783,21 +787,14 @@ void PmActionEntryWidget::updateUiStyle(const PmAction &action)
 
 void PmActionEntryWidget::selectDetailsWidget(QWidget *widget)
 {
-	//QWidget *currWidget = m_detailsStack->currentWidget();
-	//if (currWidget) {
-    //    currWidget->setSizePolicy(
-    //        QSizePolicy::Ignored, QSizePolicy::Ignored);
-    //}
 	m_detailsStack->setCurrentWidget(widget);
-    //widget->setSizePolicy(
-    //    QSizePolicy::Preferred, QSizePolicy::Preferred);
-	//m_detailsStack->setMinimumSize(widget->minimumSize());
-	//m_detailsStack->adjustSize();
-    //m_detailsStack->setFixedSize(widget->sizeHint());
-    m_detailsStack->setFixedHeight(widget->sizeHint().height());
-	m_detailsStack->updateGeometry();
-	//adjustSize();
-	//updateGeometry();
+}
+
+void PmActionEntryWidget::showFileActionsUi(bool on)
+{
+	auto sizePolicy = on ? QSizePolicy::Preferred : QSizePolicy::Ignored;
+	m_fileActionsWidget->setVisible(on);
+	m_fileActionsWidget->setSizePolicy(sizePolicy, sizePolicy);
 }
 
 //----------------------------------------------------
@@ -940,7 +937,6 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
 
             item = new QListWidgetItem(m_actionListWidget);
             m_actionListWidget->addItem(item);
-            //item->setSizeHint(entryWidget->sizeHint());
             m_actionListWidget->setItemWidget(item, entryWidget);
         } else {
             item = m_actionListWidget->item(int(i));
@@ -963,7 +959,6 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
 	    listMinHeight = m_actionListWidget->sizeHintForRow(idx);
     }
     m_actionListWidget->setMinimumHeight(listMinHeight);
-    //m_actionListWidget->updateGeometry();
 
     bool expand = (listSz > 0);
     toggleExpand(expand); // calls updateButtonsState() and updateContentHeight()
