@@ -1717,6 +1717,8 @@ void PmCore::execIndependentActions(const std::string &cfgName,
     const auto &actions
         = switchedOn ? reaction.matchActions : reaction.unmatchActions;
 	for (const auto &action : actions) {
+	    if (!action.isSet()) continue;
+
 		if (action.actionType == PmActionType::SceneItem) {
 			obs_sceneitem_t *sceneItem = nullptr;
 			{

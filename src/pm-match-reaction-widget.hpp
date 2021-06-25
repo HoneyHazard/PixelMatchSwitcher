@@ -149,7 +149,6 @@ protected:
     int maxContentHeight() const override;
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
 
-
     QListWidget *m_actionListWidget;
     QPushButton *m_insertActionButton;
     QPushButton *m_removeActionButton;

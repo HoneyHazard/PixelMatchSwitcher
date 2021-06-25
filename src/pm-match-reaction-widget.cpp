@@ -112,13 +112,10 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
-    //m_detailsStack->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
     m_detailsStack->addWidget(m_transitionsCombo);
     m_detailsStack->addWidget(m_toggleSourceCombo);
     m_detailsStack->addWidget(m_hotkeyDetailsLabel);
     m_detailsStack->addWidget(m_toggleMuteCombo);
-    //m_detailsStack->addWidget(m_fileActionsWidget);
-    //selectDetailsWidget(m_transitionsCombo);
 
     // main layout
     QHBoxLayout *mainLayout = new QHBoxLayout;
@@ -403,14 +400,11 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 	    m_fileTimeFormatEdit->setText(action.dateTimeFormat.data());
 	    m_fileTimeFormatEdit->blockSignals(false);
 
-        //selectDetailsWidget(m_fileActionsWidget);
-
 	    onFileStringsChanged();
 	    break;
     }
 
     updateUiStyle(action);
-    //adjustSize();
 }
 
 void PmActionEntryWidget::insertHotkeysList(
@@ -1103,4 +1097,3 @@ void PmMatchReactionWidget::onRemoveReleased()
     }
     pushReaction(reaction);
 }
-

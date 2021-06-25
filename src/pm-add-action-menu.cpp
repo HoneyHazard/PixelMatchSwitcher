@@ -48,6 +48,12 @@ void PmAddActionMenu::itemTriggered(int actionIndex)
 {
 	PmAction newAction;
 	newAction.actionType = (PmActionType)actionIndex;
+	if (newAction.actionType == PmActionType::File) {
+		newAction.dateTimeFormat = "dd/MM/yy hh:mm:ss";
+		newAction.targetDetails = std::string("[time] [label]: ") +
+			(m_reactionType == PmReactionType::Match ? "match" : "unmatch")
+            + " text placeholder";
+    }
 	PmReaction reaction = pullReaction();
 
 	if (m_reactionType == PmReactionType::Match) {
@@ -58,7 +64,7 @@ void PmAddActionMenu::itemTriggered(int actionIndex)
 		reaction.matchActions.push_back(newAction);
 	} else { // Unmatch
 		if (newAction.actionType == PmActionType::Scene
-         || reaction.hasUnmatchAction(PmActionType::Scene)) {
+         && reaction.hasUnmatchAction(PmActionType::Scene)) {
 			return; // enforce one scene action
 		}
 		reaction.unmatchActions.push_back(newAction);
