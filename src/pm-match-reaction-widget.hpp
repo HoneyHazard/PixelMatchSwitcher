@@ -23,6 +23,10 @@ class QWidgetAction;
 class QLabel;
 class QEvent;
 
+/**
+ * @brief Shows and configures individual action of a match/unmatmch reaction
+ */
+// TODO: serious refactor
 class PmActionEntryWidget : public QWidget
 {
     Q_OBJECT
@@ -111,6 +115,10 @@ protected:
 
 //----------------------------------------------------
 
+/**
+ * @briefs Shows and configures a match/unmatch reaction, which is a combination
+ *         of actions
+ */
 class PmMatchReactionWidget : public PmSpoilerWidget
 {
     Q_OBJECT

@@ -95,13 +95,17 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_fileTextEdit = new QLineEdit(this);
     fileBottomLayout->addWidget(m_fileTextEdit, 0, 1, 1, 3);
     m_fileTimeFormatLabel = new QLabel(obs_module_text("Time Format: "), this);
+    m_fileTimeFormatLabel->setVisible(false);
     fileBottomLayout->addWidget(m_fileTimeFormatLabel, 1, 0, 1, 1);
     m_fileTimeFormatEdit = new QLineEdit(this);
+    m_fileTimeFormatEdit->setVisible(false);
     fileBottomLayout->addWidget(m_fileTimeFormatEdit, 1, 1);
     m_fileTimeFormatPreviewButton
         = new QPushButton(obs_module_text("preview"), this);
+    m_fileTimeFormatPreviewButton->setVisible(false);
     fileBottomLayout->addWidget(m_fileTimeFormatPreviewButton);
     m_fileTimeFormatHelpButton = new QPushButton(obs_module_text("help"), this);
+    m_fileTimeFormatHelpButton->setVisible(false);
     fileBottomLayout->addWidget(m_fileTimeFormatHelpButton);
 
     QVBoxLayout *fileMainLayout = new QVBoxLayout;
@@ -139,21 +143,21 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     connect(m_fileActionCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onUiChanged);
-    connect(m_filenameEdit, &QLineEdit::textChanged,
+    connect(m_filenameEdit, &QLineEdit::editingFinished,
             this, &PmActionEntryWidget::onUiChanged);
-    connect(m_fileTextEdit, &QLineEdit::textChanged,
+    connect(m_fileTextEdit, &QLineEdit::editingFinished,
             this, &PmActionEntryWidget::onUiChanged);
-    connect(m_fileTimeFormatEdit, &QLineEdit::textChanged,
+    connect(m_fileTimeFormatEdit, &QLineEdit::editingFinished,
             this, &PmActionEntryWidget::onUiChanged);
 
     // connections: local UI customization
     connect(m_toggleSourceCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onHotkeySelectionChanged);
-    connect(m_filenameEdit, &QLineEdit::textEdited,
+    connect(m_filenameEdit, &QLineEdit::editingFinished,
             this, &PmActionEntryWidget::onFileStringsChanged);
     connect(m_fileBrowseButton, &QPushButton::released,
             this, &PmActionEntryWidget::onFileBrowseReleased);
-    connect(m_fileTextEdit, &QLineEdit::textEdited,
+    connect(m_fileTextEdit, &QLineEdit::editingFinished,
             this, &PmActionEntryWidget::onFileStringsChanged);
     connect(m_fileTimeFormatPreviewButton, &QPushButton::released,
             this, &PmActionEntryWidget::onShowTimeFormatPreview);
@@ -163,6 +167,7 @@ PmActionEntryWidget::PmActionEntryWidget(
     // init state
     onScenesChanged();
     onHotkeySelectionChanged();
+
     onFileStringsChanged();
     showFileActionsUi(false);
 }
@@ -731,10 +736,13 @@ void PmActionEntryWidget::onFileStringsChanged()
 	if (m_actionType == PmActionType::File) {
 		bool timeUsed = m_filenameEdit->text().contains(PmAction::k_timeMarker)
                      || m_fileTextEdit->text().contains(PmAction::k_timeMarker);
-		m_fileTimeFormatLabel->setVisible(timeUsed);
-		m_fileTimeFormatEdit->setVisible(timeUsed);
-		m_fileTimeFormatPreviewButton->setVisible(timeUsed);
-		m_fileTimeFormatHelpButton->setVisible(timeUsed);
+		bool timeWasUsed = m_fileTimeFormatEdit->isVisible();
+		if (timeUsed != timeWasUsed) {
+			m_fileTimeFormatLabel->setVisible(timeUsed);
+			m_fileTimeFormatEdit->setVisible(timeUsed);
+			m_fileTimeFormatPreviewButton->setVisible(timeUsed);
+			m_fileTimeFormatHelpButton->setVisible(timeUsed);
+		}
 	}
 }
 
@@ -753,7 +761,7 @@ void PmActionEntryWidget::onShowTimeFormatHelp()
 	if (!cef)
 		goto fallback;
 
-    QCefWidget *cefWidget = cef->create_widget(this, k_timeFormatHelpUrl);
+    QCefWidget *cefWidget = cef->create_widget(nullptr, k_timeFormatHelpUrl);
 	if (!cefWidget)
 		goto fallback;
 	cefWidget->show();
