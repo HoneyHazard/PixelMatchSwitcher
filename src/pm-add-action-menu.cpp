@@ -5,6 +5,8 @@
 #include <QWidgetAction>
 #include <QMouseEvent>
 
+#include <sstream>
+
 PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
 : QMenu(parent)
 , m_core(core)
@@ -49,10 +51,14 @@ void PmAddActionMenu::itemTriggered(int actionIndex)
 	PmAction newAction;
 	newAction.actionType = (PmActionType)actionIndex;
 	if (newAction.actionType == PmActionType::File) {
-		newAction.dateTimeFormat = "dd/MM/yy hh:mm:ss";
-		newAction.targetDetails = std::string("[time] [label]: ") +
-			(m_reactionType == PmReactionType::Match ? "match" : "unmatch")
-            + " text placeholder";
+		std::ostringstream oss;
+		oss << PmAction::k_timeMarker << ' '
+		    << PmAction::k_labelMarker << ' '
+            << ": "
+		    << (m_reactionType == PmReactionType::Match ? "match" : "unmatch")
+            << " text placeholder";
+		newAction.targetDetails = oss.str();
+		newAction.timeFormat = PmAction::k_defaultFileTimeFormat;
     }
 	PmReaction reaction = pullReaction();
 

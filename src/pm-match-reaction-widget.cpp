@@ -20,6 +20,7 @@
 #include <QMessageBox>
 #include <QScrollBar>
 
+#include <sstream>
 
 #if BROWSER_AVAILABLE
 #include <browser-panel.hpp>
@@ -34,7 +35,7 @@ const int PmActionEntryWidget::k_keyRole = Qt::UserRole + 1;
 const int PmActionEntryWidget::k_modifierRole = Qt::UserRole + 2;
 const int PmActionEntryWidget::k_keyHintRole = Qt::UserRole + 3;
 const char *PmActionEntryWidget::k_timeFormatHelpUrl
-    = "https://doc.qt.io/qt-5/qdatetime.html#toString";
+    = "https://doc.qt.io/qt-5/qdatetime.html#toString-2";
 
 PmActionEntryWidget::PmActionEntryWidget(
     PmCore* core, size_t actionIndex, QWidget *parent)
@@ -65,54 +66,59 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_hotkeyDetailsLabel = new QLabel(this);
  
     // file operations
-    QHBoxLayout *fileTopLayout = new QHBoxLayout;
-    fileTopLayout->setContentsMargins(0, 0, 0, 0);
+    int row = 0;
+    QGridLayout *fileLayout = new QGridLayout;
+    //fileLayout->setContentsMargins(0, 0, 0, 0);
     QLabel *fileActionLabel = new QLabel(
         obs_module_text("File Action: "), this);
-    fileTopLayout->addWidget(fileActionLabel);
+    fileLayout->addWidget(fileActionLabel, row, 0);
 
     m_fileActionCombo = new QComboBox(this);
+    m_fileActionCombo->setSizePolicy(
+        QSizePolicy::Maximum, QSizePolicy::Preferred);
     m_fileActionCombo->addItem(
         obs_module_text("Append"), (size_t)PmFileActionType::WriteAppend);
     m_fileActionCombo->addItem(
         obs_module_text("Truncate"), (size_t)PmFileActionType::WriteTruncate);
-    fileTopLayout->addWidget(m_fileActionCombo);
+    fileLayout->addWidget(m_fileActionCombo, row, 1);
+    row++;
 
     QLabel *filenameLabel = new QLabel(obs_module_text("Filename: "), this);
-    fileTopLayout->addWidget(filenameLabel);
+    fileLayout->addWidget(filenameLabel, row, 0);
 
     m_filenameEdit = new QLineEdit(this);
-    fileTopLayout->addWidget(m_filenameEdit);
+    fileLayout->addWidget(m_filenameEdit, row, 1);
 
     m_fileBrowseButton = new QPushButton("...", this);
-    fileTopLayout->addWidget(m_fileBrowseButton);
-
-    QGridLayout *fileBottomLayout = new QGridLayout;
-    fileBottomLayout->setContentsMargins(0, 0, 0, 0);
+    fileLayout->addWidget(m_fileBrowseButton, row, 2);
+    row++;
 
     QLabel *textLabel = new QLabel(obs_module_text("Text: "), this);
-    fileBottomLayout->addWidget(textLabel, 0, 0, 1, 1);
+    fileLayout->addWidget(textLabel, row, 0);
     m_fileTextEdit = new QLineEdit(this);
-    fileBottomLayout->addWidget(m_fileTextEdit, 0, 1, 1, 3);
+    fileLayout->addWidget(m_fileTextEdit, row, 1);
+    m_fileStringsPreviewButton =
+	    new QPushButton(obs_module_text("Preview"), this);
+    fileLayout->addWidget(m_fileStringsPreviewButton, row, 2);
+    row++;
+
     m_fileTimeFormatLabel = new QLabel(obs_module_text("Time Format: "), this);
     m_fileTimeFormatLabel->setVisible(false);
-    fileBottomLayout->addWidget(m_fileTimeFormatLabel, 1, 0, 1, 1);
+    fileLayout->addWidget(m_fileTimeFormatLabel, row, 0);
     m_fileTimeFormatEdit = new QLineEdit(this);
     m_fileTimeFormatEdit->setVisible(false);
-    fileBottomLayout->addWidget(m_fileTimeFormatEdit, 1, 1);
-    m_fileTimeFormatPreviewButton
-        = new QPushButton(obs_module_text("preview"), this);
-    m_fileTimeFormatPreviewButton->setVisible(false);
-    fileBottomLayout->addWidget(m_fileTimeFormatPreviewButton);
-    m_fileTimeFormatHelpButton = new QPushButton(obs_module_text("help"), this);
-    m_fileTimeFormatHelpButton->setVisible(false);
-    fileBottomLayout->addWidget(m_fileTimeFormatHelpButton);
+    fileLayout->addWidget(m_fileTimeFormatEdit, row, 1);
 
-    QVBoxLayout *fileMainLayout = new QVBoxLayout;
-    fileMainLayout->addLayout(fileTopLayout);
-    fileMainLayout->addLayout(fileBottomLayout);
+    fileLayout->addWidget(m_fileStringsPreviewButton);
+    m_fileTimeFormatHelpButton = new QPushButton(obs_module_text("Help"), this);
+    m_fileTimeFormatHelpButton->setVisible(false);
+    fileLayout->addWidget(m_fileTimeFormatHelpButton, row, 2);
+    row++;
+
     m_fileActionsWidget = new QWidget(this);
-    m_fileActionsWidget->setLayout(fileMainLayout);
+    m_fileActionsWidget->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Maximum);
+    m_fileActionsWidget->setLayout(fileLayout);
 
     // selectively shows and selects details for different types of targets
     m_detailsStack = new QStackedWidget(this);
@@ -159,8 +165,8 @@ PmActionEntryWidget::PmActionEntryWidget(
             this, &PmActionEntryWidget::onFileBrowseReleased);
     connect(m_fileTextEdit, &QLineEdit::editingFinished,
             this, &PmActionEntryWidget::onFileStringsChanged);
-    connect(m_fileTimeFormatPreviewButton, &QPushButton::released,
-            this, &PmActionEntryWidget::onShowTimeFormatPreview);
+    connect(m_fileStringsPreviewButton, &QPushButton::released,
+            this, &PmActionEntryWidget::onShowFilePreview);
     connect(m_fileTimeFormatHelpButton, &QPushButton::released,
             this, &PmActionEntryWidget::onShowTimeFormatHelp);
 
@@ -286,7 +292,8 @@ void PmActionEntryWidget::updateSizeHints(QList<QSize> &columnSizes)
     }
 }
 
-void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
+void PmActionEntryWidget::updateAction(
+    size_t actionIndex, PmAction action, const std::string &cfgLabel)
 {
     if (m_actionIndex != actionIndex) return;
 
@@ -402,10 +409,23 @@ void PmActionEntryWidget::updateAction(size_t actionIndex, PmAction action)
 	    m_fileTextEdit->blockSignals(false);
 
         m_fileTimeFormatEdit->blockSignals(true);
-	    m_fileTimeFormatEdit->setText(action.dateTimeFormat.data());
+	    m_fileTimeFormatEdit->setText(action.timeFormat.data());
 	    m_fileTimeFormatEdit->blockSignals(false);
 
 	    onFileStringsChanged();
+
+        {
+		    // update file preview
+		    QDateTime now = QDateTime::currentDateTime();
+		    std::ostringstream oss;
+		    oss << "<b>Filename:</b><br />"
+		        << action.formattedFileString(
+                      action.targetElement, cfgLabel, now).data()
+		        << "<br /><br /><b>Entry Preview:</b><br />"
+		        << action.formattedFileString(
+                      action.targetDetails, cfgLabel, now).data();
+		    m_filePreviewStr = oss.str().data();
+	    }
 	    break;
     }
 
@@ -701,7 +721,7 @@ void PmActionEntryWidget::onUiChanged()
 	    action.actionCode = (size_t)m_fileActionCombo->currentData().toUInt();
 	    action.targetElement = m_filenameEdit->text().toUtf8();
 	    action.targetDetails = m_fileTextEdit->text().toUtf8();
-	    action.dateTimeFormat = m_fileTimeFormatEdit->text().toUtf8();
+	    action.timeFormat = m_fileTimeFormatEdit->text().toUtf8();
 	    break;
     }
 
@@ -734,24 +754,31 @@ void PmActionEntryWidget::onFileBrowseReleased()
 void PmActionEntryWidget::onFileStringsChanged()
 {
 	if (m_actionType == PmActionType::File) {
-		bool timeUsed = m_filenameEdit->text().contains(PmAction::k_timeMarker)
-                     || m_fileTextEdit->text().contains(PmAction::k_timeMarker);
+		bool timeUsed
+            = m_filenameEdit->text().contains(PmAction::k_timeMarker.data())
+           || m_fileTextEdit->text().contains(PmAction::k_timeMarker.data());
 		bool timeWasUsed = m_fileTimeFormatEdit->isVisible();
 		if (timeUsed != timeWasUsed) {
+			QSizePolicy::Policy sp
+                = timeUsed ? QSizePolicy::Preferred : QSizePolicy::Ignored;
 			m_fileTimeFormatLabel->setVisible(timeUsed);
+			m_fileTimeFormatLabel->setSizePolicy(sp, sp);
 			m_fileTimeFormatEdit->setVisible(timeUsed);
-			m_fileTimeFormatPreviewButton->setVisible(timeUsed);
+			m_fileTimeFormatEdit->setSizePolicy(sp, sp);
 			m_fileTimeFormatHelpButton->setVisible(timeUsed);
+			m_fileTimeFormatHelpButton->setSizePolicy(sp, sp);
+			m_fileActionsWidget->adjustSize();
+			adjustSize();
+			updateGeometry();
 		}
 	}
 }
 
-void PmActionEntryWidget::onShowTimeFormatPreview()
+void PmActionEntryWidget::onShowFilePreview()
 {
-	QString nowStr = QDateTime::currentDateTime().toString(
-		m_fileTimeFormatEdit->text());
 	QMessageBox::information(
-        this, obs_module_text("Time Format Preview"), nowStr, QMessageBox::Ok);
+        this, obs_module_text("Filename and file entry preview"),
+        m_filePreviewStr, QMessageBox::Ok);
 }
 
 void PmActionEntryWidget::onShowTimeFormatHelp()
@@ -764,12 +791,15 @@ void PmActionEntryWidget::onShowTimeFormatHelp()
     QCefWidget *cefWidget = cef->create_widget(nullptr, k_timeFormatHelpUrl);
 	if (!cefWidget)
 		goto fallback;
-	cefWidget->show();
 
+	QDialog *hostDialog = new QDialog(nullptr);
+	hostDialog->setWindowTitle(obs_module_text("Time Format Help"));
+	cefWidget->setParent(hostDialog);
+	hostDialog->exec();
 #endif
 
 fallback:
-    ;
+	QDesktopServices::openUrl(QUrl(k_timeFormatHelpUrl));
 }
 
 void PmActionEntryWidget::onScenesChanged()
@@ -894,12 +924,12 @@ void PmMatchReactionWidget::onMatchConfigChanged(
     if (matchIdx != m_matchIndex) return;
 
     const PmReaction &reaction = cfg.reaction;
-    reactionToUi(reaction);
+    reactionToUi(reaction, cfg.label);
 }
 
 void PmMatchReactionWidget::onNoMatchReactionChanged(PmReaction reaction)
 {
-    reactionToUi(reaction);
+	reactionToUi(reaction, "global");
 }
 
 PmReaction PmMatchReactionWidget::pullReaction() const
@@ -919,7 +949,8 @@ void PmMatchReactionWidget::pushReaction(const PmReaction &reaction)
     }
 }
 
-void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
+void PmMatchReactionWidget::reactionToUi(
+    const PmReaction &reaction, const std::string &cfgLabel)
 {
     const auto &actionList = (m_reactionType == PmReactionType::Match) ?
         reaction.matchActions : reaction.unmatchActions;
@@ -945,7 +976,7 @@ void PmMatchReactionWidget::reactionToUi(const PmReaction &reaction)
             entryWidget
                 = (PmActionEntryWidget*) m_actionListWidget->itemWidget(item);
         }
-        entryWidget->updateAction(i, actionList[i]);
+        entryWidget->updateAction(i, actionList[i], cfgLabel);
 	    item->setSizeHint(entryWidget->sizeHint());
     }
     while (m_actionListWidget->count() > listSz) {

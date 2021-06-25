@@ -66,10 +66,10 @@ public:
 	static QString actionColorStr(PmActionType actionType);
     static QString frontEndActionStr(PmFrontEndAction fea);
 
-    static const char *k_timeMarker;
-    static const char *k_matchNameLabel;
-    static const char *k_defaultFileText;
-    static const char *k_defaultFileTimeFormat;
+    static const std::string k_timeMarker;
+    static const std::string k_labelMarker;
+    static const std::string k_defaultFileText;
+    static const std::string k_defaultFileTimeFormat;
 
     PmAction() {}
     PmAction(obs_data_t *data);
@@ -84,6 +84,8 @@ public:
     bool operator==(const PmAction &) const;
     bool operator!=(const PmAction &other) const { return !operator==(other); }
     QString actionColorStr() const;
+    std::string formattedFileString(const std::string &str,
+        const std::string &cfgLabel, const QDateTime &time) const;
 
     PmActionType actionType = PmActionType::None;
     std::string targetElement;
@@ -92,7 +94,9 @@ public:
     size_t actionCode = (size_t)-1;
 
     obs_key_combination_t keyCombo = {(uint32_t)-1, (obs_key_t)-1};
-    std::string dateTimeFormat;
+
+    // https://doc.qt.io/qt-5/qdatetime.html#toString-2
+    std::string timeFormat;
 };
 
 /**

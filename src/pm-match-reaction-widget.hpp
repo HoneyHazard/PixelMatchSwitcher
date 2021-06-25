@@ -34,7 +34,8 @@ class PmActionEntryWidget : public QWidget
 public:
     PmActionEntryWidget(PmCore *core, size_t actionIndex, QWidget *parent);
 
-    void updateAction(size_t actionIndex, PmAction action);
+    void updateAction(size_t actionIndex, PmAction action,
+                      const std::string &cfgLabel);
 
     void installEventFilterAll(QObject *obj);
 
@@ -47,13 +48,13 @@ public slots:
     void onScenesChanged();
 
 protected slots:
-    //void onActionTypeSelectionChanged();
     void onUiChanged();
+
     // ui customization
     void onHotkeySelectionChanged();
     void onFileBrowseReleased();
     void onFileStringsChanged();
-    void onShowTimeFormatPreview();
+    void onShowFilePreview();
     void onShowTimeFormatHelp();
 
 protected:
@@ -102,7 +103,7 @@ protected:
     QLineEdit *m_fileTextEdit;
     QLabel *m_fileTimeFormatLabel;
     QLineEdit *m_fileTimeFormatEdit;
-    QPushButton *m_fileTimeFormatPreviewButton;
+    QPushButton *m_fileStringsPreviewButton;
     QPushButton *m_fileTimeFormatHelpButton;
     QWidget *m_fileActionsWidget;
 
@@ -111,6 +112,7 @@ protected:
     PmCore *m_core;
     size_t m_actionIndex;
     PmActionType m_actionType = PmActionType::None;
+    QString m_filePreviewStr;
 };
 
 //----------------------------------------------------
@@ -153,7 +155,7 @@ protected slots:
 protected:
     PmReaction pullReaction() const;
     void pushReaction(const PmReaction &reaction);
-    void reactionToUi(const PmReaction &reaction);
+    void reactionToUi(const PmReaction &reaction, const std::string &cfgLabel);
     int maxContentHeight() const override;
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
 

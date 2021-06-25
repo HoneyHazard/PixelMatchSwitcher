@@ -1,9 +1,11 @@
 #include "pm-reaction.hpp"
 #include <obs-frontend-api.h>
 #include <obs-module.h>
+#include <QDateTime>
 
-const char *PmAction::k_timeMarker = "[time]";
-const char *PmAction::k_matchNameLabel = "[label]";
+const std::string PmAction::k_timeMarker = "[time]";
+const std::string PmAction::k_labelMarker = "[label]";
+const std::string PmAction::k_defaultFileTimeFormat = "dd/MM/yy hh:mm:ss";
 
 const char *PmAction::actionStr(PmActionType actionType)
 {
@@ -104,10 +106,7 @@ PmAction::PmAction(obs_data_t *data)
             = (uint32_t)obs_data_get_int(data, "hotkey_modifiers");
     }
     if (actionType == PmActionType::File) {
-	    if (targetElement.find(k_timeMarker) != std::string::npos
-         || targetDetails.find(k_timeMarker) != std::string::npos) {
-	        dateTimeFormat = obs_data_get_string(data, "date_time_format");
-        }
+	    timeFormat = obs_data_get_string(data, "date_time_format");
     }
 
     obs_data_release(data);
@@ -141,7 +140,7 @@ PmAction::PmAction(QXmlStreamReader &reader)
 		    } else if (name == "hotkey_modifiers") {
 			    keyCombo.modifiers = (uint32_t)elementText.toUInt();
 		    } else if (name == "date_time_format") {
-			    dateTimeFormat = elementText.toUtf8().data();
+			    timeFormat = elementText.toUtf8().data();
             }
         }
     }
@@ -162,9 +161,8 @@ obs_data_t *PmAction::saveData() const
 	    obs_data_set_int(ret, "hotkey_key", (long long)keyCombo.key);
     }
     if (actionType == PmActionType::File) {
-	    if (targetElement.find(k_timeMarker) != std::string::npos
-         || targetDetails.find(k_timeMarker) != std::string::npos) {
-		    obs_data_set_string(ret, "date_time_format", dateTimeFormat.data());
+	    if (timeFormat.size()) {
+		    obs_data_set_string(ret, "date_time_format", timeFormat.data());
         }
     }
     return ret;
@@ -186,9 +184,8 @@ void PmAction::saveXml(QXmlStreamWriter &writer) const
             "hotkey_modifiers", QString::number(keyCombo.modifiers));
     }
     if (actionType == PmActionType::File) {
-	    if (targetElement.find(k_timeMarker) != std::string::npos
-         || targetDetails.find(k_timeMarker) != std::string::npos) {
-		    writer.writeTextElement("date_time_format", dateTimeFormat.data());
+	    if (timeFormat.size()) {
+		    writer.writeTextElement("date_time_format", timeFormat.data());
         }
     }
     writer.writeEndElement();
@@ -229,12 +226,28 @@ bool PmAction::operator==(const PmAction &other) const
             (keyCombo.key == other.keyCombo.key
                 && keyCombo.modifiers == other.keyCombo.modifiers))
         && (actionType != PmActionType::File ||
-            dateTimeFormat == other.dateTimeFormat);
+            timeFormat == other.timeFormat);
 }
 
 QString PmAction::actionColorStr() const
 {
 	return actionColorStr(actionType);
+}
+
+std::string PmAction::formattedFileString(const std::string &str,
+    const std::string &cfgLabel, const QDateTime &time) const
+{
+    // TODO optimize but not super important
+	std::string timeStr = time.toString(timeFormat.data()).toUtf8();
+    std::string ret = str;
+	size_t find;
+	while ((find = ret.find(k_timeMarker)) != std::string::npos) {
+	    ret.replace(find, k_timeMarker.size(), timeStr);
+    }
+	while ((find = ret.find(k_labelMarker)) != std::string::npos) {
+	    ret.replace(find, k_labelMarker.size(), cfgLabel);
+    }
+	return ret;
 }
 
 //---------------------------------------------------------

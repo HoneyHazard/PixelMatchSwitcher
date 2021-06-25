@@ -1821,19 +1821,14 @@ void PmCore::execIndependentActions(const std::string &cfgName,
             }
 		} else if (action.actionType == PmActionType::File) {
 			PmFileActionType fileAction = (PmFileActionType)action.actionCode;
-			QString filename = action.targetElement.data();
-			QString dateTimeStr;
-			if (!action.dateTimeFormat.empty()) {
-				dateTimeStr = QDateTime::currentDateTime().toString(
-				    action.dateTimeFormat.data());
-			}
-            filename.replace(PmAction::k_matchNameLabel, cfgName.data());
-			filename.replace(PmAction::k_timeMarker, dateTimeStr);
+			QDateTime now = QDateTime::currentDateTime();
+			std::string filename = action.formattedFileString(
+				action.targetElement, cfgName, now);
 
             if (fileAction == PmFileActionType::WriteAppend
 	         || fileAction == PmFileActionType::WriteTruncate) {
 			    //QFileInfo fileInfo(action.targetElement.data());
-		        QFile file(filename);
+		        QFile file(filename.data());
                 QIODevice::OpenMode flags = QIODevice::WriteOnly;
 			    if (fileAction == PmFileActionType::WriteAppend) {
 				    flags |= QIODevice::Append;
@@ -1846,11 +1841,10 @@ void PmCore::execIndependentActions(const std::string &cfgName,
                          filename.data(), file.errorString().toUtf8().data());
                     continue;
                 }
-                QString entry = action.targetDetails.data();
-		        entry.replace(action.k_matchNameLabel, cfgName.data());
-		        entry.replace(action.k_timeMarker, dateTimeStr);
+                std::string entry = action.formattedFileString(
+                    action.targetDetails, cfgName, now);
 		        QTextStream stream(&file);
-                stream << entry << Qt::endl;
+                stream << entry.data() << Qt::endl;
                 file.close();
             }
         }
