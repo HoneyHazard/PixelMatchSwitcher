@@ -211,6 +211,8 @@ bool PmAction::isSet() const
     case PmActionType::Hotkey:
 	    return keyCombo.key != (obs_key_t)-1
             || keyCombo.modifiers != (obs_key_t)-1;
+    case PmActionType::File:
+	    return targetElement.size() > 0 || targetDetails.size() > 0;
     default:
         return targetElement.size() > 0; break;
     }

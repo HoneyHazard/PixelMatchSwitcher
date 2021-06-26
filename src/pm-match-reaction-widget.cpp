@@ -74,8 +74,8 @@ PmActionEntryWidget::PmActionEntryWidget(
     fileLayout->addWidget(fileActionLabel, row, 0);
 
     m_fileActionCombo = new QComboBox(this);
-    m_fileActionCombo->setSizePolicy(
-        QSizePolicy::Maximum, QSizePolicy::Preferred);
+    //m_fileActionCombo->setSizePolicy(
+    //    QSizePolicy::Maximum, QSizePolicy::Preferred);
     m_fileActionCombo->addItem(
         obs_module_text("Append"), (size_t)PmFileActionType::WriteAppend);
     m_fileActionCombo->addItem(
@@ -116,8 +116,6 @@ PmActionEntryWidget::PmActionEntryWidget(
     row++;
 
     m_fileActionsWidget = new QWidget(this);
-    m_fileActionsWidget->setSizePolicy(
-        QSizePolicy::Preferred, QSizePolicy::Maximum);
     m_fileActionsWidget->setLayout(fileLayout);
 
     // selectively shows and selects details for different types of targets
@@ -292,7 +290,7 @@ void PmActionEntryWidget::updateSizeHints(QList<QSize> &columnSizes)
     }
 }
 
-void PmActionEntryWidget::updateAction(
+void PmActionEntryWidget::actionToUi(
     size_t actionIndex, PmAction action, const std::string &cfgLabel)
 {
     if (m_actionIndex != actionIndex) return;
@@ -388,7 +386,6 @@ void PmActionEntryWidget::updateAction(
     case PmActionType::File:
 	    m_targetCombo->setVisible(false);
 	    m_detailsStack->setVisible(false);
-	    showFileActionsUi(true);
 
         m_fileActionCombo->blockSignals(true);
 	    if (action.isSet()) {
@@ -426,6 +423,7 @@ void PmActionEntryWidget::updateAction(
                       action.targetDetails, cfgLabel, now).data();
 		    m_filePreviewStr = oss.str().data();
 	    }
+	    showFileActionsUi(true);
 	    break;
     }
 
@@ -747,8 +745,9 @@ void PmActionEntryWidget::onFileBrowseReleased()
 		this, obs_module_text("Choose file save location"), curPath,
 		PmConstants::k_writeFilenameFilter);
 	if (!filename.isEmpty()) {
-		m_filenameEdit->setText(filename); // will trigger onUiChanged()
+		m_filenameEdit->setText(filename);
     }
+	onUiChanged();
 }
 
 void PmActionEntryWidget::onFileStringsChanged()
@@ -768,6 +767,7 @@ void PmActionEntryWidget::onFileStringsChanged()
 			m_fileTimeFormatHelpButton->setVisible(timeUsed);
 			m_fileTimeFormatHelpButton->setSizePolicy(sp, sp);
 			m_fileActionsWidget->adjustSize();
+			m_fileActionsWidget->updateGeometry();
 			adjustSize();
 			updateGeometry();
 		}
@@ -824,9 +824,15 @@ void PmActionEntryWidget::selectDetailsWidget(QWidget *widget)
 
 void PmActionEntryWidget::showFileActionsUi(bool on)
 {
-	auto sizePolicy = on ? QSizePolicy::Preferred : QSizePolicy::Ignored;
 	m_fileActionsWidget->setVisible(on);
-	m_fileActionsWidget->setSizePolicy(sizePolicy, sizePolicy);
+	QSizePolicy sp;
+	if (on) {
+		sp = QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+		sp.setRetainSizeWhenHidden(false);
+	} else {
+		sp = QSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    }
+	m_fileActionsWidget->setSizePolicy(sp);
 }
 
 //----------------------------------------------------
@@ -976,7 +982,7 @@ void PmMatchReactionWidget::reactionToUi(
             entryWidget
                 = (PmActionEntryWidget*) m_actionListWidget->itemWidget(item);
         }
-        entryWidget->updateAction(i, actionList[i], cfgLabel);
+        entryWidget->actionToUi(i, actionList[i], cfgLabel);
 	    item->setSizeHint(entryWidget->sizeHint());
     }
     while (m_actionListWidget->count() > listSz) {

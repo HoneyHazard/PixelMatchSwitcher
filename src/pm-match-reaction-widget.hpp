@@ -34,7 +34,7 @@ class PmActionEntryWidget : public QWidget
 public:
     PmActionEntryWidget(PmCore *core, size_t actionIndex, QWidget *parent);
 
-    void updateAction(size_t actionIndex, PmAction action,
+    void actionToUi(size_t actionIndex, PmAction action,
                       const std::string &cfgLabel);
 
     void installEventFilterAll(QObject *obj);
