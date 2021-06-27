@@ -51,6 +51,7 @@ void PmAddActionMenu::itemTriggered(int actionIndex)
 	PmAction newAction;
 	newAction.actionType = (PmActionType)actionIndex;
 	if (newAction.actionType == PmActionType::File) {
+		newAction.actionCode = (size_t)PmFileActionType::WriteAppend;
 		std::ostringstream oss;
 		oss << PmAction::k_timeMarker << ' '
 		    << PmAction::k_labelMarker << ' '
