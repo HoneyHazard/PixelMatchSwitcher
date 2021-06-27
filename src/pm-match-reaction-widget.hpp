@@ -54,6 +54,7 @@ protected slots:
     void onHotkeySelectionChanged();
     void onFileBrowseReleased();
     void onFileStringsChanged();
+    void onShowFileMarkersHelp();
     void onShowFilePreview();
     void onShowTimeFormatHelp();
 
@@ -63,6 +64,7 @@ protected:
     static const int k_modifierRole;
 	static const int k_keyHintRole;
     static const char *k_timeFormatHelpUrl;
+	static const char *k_fileMarkersHelpHtml;
 
     struct HotkeyData {
 	    obs_hotkey_t *hkey;
@@ -98,6 +100,7 @@ protected:
     QLabel *m_hotkeyDetailsLabel;
 
     QComboBox *m_fileActionCombo;
+    QPushButton *m_fileMarkersHelpButton;
     QLineEdit *m_filenameEdit;
     QPushButton *m_fileBrowseButton;
     QLineEdit *m_fileTextEdit;

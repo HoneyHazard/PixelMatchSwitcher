@@ -36,6 +36,12 @@ const int PmActionEntryWidget::k_modifierRole = Qt::UserRole + 2;
 const int PmActionEntryWidget::k_keyHintRole = Qt::UserRole + 3;
 const char *PmActionEntryWidget::k_timeFormatHelpUrl
     = "https://doc.qt.io/qt-5/qdatetime.html#toString-2";
+const char *PmActionEntryWidget::k_fileMarkersHelpHtml
+    = "File markers work in both file names and entries written to files: "
+	  "<br /><br />"
+	  "<b>[label]</b>  Insert match config label"
+	  "<br /><br />"
+	  "<b>[time]</b>  Insert date/time";
 
 PmActionEntryWidget::PmActionEntryWidget(
     PmCore* core, size_t actionIndex, QWidget *parent)
@@ -68,19 +74,20 @@ PmActionEntryWidget::PmActionEntryWidget(
     // file operations
     int row = 0;
     QGridLayout *fileLayout = new QGridLayout;
-    //fileLayout->setContentsMargins(0, 0, 0, 0);
     QLabel *fileActionLabel = new QLabel(
         obs_module_text("File Action: "), this);
     fileLayout->addWidget(fileActionLabel, row, 0);
 
     m_fileActionCombo = new QComboBox(this);
-    //m_fileActionCombo->setSizePolicy(
-    //    QSizePolicy::Maximum, QSizePolicy::Preferred);
     m_fileActionCombo->addItem(
         obs_module_text("Append"), (size_t)PmFileActionType::WriteAppend);
     m_fileActionCombo->addItem(
         obs_module_text("Truncate"), (size_t)PmFileActionType::WriteTruncate);
     fileLayout->addWidget(m_fileActionCombo, row, 1);
+
+    m_fileMarkersHelpButton
+        = new QPushButton(obs_module_text("Markers Help"), this);
+    fileLayout->addWidget(m_fileMarkersHelpButton, row, 2);
     row++;
 
     QLabel *filenameLabel = new QLabel(obs_module_text("Filename: "), this);
@@ -109,7 +116,6 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_fileTimeFormatEdit->setVisible(false);
     fileLayout->addWidget(m_fileTimeFormatEdit, row, 1);
 
-    fileLayout->addWidget(m_fileStringsPreviewButton);
     m_fileTimeFormatHelpButton = new QPushButton(obs_module_text("Help"), this);
     m_fileTimeFormatHelpButton->setVisible(false);
     fileLayout->addWidget(m_fileTimeFormatHelpButton, row, 2);
@@ -157,6 +163,8 @@ PmActionEntryWidget::PmActionEntryWidget(
     // connections: local UI customization
     connect(m_toggleSourceCombo, &QComboBox::currentTextChanged,
             this, &PmActionEntryWidget::onHotkeySelectionChanged);
+    connect(m_fileMarkersHelpButton, &QPushButton::released,
+            this, &PmActionEntryWidget::onShowFileMarkersHelp);
     connect(m_filenameEdit, &QLineEdit::editingFinished,
             this, &PmActionEntryWidget::onFileStringsChanged);
     connect(m_fileBrowseButton, &QPushButton::released,
@@ -758,20 +766,19 @@ void PmActionEntryWidget::onFileStringsChanged()
            || m_fileTextEdit->text().contains(PmAction::k_timeMarker.data());
 		bool timeWasUsed = m_fileTimeFormatEdit->isVisible();
 		if (timeUsed != timeWasUsed) {
-			QSizePolicy::Policy sp
-                = timeUsed ? QSizePolicy::Preferred : QSizePolicy::Ignored;
-			m_fileTimeFormatLabel->setVisible(timeUsed);
-			m_fileTimeFormatLabel->setSizePolicy(sp, sp);
+            m_fileTimeFormatLabel->setVisible(timeUsed);
 			m_fileTimeFormatEdit->setVisible(timeUsed);
-			m_fileTimeFormatEdit->setSizePolicy(sp, sp);
 			m_fileTimeFormatHelpButton->setVisible(timeUsed);
-			m_fileTimeFormatHelpButton->setSizePolicy(sp, sp);
-			m_fileActionsWidget->adjustSize();
-			m_fileActionsWidget->updateGeometry();
 			adjustSize();
-			updateGeometry();
 		}
 	}
+}
+
+void PmActionEntryWidget::onShowFileMarkersHelp()
+{
+	QMessageBox::information(
+		this, obs_module_text("File markers help"),
+		k_fileMarkersHelpHtml, QMessageBox::Ok);
 }
 
 void PmActionEntryWidget::onShowFilePreview()
@@ -828,10 +835,10 @@ void PmActionEntryWidget::showFileActionsUi(bool on)
 	QSizePolicy sp;
 	if (on) {
 		sp = QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-		sp.setRetainSizeWhenHidden(false);
 	} else {
 		sp = QSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     }
+	sp.setRetainSizeWhenHidden(false);
 	m_fileActionsWidget->setSizePolicy(sp);
 }
 
