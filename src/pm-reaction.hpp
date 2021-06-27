@@ -65,6 +65,7 @@ public:
                               PmActionType active = PmActionType::None);
 	static QString actionColorStr(PmActionType actionType);
     static QString frontEndActionStr(PmFrontEndAction fea);
+	static QString fileActionStr(PmFileActionType fa);
 
     static const std::string k_timeMarker;
     static const std::string k_labelMarker;

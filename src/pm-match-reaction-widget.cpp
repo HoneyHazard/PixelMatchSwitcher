@@ -80,9 +80,11 @@ PmActionEntryWidget::PmActionEntryWidget(
 
     m_fileActionCombo = new QComboBox(this);
     m_fileActionCombo->addItem(
-        obs_module_text("Append"), (size_t)PmFileActionType::WriteAppend);
+        PmAction::fileActionStr(PmFileActionType::WriteAppend),
+        (size_t)PmFileActionType::WriteAppend);
     m_fileActionCombo->addItem(
-        obs_module_text("Truncate"), (size_t)PmFileActionType::WriteTruncate);
+        PmAction::fileActionStr(PmFileActionType::WriteTruncate),
+        (size_t)PmFileActionType::WriteTruncate);
     fileLayout->addWidget(m_fileActionCombo, row, 1);
 
     m_fileMarkersHelpButton

@@ -87,6 +87,16 @@ QString PmAction::frontEndActionStr(PmFrontEndAction fea)
     }
 }
 
+QString PmAction::fileActionStr(PmFileActionType fa)
+{
+	switch (fa) {
+	case PmFileActionType::WriteAppend:
+		return obs_module_text("append");
+	case PmFileActionType::WriteTruncate:
+		return obs_module_text("truncate");
+    }
+}
+
 PmAction::PmAction(obs_data_t *data)
 {
     obs_data_set_default_int(data, "action_type", (long long)actionType);

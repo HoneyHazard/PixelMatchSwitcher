@@ -694,23 +694,23 @@ void PmReactionDisplay::updateReaction(
 	    } else {
             switch (action.actionType) {
             case PmActionType::Scene:
-		        line = QString("%1%2")
-			        .arg(action.targetElement.data())
-                    .arg(action.targetDetails.size() ?
-                        QString(" [%1]").arg(action.targetDetails.data()) : "");
+		        line = QString("[%1] %2")
+                   .arg(action.targetDetails.size() ?
+                        action.targetDetails.data() : obs_module_text("scene"))
+				   .arg(action.targetElement.data());
                 break;
             case PmActionType::SceneItem:
             case PmActionType::Filter:
-                line = QString("%1 [%2]")
-			        .arg(action.targetElement.data())
+                line = QString("[%1] %2")
                     .arg(action.actionCode == (size_t)PmToggleCode::On ?
-                        obs_module_text("show") : obs_module_text("hide"));
+                        obs_module_text("show") : obs_module_text("hide"))
+                    .arg(action.targetElement.data());
                 break;
 	        case PmActionType::ToggleMute:
-		        line = QString("%1 [%2]")
-				   .arg(action.targetElement.data())
-				   .arg(action.actionCode == (size_t)PmToggleCode::On
-					    ? obs_module_text("unmute") : obs_module_text("mute"));  
+		        line = QString("[%1] %2")
+                    .arg(action.actionCode == (size_t)PmToggleCode::On
+					    ? obs_module_text("unmute") : obs_module_text("mute"))
+                    .arg(action.targetElement.data());
                 break;
             case PmActionType::Hotkey:
                 {
@@ -723,11 +723,22 @@ void PmReactionDisplay::updateReaction(
                 line = PmAction::frontEndActionStr(
                     (PmFrontEndAction)action.actionCode);
                 break;
+	        case PmActionType::File:
+                line = QString("[%1] %2")
+                    .arg(PmAction::fileActionStr(
+                        (PmFileActionType)action.actionCode))
+                    .arg(action.targetElement.data());
+                break;
 	        default:
     		    line = obs_module_text("<not selected>");
 		        break;
             }
         }
+	    //int col = int((rtype == PmReactionType::Match)
+        //    ? ColOrder::Match : ColOrder::Unmatch);
+        //int maxAllowed = min(200, m_tableWidget->columnWidth(col));
+	    line = m_fontMetrics.elidedText(line, Qt::ElideMiddle, 200);
+
         html += QString("<font color=\"%1\">%2</font>")
 			.arg(action.actionColorStr())
 			.arg(line);
