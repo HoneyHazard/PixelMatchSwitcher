@@ -1280,12 +1280,16 @@ void PmCore::scanScenes()
 			    auto ws = m_audioSources[oldAudioName];
                 std::string newAudioName = scanInfo.audioSources.key(ws);
 			    if (m_multiMatchConfig.noMatchReaction.hasAction(
-                    PmActionType::ToggleMute));
-                auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
-			    if (noMatchReaction.renameElement(
-                        PmActionType::ToggleMute, oldAudioName, newAudioName)) {
-                    onNoMatchReactionChanged(noMatchReaction);
-        		}
+					PmActionType::ToggleMute)) {
+				    auto noMatchReaction =
+					    m_multiMatchConfig.noMatchReaction;
+				    if (noMatchReaction.renameElement(
+						PmActionType::ToggleMute,
+						oldAudioName, newAudioName)) {
+					    onNoMatchReactionChanged(
+						    noMatchReaction);
+				    }
+			    }
                 for (size_t i = 0; i < cfgSize; i++) {
                     if (hasAction(i, PmActionType::ToggleMute)) {
                         PmMatchConfig cfg = m_multiMatchConfig[i];
@@ -1706,7 +1710,8 @@ bool PmCore::execSceneAction(
         obs_source_release(targetSceneSrc);
     }
 
-    obs_source_release(currSceneSrc);
+    if (currSceneSrc)
+        obs_source_release(currSceneSrc);
 
     return true;
 }
