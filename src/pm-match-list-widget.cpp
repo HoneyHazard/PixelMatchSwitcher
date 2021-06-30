@@ -56,7 +56,12 @@ const QString PmMatchListWidget::k_transpBgStyle
     = "background-color: rgba(0, 0, 0, 0);";
 const QString PmMatchListWidget::k_semiTranspBgStyle
     = "background-color: rgba(0, 0, 0, 0.6);";
+const QString PmMatchListWidget::k_cooldownTextStyle
+    = "color: red; background-color: rgba(0, 0, 0, 0)";
+const QString PmMatchListWidget::k_lingerTextStyle
+    = "color: yellow; background-color: rgba(0, 0, 0, 0)";
 const QColor PmMatchListWidget::k_cooldownBgColor = Qt::darkYellow;
+const QColor PmMatchListWidget::k_lingerBgColor = Qt::blue;
 
 PmMatchListWidget::PmMatchListWidget(
     PmCore* core, PmAddActionMenu *addActionMenu, QWidget* parent)
@@ -142,6 +147,8 @@ PmMatchListWidget::PmMatchListWidget(
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
     connect(m_core, &PmCore::sigCooldownActive,
         this, &PmMatchListWidget::onCooldownActive, qc);
+    connect(m_core, &PmCore::sigLingerActive,
+        this, &PmMatchListWidget::onLingerActive, qc);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
@@ -350,18 +357,39 @@ void PmMatchListWidget::onMatchConfigSelect(
 void PmMatchListWidget::onCooldownActive(size_t matchIdx, bool active)
 {
 	auto model = m_tableWidget->model();
-	QColor regBgColor = m_tableWidget->palette().color(QPalette::Background);
+	QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
 	int row = (int)matchIdx;
 	if (row < m_tableWidget->rowCount()) {
 		for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
 			QColor bgColor = active ? k_cooldownBgColor : regBgColor;
 			QModelIndex index = model->index(row, col); 
             model->setData(index, bgColor, Qt::BackgroundRole);
+        }
+		QWidget *cooldownWidget = m_tableWidget->cellWidget(
+            row, (int)ColOrder::Cooldown);
+	    if (cooldownWidget) {
+            cooldownWidget->setStyleSheet(
+                active ? k_cooldownTextStyle : k_transpBgStyle);
+        }
+    }
+}
 
-			//QTableWidgetItem *item = m_tableWidget->item(row, col);
-			//if (item) {
-			//	item->setData(Qt::BackgroundColorRole, bgColor);
-			//}
+void PmMatchListWidget::onLingerActive(size_t matchIdx, bool active)
+{
+	auto model = m_tableWidget->model();
+	QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
+	int row = (int)matchIdx;
+	if (row < m_tableWidget->rowCount()) {
+		for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
+			QColor bgColor = active ? k_lingerBgColor : regBgColor;
+			QModelIndex index = model->index(row, col); 
+            model->setData(index, bgColor, Qt::BackgroundRole);
+        }
+		QWidget *lingerWidget = m_tableWidget->cellWidget(
+            row, (int)ColOrder::Linger);
+        if (lingerWidget) {
+	        lingerWidget->setStyleSheet(
+                active ? k_lingerTextStyle : k_transpBgStyle);
         }
     }
 }

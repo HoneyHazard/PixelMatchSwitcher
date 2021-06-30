@@ -50,6 +50,7 @@ protected slots:
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
     void onCooldownActive(size_t matchIdx, bool active);
+    void onLingerActive(size_t matchIdx, bool active);
 
     // local UI handlers
     void onRowSelected();
@@ -81,6 +82,9 @@ protected:
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;
     static const QColor k_cooldownBgColor;
+    static const QColor k_lingerBgColor;
+    static const QString k_cooldownTextStyle;
+    static const QString k_lingerTextStyle;
     static const int k_rowPadding = 5;
 
     QPushButton* prepareButton(

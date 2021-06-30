@@ -136,6 +136,7 @@ signals:
     void sigMatchImagesOrphaned(QList<std::string> filenames);
 
     void sigCooldownActive(size_t matchIdx, bool active);
+    void sigLingerActive(size_t matchIdx, bool active);
 
 public slots:
     void onMenuAction();
@@ -215,7 +216,7 @@ protected:
     PmSourceHash m_audioSources;
 
     PmLingerQueue m_sceneLingerQueue;
-    PmLingerList m_sceneItemLingerList;
+    PmLingerList m_lingerList;
     PmLingerList m_cooldownList;
     bool m_forceSceneItemRefresh = true;
 

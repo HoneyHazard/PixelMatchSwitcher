@@ -1369,7 +1369,7 @@ void PmCore::activateMatchConfig(
 {
     // clean linger delay, for safety
     m_sceneLingerQueue.removeAll();
-    m_sceneItemLingerList.removeAll();
+    m_lingerList.removeAll();
 
     auto oldCfg = matchConfig(matchIdx);
 
@@ -1547,10 +1547,11 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     m_sceneLingerQueue.removeExpired(currTime);
 
     // expired lingers for scene items
-    auto expiredSceneItems = m_sceneItemLingerList.removeExpired(currTime);
-    for (size_t siIdx : expiredSceneItems) {
-        PmReaction siReaction = reaction(siIdx);
-        execIndependentActions(matchConfigLabel(siIdx), siReaction, false);
+    std::vector<size_t> expLingers = m_lingerList.removeExpired(currTime);
+    for (size_t expIdx : expLingers) {
+	    emit sigLingerActive(expIdx, false);
+        PmReaction expReaction = reaction(expIdx);
+        execIndependentActions(matchConfigLabel(expIdx), expReaction, false);
     }
 
     bool sceneSelected = false;
@@ -1637,7 +1638,11 @@ void PmCore::execReaction(
 
     // maintain linger info
     if (switchedOn && reaction.lingerMs > 0) {
-        m_sceneLingerQueue.push({matchIdx, time});
+	    QTime futureTime = time.addMSecs(int(reaction.lingerMs));
+	    m_lingerList.push_back({matchIdx, futureTime});
+	    if (reaction.hasSceneAction())
+		    m_sceneLingerQueue.push({matchIdx, futureTime});
+	    emit sigLingerActive(matchIdx, true);
     }
 
     // activate cooldown
