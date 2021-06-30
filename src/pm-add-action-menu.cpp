@@ -44,9 +44,6 @@ PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
 			[this, i]() { itemTriggered(i); });
 		addAction(qwa);
 
-		if (i != typeEnd)
-            addSeparator();
-
         if (i == (int)PmActionType::Scene)
             m_sceneAction = qwa;
 	}
@@ -202,10 +199,13 @@ void PmAddActionMenuHelper::highlight(QWidgetAction *qwa, bool h)
 {
 	if (!qwa->isEnabled()) return;
 
+    QString bgColorStr = m_menu->palette().color(QPalette::Window).name();
 	QString colorStr = qwa->data().toString();
+
 	QLabel *label = (QLabel *)qwa->defaultWidget();
-	QString styleSheet = QString("color: %1 %2")
-				     .arg(colorStr)
+	QString styleSheet = QString("color: %1; background: %2%3")
+				     .arg(h ? bgColorStr : colorStr)
+                     .arg(h ? colorStr : bgColorStr)
 				     .arg(h ? "; font-weight: bold" : "");
 	label->setStyleSheet(styleSheet);
 
