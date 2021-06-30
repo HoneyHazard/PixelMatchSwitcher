@@ -21,6 +21,13 @@ PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
     connect(this, &QMenu::aboutToShow,
             this, &PmAddActionMenu::updateActionsState);
 
+    m_titleLabel = new QLabel(this);
+    QWidgetAction *labelQwa = new QWidgetAction(this);
+    labelQwa->setDefaultWidget(m_titleLabel);
+    labelQwa->setEnabled(false);
+    addAction(labelQwa);
+    addSeparator();
+
     int typeStart = (int)PmActionType::Scene;
     int typeEnd = (int)PmActionType::ANY - 1;
 	for (int i = typeStart; i <= typeEnd; i++) {
@@ -44,6 +51,20 @@ PmAddActionMenu::PmAddActionMenu(PmCore *core, QWidget *parent)
             m_sceneAction = qwa;
 	}
 	new PmAddActionMenuHelper(this, this);
+}
+
+void PmAddActionMenu::setTypeAndTarget(PmReactionTarget rTarget,
+				       PmReactionType rType)
+{
+	m_reactionTarget = rTarget;
+	m_reactionType = rType;
+	updateTitle();
+}
+
+void PmAddActionMenu::setMatchIndex(size_t idx)
+{
+	m_matchIndex = idx;
+	updateTitle();
 }
 
 void PmAddActionMenu::itemTriggered(int actionIndex)
@@ -95,6 +116,20 @@ void PmAddActionMenu::pushReaction(const PmReaction &reaction)
 	} else {
 		emit sigNoMatchReactionChanged(reaction);
 	}
+}
+
+void PmAddActionMenu::updateTitle()
+{
+	QString typeStr = (m_reactionType == PmReactionType::Match) ?
+        obs_module_text("Match") : obs_module_text("Unmatch");
+	QString str;
+	if (m_reactionTarget == PmReactionTarget::Global) {
+		str = QString(obs_module_text("Add Global %1 Action:")).arg(typeStr);
+	} else {
+		str = QString(obs_module_text("Add %1 Action to #%2: "))
+            .arg(typeStr).arg(m_matchIndex+1);
+    }
+	m_titleLabel->setText(str);
 }
 
 void PmAddActionMenu::updateActionsState()
