@@ -397,28 +397,19 @@ void PmMatchListWidget::onCellChanged(int row, int col)
 
 void PmMatchListWidget::onCellDoubleClicked(int row, int column)
 {
-	bool addAction = false;
     PmReactionType reactType = PmReactionType::Match;
 
     if (row < 0 || row >= (int)m_core->multiMatchConfigSize()) return;
 
 	if (column == (int)ColOrder::MatchActions) {
-		if (!m_core->hasMatchAction((size_t)row, PmActionType::ANY)) {
-			addAction = true;
-			reactType = PmReactionType::Match;
-        }
+		reactType = PmReactionType::Match;
 	} else if (column == (int)ColOrder::UnmatchActions) {
-		if (!m_core->hasUnmatchAction((size_t)row, PmActionType::ANY)) {
-			addAction = true;
-			reactType = PmReactionType::Unmatch;
-		}
+		reactType = PmReactionType::Unmatch;
     }
 
-    if (addAction) {
-	    m_addActionMenu->setTypeAndTarget(PmReactionTarget::Entry, reactType);
-	    m_addActionMenu->setMatchIndex((size_t)row);
-	    m_addActionMenu->popup(QCursor::pos());
-    }
+	m_addActionMenu->setTypeAndTarget(PmReactionTarget::Entry, reactType);
+	m_addActionMenu->setMatchIndex((size_t)row);
+	m_addActionMenu->popup(QCursor::pos());
 }
 
 QPushButton* PmMatchListWidget::prepareButton(
