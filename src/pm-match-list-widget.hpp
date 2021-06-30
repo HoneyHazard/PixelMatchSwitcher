@@ -153,10 +153,6 @@ public:
     QSize sizeHint() const override;
 
 protected:
-    void enterEvent(QEvent *event) override;
-	void leaveEvent(QEvent *event) override;
-
-protected:
 	void updateContents(const QString &html, int textWidthMax, int textRows);
 
     int m_textWidth = 0;

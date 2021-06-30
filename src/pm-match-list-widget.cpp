@@ -739,35 +739,22 @@ void PmReactionDisplay::updateReaction(
             html += "<br />";
         }
     }
-     m_hasActions = actions.size() > 0;
-     updateContents(html, maxLength, (int)actions.size());
+    m_hasActions = actions.size() > 0;
+    updateContents(html, maxLength, (int)actions.size());
+
+    QString reactionStr = (rtype == PmReactionType::Match)
+        ? obs_module_text("a match") : obs_module_text("an unmatch");
+    QString tooltip = QString("(double click to add %1 action)")
+        .arg(reactionStr);
+    if (m_hasActions) {
+	    tooltip = html + "<hr />" + tooltip;
+    }
+    setToolTip(tooltip);
 }
 
 QSize PmReactionDisplay::sizeHint() const
 {
     return QSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
-}
-
-void PmReactionDisplay::enterEvent(QEvent *event)
-{
-	if (!m_hasActions) {
-		QString line = QString("&#60; %1 &#62;")
-            .arg(obs_module_text("d.clk to add"));
-		QString html =
-			QString("<font color=\"%1\">%2</font>")
-				.arg(PmAction::actionColorStr(PmActionType::None))
-                .arg(line);
-		updateContents(html, m_fontMetrics.size(0, line).width(), 1);
-    }
-	QLabel::enterEvent(event);
-}
-
-void PmReactionDisplay::leaveEvent(QEvent *event)
-{
-	if (!m_hasActions) {
-		updateContents("", 0, 0);
-	}
-	QLabel::leaveEvent(event);
 }
 
 void PmReactionDisplay::updateContents(

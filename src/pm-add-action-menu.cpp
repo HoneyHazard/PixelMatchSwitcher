@@ -202,16 +202,12 @@ void PmAddActionMenuHelper::highlight(QWidgetAction *qwa, bool h)
     QString bgColorStr = m_menu->palette().color(QPalette::Window).name();
 	QString colorStr = qwa->data().toString();
 
-	QLabel *label = (QLabel *)qwa->defaultWidget();
-	QString styleSheet = QString("color: %1; background: %2%3")
-				     .arg(h ? bgColorStr : colorStr)
-                     .arg(h ? colorStr : bgColorStr)
-				     .arg(h ? "; font-weight: bold" : "");
-	label->setStyleSheet(styleSheet);
-
-#if 0
-	mainWidget->setBackgroundRole(h ? QPalette::Highlight
-					: QPalette::Window);
-	mainWidget->setAutoFillBackground(h);
-#endif
+	QLabel *label = dynamic_cast<QLabel*>(qwa->defaultWidget());
+	if (label) {
+	    QString styleSheet = QString("color: %1; background: %2%3")
+				         .arg(h ? bgColorStr : colorStr)
+                         .arg(h ? colorStr : bgColorStr)
+				         .arg(h ? "; font-weight: bold" : "");
+	    label->setStyleSheet(styleSheet);
+    }
 }
