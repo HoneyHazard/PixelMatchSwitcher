@@ -713,7 +713,7 @@ void PmCore::onMatchPresetSave(std::string name)
     onMatchPresetSelect(name);
     emit sigActivePresetDirtyChanged();
     if (orphanedImages.size()) {
-        emit sigMatchImagesOrphaned(orphanedImages.toList());
+        emit sigMatchImagesOrphaned(orphanedImages.values());
     }
 
     obs_frontend_save();
@@ -763,7 +763,7 @@ void PmCore::onMatchPresetRemove(std::string name)
     emit sigAvailablePresetsChanged();
     onMatchPresetSelect(selOther);
     if (orphanedImages.size()) {
-        emit sigMatchImagesOrphaned(orphanedImages.toList());
+        emit sigMatchImagesOrphaned(orphanedImages.values());
     }
 }
 
@@ -1084,8 +1084,6 @@ void PmCore::scanScenes()
             [](obs_scene_t *scene, obs_sceneitem_t *item, void *p) -> bool {
                 PmSceneScanInfo *scanInfo = (PmSceneScanInfo *)p;
 
-                //obs_source_t *sceneSrc = obs_scene_get_source(scene);
-                //std::string sceneName = obs_source_get_name(sceneSrc);
                 obs_source_t *siSrc = obs_sceneitem_get_source(item);
                 std::string siName = obs_source_get_name(siSrc);
 
@@ -1127,6 +1125,7 @@ void PmCore::scanScenes()
                     scanInfo);
                 scanInfo->sceneItems.insert(siName, siData);
                 return true;
+                UNUSED_PARAMETER(scene);
             },
             &scanInfo);
         scanInfo.scenes.insert(sceneName, sceneData);
@@ -1486,7 +1485,7 @@ void PmCore::resetMultiMatchConfig(const PmMultiMatchConfig *newCfg)
 
     // report orphaned images
     if (orphanedImages.size()) {
-        emit sigMatchImagesOrphaned(orphanedImages.toList());
+        emit sigMatchImagesOrphaned(orphanedImages.values());
     }
 }
 

@@ -259,11 +259,14 @@ void render_match_entries(struct pm_filter_data* filter)
         gs_effect_set_bool(filter->param_mask_alpha, entry->cfg.mask_alpha);
         gs_effect_set_bool(filter->param_store_match_alpha, false);
         gs_effect_set_vec3(filter->param_mask_color, &entry->cfg.mask_color);
-        if (visualize) {
-            gs_effect_set_texture(
+
+        const bool linear_srgb = gs_get_linear_srgb();
+
+        if (linear_srgb) {
+            gs_effect_set_texture_srgb(
                 filter->param_match_img, entry->match_img_tex);
         } else {
-            gs_effect_set_texture_srgb(
+            gs_effect_set_texture(
                 filter->param_match_img, entry->match_img_tex);
         }
         gs_effect_set_bool(filter->param_show_border, visualize);
