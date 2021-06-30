@@ -1661,21 +1661,24 @@ bool PmCore::execSceneAction(
      && m_sceneLingerQueue.top().matchIndex < matchIdx)
         return false;
 
-    // is there a higher priority 
-    obs_source_t* currSceneSrc = obs_frontend_get_current_scene();
-    obs_source_t* targetSceneSrc = nullptr;
     std::string targetSceneName;
     std::string targetTransition;
 
-    // do the switch
+    // get switch info
     if (switchedOn) {
         reaction.getMatchScene(targetSceneName, targetTransition);
     } else {
         reaction.getUnmatchScene(targetSceneName, targetTransition);
     }
 
-    if (targetSceneName.empty()) return false;
+    // nothing to switch to?
+    if (targetSceneName.empty())
+        return false;
 
+    obs_source_t *currSceneSrc = obs_frontend_get_current_scene();
+    obs_source_t *targetSceneSrc = nullptr;
+
+    // find reference to the target scene
     {
         QMutexLocker locker(&m_scenesMutex);
         auto find = m_scenes.find(targetSceneName);
@@ -1685,6 +1688,7 @@ bool PmCore::execSceneAction(
         }
     }
 
+    // do the switch when necessary
     if (targetSceneSrc) {
         if (targetSceneSrc != currSceneSrc) {
             obs_source_t* transitionSrc = nullptr;
