@@ -34,7 +34,7 @@ enum class PmMatchListWidget::ColOrder : int {
     Linger = 4,
     Cooldown = 5,
     Result = 6,
-    NumCols = 7,
+    NUM_COLS = 7,
 };
 
 enum class PmMatchListWidget::ActionStackOrder : int {
@@ -56,6 +56,7 @@ const QString PmMatchListWidget::k_transpBgStyle
     = "background-color: rgba(0, 0, 0, 0);";
 const QString PmMatchListWidget::k_semiTranspBgStyle
     = "background-color: rgba(0, 0, 0, 0.6);";
+const QColor PmMatchListWidget::k_cooldownBgColor = Qt::darkYellow;
 
 PmMatchListWidget::PmMatchListWidget(
     PmCore* core, PmAddActionMenu *addActionMenu, QWidget* parent)
@@ -71,7 +72,7 @@ PmMatchListWidget::PmMatchListWidget(
                                  | QAbstractItemView::SelectedClicked);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
-    m_tableWidget->setColumnCount((int)ColOrder::NumCols);
+    m_tableWidget->setColumnCount((int)ColOrder::NUM_COLS);
     m_tableWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
@@ -139,6 +140,8 @@ PmMatchListWidget::PmMatchListWidget(
         this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMatchConfigSelect,
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
+    connect(m_core, &PmCore::sigCooldownActive,
+        this, &PmMatchListWidget::onCooldownActive, qc);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
@@ -185,9 +188,11 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
         constructRow((int)i);
     }
     // last row below is empty (for insertion)
-    for (int c = 0; c < (int)ColOrder::NumCols; ++c) {
+    for (int c = 0; c < (int)ColOrder::NUM_COLS; ++c) {
         m_tableWidget->setCellWidget((int)sz, c, nullptr);
-        m_tableWidget->setItem((int)sz, c, nullptr);
+	    QTableWidgetItem *item = new QTableWidgetItem();
+        item->setFlags(item->flags() ^ Qt::ItemIsEditable);
+        m_tableWidget->setItem((int)sz, c, item);
     }
 
     // enable/disable control buttons
@@ -342,6 +347,25 @@ void PmMatchListWidget::onMatchConfigSelect(
     UNUSED_PARAMETER(config);
 }
 
+void PmMatchListWidget::onCooldownActive(size_t matchIdx, bool active)
+{
+	auto model = m_tableWidget->model();
+	QColor regBgColor = m_tableWidget->palette().color(QPalette::Background);
+	int row = (int)matchIdx;
+	if (row < m_tableWidget->rowCount()) {
+		for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
+			QColor bgColor = active ? k_cooldownBgColor : regBgColor;
+			QModelIndex index = model->index(row, col); 
+            model->setData(index, bgColor, Qt::BackgroundRole);
+
+			//QTableWidgetItem *item = m_tableWidget->item(row, col);
+			//if (item) {
+			//	item->setData(Qt::BackgroundColorRole, bgColor);
+			//}
+        }
+    }
+}
+
 void PmMatchListWidget::onRowSelected()
 {
     int idx = currentIndex();
@@ -405,6 +429,8 @@ void PmMatchListWidget::onCellDoubleClicked(int row, int column)
 		reactType = PmReactionType::Match;
 	} else if (column == (int)ColOrder::UnmatchActions) {
 		reactType = PmReactionType::Unmatch;
+	} else {
+		return;
     }
 
 	m_addActionMenu->setTypeAndTarget(PmReactionTarget::Entry, reactType);

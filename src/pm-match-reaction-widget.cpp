@@ -36,12 +36,13 @@ const int PmActionEntryWidget::k_modifierRole = Qt::UserRole + 2;
 const int PmActionEntryWidget::k_keyHintRole = Qt::UserRole + 3;
 const char *PmActionEntryWidget::k_timeFormatHelpUrl
     = "https://doc.qt.io/qt-5/qdatetime.html#toString-2";
-const char *PmActionEntryWidget::k_fileMarkersHelpHtml
-    = "File markers work in both file names and entries written to files: "
-	  "<br /><br />"
-	  "<b>[label]</b>  Insert match config label"
-	  "<br /><br />"
-	  "<b>[time]</b>  Insert date/time";
+const char *PmActionEntryWidget::k_fileMarkersHelpHtml = obs_module_text(
+    "File markers work in both file names and entries written to files: "
+    "<br /><br />"
+    "<b>[label]</b>  Insert match config label"
+    "<br /><br />"
+    "<b>[time]</b>  Insert date/time"
+);
 
 PmActionEntryWidget::PmActionEntryWidget(
     PmCore* core, size_t actionIndex, QWidget *parent)

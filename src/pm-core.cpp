@@ -1537,6 +1537,12 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 {
     QTime currTime = QTime::currentTime();
 
+    // expired cooldown info disappers
+    std::vector<size_t> expCooldowns = m_cooldownList.removeExpired(currTime);
+    for (size_t i : expCooldowns) {
+	    emit sigCooldownActive(i, false);
+    }
+
     // expired lingers for scenes will disappear, allowing other scenes
     m_sceneLingerQueue.removeExpired(currTime);
 
@@ -1636,7 +1642,9 @@ void PmCore::execReaction(
 
     // activate cooldown
     if (switchedOn && reaction.cooldownMs > 0) {
-        m_cooldownList.push_back({matchIdx, time});
+	    m_cooldownList.push_back(
+		    {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
+	    emit sigCooldownActive(matchIdx, true);
     }
 
     // activate scene match/unmatch action and take note if switched

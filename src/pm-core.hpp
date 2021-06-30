@@ -135,6 +135,8 @@ signals:
 
     void sigMatchImagesOrphaned(QList<std::string> filenames);
 
+    void sigCooldownActive(size_t matchIdx, bool active);
+
 public slots:
     void onMenuAction();
 
