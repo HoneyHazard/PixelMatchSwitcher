@@ -59,7 +59,7 @@ const QString PmMatchListWidget::k_semiTranspBgStyle
 const QString PmMatchListWidget::k_cooldownTextStyle
     = "color: red; background-color: rgba(0, 0, 0, 0)";
 const QString PmMatchListWidget::k_lingerTextStyle
-    = "color: yellow; background-color: rgba(0, 0, 0, 0)";
+    = "color: cyan; background-color: rgba(0, 0, 0, 0)";
 const QColor PmMatchListWidget::k_cooldownBgColor = Qt::darkYellow;
 const QColor PmMatchListWidget::k_lingerBgColor = Qt::blue;
 
