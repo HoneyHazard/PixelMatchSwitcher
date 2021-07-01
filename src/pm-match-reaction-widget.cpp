@@ -283,24 +283,6 @@ void PmActionEntryWidget::updateTransitons()
     m_transitionsCombo->blockSignals(false);
 }
 
-void PmActionEntryWidget::updateSizeHints(QList<QSize> &columnSizes)
-{
-    QList<QSize> sizes = {
-        //m_actionTypeCombo->sizeHint(),
-        m_targetCombo->sizeHint(),
-        m_detailsStack->sizeHint()
-    };
-    while (columnSizes.size() < 2) {
-        columnSizes.append({0, 0});
-    }
-    for (int i = 0; i < columnSizes.size(); ++i) {
-        columnSizes[i] = {
-            qMax(columnSizes[i].width(), sizes[i].width()),
-            qMax(columnSizes[i].height(), sizes[i].height())
-        };
-    }
-}
-
 void PmActionEntryWidget::actionToUi(
     size_t actionIndex, PmAction action, const std::string &cfgLabel)
 {
