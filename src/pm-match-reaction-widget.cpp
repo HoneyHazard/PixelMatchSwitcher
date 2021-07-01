@@ -303,22 +303,22 @@ void PmActionEntryWidget::actionToUi(
     case PmActionType::Scene:
         m_targetCombo->setVisible(true);
         m_targetCombo->blockSignals(true);
-	    if (action.isSet()) {
+        if (action.isSet()) {
             int targetIdx
                 = m_targetCombo->findData(action.targetElement.data());
-		    m_targetCombo->setCurrentIndex(targetIdx);
-	    } else {
-		    m_targetCombo->setCurrentIndex(0);
+            m_targetCombo->setCurrentIndex(targetIdx);
+        } else {
+            m_targetCombo->setCurrentIndex(0);
         }
         m_targetCombo->blockSignals(false);
 
         m_transitionsCombo->blockSignals(true);
-	    if (action.targetDetails.size()) {
+        if (action.targetDetails.size()) {
             int transitionIdx
                 = m_transitionsCombo->findData(action.targetDetails.data());
-		    m_transitionsCombo->setCurrentIndex(transitionIdx);
-	    } else {
-		    m_transitionsCombo->setCurrentIndex(0);
+            m_transitionsCombo->setCurrentIndex(transitionIdx);
+        } else {
+            m_transitionsCombo->setCurrentIndex(0);
         }
         m_transitionsCombo->blockSignals(false);
 
@@ -333,9 +333,9 @@ void PmActionEntryWidget::actionToUi(
         if (action.isSet()) {
             int targetIdx
                 = m_targetCombo->findData(action.targetElement.data());
-		    m_targetCombo->setCurrentIndex(targetIdx);
-	    } else {
-		    m_targetCombo->setCurrentIndex(0);
+            m_targetCombo->setCurrentIndex(targetIdx);
+        } else {
+            m_targetCombo->setCurrentIndex(0);
         }
          m_targetCombo->blockSignals(false);
 
@@ -354,9 +354,9 @@ void PmActionEntryWidget::actionToUi(
         if (action.isSet()) {
             int targetIdx
                 = m_targetCombo->findData(action.targetElement.data());
-		    m_targetCombo->setCurrentIndex(targetIdx);
-	    } else {
-		    m_targetCombo->setCurrentIndex(0);
+            m_targetCombo->setCurrentIndex(targetIdx);
+        } else {
+            m_targetCombo->setCurrentIndex(0);
         }
         m_targetCombo->blockSignals(false);
 
@@ -800,23 +800,24 @@ void PmActionEntryWidget::onShowFilePreview()
 
 void PmActionEntryWidget::onShowTimeFormatHelp()
 {
+    bool fallback = true;
 #if BROWSER_AVAILABLE
     QCef *cef = obs_browser_init_panel();
-    if (!cef)
-        goto fallback;
-
-    QCefWidget *cefWidget = cef->create_widget(nullptr, k_timeFormatHelpUrl);
-    if (!cefWidget)
-        goto fallback;
-
-    QDialog *hostDialog = new QDialog(nullptr);
-    hostDialog->setWindowTitle(obs_module_text("Time Format Help"));
-    cefWidget->setParent(hostDialog);
-    hostDialog->exec();
+    if (cef) {
+        QCefWidget *cefWidget = cef->create_widget(nullptr, k_timeFormatHelpUrl);
+        if (cefWidget) {
+            QDialog *hostDialog = new QDialog(nullptr);
+            hostDialog->setWindowTitle(
+                obs_module_text("Time Format Help"));
+            cefWidget->setParent(hostDialog);
+            hostDialog->exec();
+            fallback = false;
+        }
+    }
 #endif
-
-fallback:
-    QDesktopServices::openUrl(QUrl(k_timeFormatHelpUrl));
+    if (fallback) {
+        QDesktopServices::openUrl(QUrl(k_timeFormatHelpUrl));
+    }
 }
 
 void PmActionEntryWidget::onScenesChanged()
