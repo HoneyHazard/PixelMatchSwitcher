@@ -1874,7 +1874,7 @@ bool PmCore::execIndependentActions(const std::string &cfgName,
                 std::string entry = action.formattedFileString(
                     action.targetDetails, cfgName, now);
                 QTextStream stream(&file);
-                stream << entry.data() << Qt::endl;
+                stream << entry.data() << "\r\n";
                 file.close();
             }
         }
