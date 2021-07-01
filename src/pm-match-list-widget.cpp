@@ -199,9 +199,7 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 	    for (int c = 0; c < (int)ColOrder::NUM_COLS; ++c) {
 		    m_tableWidget->setCellWidget((int)sz, c, nullptr);
 		    QTableWidgetItem *item = new QTableWidgetItem();
-		    auto flags = item->flags();
-		    flags = flags ^ Qt::ItemIsEditable;
-		    flags = flags ^ Qt::ItemIsEnabled;
+		    auto flags = item->flags() & ~Qt::ItemIsEditable;
 		    item->setFlags(flags);
 		    m_tableWidget->setItem((int)sz, c, item);
 	    }

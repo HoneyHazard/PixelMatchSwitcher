@@ -27,12 +27,11 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
                 | Qt::WindowCloseButtonHint | Qt::WindowMaximizeButtonHint)
 , m_core(core)
 {
-    setWindowTitle(
-        QString(obs_module_text("Pixel Match Switcher ")) + PM_VERSION);
+    setWindowTitle(QString("Pixel Match Switcher %1").arg(PM_VERSION));
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // UI modules
-    PmAddActionMenu *addActionMenu = new PmAddActionMenu(core, this);
+    PmAddActionMenu *addActionMenu = new PmAddActionMenu(core, parent);
 
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
 
