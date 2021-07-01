@@ -188,21 +188,21 @@ PmMatchListWidget::PmMatchListWidget(
 void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 {
     int oldRowCount = size_t(m_tableWidget->rowCount());
-	int newRowCount = (int)sz + 1;
+    int newRowCount = (int)sz + 1;
     if (oldRowCount != newRowCount) {
-	    m_tableWidget->setRowCount(newRowCount);
-	    // widgets in the new rows are constructed, when necessary
-	    for (int i = oldRowCount ? oldRowCount - 1 : 0; i < (int)sz; ++i) {
-		    constructRow(i);
-	    }
-	    // last row below is empty (for insertion)
-	    for (int c = 0; c < (int)ColOrder::NUM_COLS; ++c) {
-		    m_tableWidget->setCellWidget((int)sz, c, nullptr);
-		    QTableWidgetItem *item = new QTableWidgetItem();
-		    auto flags = item->flags() & ~Qt::ItemIsEditable;
-		    item->setFlags(flags);
-		    m_tableWidget->setItem((int)sz, c, item);
-	    }
+        m_tableWidget->setRowCount(newRowCount);
+        // widgets in the new rows are constructed, when necessary
+        for (int i = oldRowCount ? oldRowCount - 1 : 0; i < (int)sz; ++i) {
+            constructRow(i);
+        }
+        // last row below is empty (for insertion)
+        for (int c = 0; c < (int)ColOrder::NUM_COLS; ++c) {
+            m_tableWidget->setCellWidget((int)sz, c, nullptr);
+            QTableWidgetItem *item = new QTableWidgetItem();
+            auto flags = item->flags() & ~Qt::ItemIsEditable;
+            item->setFlags(flags);
+            m_tableWidget->setItem((int)sz, c, item);
+        }
     }
 
     // enable/disable control buttons
@@ -214,7 +214,7 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 
     QString title = obs_module_text("Active Match Entries");
     if (sz > 0)
-	    title += QString(" [%1]").arg(sz);
+        title += QString(" [%1]").arg(sz);
     setTitle(title);
 }
 
@@ -230,7 +230,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         enableBox->blockSignals(true);
         enableBox->setChecked(cfg.filterCfg.is_enabled);
         enableBox->blockSignals(false);
-    	rowHeight = qMax(rowHeight, enableBox->sizeHint().height());
+        rowHeight = qMax(rowHeight, enableBox->sizeHint().height());
     }
 
     auto nameItem = m_tableWidget->item(idx, (int)ColOrder::ConfigName);
@@ -247,15 +247,15 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
     PmReactionDisplay *matchDisplay = (PmReactionDisplay *)
         m_tableWidget->cellWidget(idx, (int)ColOrder::MatchActions);
     if (matchDisplay) {
-	    matchDisplay->updateReaction(reaction, PmReactionType::Match);
-	    rowHeight = qMax(rowHeight, matchDisplay->sizeHint().height());
+        matchDisplay->updateReaction(reaction, PmReactionType::Match);
+        rowHeight = qMax(rowHeight, matchDisplay->sizeHint().height());
     }
 
     PmReactionDisplay *unmatchDisplay = (PmReactionDisplay *)
         m_tableWidget->cellWidget(idx, (int)ColOrder::UnmatchActions);
     if (unmatchDisplay) {
-	    unmatchDisplay->updateReaction(reaction, PmReactionType::Unmatch);
-	    rowHeight
+        unmatchDisplay->updateReaction(reaction, PmReactionType::Unmatch);
+        rowHeight
             = qMax(rowHeight, unmatchDisplay->sizeHint().height());
     }
 
@@ -266,7 +266,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         lingerDelayBox->blockSignals(true);
         lingerDelayBox->setValue(reaction.lingerMs);
         lingerDelayBox->blockSignals(false);
-    	rowHeight
+        rowHeight
             = qMax(rowHeight, lingerDelayBox->sizeHint().height());
     }
 
@@ -278,7 +278,7 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         cooldownDelayBox->blockSignals(true);
         cooldownDelayBox->setValue(reaction.cooldownMs);
         cooldownDelayBox->blockSignals(false);
-	    rowHeight
+        rowHeight
             = qMax(rowHeight, cooldownDelayBox->sizeHint().height());
     }
 
@@ -297,10 +297,10 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 
 void PmMatchListWidget::toggleExpand(bool on)
 {
-	if (m_tableWidget->rowCount() <= 1)
-		on = false;
+    if (m_tableWidget->rowCount() <= 1)
+        on = false;
 
-	PmSpoilerWidget::toggleExpand(on);
+    PmSpoilerWidget::toggleExpand(on);
 
     updateButtonsState();
 }
@@ -350,7 +350,7 @@ void PmMatchListWidget::onMatchConfigSelect(
     m_tableWidget->selectRow((int)matchIndex);
     auto item = m_tableWidget->item((int)matchIndex, 0);
     if (item)
-	    m_tableWidget->scrollToItem(item);
+        m_tableWidget->scrollToItem(item);
 
     updateButtonsState();
 
@@ -359,18 +359,18 @@ void PmMatchListWidget::onMatchConfigSelect(
 
 void PmMatchListWidget::onCooldownActive(size_t matchIdx, bool active)
 {
-	auto model = m_tableWidget->model();
-	QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
-	int row = (int)matchIdx;
-	if (row < m_tableWidget->rowCount()) {
-		for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
-			QColor bgColor = active ? k_cooldownBgColor : regBgColor;
-			QModelIndex index = model->index(row, col); 
+    auto model = m_tableWidget->model();
+    QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
+    int row = (int)matchIdx;
+    if (row < m_tableWidget->rowCount()) {
+        for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
+            QColor bgColor = active ? k_cooldownBgColor : regBgColor;
+            QModelIndex index = model->index(row, col); 
             model->setData(index, bgColor, Qt::BackgroundRole);
         }
-		QWidget *cooldownWidget = m_tableWidget->cellWidget(
+        QWidget *cooldownWidget = m_tableWidget->cellWidget(
             row, (int)ColOrder::Cooldown);
-	    if (cooldownWidget) {
+        if (cooldownWidget) {
             cooldownWidget->setStyleSheet(
                 active ? k_cooldownTextStyle : k_transpBgStyle);
         }
@@ -379,19 +379,19 @@ void PmMatchListWidget::onCooldownActive(size_t matchIdx, bool active)
 
 void PmMatchListWidget::onLingerActive(size_t matchIdx, bool active)
 {
-	auto model = m_tableWidget->model();
-	QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
-	int row = (int)matchIdx;
-	if (row < m_tableWidget->rowCount()) {
-		for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
-			QColor bgColor = active ? k_lingerBgColor : regBgColor;
-			QModelIndex index = model->index(row, col); 
+    auto model = m_tableWidget->model();
+    QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
+    int row = (int)matchIdx;
+    if (row < m_tableWidget->rowCount()) {
+        for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
+            QColor bgColor = active ? k_lingerBgColor : regBgColor;
+            QModelIndex index = model->index(row, col); 
             model->setData(index, bgColor, Qt::BackgroundRole);
         }
-		QWidget *lingerWidget = m_tableWidget->cellWidget(
+        QWidget *lingerWidget = m_tableWidget->cellWidget(
             row, (int)ColOrder::Linger);
         if (lingerWidget) {
-	        lingerWidget->setStyleSheet(
+            lingerWidget->setStyleSheet(
                 active ? k_lingerTextStyle : k_transpBgStyle);
         }
     }
@@ -410,9 +410,9 @@ void PmMatchListWidget::onRowSelected()
 
 void PmMatchListWidget::onConfigInsertButtonReleased()
 {
-	int idx = currentIndex();
-	if (!isExpanded() || idx < 0) {
-		idx = m_tableWidget->rowCount() - 1;
+    int idx = currentIndex();
+    if (!isExpanded() || idx < 0) {
+        idx = m_tableWidget->rowCount() - 1;
     }
     emit sigMatchConfigInsert((size_t)idx, PmMatchConfig());
     emit sigMatchConfigSelect((size_t)idx);
@@ -456,17 +456,17 @@ void PmMatchListWidget::onCellDoubleClicked(int row, int column)
 
     if (row < 0 || row >= (int)m_core->multiMatchConfigSize()) return;
 
-	if (column == (int)ColOrder::MatchActions) {
-		reactType = PmReactionType::Match;
-	} else if (column == (int)ColOrder::UnmatchActions) {
-		reactType = PmReactionType::Unmatch;
-	} else {
-		return;
+    if (column == (int)ColOrder::MatchActions) {
+        reactType = PmReactionType::Match;
+    } else if (column == (int)ColOrder::UnmatchActions) {
+        reactType = PmReactionType::Unmatch;
+    } else {
+        return;
     }
 
-	m_addActionMenu->setTypeAndTarget(PmReactionTarget::Entry, reactType);
-	m_addActionMenu->setMatchIndex((size_t)row);
-	m_addActionMenu->popup(QCursor::pos());
+    m_addActionMenu->setTypeAndTarget(PmReactionTarget::Entry, reactType);
+    m_addActionMenu->setMatchIndex((size_t)row);
+    m_addActionMenu->popup(QCursor::pos());
 }
 
 QPushButton* PmMatchListWidget::prepareButton(
@@ -557,7 +557,7 @@ void PmMatchListWidget::constructRow(int idx)
         = new PmContainerWidget(cooldownDelayBox);
     cooldownContainer->installEventFilter(this);
     m_tableWidget->setCellWidget(idx, (int)ColOrder::Cooldown,
-				 cooldownContainer);
+                 cooldownContainer);
 
     // result
     QLabel *resultLabel = new PmResultsLabel("--", parent);
@@ -574,13 +574,13 @@ void PmMatchListWidget::constructRow(int idx)
 
 void PmMatchListWidget::updateButtonsState()
 {
-	bool expanded = isExpanded();
+    bool expanded = isExpanded();
     m_cfgInsertBtn->setVisible(true);
-	m_cfgMoveUpBtn->setVisible(expanded);
+    m_cfgMoveUpBtn->setVisible(expanded);
     m_cfgMoveDownBtn->setVisible(expanded);
-	m_cfgRemoveBtn->setVisible(expanded);
+    m_cfgRemoveBtn->setVisible(expanded);
     m_buttonSpacer1->changeSize(expanded ? 20 : 0, 0);
-	m_buttonSpacer2->changeSize(expanded ? 20 : 0, 0);
+    m_buttonSpacer2->changeSize(expanded ? 20 : 0, 0);
     m_buttonsLayout->update();
 
     int currIdx = currentIndex();
@@ -601,10 +601,10 @@ void PmMatchListWidget::onItemChanged(QTableWidgetItem* item)
     auto flags = item->flags();
     if ((flags & Qt::ItemIsEditable) && (flags & Qt::ItemIsEnabled)) {
         // make sure this is the right label item; modify config when so 
-	    size_t matchIndex = (size_t)item->row();
-	    PmMatchConfig cfg = m_core->matchConfig(matchIndex);
-	    cfg.label = item->text().toUtf8().data();
-	    emit sigMatchConfigChanged(matchIndex, cfg);
+        size_t matchIndex = (size_t)item->row();
+        PmMatchConfig cfg = m_core->matchConfig(matchIndex);
+        cfg.label = item->text().toUtf8().data();
+        emit sigMatchConfigChanged(matchIndex, cfg);
     }
 }
 
@@ -640,20 +640,20 @@ void PmMatchListWidget::setMinWidth()
 
 int PmMatchListWidget::maxContentHeight() const
 {
-	//return PmSpoilerWidget::contentHeight();
+    //return PmSpoilerWidget::contentHeight();
 
-	auto vertHeader = m_tableWidget->verticalHeader();
-	auto horizHeader = m_tableWidget->horizontalHeader();
+    auto vertHeader = m_tableWidget->verticalHeader();
+    auto horizHeader = m_tableWidget->horizontalHeader();
 
-	int count = vertHeader->count();
-	//int scrollBarHeight = m_tableWidget->horizontalScrollBar()->height();
-	int horizontalHeaderHeight = horizHeader->height();
-	int rowTotalHeight = 0;
-	for (int i = 0; i < count; ++i) {
-		rowTotalHeight += vertHeader->sectionSize(i);
-		rowTotalHeight += k_rowPadding;
-	}
-	return rowTotalHeight + horizontalHeaderHeight;
+    int count = vertHeader->count();
+    //int scrollBarHeight = m_tableWidget->horizontalScrollBar()->height();
+    int horizontalHeaderHeight = horizHeader->height();
+    int rowTotalHeight = 0;
+    for (int i = 0; i < count; ++i) {
+        rowTotalHeight += vertHeader->sectionSize(i);
+        rowTotalHeight += k_rowPadding;
+    }
+    return rowTotalHeight + horizontalHeaderHeight;
 }
 
 bool PmMatchListWidget::selectRowAtGlobalPos(QPoint globalPos)
@@ -733,7 +733,7 @@ PmReactionDisplay::PmReactionDisplay(const QString &text, QWidget *parent)
 void PmReactionDisplay::updateReaction(
     const PmReaction &reaction, PmReactionType rtype)
 {
-	int maxLength = 0;
+    int maxLength = 0;
     const std::vector<PmAction> &actions = (rtype == PmReactionType::Match)
         ? reaction.matchActions : reaction.unmatchActions;
     QString line;
@@ -742,15 +742,15 @@ void PmReactionDisplay::updateReaction(
 
     for (size_t i = 0; i < actions.size(); ++i) {
         const auto &action = actions[i];
-	    if (!action.isSet()) {
+        if (!action.isSet()) {
             line = QString("[%1]").arg(PmAction::actionStr(action.actionType));
-	    } else {
+        } else {
             switch (action.actionType) {
             case PmActionType::Scene:
-		        line = QString("[%1] %2")
+                line = QString("[%1] %2")
                    .arg(action.targetDetails.size() ?
                         action.targetDetails.data() : obs_module_text("scene"))
-				   .arg(action.targetElement.data());
+                   .arg(action.targetElement.data());
                 break;
             case PmActionType::SceneItem:
             case PmActionType::Filter:
@@ -759,10 +759,10 @@ void PmReactionDisplay::updateReaction(
                         obs_module_text("show") : obs_module_text("hide"))
                     .arg(action.targetElement.data());
                 break;
-	        case PmActionType::ToggleMute:
-		        line = QString("[%1] %2")
+            case PmActionType::ToggleMute:
+                line = QString("[%1] %2")
                     .arg(action.actionCode == (size_t)PmToggleCode::On
-					    ? obs_module_text("unmute") : obs_module_text("mute"))
+                        ? obs_module_text("unmute") : obs_module_text("mute"))
                     .arg(action.targetElement.data());
                 break;
             case PmActionType::Hotkey:
@@ -776,27 +776,27 @@ void PmReactionDisplay::updateReaction(
                 line = PmAction::frontEndActionStr(
                     (PmFrontEndAction)action.actionCode);
                 break;
-	        case PmActionType::File:
+            case PmActionType::File:
                 line = QString("[%1] %2")
                     .arg(PmAction::fileActionStr(
                         (PmFileActionType)action.actionCode))
                     .arg(action.targetElement.data());
                 break;
-	        default:
-    		    line = obs_module_text("<not selected>");
-		        break;
+            default:
+                line = obs_module_text("<not selected>");
+                break;
             }
         }
-	    //int col = int((rtype == PmReactionType::Match)
+        //int col = int((rtype == PmReactionType::Match)
         //    ? ColOrder::Match : ColOrder::Unmatch);
         //int maxAllowed = min(200, m_tableWidget->columnWidth(col));
-	    line = m_fontMetrics.elidedText(line, Qt::ElideMiddle, 200);
+        line = m_fontMetrics.elidedText(line, Qt::ElideMiddle, 200);
 
         html += QString("<font color=\"%1\">%2</font>")
-			.arg(action.actionColorStr())
-			.arg(line);
+            .arg(action.actionColorStr())
+            .arg(line);
 
-	    maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
+        maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
         if (i < actions.size() - 1) {
             html += "<br />";
         }
@@ -809,7 +809,7 @@ void PmReactionDisplay::updateReaction(
     QString tooltip = QString("(double click to add %1 action)")
         .arg(reactionStr);
     if (m_hasActions) {
-	    tooltip = html + "<hr />" + tooltip;
+        tooltip = html + "<hr />" + tooltip;
     }
     setToolTip(tooltip);
 }
@@ -822,18 +822,18 @@ QSize PmReactionDisplay::sizeHint() const
 void PmReactionDisplay::updateContents(
     const QString &html, int textWidthMax, int textRows)
 {
-	setText(html);
-	m_textWidth = textWidthMax;
-	m_textHeight = m_fontMetrics.height() * textRows;
-	setMinimumSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
-	updateGeometry();
+    setText(html);
+    m_textWidth = textWidthMax;
+    m_textHeight = m_fontMetrics.height() * textRows;
+    setMinimumSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
+    updateGeometry();
 }
 
 PmContainerWidget::PmContainerWidget(QWidget *contained, QWidget *parent)
 : QWidget(parent)
 , m_contained(contained)
 {
-	m_contained->setParent(this);
+    m_contained->setParent(this);
     m_mainLayout = new QVBoxLayout;
     m_mainLayout->addWidget(contained);
     setLayout(m_mainLayout);

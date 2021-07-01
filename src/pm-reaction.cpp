@@ -24,76 +24,76 @@ const char *PmAction::actionStr(PmActionType actionType)
 
 QColor PmAction::actionColor(PmActionType actionType)
 {
-	switch (actionType) {
-	case PmActionType::None: return Qt::white; 
-	case PmActionType::Scene: return Qt::cyan;
-	case PmActionType::SceneItem: return Qt::yellow;
-	case PmActionType::Filter: return QColor(255, 0, 255, 255);
-	case PmActionType::Hotkey: return Qt::red;
-	case PmActionType::FrontEndAction: return Qt::green;
-	case PmActionType::ToggleMute: return QColor(255, 127, 0, 255); break;
-	case PmActionType::File: return Qt::white; break;
+    switch (actionType) {
+    case PmActionType::None: return Qt::white; 
+    case PmActionType::Scene: return Qt::cyan;
+    case PmActionType::SceneItem: return Qt::yellow;
+    case PmActionType::Filter: return QColor(255, 0, 255, 255);
+    case PmActionType::Hotkey: return Qt::red;
+    case PmActionType::FrontEndAction: return Qt::green;
+    case PmActionType::ToggleMute: return QColor(255, 127, 0, 255); break;
+    case PmActionType::File: return Qt::white; break;
     default : return Qt::lightGray;
     }
 }
 
 QColor PmAction::dimmedColor(PmActionType actionType, PmActionType active)
 {
-	QColor color = actionColor(actionType);
-	if (active != actionType) {
-		color.setRed(color.red() / 2);
-		color.setGreen(color.green() / 2);
-		color.setBlue(color.blue() / 2);
-	}
-	return color;
+    QColor color = actionColor(actionType);
+    if (active != actionType) {
+        color.setRed(color.red() / 2);
+        color.setGreen(color.green() / 2);
+        color.setBlue(color.blue() / 2);
+    }
+    return color;
 }
 
 QString PmAction::actionColorStr(PmActionType actionType)
 {
-	return actionColor(actionType).name();
+    return actionColor(actionType).name();
 }
 
 QString PmAction::frontEndActionStr(PmFrontEndAction fea)
 {
-	switch (fea) {
-	case PmFrontEndAction::StreamingStart:
-		return obs_module_text("Streaming: Start");
-	case PmFrontEndAction::StreamingStop:
-		return obs_module_text("Streaming: Stop");
-	case PmFrontEndAction::RecordingStart:
-		return obs_module_text("Recording: Start");
-	case PmFrontEndAction::RecordingStop:
-		return obs_module_text("Recording: Stop");
-	case PmFrontEndAction::RecordingPause:
-		return obs_module_text("Recording: Pause");
-	case PmFrontEndAction::RecordingUnpause:
-		return obs_module_text("Recording: Unpause");
-	case PmFrontEndAction::ReplayBufferStart:
-		return obs_module_text("Replay Buffer: Start");
-	case PmFrontEndAction::ReplayBufferSave:
-		return obs_module_text("Replay Buffer: Save");
-	case PmFrontEndAction::ReplayBufferStop:
-		return obs_module_text("Replay Buffer: Stop");
-	case PmFrontEndAction::TakeScreenshot:
-		return obs_module_text("Take Screenshot");
-	case PmFrontEndAction::StartVirtualCam:
-		return obs_module_text("Virtual Cam: Start");
-	case PmFrontEndAction::StopVirtualCam:
-		return obs_module_text("Virtual Cam: Stop");
-	case PmFrontEndAction::ResetVideo:
-		return obs_module_text("Reset Video");
-	default:
-		return obs_module_text("unknown");
+    switch (fea) {
+    case PmFrontEndAction::StreamingStart:
+        return obs_module_text("Streaming: Start");
+    case PmFrontEndAction::StreamingStop:
+        return obs_module_text("Streaming: Stop");
+    case PmFrontEndAction::RecordingStart:
+        return obs_module_text("Recording: Start");
+    case PmFrontEndAction::RecordingStop:
+        return obs_module_text("Recording: Stop");
+    case PmFrontEndAction::RecordingPause:
+        return obs_module_text("Recording: Pause");
+    case PmFrontEndAction::RecordingUnpause:
+        return obs_module_text("Recording: Unpause");
+    case PmFrontEndAction::ReplayBufferStart:
+        return obs_module_text("Replay Buffer: Start");
+    case PmFrontEndAction::ReplayBufferSave:
+        return obs_module_text("Replay Buffer: Save");
+    case PmFrontEndAction::ReplayBufferStop:
+        return obs_module_text("Replay Buffer: Stop");
+    case PmFrontEndAction::TakeScreenshot:
+        return obs_module_text("Take Screenshot");
+    case PmFrontEndAction::StartVirtualCam:
+        return obs_module_text("Virtual Cam: Start");
+    case PmFrontEndAction::StopVirtualCam:
+        return obs_module_text("Virtual Cam: Stop");
+    case PmFrontEndAction::ResetVideo:
+        return obs_module_text("Reset Video");
+    default:
+        return obs_module_text("unknown");
     }
 }
 
 QString PmAction::fileActionStr(PmFileActionType fa)
 {
-	switch (fa) {
-	case PmFileActionType::WriteAppend:
-		return obs_module_text("append");
-	case PmFileActionType::WriteTruncate:
-		return obs_module_text("truncate");
+    switch (fa) {
+    case PmFileActionType::WriteAppend:
+        return obs_module_text("append");
+    case PmFileActionType::WriteTruncate:
+        return obs_module_text("truncate");
     }
 }
 
@@ -109,14 +109,14 @@ PmAction::PmAction(obs_data_t *data)
     targetDetails = obs_data_get_string(data, "target_details");
 
     if (actionType == PmActionType::Hotkey) {
-	    obs_data_set_default_int(data, "hotkey_key", 0L);
-	    obs_data_set_default_int(data, "hotkey_modifiers", 0L);
-	    keyCombo.key = (obs_key_t)obs_data_get_int(data, "hotkey_key");
-	    keyCombo.modifiers
+        obs_data_set_default_int(data, "hotkey_key", 0L);
+        obs_data_set_default_int(data, "hotkey_modifiers", 0L);
+        keyCombo.key = (obs_key_t)obs_data_get_int(data, "hotkey_key");
+        keyCombo.modifiers
             = (uint32_t)obs_data_get_int(data, "hotkey_modifiers");
     }
     if (actionType == PmActionType::File) {
-	    timeFormat = obs_data_get_string(data, "date_time_format");
+        timeFormat = obs_data_get_string(data, "date_time_format");
     }
 
     obs_data_release(data);
@@ -145,12 +145,12 @@ PmAction::PmAction(QXmlStreamReader &reader)
                 targetElement = elementText.toUtf8().data();
             } else if (name == "target_details") {
                 targetDetails = elementText.toUtf8().data();
-		    } else if (name == "hotkey_key") {
+            } else if (name == "hotkey_key") {
                 keyCombo.key = (obs_key_t)elementText.toInt();
-		    } else if (name == "hotkey_modifiers") {
-			    keyCombo.modifiers = (uint32_t)elementText.toUInt();
-		    } else if (name == "date_time_format") {
-			    timeFormat = elementText.toUtf8().data();
+            } else if (name == "hotkey_modifiers") {
+                keyCombo.modifiers = (uint32_t)elementText.toUInt();
+            } else if (name == "date_time_format") {
+                timeFormat = elementText.toUtf8().data();
             }
         }
     }
@@ -166,13 +166,13 @@ obs_data_t *PmAction::saveData() const
     if (targetDetails.size())
         obs_data_set_string(ret, "target_details", targetDetails.data());
     if (actionType == PmActionType::Hotkey) {
-	    obs_data_set_int(
+        obs_data_set_int(
             ret, "hotkey_modifiers", (long long)keyCombo.modifiers);
-	    obs_data_set_int(ret, "hotkey_key", (long long)keyCombo.key);
+        obs_data_set_int(ret, "hotkey_key", (long long)keyCombo.key);
     }
     if (actionType == PmActionType::File) {
-	    if (timeFormat.size()) {
-		    obs_data_set_string(ret, "date_time_format", timeFormat.data());
+        if (timeFormat.size()) {
+            obs_data_set_string(ret, "date_time_format", timeFormat.data());
         }
     }
     return ret;
@@ -188,14 +188,14 @@ void PmAction::saveXml(QXmlStreamWriter &writer) const
     if (targetDetails.size())
         writer.writeTextElement("target_details", targetDetails.data());
     if (actionType == PmActionType::Hotkey) {
-	    writer.writeTextElement(
+        writer.writeTextElement(
             "hotkey_key", QString::number(int(keyCombo.key)));
-	    writer.writeTextElement(
+        writer.writeTextElement(
             "hotkey_modifiers", QString::number(keyCombo.modifiers));
     }
     if (actionType == PmActionType::File) {
-	    if (timeFormat.size()) {
-		    writer.writeTextElement("date_time_format", timeFormat.data());
+        if (timeFormat.size()) {
+            writer.writeTextElement("date_time_format", timeFormat.data());
         }
     }
     writer.writeEndElement();
@@ -217,12 +217,12 @@ bool PmAction::isSet() const
     case PmActionType::None:
         return false; break;
     case PmActionType::FrontEndAction:
-	    return actionCode != (size_t)-1; break;
+        return actionCode != (size_t)-1; break;
     case PmActionType::Hotkey:
-	    return keyCombo.key != (obs_key_t)-1
+        return keyCombo.key != (obs_key_t)-1
             || keyCombo.modifiers != (obs_key_t)-1;
     case PmActionType::File:
-	    return targetElement.size() > 0 || targetDetails.size() > 0;
+        return targetElement.size() > 0 || targetDetails.size() > 0;
     default:
         return targetElement.size() > 0; break;
     }
@@ -243,23 +243,23 @@ bool PmAction::operator==(const PmAction &other) const
 
 QString PmAction::actionColorStr() const
 {
-	return actionColorStr(actionType);
+    return actionColorStr(actionType);
 }
 
 std::string PmAction::formattedFileString(const std::string &str,
     const std::string &cfgLabel, const QDateTime &time) const
 {
     // TODO optimize but not super important
-	std::string timeStr = time.toString(timeFormat.data()).toUtf8();
+    std::string timeStr = time.toString(timeFormat.data()).toUtf8();
     std::string ret = str;
-	size_t find;
-	while ((find = ret.find(k_timeMarker)) != std::string::npos) {
-	    ret.replace(find, k_timeMarker.size(), timeStr);
+    size_t find;
+    while ((find = ret.find(k_timeMarker)) != std::string::npos) {
+        ret.replace(find, k_timeMarker.size(), timeStr);
     }
-	while ((find = ret.find(k_labelMarker)) != std::string::npos) {
-	    ret.replace(find, k_labelMarker.size(), cfgLabel);
+    while ((find = ret.find(k_labelMarker)) != std::string::npos) {
+        ret.replace(find, k_labelMarker.size(), cfgLabel);
     }
-	return ret;
+    return ret;
 }
 
 //---------------------------------------------------------
@@ -380,7 +380,7 @@ bool PmReaction::hasAction(PmActionType actionType) const
 bool PmReaction::hasMatchAction(PmActionType actionType) const
 {
     for (const PmAction& action : matchActions) {
-		if (actionType == PmActionType::ANY
+        if (actionType == PmActionType::ANY
          || action.actionType == actionType) {
             return true;
         }

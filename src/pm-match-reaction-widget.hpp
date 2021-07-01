@@ -60,18 +60,18 @@ protected slots:
 
 protected:
     static const QString k_defaultTransitionStr;
-	static const int k_keyRole;
+    static const int k_keyRole;
     static const int k_modifierRole;
-	static const int k_keyHintRole;
+    static const int k_keyHintRole;
     static const char *k_timeFormatHelpUrl;
-	static const char *k_fileMarkersHelpHtml;
+    static const char *k_fileMarkersHelpHtml;
 
     struct HotkeyData {
-	    obs_hotkey_t *hkey;
-	    obs_key_combination_t keyCombo;
+        obs_hotkey_t *hkey;
+        obs_key_combination_t keyCombo;
     };
-	typedef QList<HotkeyData> HotkeysList;
-	typedef QMultiHash<std::string, HotkeyData> HotkeysGroup;
+    typedef QList<HotkeyData> HotkeysList;
+    typedef QMultiHash<std::string, HotkeyData> HotkeysGroup;
 
     void insertHotkeysList(
         int &idx, const QString &info, HotkeysList list);

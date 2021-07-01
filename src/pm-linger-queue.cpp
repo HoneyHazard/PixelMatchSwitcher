@@ -8,10 +8,10 @@ bool PmLingerCompare::operator()(const PmLingerInfo &left,
 
 std::vector<size_t> PmLingerQueue::removeExpired(const QTime &currTime)
 {
-	std::vector<size_t> ret;
+    std::vector<size_t> ret;
     for (auto itr = c.begin(); itr != c.end();) {
         if (currTime > itr->endTime) {
-		    ret.push_back(itr->matchIndex);
+            ret.push_back(itr->matchIndex);
             itr = c.erase(itr);
         } else {
             itr++;

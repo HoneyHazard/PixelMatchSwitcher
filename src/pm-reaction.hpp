@@ -41,7 +41,7 @@ enum class PmReactionType : unsigned char { Match = 0, Unmatch = 1};
 enum class PmFrontEndAction : size_t {
     StreamingStart = 0, StreamingStop = 1,
     RecordingStart = 2, RecordingStop = 3,
-	RecordingPause = 4, RecordingUnpause = 5,
+    RecordingPause = 4, RecordingUnpause = 5,
     ReplayBufferStart = 6, ReplayBufferSave = 7, ReplayBufferStop = 8,
     TakeScreenshot,
     StartVirtualCam, StopVirtualCam,
@@ -60,12 +60,12 @@ struct PmAction
 {
 public:
     static const char *actionStr(PmActionType actionType);
-	static QColor actionColor(PmActionType actionType);
+    static QColor actionColor(PmActionType actionType);
     static QColor dimmedColor(PmActionType actionType,
                               PmActionType active = PmActionType::None);
-	static QString actionColorStr(PmActionType actionType);
+    static QString actionColorStr(PmActionType actionType);
     static QString frontEndActionStr(PmFrontEndAction fea);
-	static QString fileActionStr(PmFileActionType fa);
+    static QString fileActionStr(PmFileActionType fa);
 
     static const std::string k_timeMarker;
     static const std::string k_labelMarker;

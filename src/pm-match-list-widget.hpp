@@ -136,7 +136,7 @@ class PmContainerWidget : public QWidget
 
 public:
     PmContainerWidget(QWidget *contained, QWidget *parent = nullptr);
-	QWidget *containedWidget() const { return m_contained; }
+    QWidget *containedWidget() const { return m_contained; }
     QVBoxLayout *mainLayout() const { return m_mainLayout; }
 
 protected:
@@ -157,11 +157,11 @@ public:
     QSize sizeHint() const override;
 
 protected:
-	void updateContents(const QString &html, int textWidthMax, int textRows);
+    void updateContents(const QString &html, int textWidthMax, int textRows);
 
     int m_textWidth = 0;
-	int m_textHeight = 0;
-	int m_marginsWidth = 0;
+    int m_textHeight = 0;
+    int m_marginsWidth = 0;
     QFontMetrics m_fontMetrics;
     bool m_hasActions = false;
 };

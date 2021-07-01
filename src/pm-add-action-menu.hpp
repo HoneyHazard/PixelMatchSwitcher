@@ -27,15 +27,15 @@ protected slots:
 
 protected:
     void itemTriggered(int actionIndex);
-	PmReaction pullReaction() const;
-	void pushReaction(const PmReaction &reaction);
-	void updateTitle();
+    PmReaction pullReaction() const;
+    void pushReaction(const PmReaction &reaction);
+    void updateTitle();
 
     PmCore *m_core;
     PmReactionTarget m_reactionTarget = PmReactionTarget::Global;
-	PmReactionType m_reactionType = PmReactionType::Match;
+    PmReactionType m_reactionType = PmReactionType::Match;
     QWidgetAction *m_sceneAction = nullptr;
-	QLabel *m_titleLabel = nullptr;
+    QLabel *m_titleLabel = nullptr;
     size_t m_matchIndex = 0;
 };
 
@@ -44,15 +44,15 @@ protected:
  */
 class PmAddActionMenuHelper : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PmAddActionMenuHelper(QMenu *menu, QObject *parent);
+    PmAddActionMenuHelper(QMenu *menu, QObject *parent);
 
 protected:
-	bool eventFilter(QObject *target, QEvent *e) override;
-	void highlight(QWidgetAction *qwa, bool h);
+    bool eventFilter(QObject *target, QEvent *e) override;
+    void highlight(QWidgetAction *qwa, bool h);
 
-	QMenu *m_menu;
-	QWidgetAction *m_lastQwa = nullptr;
+    QMenu *m_menu;
+    QWidgetAction *m_lastQwa = nullptr;
 };

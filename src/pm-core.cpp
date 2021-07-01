@@ -290,8 +290,8 @@ PmMatchConfig PmCore::matchConfig(size_t matchIdx) const
 
 std::string PmCore::matchConfigLabel(size_t matchIdx) const
 {
-	QMutexLocker locker(&m_matchConfigMutex);
-	return matchIdx < m_multiMatchConfig.size()
+    QMutexLocker locker(&m_matchConfigMutex);
+    return matchIdx < m_multiMatchConfig.size()
         ? m_multiMatchConfig[matchIdx].label : "";
 }
 
@@ -304,7 +304,7 @@ bool PmCore::hasAction(size_t matchIdx, PmActionType actionType) const
 
 bool PmCore::hasMatchAction(size_t matchIdx, PmActionType actionType) const
 {
-	QMutexLocker locker(&m_matchConfigMutex);
+    QMutexLocker locker(&m_matchConfigMutex);
     return matchIdx < m_multiMatchConfig.size()
         ? m_multiMatchConfig[matchIdx].reaction.hasMatchAction(actionType)
         : false;
@@ -312,7 +312,7 @@ bool PmCore::hasMatchAction(size_t matchIdx, PmActionType actionType) const
 
 bool PmCore::hasUnmatchAction(size_t matchIdx, PmActionType actionType) const
 {
-	QMutexLocker locker(&m_matchConfigMutex);
+    QMutexLocker locker(&m_matchConfigMutex);
     return matchIdx < m_multiMatchConfig.size()
         ? m_multiMatchConfig[matchIdx].reaction.hasUnmatchAction(actionType)
         : false;
@@ -320,14 +320,14 @@ bool PmCore::hasUnmatchAction(size_t matchIdx, PmActionType actionType) const
 
 bool PmCore::hasGlobalMatchAction(PmActionType actionType) const
 {
-	QMutexLocker locker(&m_matchConfigMutex);
-	return m_multiMatchConfig.noMatchReaction.hasMatchAction(actionType);
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_multiMatchConfig.noMatchReaction.hasMatchAction(actionType);
 }
 
 bool PmCore::hasGlobalUnmatchAction(PmActionType actionType) const
 {
-	QMutexLocker locker(&m_matchConfigMutex);
-	return m_multiMatchConfig.noMatchReaction.hasUnmatchAction(actionType);
+    QMutexLocker locker(&m_matchConfigMutex);
+    return m_multiMatchConfig.noMatchReaction.hasUnmatchAction(actionType);
 }
 
 PmReaction PmCore::reaction(size_t matchIdx) const
@@ -405,7 +405,7 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
                 matchIdx++;
             }
             onMatchConfigInsert(matchIdx, newCfg);
-	        onMatchConfigSelect(matchIdx);
+            onMatchConfigSelect(matchIdx);
             return true;
         } else if (newCfg.reaction.hasSceneAction()
                 && matchIdx > 0
@@ -416,7 +416,7 @@ bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
                 matchIdx--;
             }
             onMatchConfigInsert(matchIdx, newCfg);
-    	    onMatchConfigSelect(matchIdx);
+            onMatchConfigSelect(matchIdx);
             return true;
         }
     }
@@ -983,8 +983,8 @@ QList<std::string> PmCore::sceneItemNames() const
 
 QList<std::string> PmCore::audioSourcesNames() const
 {
-	QMutexLocker locker(&m_scenesMutex);
-	return m_audioSources.keys();
+    QMutexLocker locker(&m_scenesMutex);
+    return m_audioSources.keys();
 }
 
 QImage PmCore::matchImage(size_t matchIdx) const
@@ -1136,16 +1136,16 @@ void PmCore::scanScenes()
     obs_enum_sources(
         [](void *data, obs_source_t* source) -> bool
         {
-		    uint32_t flags = obs_source_get_output_flags(source);
-		    if ((flags & OBS_SOURCE_AUDIO) != 0) {
-			    std::string audioName = obs_source_get_name(source);
-			    obs_weak_source_t *audioWs = obs_source_get_weak_source(source);
-			    OBSWeakSource audioWsWs(audioWs);
-			    obs_weak_source_release(audioWs);
+            uint32_t flags = obs_source_get_output_flags(source);
+            if ((flags & OBS_SOURCE_AUDIO) != 0) {
+                std::string audioName = obs_source_get_name(source);
+                obs_weak_source_t *audioWs = obs_source_get_weak_source(source);
+                OBSWeakSource audioWsWs(audioWs);
+                obs_weak_source_release(audioWs);
                 PmSceneScanInfo *scanInfo = (PmSceneScanInfo *)data;
-			    scanInfo->audioSources.insert(audioName, {audioWsWs});
+                scanInfo->audioSources.insert(audioName, {audioWsWs});
             }
-		    return true;
+            return true;
         },
         &scanInfo);
 
@@ -1182,7 +1182,7 @@ void PmCore::scanScenes()
         emit sigScenesChanged(scanInfo.scenes.keys(), scanInfo.sceneItems.keys());
     }
     if (audioSourcesChanged) {
-	    emit sigAudioSourcesChanged(scanInfo.audioSources.keys());
+        emit sigAudioSourcesChanged(scanInfo.audioSources.keys());
     }
 
     // adjust for scene changes
@@ -1272,23 +1272,23 @@ void PmCore::scanScenes()
     }
 
     if (audioSourcesChanged) {
-	    QMutexLocker locker(&m_scenesMutex);
-	    size_t cfgSize = multiMatchConfigSize();
-	    for (const std::string &oldAudioName : oldAudioNames) {
-		    if (!scanInfo.audioSources.contains(oldAudioName)) {
-			    auto ws = m_audioSources[oldAudioName];
+        QMutexLocker locker(&m_scenesMutex);
+        size_t cfgSize = multiMatchConfigSize();
+        for (const std::string &oldAudioName : oldAudioNames) {
+            if (!scanInfo.audioSources.contains(oldAudioName)) {
+                auto ws = m_audioSources[oldAudioName];
                 std::string newAudioName = scanInfo.audioSources.key(ws);
-			    if (m_multiMatchConfig.noMatchReaction.hasAction(
-					PmActionType::ToggleMute)) {
-				    auto noMatchReaction =
-					    m_multiMatchConfig.noMatchReaction;
-				    if (noMatchReaction.renameElement(
-						PmActionType::ToggleMute,
-						oldAudioName, newAudioName)) {
-					    onNoMatchReactionChanged(
-						    noMatchReaction);
-				    }
-			    }
+                if (m_multiMatchConfig.noMatchReaction.hasAction(
+                    PmActionType::ToggleMute)) {
+                    auto noMatchReaction =
+                        m_multiMatchConfig.noMatchReaction;
+                    if (noMatchReaction.renameElement(
+                        PmActionType::ToggleMute,
+                        oldAudioName, newAudioName)) {
+                        onNoMatchReactionChanged(
+                            noMatchReaction);
+                    }
+                }
                 for (size_t i = 0; i < cfgSize; i++) {
                     if (hasAction(i, PmActionType::ToggleMute)) {
                         PmMatchConfig cfg = m_multiMatchConfig[i];
@@ -1540,7 +1540,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     // expired cooldown info disappers
     std::vector<size_t> expCooldowns = m_cooldownList.removeExpired(currTime);
     for (size_t i : expCooldowns) {
-	    emit sigCooldownActive(i, false);
+        emit sigCooldownActive(i, false);
     }
 
     // expired lingers for scenes will disappear, allowing other scenes
@@ -1549,7 +1549,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     // expired lingers for scene items
     std::vector<size_t> expLingers = m_lingerList.removeExpired(currTime);
     for (size_t expIdx : expLingers) {
-	    emit sigLingerActive(expIdx, false);
+        emit sigLingerActive(expIdx, false);
         PmReaction expReaction = reaction(expIdx);
         execIndependentActions(matchConfigLabel(expIdx), expReaction, false);
     }
@@ -1637,15 +1637,15 @@ void PmCore::execReaction(
     bool &sceneSelected, size_t matchIdx, const QTime &time,
     const PmReaction &reaction, bool switchedOn)
 {
-	bool actionsTaken = false;
+    bool actionsTaken = false;
 
     // maintain linger info
     if (switchedOn && reaction.lingerMs > 0) {
-	    QTime futureTime = time.addMSecs(int(reaction.lingerMs));
-	    m_lingerList.push_back({matchIdx, futureTime});
-	    if (reaction.hasSceneAction())
-		    m_sceneLingerQueue.push({matchIdx, futureTime});
-	    emit sigLingerActive(matchIdx, true);
+        QTime futureTime = time.addMSecs(int(reaction.lingerMs));
+        m_lingerList.push_back({matchIdx, futureTime});
+        if (reaction.hasSceneAction())
+            m_sceneLingerQueue.push({matchIdx, futureTime});
+        emit sigLingerActive(matchIdx, true);
     }
 
     // activate scene match/unmatch action and take note if switched
@@ -1659,14 +1659,14 @@ void PmCore::execReaction(
     // activate independent match/unmatch actions
     if (execIndependentActions(
             matchConfigLabel(matchIdx), reaction, switchedOn)) {
-	    actionsTaken = true;
+        actionsTaken = true;
     }
 
     // activate cooldown
     if (actionsTaken && switchedOn && reaction.cooldownMs > 0) {
-	    m_cooldownList.push_back(
-		    {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
-	    emit sigCooldownActive(matchIdx, true);
+        m_cooldownList.push_back(
+            {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
+        emit sigCooldownActive(matchIdx, true);
     }
 }
 
@@ -1742,144 +1742,144 @@ bool PmCore::execSceneAction(
 bool PmCore::execIndependentActions(const std::string &cfgName,
     const PmReaction &reaction, bool switchedOn)
 {
-	bool actionsTaken = false;
+    bool actionsTaken = false;
     const auto &actions
         = switchedOn ? reaction.matchActions : reaction.unmatchActions;
-	for (const auto &action : actions) {
-	    if (!action.isSet()) continue;
-	    actionsTaken = true;
+    for (const auto &action : actions) {
+        if (!action.isSet()) continue;
+        actionsTaken = true;
 
-		if (action.actionType == PmActionType::SceneItem) {
-			obs_sceneitem_t *sceneItem = nullptr;
-			{
-				QMutexLocker locker(&m_scenesMutex);
-				auto find = m_sceneItems.find(
-					action.targetElement);
-				if (find != m_sceneItems.end()) {
-					OBSSceneItem sceneItemSi = find->si;
-					sceneItem = sceneItemSi;
-				}
-			}
-			if (sceneItem) {
-				if (switchedOn &&
-				    action.actionCode ==
-					    (size_t)PmToggleCode::On) {
-					obs_sceneitem_set_visible(sceneItem,
-								  true);
-				} else if (!switchedOn &&
-					   action.actionCode ==
-						   (size_t)PmToggleCode::Off) {
-					obs_sceneitem_set_visible(sceneItem,
-								  false);
-				}
-				obs_sceneitem_release(sceneItem);
-			}
-		} else if (action.actionType == PmActionType::Filter) {
-			obs_source_t *filterSrc = nullptr;
-			{
-				QMutexLocker locker(&m_scenesMutex);
-				auto find =
-					m_filters.find(action.targetElement);
-				if (find != m_filters.end()) {
-					OBSWeakSource filterWs = find->wsrc;
-					filterSrc = obs_weak_source_get_source(
-						filterWs);
-				}
-			}
-			if (filterSrc) {
-				if (switchedOn
-                 && action.actionCode == (size_t)PmToggleCode::On) {
-					obs_source_set_enabled(filterSrc, true);
-				} else if (!switchedOn
-                        && action.actionCode == (size_t)PmToggleCode::Off) {
-					obs_source_set_enabled(filterSrc, false);
-				}
-				obs_source_release(filterSrc);
-			}
-		} else if (action.actionType == PmActionType::ToggleMute) {
-			obs_source_t *audioSrc = nullptr;
-			{
-				QMutexLocker locker(&m_scenesMutex);
-				auto find = m_audioSources.find(action.targetElement);
-				if (find != m_audioSources.end()) {
-					OBSWeakSource audioWs = find->wsrc;
-					audioSrc = obs_weak_source_get_source(audioWs);
-				}
-			}
-			if (audioSrc) {
+        if (action.actionType == PmActionType::SceneItem) {
+            obs_sceneitem_t *sceneItem = nullptr;
+            {
+                QMutexLocker locker(&m_scenesMutex);
+                auto find = m_sceneItems.find(
+                    action.targetElement);
+                if (find != m_sceneItems.end()) {
+                    OBSSceneItem sceneItemSi = find->si;
+                    sceneItem = sceneItemSi;
+                }
+            }
+            if (sceneItem) {
+                if (switchedOn &&
+                    action.actionCode ==
+                        (size_t)PmToggleCode::On) {
+                    obs_sceneitem_set_visible(sceneItem,
+                                  true);
+                } else if (!switchedOn &&
+                       action.actionCode ==
+                           (size_t)PmToggleCode::Off) {
+                    obs_sceneitem_set_visible(sceneItem,
+                                  false);
+                }
+                obs_sceneitem_release(sceneItem);
+            }
+        } else if (action.actionType == PmActionType::Filter) {
+            obs_source_t *filterSrc = nullptr;
+            {
+                QMutexLocker locker(&m_scenesMutex);
+                auto find =
+                    m_filters.find(action.targetElement);
+                if (find != m_filters.end()) {
+                    OBSWeakSource filterWs = find->wsrc;
+                    filterSrc = obs_weak_source_get_source(
+                        filterWs);
+                }
+            }
+            if (filterSrc) {
                 if (switchedOn
                  && action.actionCode == (size_t)PmToggleCode::On) {
-					obs_source_set_muted(audioSrc, false);
-		        } else if (!switchedOn
+                    obs_source_set_enabled(filterSrc, true);
+                } else if (!switchedOn
+                        && action.actionCode == (size_t)PmToggleCode::Off) {
+                    obs_source_set_enabled(filterSrc, false);
+                }
+                obs_source_release(filterSrc);
+            }
+        } else if (action.actionType == PmActionType::ToggleMute) {
+            obs_source_t *audioSrc = nullptr;
+            {
+                QMutexLocker locker(&m_scenesMutex);
+                auto find = m_audioSources.find(action.targetElement);
+                if (find != m_audioSources.end()) {
+                    OBSWeakSource audioWs = find->wsrc;
+                    audioSrc = obs_weak_source_get_source(audioWs);
+                }
+            }
+            if (audioSrc) {
+                if (switchedOn
+                 && action.actionCode == (size_t)PmToggleCode::On) {
+                    obs_source_set_muted(audioSrc, false);
+                } else if (!switchedOn
                         && action.actionCode == (size_t)PmToggleCode::Off) {
                     obs_source_set_muted(audioSrc, true);
-		        }
+                }
                 obs_source_release(audioSrc);
             }
-		} else if (action.actionType == PmActionType::Hotkey) {
-        	obs_hotkey_inject_event(action.keyCombo, false);
-			obs_hotkey_inject_event(action.keyCombo, true);
-		    obs_hotkey_inject_event(action.keyCombo, false);
-		} else if (action.actionType == PmActionType::FrontEndAction) {
-			switch ((PmFrontEndAction)action.actionCode) {
-			case PmFrontEndAction::StreamingStart:
-				obs_frontend_streaming_start(); break;
-			case PmFrontEndAction::StreamingStop:
-				obs_frontend_streaming_stop(); break;
-			case PmFrontEndAction::RecordingStart:
-				obs_frontend_recording_start(); break;
-			case PmFrontEndAction::RecordingStop:
-				obs_frontend_recording_stop(); break;
-			case PmFrontEndAction::RecordingPause:
-				obs_frontend_recording_pause(true); break;
-			case PmFrontEndAction::RecordingUnpause:
-				obs_frontend_recording_pause(false); break;
-			case PmFrontEndAction::ReplayBufferStart:
-				obs_frontend_replay_buffer_start(); break;
-			case PmFrontEndAction::ReplayBufferSave:
-				obs_frontend_replay_buffer_save(); break;
-			case PmFrontEndAction::ReplayBufferStop:
-				obs_frontend_replay_buffer_stop(); break;
-			case PmFrontEndAction::TakeScreenshot:
-				obs_frontend_take_screenshot(); break;
-			case PmFrontEndAction::StartVirtualCam:
-				obs_frontend_start_virtualcam(); break;
-			case PmFrontEndAction::StopVirtualCam:
-				obs_frontend_stop_virtualcam(); break;
-			case PmFrontEndAction::ResetVideo:
-				obs_frontend_reset_video();
+        } else if (action.actionType == PmActionType::Hotkey) {
+            obs_hotkey_inject_event(action.keyCombo, false);
+            obs_hotkey_inject_event(action.keyCombo, true);
+            obs_hotkey_inject_event(action.keyCombo, false);
+        } else if (action.actionType == PmActionType::FrontEndAction) {
+            switch ((PmFrontEndAction)action.actionCode) {
+            case PmFrontEndAction::StreamingStart:
+                obs_frontend_streaming_start(); break;
+            case PmFrontEndAction::StreamingStop:
+                obs_frontend_streaming_stop(); break;
+            case PmFrontEndAction::RecordingStart:
+                obs_frontend_recording_start(); break;
+            case PmFrontEndAction::RecordingStop:
+                obs_frontend_recording_stop(); break;
+            case PmFrontEndAction::RecordingPause:
+                obs_frontend_recording_pause(true); break;
+            case PmFrontEndAction::RecordingUnpause:
+                obs_frontend_recording_pause(false); break;
+            case PmFrontEndAction::ReplayBufferStart:
+                obs_frontend_replay_buffer_start(); break;
+            case PmFrontEndAction::ReplayBufferSave:
+                obs_frontend_replay_buffer_save(); break;
+            case PmFrontEndAction::ReplayBufferStop:
+                obs_frontend_replay_buffer_stop(); break;
+            case PmFrontEndAction::TakeScreenshot:
+                obs_frontend_take_screenshot(); break;
+            case PmFrontEndAction::StartVirtualCam:
+                obs_frontend_start_virtualcam(); break;
+            case PmFrontEndAction::StopVirtualCam:
+                obs_frontend_stop_virtualcam(); break;
+            case PmFrontEndAction::ResetVideo:
+                obs_frontend_reset_video();
             }
-		} else if (action.actionType == PmActionType::File) {
-			PmFileActionType fileAction = (PmFileActionType)action.actionCode;
-			QDateTime now = QDateTime::currentDateTime();
-			std::string filename = action.formattedFileString(
-				action.targetElement, cfgName, now);
+        } else if (action.actionType == PmActionType::File) {
+            PmFileActionType fileAction = (PmFileActionType)action.actionCode;
+            QDateTime now = QDateTime::currentDateTime();
+            std::string filename = action.formattedFileString(
+                action.targetElement, cfgName, now);
 
             if (fileAction == PmFileActionType::WriteAppend
-	         || fileAction == PmFileActionType::WriteTruncate) {
-			    //QFileInfo fileInfo(action.targetElement.data());
-		        QFile file(filename.data());
+             || fileAction == PmFileActionType::WriteTruncate) {
+                //QFileInfo fileInfo(action.targetElement.data());
+                QFile file(filename.data());
                 QIODevice::OpenMode flags = QIODevice::WriteOnly;
-			    if (fileAction == PmFileActionType::WriteAppend) {
-				    flags |= QIODevice::Append;
-			    } else if (fileAction == PmFileActionType::WriteTruncate) {
-				    flags |= QIODevice::Truncate;
+                if (fileAction == PmFileActionType::WriteAppend) {
+                    flags |= QIODevice::Append;
+                } else if (fileAction == PmFileActionType::WriteTruncate) {
+                    flags |= QIODevice::Truncate;
                 }
-			    file.open(flags);
+                file.open(flags);
                 if (!file.isOpen()) {
-				    blog(LOG_ERROR, "Error opening %s: %s",
+                    blog(LOG_ERROR, "Error opening %s: %s",
                          filename.data(), file.errorString().toUtf8().data());
                     continue;
                 }
                 std::string entry = action.formattedFileString(
                     action.targetDetails, cfgName, now);
-		        QTextStream stream(&file);
+                QTextStream stream(&file);
                 stream << entry.data() << Qt::endl;
                 file.close();
             }
         }
-	}
-	return actionsTaken;
+    }
+    return actionsTaken;
 }
 
 void PmCore::supplyImageToFilter(

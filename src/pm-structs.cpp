@@ -483,23 +483,23 @@ QSet<std::string> PmMatchPresets::orphanedImages(
 
 bool PmSourceData::operator==(const PmSourceData &other) const
 {
-	return wsrc == other.wsrc && childNames == other.childNames;
+    return wsrc == other.wsrc && childNames == other.childNames;
 }
 
 QSet<std::string> PmSourceHash::sourceNames() const
 {
-	QSet<std::string> ret;
-	for (const std::string &k : keys()) {
-		ret.insert(k);
+    QSet<std::string> ret;
+    for (const std::string &k : keys()) {
+        ret.insert(k);
     }
-	return ret;
+    return ret;
 }
 
 QSet<std::string> PmSceneItemsHash::sceneItemNames() const
 {
-	QSet<std::string> ret;
-	for (const std::string &k : keys()) {
-		ret.insert(k);
-	}
-	return ret;
+    QSet<std::string> ret;
+    for (const std::string &k : keys()) {
+        ret.insert(k);
+    }
+    return ret;
 }

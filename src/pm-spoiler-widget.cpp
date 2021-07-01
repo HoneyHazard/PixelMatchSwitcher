@@ -55,12 +55,12 @@ PmSpoilerWidget::PmSpoilerWidget(QWidget *parent)
 
 void PmSpoilerWidget::collapseToggled(bool checked)
 {
-	toggleExpand(checked);
+    toggleExpand(checked);
 }
 
 void PmSpoilerWidget::toggleExpand(bool on)
 {
-	m_mainLayout->setVerticalSpacing(on ? m_verticalSpacing : 0);
+    m_mainLayout->setVerticalSpacing(on ? m_verticalSpacing : 0);
 
     m_toggleButton->blockSignals(true);
     m_toggleButton->setChecked(on);
@@ -80,23 +80,23 @@ void PmSpoilerWidget::toggleExpand(bool on)
 
 int PmSpoilerWidget::maxContentHeight() const
 {
-	return m_contentArea->layout()->maximumSize().height();
+    return m_contentArea->layout()->maximumSize().height();
 }
 
 void PmSpoilerWidget::updateContentHeight()
 {
-	bool contentOn = isExpanded();
+    bool contentOn = isExpanded();
 
-	QMargins margins = m_mainLayout->contentsMargins();
-	int marginsSpace = margins.top() + margins.bottom();
+    QMargins margins = m_mainLayout->contentsMargins();
+    int marginsSpace = margins.top() + margins.bottom();
 
 #if 0
-	int contentMin = contentOn
+    int contentMin = contentOn
         ? m_contentArea->layout()->minimumSize().height()
         : 0;
 #endif
 
-	int contentMax = contentOn ? maxContentHeight() : 0;
+    int contentMax = contentOn ? maxContentHeight() : 0;
 
     int collapsed
         = qMax(m_toggleButton->sizeHint().height(),
