@@ -498,7 +498,7 @@ void PmMatchListWidget::constructRow(int idx)
     //m_tableWidget->item(idx, (int)ColOrder::EnableBox))
 
     // config label edit
-    QString placeholderName = QString("placeholder %1").arg(idx);
+    QString placeholderName = QString("placeholder %1").arg(idx + 1);
     auto labelItem = new QTableWidgetItem(placeholderName);
     labelItem->setTextAlignment(Qt::AlignVCenter);
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
