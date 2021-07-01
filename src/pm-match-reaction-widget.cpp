@@ -304,8 +304,8 @@ void PmActionEntryWidget::actionToUi(
         m_targetCombo->setVisible(true);
         m_targetCombo->blockSignals(true);
         if (action.isSet()) {
-            int targetIdx
-                = m_targetCombo->findData(action.targetElement.data());
+            int targetIdx = m_targetCombo->findData(
+                (unsigned int)action.targetElement.data());
             m_targetCombo->setCurrentIndex(targetIdx);
         } else {
             m_targetCombo->setCurrentIndex(0);
@@ -341,7 +341,7 @@ void PmActionEntryWidget::actionToUi(
 
          m_toggleSourceCombo->blockSignals(true);
          m_toggleSourceCombo->setCurrentIndex(
-            m_toggleSourceCombo->findData(action.actionCode));
+            m_toggleSourceCombo->findData((unsigned int)action.actionCode));
          m_toggleSourceCombo->blockSignals(false);
 
          m_detailsStack->setVisible(true);
@@ -362,7 +362,7 @@ void PmActionEntryWidget::actionToUi(
 
         m_toggleMuteCombo->blockSignals(true);
         m_toggleMuteCombo->setCurrentIndex(
-            m_toggleMuteCombo->findData(action.actionCode));
+            m_toggleMuteCombo->findData((unsigned int)action.actionCode));
         m_toggleMuteCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
