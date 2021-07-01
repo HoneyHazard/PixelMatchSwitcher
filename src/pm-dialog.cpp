@@ -1,10 +1,12 @@
 #include "pm-dialog.hpp"
 #include "pm-version.hpp"
 #include "pm-core.hpp"
+#include "pm-add-action-menu.hpp"
 #include "pm-toggles-widget.hpp"
 #include "pm-presets-widget.hpp"
 #include "pm-match-list-widget.hpp"
 #include "pm-match-config-widget.hpp"
+#include "pm-match-reaction-widget.hpp"
 #include "pm-match-results-widget.hpp"
 #include "pm-preview-config-widget.hpp"
 #include "pm-preview-display-widget.hpp"
@@ -25,18 +27,49 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
                 | Qt::WindowCloseButtonHint | Qt::WindowMaximizeButtonHint)
 , m_core(core)
 {
-    setWindowTitle(
-        QString(obs_module_text("Pixel Match Switcher ")) + PM_VERSION);
+    setWindowTitle(QString("Pixel Match Switcher %1").arg(PM_VERSION));
     setAttribute(Qt::WA_DeleteOnClose, true);
 
     // UI modules
+    PmAddActionMenu *addActionMenu = new PmAddActionMenu(core, parent);
+
     PmTogglesWidget* togglesWidget = new PmTogglesWidget(core, this);
+
     m_presetsWidget = new PmPresetsWidget(core, this);
-    PmMatchListWidget *listWidget 
-        = new PmMatchListWidget(core, this);
-    PmMatchConfigWidget *configWidget 
-        = new PmMatchConfigWidget(core, this);
-    PmMatchResultsWidget* resultsWidget 
+
+    PmMatchListWidget *listWidget
+        = new PmMatchListWidget(core, addActionMenu, this);
+    listWidget->expand();
+
+    PmMatchConfigWidget *configWidget = new PmMatchConfigWidget(core, this);
+    configWidget->expand();
+
+    // match for an entry
+    QSizePolicy minPol(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    PmMatchReactionWidget *entryMatchActions
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Entry, PmReactionType::Match,
+            this);
+
+    // unmatch for an entry
+    PmMatchReactionWidget *entryUnmatchActions
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Entry, PmReactionType::Unmatch,
+            this);
+
+    // global match (anything matched)
+    PmMatchReactionWidget *anythingMatchedActions
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Global, PmReactionType::Match,
+            this);
+
+    // global unmatch (nothing matched)
+    PmMatchReactionWidget *nothingMatchedActions
+        = new PmMatchReactionWidget(core, addActionMenu,
+            PmReactionTarget::Global, PmReactionType::Unmatch,
+            this);
+
+    PmMatchResultsWidget *resultsWidget 
         = new PmMatchResultsWidget(core, this);
     PmPreviewConfigWidget* previewCfgWidget 
         = new PmPreviewConfigWidget(core, this);
@@ -51,12 +84,28 @@ PmDialog::PmDialog(PmCore *core, QWidget *parent)
     leftLayout->addWidget(m_presetsWidget);
     leftLayout->addWidget(listWidget);
     leftLayout->addWidget(configWidget);
+
+    leftLayout->addWidget(entryMatchActions);
+    leftLayout->addWidget(entryUnmatchActions);
+    leftLayout->addWidget(anythingMatchedActions);
+    leftLayout->addWidget(nothingMatchedActions);
+    leftLayout->addItem(
+        new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     leftLayout->addWidget(resultsWidget);
+
+    #if 1
     leftLayout->setStretch(0, 1);
-    leftLayout->setStretch(1, 1000);
+    leftLayout->setStretch(1, 10000);
     leftLayout->setStretch(2, 1);
-    leftLayout->setStretch(3, 1);
-    QWidget* leftWidget = new QWidget(this);
+    leftLayout->setStretch(3, 100);
+    leftLayout->setStretch(4, 100);
+    leftLayout->setStretch(5, 100);
+    leftLayout->setStretch(6, 100);
+    leftLayout->setStretch(7, 10);
+    leftLayout->setStretch(8, 1);
+    #endif
+
+    QWidget *leftWidget = new QWidget(this);
     leftWidget->setLayout(leftLayout);
 
     // top layout

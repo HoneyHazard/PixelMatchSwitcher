@@ -32,7 +32,6 @@ void on_frame_processed(struct pm_filter_data *filterData);
 void on_match_image_captured(struct pm_filter_data *filterData);
 
 /**
- * @brief The core interacts with the filter, UI, activates scene transitions,
  *        and more
  */
 class PmCore : public QObject   
@@ -65,6 +64,14 @@ public:
     PmMultiMatchConfig multiMatchConfig() const;
     size_t multiMatchConfigSize() const;
     PmMatchConfig matchConfig(size_t matchIdx) const;
+    std::string matchConfigLabel(size_t matchIdx) const;
+    bool hasSceneAction(size_t matchIdx) const
+        { return hasAction(matchIdx, PmActionType::Scene); }
+    bool hasAction(size_t matchIdx, PmActionType actionType) const;
+    bool hasMatchAction(size_t matchIdx, PmActionType actionType) const;
+    bool hasUnmatchAction(size_t matchIdx, PmActionType actionType) const;
+    bool hasGlobalMatchAction(PmActionType actionType) const;
+    bool hasGlobalUnmatchAction(PmActionType actionType) const;
     PmReaction reaction(size_t matchIdx) const;
     PmReaction noMatchReaction() const;
     std::string matchImgFilename(size_t matchIdx) const;
@@ -80,9 +87,12 @@ public:
     PmMatchResults matchResults(size_t matchIdx) const;
     PmSourceHash scenes() const;
     QList<std::string> sceneNames() const;
+    QList<std::string> sceneItemNames(const std::string &sceneName) const;
     PmSceneItemsHash sceneItems() const;
-    QList<std::string> filters(const std::string &sceneItemName) const;
+    QList<std::string> allFilterNames() const;
+    QList<std::string> filterNames(const std::string &sceneItemName) const;
     QList<std::string> sceneItemNames() const;
+    QList<std::string> audioSourcesNames() const;
     QList<std::string> availableTransitions() const 
         { return m_availableTransitions.keys(); }
     QImage matchImage(size_t matchIdx) const;
@@ -97,6 +107,7 @@ signals:
     void sigActiveFilterChanged(PmFilterRef newAf);
     void sigScenesChanged(
         QList<std::string> scenes, QList<std::string> sceneItems);
+    void sigAudioSourcesChanged(QList<std::string> audioSources);
 
     void sigFrameProcessed(PmMultiMatchResults);
     void sigNewMatchResults(size_t matchIndex, PmMatchResults results);
@@ -123,6 +134,9 @@ signals:
     void sigCaptureStateChanged(PmCaptureState capMode, int x=-1, int y=-1);
 
     void sigMatchImagesOrphaned(QList<std::string> filenames);
+
+    void sigCooldownActive(size_t matchIdx, bool active);
+    void sigLingerActive(size_t matchIdx, bool active);
 
 public slots:
     void onMenuAction();
@@ -164,9 +178,12 @@ protected:
     void activate();
     void deactivate();
 
-    void switchScene(
-        const std::string& scene, const std::string &transition);
-    void toggleSceneItemOrFilter(PmReaction reaction, bool matched);
+    void execReaction(bool &sceneSelected, size_t matchIdx, const QTime &time,
+        const PmReaction &reaction, bool switchedOn);
+    bool execSceneAction(
+        size_t matchIdx, const PmReaction &reaction, bool switchedOn);
+    bool execIndependentActions(const std::string &cfgName,
+        const PmReaction &reaction, bool switchedOn);
 
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);
@@ -196,9 +213,11 @@ protected:
     PmSourceHash m_scenes;
     PmSceneItemsHash m_sceneItems;
     PmSourceHash m_filters;
+    PmSourceHash m_audioSources;
 
     PmLingerQueue m_sceneLingerQueue;
-    PmLingerList m_sceneItemLingerList;
+    PmLingerList m_lingerList;
+    PmLingerList m_cooldownList;
     bool m_forceSceneItemRefresh = true;
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;

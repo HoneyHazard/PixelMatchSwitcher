@@ -28,7 +28,7 @@ class PmLingerQueue final
                      PmLingerCompare> {
 public:
     PmLingerQueue() {}
-    void removeExpired(const QTime &currTime);
+    std::vector<size_t> removeExpired(const QTime &currTime);
     void removeByMatchIndex(size_t matchIndex);
     void removeAll() { c.clear(); }
 };
@@ -43,4 +43,5 @@ public:
     std::vector<size_t> removeExpired(const QTime &currTime);
     void removeByMatchIndex(size_t matchIndex);
     void removeAll() { clear(); }
+    bool contains(const size_t matchIdx) const;
 };

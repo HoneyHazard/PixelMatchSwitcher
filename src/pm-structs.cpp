@@ -6,114 +6,6 @@
 #include <QFile>
 #include <sstream>
 
-bool PmReaction::operator==(const PmReaction &other) const
-{
-    return type == other.type
-        && targetScene == other.targetScene
-        && sceneTransition == other.sceneTransition
-        && targetSceneItem == other.targetSceneItem
-        && targetFilter == other.targetFilter
-        && lingerMs == other.lingerMs;
-}
-
-PmReaction::PmReaction(obs_data_t *data)
-{
-    obs_data_set_default_int(data, "type", static_cast<long long>(type));
-    type = PmReactionType(obs_data_get_int(data, "type"));
-    targetSceneItem = obs_data_get_string(data, "target_scene_item");
-    targetScene = obs_data_get_string(data, "target_scene");
-    targetFilter = obs_data_get_string(data, "target_filter");
-    obs_data_set_default_string(
-        data, "target_transition", sceneTransition.data());
-    sceneTransition = obs_data_get_string(data, "target_transition");
-
-    obs_data_set_default_int(data, "linger_ms", int(lingerMs));
-    lingerMs = static_cast<unsigned int>(obs_data_get_int(data, "linger_ms"));
-}
-
-PmReaction::PmReaction(QXmlStreamReader &reader)
-{
-    while (true) {
-        reader.readNext();
-        if (reader.atEnd() || reader.error() != QXmlStreamReader::NoError) {
-            return;
-        }
-
-        QStringRef name = reader.name();
-        if (reader.isEndElement()) {
-            if (name == "reaction") {
-                return;
-            }
-        } else if (reader.isStartElement()) {
-            QString elementText = reader.readElementText();
-            if (name == "type") {
-                type = PmReactionType(elementText.toInt());
-            } else if (name == "target_scene") {
-                targetScene = elementText.toUtf8().data();
-            } else if (name == "target_transition") {
-                sceneTransition = elementText.toUtf8().data();
-            } else if (name == "target_scene_item") {
-                targetSceneItem = elementText.toUtf8().data();
-            } else if (name == "target_filter") {
-                targetFilter = elementText.toUtf8().data();
-            } else if (name == "linger_ms") {
-                lingerMs = static_cast<unsigned int>(elementText.toInt());
-            }
-        }
-    }
-}
-
-obs_data_t *PmReaction::save() const
-{
-    obs_data_t *ret = obs_data_create();
-    obs_data_set_int(ret, "type", static_cast<long long>(type));
-    obs_data_set_string(ret, "target_scene", targetScene.data());
-    obs_data_set_string(ret, "target_transition", sceneTransition.data());
-    obs_data_set_string(ret, "target_scene_item", targetSceneItem.data());
-    obs_data_set_string(ret, "target_filter", targetFilter.data());
-    obs_data_set_int(ret, "linger_ms", int(lingerMs));
-    return ret;
-}
-
-void PmReaction::saveXml(QXmlStreamWriter &writer) const
-{
-    writer.writeStartElement("reaction");
-    writer.writeTextElement("type", QString::number(int(type)));
-    if (targetScene.size()) {
-        writer.writeTextElement("target_scene", targetScene.data());
-        if (sceneTransition.size()) {
-            writer.writeTextElement(
-                "target_transition", sceneTransition.data());
-        }
-    }
-    if (targetSceneItem.size()) {
-        writer.writeTextElement("target_scene_item", targetSceneItem.data());
-    }
-    if (targetFilter.size()) {
-	    writer.writeTextElement("target_filter", targetFilter.data());
-    }
-    if (lingerMs > 0) {
-        writer.writeTextElement("linger_ms", QString::number(int(lingerMs)));
-    }
-    writer.writeEndElement();
-}
-
-bool PmReaction::isSet() const
-{
-    switch (type) {
-        case PmReactionType::SwitchScene:
-            return targetScene.size() > 0;
-        case PmReactionType::ShowSceneItem:
-        case PmReactionType::HideSceneItem:
-            return targetSceneItem.size() > 0;
-        case PmReactionType::ShowFilter:
-        case PmReactionType::HideFilter:
-            return targetFilter.size() > 0;
-        default:
-            return false;
-    }
-}
-
 bool operator== (const struct pm_match_entry_config& l, 
                  const struct pm_match_entry_config& r)
 {
@@ -174,6 +66,8 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
 
 PmMatchConfig::PmMatchConfig(obs_data_t *data)
 {
+    memset(&filterCfg, 0, sizeof(pm_match_entry_config));
+
     obs_data_set_default_string(
         data, "match_image_filename", matchImgFilename.data());
     matchImgFilename = obs_data_get_string(data, "match_image_filename");
@@ -222,6 +116,8 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 
 PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
 {
+    memset(&filterCfg, 0, sizeof(pm_match_entry_config));
+
     while (true) {
         reader.readNext();
         if (reader.atEnd() || reader.error() != QXmlStreamReader::NoError) {
@@ -291,7 +187,7 @@ obs_data_t* PmMatchConfig::save() const
 
     obs_data_set_bool(ret, "is_enabled", filterCfg.is_enabled);
 
-    obs_data_t *reactionObj = reaction.save();
+    obs_data_t *reactionObj = reaction.saveData();
     obs_data_set_obj(ret, "reaction", reactionObj);
     obs_data_release(reactionObj);
 
@@ -393,7 +289,7 @@ obs_data_t* PmMultiMatchConfig::save(const std::string& presetName)
     obs_data_set_array(ret, "entries", matchEntriesArray);
     obs_data_array_release(matchEntriesArray);
 
-    obs_data_t *noMatchReactionObj = noMatchReaction.save();
+    obs_data_t *noMatchReactionObj = noMatchReaction.saveData();
     obs_data_set_obj(ret, "reaction", noMatchReactionObj);
     obs_data_release(noMatchReactionObj);
 
@@ -477,6 +373,7 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
     qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
     qRegisterMetaType<PmReaction>("PmReaction");
+    qRegisterMetaType<PmAction>("PmAction");
     qRegisterMetaType<PmMatchResults>("PmMatchResults");
     qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
     qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
@@ -580,6 +477,29 @@ QSet<std::string> PmMatchPresets::orphanedImages(
         && !this->containsImage(rcfg.matchImgFilename)) {
             ret.insert(rcfg.matchImgFilename);
         }
+    }
+    return ret;
+}
+
+bool PmSourceData::operator==(const PmSourceData &other) const
+{
+    return wsrc == other.wsrc && childNames == other.childNames;
+}
+
+QSet<std::string> PmSourceHash::sourceNames() const
+{
+    QSet<std::string> ret;
+    for (const std::string &k : keys()) {
+        ret.insert(k);
+    }
+    return ret;
+}
+
+QSet<std::string> PmSceneItemsHash::sceneItemNames() const
+{
+    QSet<std::string> ret;
+    for (const std::string &k : keys()) {
+        ret.insert(k);
     }
     return ret;
 }

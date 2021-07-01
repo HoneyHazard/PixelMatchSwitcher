@@ -11,6 +11,7 @@
 #include <obs.hpp>
 
 #include "pm-filter.h"
+#include "pm-reaction.hpp"
 
 class QXmlStreamWriter;
 class QXmlStreamReader;
@@ -83,50 +84,6 @@ struct PmMatchResults
 typedef std::vector<PmMatchResults> PmMultiMatchResults;
 
 /**
- * @brief Types of reactions provided by the plugin
- */
-enum class PmReactionType : char {
-    SwitchScene = 0,
-    ShowSceneItem = 1,
-    HideSceneItem = 2,
-    ShowFilter = 3,
-    HideFilter = 4,
-    ShowImage = 5, /* TBD */
-    HideImage = 6  /* TBD */
-};
-
-/**
- * @brief Describes what will happen in reaction to a condition
- */
-struct PmReaction
-{
-public:
-    PmReaction() {}
-    PmReaction(obs_data_t *data);
-    PmReaction(QXmlStreamReader &reader);
-
-    obs_data_t *save() const;
-    void saveXml(QXmlStreamWriter &writer) const;
-
-    bool isSet() const;
-
-public:
-    PmReactionType type = PmReactionType::SwitchScene;
-
-    std::string targetScene;
-    std::string sceneTransition = "Cut";
-
-    std::string targetSceneItem;
-    std::string targetFilter;
-
-    uint32_t lingerMs = 0;
-
-    bool operator==(const PmReaction &) const;
-    bool operator!=(const PmReaction &other) const
-        { return !operator==(other); }
-};
-
-/**
  * @brief Describes matching configuration of an individual match entry, 
  *        as well as switching behavior in case of a match
  */
@@ -148,7 +105,6 @@ struct PmMatchConfig
     bool invertResult = false;
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
-
     PmReaction reaction;
 
     bool operator==(const PmMatchConfig&) const;
@@ -206,17 +162,28 @@ protected:
     void importXml(QXmlStreamReader &reader);
 };
 
+/**
+ * @brief A reference to a scene or filter
+ */
+struct PmSourceData
+{
+    bool operator==(const PmSourceData &other) const;
+
+    OBSWeakSource wsrc;
+    QList<std::string> childNames;
+};
+
 /*
  * @brief Represents a set of weak source references to available scenes or 
  */
-class PmSourceHash final : public QHash<std::string, OBSWeakSource>
+class PmSourceHash final : public QHash<std::string, PmSourceData>
 {
 public:
     PmSourceHash() {}
     PmSourceHash(const PmSourceHash &other)
-        : QHash<std::string, OBSWeakSource>(other) {}
+        : QHash<std::string, PmSourceData>(other) {}
 
-    QSet<std::string> sourceNames() const { return keys().toSet(); };
+    QSet<std::string> sourceNames() const;
 };
 
 /**
@@ -239,7 +206,7 @@ public:
     PmSceneItemsHash(const PmSceneItemsHash &other)
         : QHash<std::string, PmSceneItemData>(other) {}
 
-    QSet<std::string> sceneItemNames() const { return keys().toSet(); };
+    QSet<std::string> sceneItemNames() const;
 };
 
 /**
@@ -270,6 +237,8 @@ namespace PmConstants
         = "PNG (*.png);; JPEG (*.jpg *.jpeg);; BMP (*.bmp);; All files (*.*)";
     const QString k_xmlFilenameFilter
         = "XML (*.xml);; All files (*.*)";
+    const QString k_writeFilenameFilter
+        = "TXT (*.txt);; LOG (*.log);; All files (*.*)";
 
     const QString k_problemCharacterStr
         = QString("[") + QRegExp::escape("\\/:*?\"<>|\"") + QString("]");

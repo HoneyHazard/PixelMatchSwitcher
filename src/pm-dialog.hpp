@@ -7,6 +7,7 @@
 
 class PmCore;
 class PmPresetsWidget;
+class QTabWidget;
 
 /**
  * @brief Top-level aggregate module of all UI elements used by the plugin

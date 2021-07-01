@@ -1,27 +1,33 @@
 #pragma once
 
+#include "pm-spoiler-widget.hpp"
 #include "pm-structs.hpp"
 
-#include <QGroupBox>
 #include <QSet>
 #include <QLabel>
 
 class PmCore;
+class PmReactionWidget;
+class PmAddActionMenu;
+
 class QTableWidget;
 class QPushButton;
 class QComboBox;
 class QTableWidgetItem;
+class QVBoxLayout;
+class QSpacerItem;
 
 /**
  * @brief Shows a list of match configuration entries and allows changing
  *        some of their parameters
   */
-class PmMatchListWidget : public QGroupBox
+class PmMatchListWidget : public PmSpoilerWidget
 {
     Q_OBJECT
 
 public:
-    PmMatchListWidget(PmCore* core, QWidget* parent);
+    PmMatchListWidget(PmCore* core, PmAddActionMenu *addActionMenu,
+                      QWidget* parent);
 
     int currentIndex() const;
 
@@ -33,17 +39,18 @@ signals:
     void sigMatchConfigMoveDown(size_t matchIndex);
     void sigMatchConfigInsert(size_t matchIndex, PmMatchConfig cfg);
     void sigMatchConfigRemove(size_t matchIndex);
-    void sigNoMatchReactionChanged(PmReaction noMatchReaction);
+
+public slots:
+    void toggleExpand(bool on) override;
 
 protected slots:
     // core event handlers
-    void onScenesChanged(
-        QList<std::string> scenes, QList<std::string> sceneItems);
     void onNewMatchResults(size_t idx, PmMatchResults results);
     void onMultiMatchConfigSizeChanged(size_t sz);
     void onMatchConfigChanged(size_t idx, PmMatchConfig cfg);
-    void onNoMatchReactionChanged(PmReaction noMatchReaction);
     void onMatchConfigSelect(size_t matchIndex, PmMatchConfig config);
+    void onCooldownActive(size_t matchIdx, bool active);
+    void onLingerActive(size_t matchIdx, bool active);
 
     // local UI handlers
     void onRowSelected();
@@ -52,9 +59,8 @@ protected slots:
     void onConfigRemoveButtonReleased();
     void onConfigMoveUpButtonReleased();
     void onConfigMoveDownButtonReleased();
-    void onNoMatchSceneSelected(QString str);
-    void onNoMatchTransitionSelected(QString str);
     void onCellChanged(int row, int col);
+    void onCellDoubleClicked(int row, int column);
 
 protected:
     enum class ColOrder;
@@ -75,31 +81,29 @@ protected:
 
     static const QString k_transpBgStyle;
     static const QString k_semiTranspBgStyle;
+    static const QColor k_cooldownBgColor;
+    static const QColor k_lingerBgColor;
+    static const QString k_cooldownTextStyle;
+    static const QString k_lingerTextStyle;
+    static const int k_rowPadding = 5;
 
     QPushButton* prepareButton(
         const char *tooltip, const char* icoPath, const char* themeId);
-    void constructRow(int idx, const QList<std::string> &scenes,
-        const QList<std::string> &sceneItems);
-    void updateAvailableButtons(size_t currIdx, size_t numConfigs);
-    void updateTargetChoices(QComboBox* combo,
-        const QList<std::string> &scenes,
-        const QList<std::string> &sceneItems);
-    void updateTargetSelection(
-        QComboBox *combo, const PmReaction &reaction, bool transparent = false);
-    void updateTransitionChoices(QComboBox* combo);
-
+    void updateButtonsState();
+    void constructRow(int idx);
     void enableConfigToggled(int idx, bool enable);
-    void targetSelected(int idx, QComboBox *box);
-    void sceneTransitionSelected(int idx, const QString &transTr);
-    void sceneItemActionSelected(int idx, const QString &actionStr);
     
     void lingerDelayChanged(int idx, int lingerMs);
+    void cooldownChanged(int idx, int cooldown);
 
     void setMinWidth();
     bool selectRowAtGlobalPos(QPoint globalPos);
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
 
+    int maxContentHeight() const override;
+
     PmCore* m_core;
+    PmAddActionMenu *m_addActionMenu;
     QTableWidget *m_tableWidget;
 
     QPushButton* m_cfgMoveUpBtn;
@@ -107,13 +111,15 @@ protected:
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
 
-    QComboBox* m_noMatchSceneCombo;
-    QComboBox* m_noMatchTransitionCombo;
+    QSpacerItem *m_buttonSpacer1;
+    QSpacerItem *m_buttonSpacer2;
+    QHBoxLayout *m_buttonsLayout;
 
     int m_prevMatchIndex = 0;
 };
 
-class PmResultsLabel : public QLabel {
+class PmResultsLabel : public QLabel
+{
     Q_OBJECT
 
 public:
@@ -121,5 +127,41 @@ public:
     QSize sizeHint() const override;
 
 protected:
-    int m_resultWidth;
+    int m_resultTextWidth = 0;
+};
+
+class PmContainerWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    PmContainerWidget(QWidget *contained, QWidget *parent = nullptr);
+    QWidget *containedWidget() const { return m_contained; }
+    QVBoxLayout *mainLayout() const { return m_mainLayout; }
+
+protected:
+    void mouseReleaseEvent(QMouseEvent *) override
+        { m_contained->setFocus(); }
+
+    QWidget *m_contained;
+    QVBoxLayout *m_mainLayout;
+};
+
+class PmReactionDisplay : public QLabel
+{
+    Q_OBJECT
+
+public:
+    PmReactionDisplay(const QString &text, QWidget *parent);
+    void updateReaction(const PmReaction &reaction, PmReactionType rtype);
+    QSize sizeHint() const override;
+
+protected:
+    void updateContents(const QString &html, int textWidthMax, int textRows);
+
+    int m_textWidth = 0;
+    int m_textHeight = 0;
+    int m_marginsWidth = 0;
+    QFontMetrics m_fontMetrics;
+    bool m_hasActions = false;
 };

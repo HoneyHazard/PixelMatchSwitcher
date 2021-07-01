@@ -47,6 +47,7 @@ if(BUILD_OUT_OF_TREE)
 
     include(external/FindLibObs.cmake)
     include(external/ObsPluginHelpers.cmake)
+    include(external/FindCEF.cmake)
 
     find_package(LibObs REQUIRED)
     find_package(Qt5Core REQUIRED)
@@ -87,7 +88,10 @@ set(pixel-match-switcher_HEADERS
         src/pm-filter.h
         src/pm-filter-ref.hpp
         src/pm-core.hpp
+        src/pm-add-action-menu.hpp
+        src/pm-spoiler-widget.hpp
         src/pm-match-config-widget.hpp
+        src/pm-match-reaction-widget.hpp
         src/pm-match-results-widget.hpp
         src/pm-match-list-widget.hpp
         src/pm-preview-config-widget.hpp
@@ -103,6 +107,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-dialog.hpp
         src/pm-about-box.hpp
         src/pm-structs.hpp
+        src/pm-reaction.hpp
         src/pm-linger-queue.hpp
         src/pm-presets-retriever.hpp
         src/pm-debug-tab.hpp
@@ -115,8 +120,11 @@ set(pixel-match-switcher_SOURCES
         src/pm-filter.c
         src/pm-filter-ref.cpp
         src/pm-core.cpp
+        src/pm-spoiler-widget.cpp
+        src/pm-add-action-menu.cpp
         src/pm-match-config-widget.cpp
         src/pm-match-results-widget.cpp
+        src/pm-match-reaction-widget.cpp
         src/pm-match-list-widget.cpp
         src/pm-preview-config-widget.cpp
         src/pm-preview-display-widget.cpp
@@ -132,6 +140,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-dialog.cpp
         src/pm-about-box.cpp
         src/pm-structs.cpp
+        src/pm-reaction.cpp
         src/pm-linger-queue.cpp
         src/pm-presets-retriever.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
@@ -180,6 +189,12 @@ else()
         endif()
         set_target_properties(pixel-match-switcher PROPERTIES FOLDER "plugins")
         install_obs_plugin_with_data(pixel-match-switcher data)
+endif()
+
+if(BROWSER_AVAILABLE_INTERNAL)
+    target_compile_definitions(pixel-match-switcher PUBLIC BROWSER_AVAILABLE=1)
+else()
+    target_compile_definitions(pixel-match-switcher PUBLIC BROWSER_AVAILABLE=0)
 endif()
 
 target_compile_options(pixel-match-switcher PUBLIC

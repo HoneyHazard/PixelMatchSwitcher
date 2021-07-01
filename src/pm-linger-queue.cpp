@@ -6,15 +6,18 @@ bool PmLingerCompare::operator()(const PmLingerInfo &left,
     return left.matchIndex > right.matchIndex;
 }
 
-void PmLingerQueue::removeExpired(const QTime &currTime)
+std::vector<size_t> PmLingerQueue::removeExpired(const QTime &currTime)
 {
+    std::vector<size_t> ret;
     for (auto itr = c.begin(); itr != c.end();) {
         if (currTime > itr->endTime) {
+            ret.push_back(itr->matchIndex);
             itr = c.erase(itr);
         } else {
             itr++;
         }
     }
+    return ret;
 }
 
 void PmLingerQueue::removeByMatchIndex(size_t matchIndex)
@@ -53,4 +56,12 @@ void PmLingerList::removeByMatchIndex(size_t matchIndex)
     }
 }
 
-
+bool PmLingerList::contains(const size_t matchIdx) const
+{
+    for (auto itr = begin(); itr != end(); itr++) {
+        if (itr->matchIndex == matchIdx) {
+            return true;
+        }
+    }
+    return false;
+}

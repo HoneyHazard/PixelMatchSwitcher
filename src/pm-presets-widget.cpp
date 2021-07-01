@@ -30,6 +30,7 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
     // top level layout
     QHBoxLayout* presetLayout = new QHBoxLayout;
     setLayout(presetLayout);
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 
     // preset controls
     m_presetCombo = new QComboBox(this);
@@ -369,7 +370,7 @@ void PmPresetsWidget::onPresetExportXml()
 
     std::string activePresetName = m_core->activeMatchPresetName();
     if (activePresetName.size()) {
-	    selectedPresets = { activePresetName };
+        selectedPresets = { activePresetName };
     }
 
     if (availablePresets.size() > 1) {

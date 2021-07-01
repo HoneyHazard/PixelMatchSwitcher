@@ -25,7 +25,7 @@ const char* PmMatchConfigWidget::k_failedImgStr
     = obs_module_text("[FAILED]");
 
 PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
-: QGroupBox(parent)
+: PmSpoilerWidget(parent)
 , m_core(pixelMatcher)
 {   
     const Qt::ConnectionType qc = Qt::QueuedConnection;
@@ -208,7 +208,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     mainLayout->addRow(obs_module_text("Invert Result: "), m_invertResultCheckbox);
 
-    setLayout(mainLayout);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    setContentLayout(mainLayout);
 
     // core signals -> local slots
     connect(m_core, &PmCore::sigMatchImageLoadSuccess,
@@ -243,6 +244,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     onNewMatchResults(selIdx, m_core->matchResults(selIdx));
     onCaptureStateChanged(m_core->captureState(), 0, 0);
     onActiveFilterChanged(m_core->activeFilterRef());
+
+    toggleExpand(true);
 }
 
 void PmMatchConfigWidget::onMatchConfigSelect(
@@ -251,8 +254,7 @@ void PmMatchConfigWidget::onMatchConfigSelect(
     m_matchIndex = matchIndex;
 
     onMatchConfigChanged(matchIndex, cfg);
-    bool existingSelected = matchIndex < m_multiConfigSz;
-    setEnabled(existingSelected);
+    setEnabled(matchIndex < m_multiConfigSz);
 
     if (m_core->hasFilename(matchIndex) && m_core->runningEnabled()) {
         std::string matchImgFilename = m_core->matchImgFilename(matchIndex);

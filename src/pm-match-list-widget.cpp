@@ -1,5 +1,8 @@
 #include "pm-match-list-widget.hpp"
 #include "pm-core.hpp"
+#include "pm-add-action-menu.hpp"
+
+#include <util/dstr.hpp>
 
 #include <QTableWidget>
 #include <QHeaderView>
@@ -14,6 +17,7 @@
 #include <QStackedWidget>
 #include <QIcon>
 #include <QStandardItemModel>
+#include <QScrollBar>
 
 #include <QMouseEvent>
 #include <QTimer> // for QTimer::singleShot()
@@ -25,11 +29,12 @@ using namespace std;
 enum class PmMatchListWidget::ColOrder : int {
     EnableBox = 0,
     ConfigName = 1,
-    TargetSelect = 2,
-    ActionSelect = 3,
-    LingerDelay = 4,
-    Result = 5,
-    NumCols = 6,
+    MatchActions = 2,
+    UnmatchActions = 3,
+    Linger = 4,
+    Cooldown = 5,
+    Result = 6,
+    NUM_COLS = 7,
 };
 
 enum class PmMatchListWidget::ActionStackOrder : int {
@@ -40,35 +45,29 @@ enum class PmMatchListWidget::ActionStackOrder : int {
 const QStringList PmMatchListWidget::k_columnLabels = {
     obs_module_text("Enable"),
     obs_module_text("Label"),
-    obs_module_text("Target"),
-    obs_module_text("Action"),
-    obs_module_text("Linger ms"),
+    obs_module_text("On Match"),
+    obs_module_text("On Unmatch"),
+    obs_module_text("Linger"),
+    obs_module_text("Cooldown"),
     obs_module_text("Result")
 };
-
-const QString PmMatchListWidget::k_dontSwitchStr 
-    = obs_module_text("<don't switch>");
-const QString PmMatchListWidget::k_scenesLabelStr
-    = obs_module_text("--- Scenes ---");
-const QString PmMatchListWidget::k_sceneItemsLabelStr
-    = obs_module_text("--- Scene Items & Filters ---");
-const QString PmMatchListWidget::k_showLabelStr = obs_module_text("Show");
-const QString PmMatchListWidget::k_hideLabelStr = obs_module_text("Hide");
-
-const QColor PmMatchListWidget::k_dontSwitchColor = Qt::lightGray;
-const QColor PmMatchListWidget::k_scenesLabelColor = Qt::darkCyan;
-const QColor PmMatchListWidget::k_scenesColor = Qt::cyan;
-const QColor PmMatchListWidget::k_sceneItemsLabelColor = Qt::darkYellow;
-const QColor PmMatchListWidget::k_sceneItemsColor = Qt::yellow;
 
 const QString PmMatchListWidget::k_transpBgStyle
     = "background-color: rgba(0, 0, 0, 0);";
 const QString PmMatchListWidget::k_semiTranspBgStyle
     = "background-color: rgba(0, 0, 0, 0.6);";
+const QString PmMatchListWidget::k_cooldownTextStyle
+    = "color: red; background-color: rgba(0, 0, 0, 0)";
+const QString PmMatchListWidget::k_lingerTextStyle
+    = "color: cyan; background-color: rgba(0, 0, 0, 0)";
+const QColor PmMatchListWidget::k_cooldownBgColor = Qt::darkYellow;
+const QColor PmMatchListWidget::k_lingerBgColor = Qt::blue;
 
-PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
-: QGroupBox(obs_module_text("Active Match Entries"), parent)
+PmMatchListWidget::PmMatchListWidget(
+    PmCore* core, PmAddActionMenu *addActionMenu, QWidget* parent)
+: PmSpoilerWidget(parent)
 , m_core(core)
+, m_addActionMenu(addActionMenu)
 {
     // table widget
     m_tableWidget = new QTableWidget(this);
@@ -78,7 +77,9 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
                                  | QAbstractItemView::SelectedClicked);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setSortingEnabled(false);
-    m_tableWidget->setColumnCount((int)ColOrder::NumCols);
+    m_tableWidget->setColumnCount((int)ColOrder::NUM_COLS);
+    m_tableWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_tableWidget->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
     m_tableWidget->setHorizontalHeaderLabels(k_columnLabels);
@@ -93,53 +94,31 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     m_cfgRemoveBtn = prepareButton(obs_module_text("Remove Match Entry"),
         ":/res/images/list_remove.png", "removeIconSmall");
 
-    QSpacerItem* buttonSpacer1 = new QSpacerItem(0, 0, QSizePolicy::Expanding);
-    QSpacerItem* buttonSpacer2 = new QSpacerItem(0, 0, QSizePolicy::Expanding);
+    m_buttonSpacer1 = new QSpacerItem(20, 0);
+    m_buttonSpacer2 = new QSpacerItem(20, 0);
 
-    QHBoxLayout* buttonsLayout = new QHBoxLayout;
-    buttonsLayout->addWidget(m_cfgInsertBtn);
-    buttonsLayout->addItem(buttonSpacer1);
-    buttonsLayout->addWidget(m_cfgMoveUpBtn);
-    buttonsLayout->addWidget(m_cfgMoveDownBtn);
-    buttonsLayout->addItem(buttonSpacer2);
-    buttonsLayout->addWidget(m_cfgRemoveBtn);
-
-    // no-match configuration UI
-    QLabel* noMatchSceneLabel = new QLabel(
-        obs_module_text("No-match Scene: "), this);
-
-    m_noMatchSceneCombo = new QComboBox(this);
-    //m_noMatchSceneCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
-
-    QLabel* noMatchTransitionLabel = new QLabel(
-        obs_module_text("No-match Transition: "), this);
-
-    m_noMatchTransitionCombo = new QComboBox(this);
-    updateTransitionChoices(m_noMatchTransitionCombo);
-
-    QFrame* spacer = new QFrame();
-    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-    QHBoxLayout* noMatchLayout = new QHBoxLayout();
-    noMatchLayout->addWidget(noMatchSceneLabel);
-    noMatchLayout->addWidget(m_noMatchSceneCombo);
-    noMatchLayout->addWidget(spacer);
-    noMatchLayout->addWidget(noMatchTransitionLabel);
-    noMatchLayout->addWidget(m_noMatchTransitionCombo);
+    m_buttonsLayout = new QHBoxLayout;
+    m_buttonsLayout->addWidget(m_cfgInsertBtn);
+    m_buttonsLayout->addItem(m_buttonSpacer1);
+    m_buttonsLayout->addWidget(m_cfgMoveUpBtn);
+    m_buttonsLayout->addWidget(m_cfgMoveDownBtn);
+    m_buttonsLayout->addItem(m_buttonSpacer2);
+    m_buttonsLayout->addWidget(m_cfgRemoveBtn);
+    m_buttonsLayout->setContentsMargins(0, 0, 0, 0);
+    setTopRightLayout(m_buttonsLayout);
 
     // top-level layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(buttonsLayout);
     mainLayout->addWidget(m_tableWidget);
-    mainLayout->addLayout(noMatchLayout);
-    setLayout(mainLayout);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    setContentLayout(mainLayout);
+    m_contentArea->setSizePolicy(
+        QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     // init state
     auto multiConfig = m_core->multiMatchConfig();
     size_t cfgSz = multiConfig.size();
     onMultiMatchConfigSizeChanged(cfgSz);
-
-    onScenesChanged(m_core->sceneNames(), m_core->sceneItemNames());
 
     for (size_t i = 0; i < multiConfig.size(); ++i) {
         onMatchConfigChanged(i, multiConfig[i]);
@@ -147,8 +126,6 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
     size_t selIdx = m_core->selectedConfigIndex();
     onMatchConfigSelect(
         selIdx, selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
-
-    onNoMatchReactionChanged(multiConfig.noMatchReaction);
 
     auto multiResults = m_core->multiMatchResults();
     for (size_t i = 0; i < multiResults.size(); ++i) {
@@ -168,10 +145,10 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMatchConfigSelect,
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
-    connect(m_core, &PmCore::sigScenesChanged,
-        this, &PmMatchListWidget::onScenesChanged, qc);
-    connect(m_core, &PmCore::sigNoMatchReactionChanged,
-        this, &PmMatchListWidget::onNoMatchReactionChanged, qc);
+    connect(m_core, &PmCore::sigCooldownActive,
+        this, &PmMatchListWidget::onCooldownActive, qc);
+    connect(m_core, &PmCore::sigLingerActive,
+        this, &PmMatchListWidget::onLingerActive, qc);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
@@ -186,70 +163,66 @@ PmMatchListWidget::PmMatchListWidget(PmCore* core, QWidget* parent)
         m_core, &PmCore::onMatchConfigInsert, qc);
     connect(this, &PmMatchListWidget::sigMatchConfigRemove,
         m_core, &PmCore::onMatchConfigRemove, qc);
-    connect(this, &PmMatchListWidget::sigNoMatchReactionChanged,
-        m_core, &PmCore::onNoMatchReactionChanged, qc);
 
     // connections: local ui
     connect(m_tableWidget, &QTableWidget::itemChanged,
-        this, &PmMatchListWidget::onItemChanged, qc);
-    connect(m_tableWidget->selectionModel(),
-        &QItemSelectionModel::selectionChanged,
-        this, &PmMatchListWidget::onRowSelected, qc);
+        this, &PmMatchListWidget::onItemChanged);
     connect(m_tableWidget, &QTableWidget::cellChanged,
-        this, &PmMatchListWidget::onCellChanged, qc);
+        this, &PmMatchListWidget::onCellChanged);
+    connect(m_tableWidget, &QTableWidget::cellDoubleClicked,
+        this, &PmMatchListWidget::onCellDoubleClicked);
+    connect(
+        m_tableWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
+        this, &PmMatchListWidget::onRowSelected);
+
     connect(m_cfgMoveUpBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigMoveUpButtonReleased, qc);
+        this, &PmMatchListWidget::onConfigMoveUpButtonReleased);
     connect(m_cfgMoveDownBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigMoveDownButtonReleased, qc);
+        this, &PmMatchListWidget::onConfigMoveDownButtonReleased);
     connect(m_cfgInsertBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigInsertButtonReleased, qc);
+        this, &PmMatchListWidget::onConfigInsertButtonReleased);
     connect(m_cfgRemoveBtn, &QPushButton::released,
-        this, &PmMatchListWidget::onConfigRemoveButtonReleased, qc);
-    connect(m_noMatchSceneCombo, &QComboBox::currentTextChanged,
-        this, &PmMatchListWidget::onNoMatchSceneSelected, qc);
-    connect(m_noMatchTransitionCombo, &QComboBox::currentTextChanged,
-        this, &PmMatchListWidget::onNoMatchTransitionSelected, qc);
-}
-
-void PmMatchListWidget::onScenesChanged(
-    QList<std::string> scenes, QList<std::string> sceneItems)
-{
-    int sz = (int)m_core->multiMatchConfigSize();
-    for (int i = 0; i < sz; ++i) {
-        QComboBox* sceneBox = (QComboBox*)m_tableWidget->cellWidget(
-            i, (int)ColOrder::TargetSelect);
-        updateTargetChoices(sceneBox, scenes, sceneItems);
-    }
-
-    updateTargetChoices(m_noMatchSceneCombo, scenes, {});
+        this, &PmMatchListWidget::onConfigRemoveButtonReleased);
 }
 
 void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 {
-    QList<std::string> sceneNames = m_core->sceneNames();
-    QList<std::string> sceneItemNames = m_core->sceneItemNames();
-    size_t oldSz = size_t(m_tableWidget->rowCount());
-    m_tableWidget->setRowCount((int)sz + 1);
-    // widgets in the new rows are constructed, when necessary
-    for (size_t i = oldSz ? oldSz-1 : 0; i < sz; ++i) {
-        constructRow((int)i, sceneNames, sceneItemNames);
-    }
-    // last row below is empty (for insertion)
-    for (int c = 0; c < (int)ColOrder::NumCols; ++c) {
-        m_tableWidget->setCellWidget((int)sz, c, nullptr);
-        m_tableWidget->setItem((int)sz, c, nullptr);
+    int oldRowCount = size_t(m_tableWidget->rowCount());
+    int newRowCount = (int)sz + 1;
+    if (oldRowCount != newRowCount) {
+        m_tableWidget->setRowCount(newRowCount);
+        // widgets in the new rows are constructed, when necessary
+        for (int i = oldRowCount ? oldRowCount - 1 : 0; i < (int)sz; ++i) {
+            constructRow(i);
+        }
+        // last row below is empty (for insertion)
+        for (int c = 0; c < (int)ColOrder::NUM_COLS; ++c) {
+            m_tableWidget->setCellWidget((int)sz, c, nullptr);
+            QTableWidgetItem *item = new QTableWidgetItem();
+            auto flags = item->flags() & ~Qt::ItemIsEditable;
+            item->setFlags(flags);
+            m_tableWidget->setItem((int)sz, c, item);
+        }
     }
 
     // enable/disable control buttons
-    updateAvailableButtons((size_t)currentIndex(), sz);
+    updateButtonsState();
 
     // workaround for a buggy behavior that automatic resizing isn't handling
     m_tableWidget->resizeColumnsToContents();
+    updateContentHeight();
+
+    QString title = obs_module_text("Active Match Entries");
+    if (sz > 0)
+        title += QString(" [%1]").arg(sz);
+    setTitle(title);
 }
 
 void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 {
     int idx = (int)index;
+
+    int rowHeight = 0;
 
     auto enableBox = (QCheckBox*)m_tableWidget->cellWidget(
         idx, (int)ColOrder::EnableBox);
@@ -257,79 +230,79 @@ void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
         enableBox->blockSignals(true);
         enableBox->setChecked(cfg.filterCfg.is_enabled);
         enableBox->blockSignals(false);
+        rowHeight = qMax(rowHeight, enableBox->sizeHint().height());
     }
-    
+
     auto nameItem = m_tableWidget->item(idx, (int)ColOrder::ConfigName);
     if (nameItem) {
         m_tableWidget->blockSignals(true);
         nameItem->setText(cfg.label.data());
         nameItem->setToolTip(cfg.label.data());
         m_tableWidget->blockSignals(false);
+        rowHeight = qMax(rowHeight, nameItem->sizeHint().height());
     }
 
     const PmReaction &reaction = cfg.reaction;
-    auto targetCombo = (QComboBox*)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::TargetSelect);
-    if (targetCombo) {
-        updateTargetSelection(targetCombo, reaction, true);
+
+    PmReactionDisplay *matchDisplay = (PmReactionDisplay *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::MatchActions);
+    if (matchDisplay) {
+        matchDisplay->updateReaction(reaction, PmReactionType::Match);
+        rowHeight = qMax(rowHeight, matchDisplay->sizeHint().height());
     }
 
-    auto actionStack = (QStackedWidget*)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::ActionSelect);
-    if (actionStack) {
-        if (reaction.type == PmReactionType::SwitchScene) {
-            int idx = int(ActionStackOrder::SceneTarget);
-            actionStack->setCurrentIndex(idx);
-            auto sceneTransCombo = (QComboBox *)actionStack->widget(idx);
-            actionStack->setCurrentWidget(sceneTransCombo);
-            if (sceneTransCombo) {
-                sceneTransCombo->blockSignals(true);
-                sceneTransCombo->setCurrentText(
-                    reaction.sceneTransition.data());
-                sceneTransCombo->setToolTip(
-                    sceneTransCombo->currentText());
-                sceneTransCombo->blockSignals(false);
-            }
-        } else {
-            int idx = int(ActionStackOrder::SceneItemTarget);
-            actionStack->setCurrentIndex(idx);
-            auto sceneItemActionCombo = (QComboBox* )actionStack->widget(idx);
-            if (sceneItemActionCombo) {
-                sceneItemActionCombo->blockSignals(true);
-                bool show = reaction.type == PmReactionType::ShowSceneItem
-                         || reaction.type == PmReactionType::ShowFilter;
-                QString selStr = show ? k_showLabelStr : k_hideLabelStr;
-                sceneItemActionCombo->setCurrentText(selStr);
-                sceneItemActionCombo->blockSignals(false);
-            }
-        }
+    PmReactionDisplay *unmatchDisplay = (PmReactionDisplay *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::UnmatchActions);
+    if (unmatchDisplay) {
+        unmatchDisplay->updateReaction(reaction, PmReactionType::Unmatch);
+        rowHeight
+            = qMax(rowHeight, unmatchDisplay->sizeHint().height());
     }
 
-    auto lingerDelayBox = (QSpinBox *)m_tableWidget->cellWidget(
-        idx, (int)ColOrder::LingerDelay);
+    PmContainerWidget *lingerContainer = (PmContainerWidget *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::Linger);
+    QSpinBox* lingerDelayBox = (QSpinBox *)lingerContainer->containedWidget();
     if (lingerDelayBox) {
         lingerDelayBox->blockSignals(true);
         lingerDelayBox->setValue(reaction.lingerMs);
         lingerDelayBox->blockSignals(false);
+        rowHeight
+            = qMax(rowHeight, lingerDelayBox->sizeHint().height());
     }
 
+    PmContainerWidget *cooldownContainer = (PmContainerWidget *)
+        m_tableWidget->cellWidget(idx, (int)ColOrder::Cooldown);
+    QSpinBox *cooldownDelayBox
+        = (QSpinBox *)cooldownContainer->containedWidget();
+    if (cooldownDelayBox) {
+        cooldownDelayBox->blockSignals(true);
+        cooldownDelayBox->setValue(reaction.cooldownMs);
+        cooldownDelayBox->blockSignals(false);
+        rowHeight
+            = qMax(rowHeight, cooldownDelayBox->sizeHint().height());
+    }
+
+    // control horizontal sizing
+    m_tableWidget->resizeColumnsToContents();
     setMinWidth();
 
+    // control vertical sizing
+    rowHeight += k_rowPadding; // padding
+    m_tableWidget->verticalHeader()->resizeSection(idx, rowHeight);
+    updateContentHeight();
+
     // enable/disable control buttons
-    updateAvailableButtons(
-        (size_t)currentIndex(), m_core->multiMatchConfigSize());
+    updateButtonsState();
 }
 
-void PmMatchListWidget::onNoMatchReactionChanged(PmReaction noMatchReaction)
+void PmMatchListWidget::toggleExpand(bool on)
 {
-    updateTargetSelection(m_noMatchSceneCombo, noMatchReaction);
+    if (m_tableWidget->rowCount() <= 1)
+        on = false;
 
-    m_noMatchTransitionCombo->blockSignals(true);
-    m_noMatchTransitionCombo->setCurrentText(
-        noMatchReaction.sceneTransition.data());
-    m_noMatchTransitionCombo->setToolTip(
-        m_noMatchTransitionCombo->currentText());
-    m_noMatchTransitionCombo->blockSignals(false);
+    PmSpoilerWidget::toggleExpand(on);
+
+    updateButtonsState();
 }
 
 void PmMatchListWidget::onNewMatchResults(size_t index, PmMatchResults results)
@@ -375,10 +348,53 @@ void PmMatchListWidget::onMatchConfigSelect(
     m_prevMatchIndex = int(matchIndex);
 
     m_tableWidget->selectRow((int)matchIndex);
+    auto item = m_tableWidget->item((int)matchIndex, 0);
+    if (item)
+        m_tableWidget->scrollToItem(item);
 
-    updateAvailableButtons(matchIndex, mmSz);
+    updateButtonsState();
 
     UNUSED_PARAMETER(config);
+}
+
+void PmMatchListWidget::onCooldownActive(size_t matchIdx, bool active)
+{
+    auto model = m_tableWidget->model();
+    QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
+    int row = (int)matchIdx;
+    if (row < m_tableWidget->rowCount()) {
+        for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
+            QColor bgColor = active ? k_cooldownBgColor : regBgColor;
+            QModelIndex index = model->index(row, col); 
+            model->setData(index, bgColor, Qt::BackgroundRole);
+        }
+        QWidget *cooldownWidget = m_tableWidget->cellWidget(
+            row, (int)ColOrder::Cooldown);
+        if (cooldownWidget) {
+            cooldownWidget->setStyleSheet(
+                active ? k_cooldownTextStyle : k_transpBgStyle);
+        }
+    }
+}
+
+void PmMatchListWidget::onLingerActive(size_t matchIdx, bool active)
+{
+    auto model = m_tableWidget->model();
+    QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
+    int row = (int)matchIdx;
+    if (row < m_tableWidget->rowCount()) {
+        for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
+            QColor bgColor = active ? k_lingerBgColor : regBgColor;
+            QModelIndex index = model->index(row, col); 
+            model->setData(index, bgColor, Qt::BackgroundRole);
+        }
+        QWidget *lingerWidget = m_tableWidget->cellWidget(
+            row, (int)ColOrder::Linger);
+        if (lingerWidget) {
+            lingerWidget->setStyleSheet(
+                active ? k_lingerTextStyle : k_transpBgStyle);
+        }
+    }
 }
 
 void PmMatchListWidget::onRowSelected()
@@ -394,18 +410,18 @@ void PmMatchListWidget::onRowSelected()
 
 void PmMatchListWidget::onConfigInsertButtonReleased()
 {
-    PmMatchConfig newCfg;
-
-    size_t idx = (size_t)(currentIndex());
-    size_t sz = m_core->multiMatchConfigSize();
-    if (sz > 0) {
-        size_t closestIdx = std::min(idx, sz-1);
-        PmReaction closestReaction = m_core->reaction(closestIdx);
-        newCfg.reaction.type = closestReaction.type;
+    int idx = currentIndex();
+    if (!isExpanded() || idx < 0) {
+        idx = m_tableWidget->rowCount() - 1;
     }
+    emit sigMatchConfigInsert((size_t)idx, PmMatchConfig());
+    emit sigMatchConfigSelect((size_t)idx);
 
-    emit sigMatchConfigInsert(idx, newCfg);
-    emit sigMatchConfigSelect(idx);
+    if (!isExpanded()) expand();
+
+    QTableWidgetItem* cellItem = m_tableWidget->item(idx, 0);
+    if (cellItem)
+        m_tableWidget->scrollToItem(cellItem);
 }
 
 void PmMatchListWidget::onConfigRemoveButtonReleased()
@@ -426,28 +442,31 @@ void PmMatchListWidget::onConfigMoveDownButtonReleased()
     emit sigMatchConfigMoveDown(idx);
 }
 
-void PmMatchListWidget::onNoMatchSceneSelected(QString scene)
-{
-    std::string noMatchScene = 
-        (scene == k_dontSwitchStr) ? "" : scene.toUtf8().data();
-    PmReaction noMatchReaction = m_core->noMatchReaction();
-    noMatchReaction.targetScene = noMatchScene;
-    emit sigNoMatchReactionChanged(noMatchReaction);
-}
-
-void PmMatchListWidget::onNoMatchTransitionSelected(QString str)
-{
-    PmReaction noMatchReaction = m_core->noMatchReaction();
-    noMatchReaction.sceneTransition = str.toUtf8().data();
-    emit sigNoMatchReactionChanged(noMatchReaction);
-}
-
 void PmMatchListWidget::onCellChanged(int row, int col)
 {
     int numRows = m_tableWidget->rowCount();
     if (row == numRows - 1) {
         m_tableWidget->setItem(row, col, nullptr);
     }
+}
+
+void PmMatchListWidget::onCellDoubleClicked(int row, int column)
+{
+    PmReactionType reactType = PmReactionType::Match;
+
+    if (row < 0 || row >= (int)m_core->multiMatchConfigSize()) return;
+
+    if (column == (int)ColOrder::MatchActions) {
+        reactType = PmReactionType::Match;
+    } else if (column == (int)ColOrder::UnmatchActions) {
+        reactType = PmReactionType::Unmatch;
+    } else {
+        return;
+    }
+
+    m_addActionMenu->setTypeAndTarget(PmReactionTarget::Entry, reactType);
+    m_addActionMenu->setMatchIndex((size_t)row);
+    m_addActionMenu->popup(QCursor::pos());
 }
 
 QPushButton* PmMatchListWidget::prepareButton(
@@ -468,8 +487,7 @@ QPushButton* PmMatchListWidget::prepareButton(
     return ret;
 }
 
-void PmMatchListWidget::constructRow(int idx,
-    const QList<std::string> &scenes, const QList<std::string> &sceneItems)
+void PmMatchListWidget::constructRow(int idx)
 {
     QWidget* parent = m_tableWidget;
 
@@ -480,63 +498,66 @@ void PmMatchListWidget::constructRow(int idx,
         [this, idx](bool checked) { enableConfigToggled(idx, checked); });
     enableBox->installEventFilter(this);
     m_tableWidget->setCellWidget(idx, (int)ColOrder::EnableBox, enableBox);
+    //m_tableWidget->item(idx, (int)ColOrder::EnableBox))
 
     // config label edit
-    QString placeholderName = QString("placeholder %1").arg(idx);
+    QString placeholderName = QString("placeholder %1").arg(idx + 1);
     auto labelItem = new QTableWidgetItem(placeholderName);
+    labelItem->setTextAlignment(Qt::AlignVCenter);
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
-    m_tableWidget->setItem(
-        idx, (int)ColOrder::ConfigName, labelItem);
+    m_tableWidget->blockSignals(true);
+    m_tableWidget->setItem(idx, (int)ColOrder::ConfigName, labelItem);
+    m_tableWidget->blockSignals(false);
 
-    // target scene or scene item
-    QComboBox* targetCombo = new QComboBox(parent);
-    targetCombo->setInsertPolicy(QComboBox::InsertAlphabetically);
-    targetCombo->setStyleSheet(k_transpBgStyle);
-    targetCombo->setAttribute(Qt::WA_TranslucentBackground);
-    targetCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    updateTargetChoices(targetCombo, scenes, sceneItems);
-    targetCombo->installEventFilter(this);
-    connect(targetCombo, &QComboBox::currentTextChanged,
-        [this, targetCombo, idx](){ targetSelected(idx, targetCombo); });
-    m_tableWidget->setCellWidget(idx, (int)ColOrder::TargetSelect, targetCombo);
+    // match actions
+    PmReactionDisplay *matchActionsDisplay
+        = new PmReactionDisplay("--", parent);
+    matchActionsDisplay->setStyleSheet(k_transpBgStyle);
+    matchActionsDisplay->setAlignment(Qt::AlignVCenter);
+    matchActionsDisplay->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::MatchActions,
+        matchActionsDisplay);
 
-    // scene transition or scene item action
-    QComboBox* sceneTransitionCombo = new QComboBox(parent);
-    sceneTransitionCombo->setStyleSheet(k_transpBgStyle);
-    updateTransitionChoices(sceneTransitionCombo);
-    sceneTransitionCombo->installEventFilter(this);
-    connect(sceneTransitionCombo, &QComboBox::currentTextChanged,
-        [this, idx](const QString& str) { sceneTransitionSelected(idx, str); });
-
-    QComboBox *sceneItemActionCombo = new QComboBox(parent);
-    sceneItemActionCombo->setStyleSheet(k_transpBgStyle);
-    sceneItemActionCombo->addItem(k_showLabelStr);
-    sceneItemActionCombo->addItem(k_hideLabelStr);
-    sceneItemActionCombo->installEventFilter(this);
-    connect(sceneItemActionCombo, &QComboBox::currentTextChanged,
-        [this, idx](const QString &str) { sceneItemActionSelected(idx, str); });
-
-    QStackedWidget *targetActionStack = new QStackedWidget(parent);
-    targetActionStack->setStyleSheet(
-        QString("QWidget { %1 }").arg(k_transpBgStyle));
-    targetActionStack->setContentsMargins(0, 0, 0, 0);
-    targetActionStack->addWidget(sceneTransitionCombo);
-    targetActionStack->addWidget(sceneItemActionCombo);
-    m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::ActionSelect, targetActionStack);
+    // unmatch actions
+    PmReactionDisplay *unmatchActionsDisplay =
+        new PmReactionDisplay("--", parent);
+    unmatchActionsDisplay->setStyleSheet(k_transpBgStyle);
+    unmatchActionsDisplay->setAlignment(Qt::AlignVCenter);
+    unmatchActionsDisplay->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::UnmatchActions,
+        unmatchActionsDisplay);
 
     // linger delay
     QSpinBox *lingerDelayBox = new QSpinBox();
     lingerDelayBox->setStyleSheet(k_transpBgStyle);
-    lingerDelayBox->setRange(0, 10000);
+    lingerDelayBox->setRange(0, 3600000);
     lingerDelayBox->setSingleStep(10);
-    lingerDelayBox->installEventFilter(this);
     void (QSpinBox::*sigLingerValueChanged)(int value)
         = &QSpinBox::valueChanged;
     connect(lingerDelayBox, sigLingerValueChanged,
         [this, idx](int val) { lingerDelayChanged(idx, val); });
-    m_tableWidget->setCellWidget(
-        idx, (int)ColOrder::LingerDelay, lingerDelayBox);
+    lingerDelayBox->setMaximumHeight(lingerDelayBox->sizeHint().height());
+    lingerDelayBox->installEventFilter(this);
+    PmContainerWidget *lingerContainer = new PmContainerWidget(lingerDelayBox);
+    lingerContainer->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::Linger, lingerContainer);
+
+    // cooldown delay
+    QSpinBox *cooldownDelayBox = new QSpinBox();
+    cooldownDelayBox->setStyleSheet(k_transpBgStyle);
+    cooldownDelayBox->setRange(0, 3600000);
+    cooldownDelayBox->setSingleStep(10);
+    void (QSpinBox::*sigcooldownValueChanged)(int value) =
+        &QSpinBox::valueChanged;
+    connect(cooldownDelayBox, sigcooldownValueChanged,
+        [this, idx](int val) { cooldownChanged(idx, val); });
+    cooldownDelayBox->setMaximumHeight(cooldownDelayBox->sizeHint().height());
+    cooldownDelayBox->installEventFilter(this);
+    PmContainerWidget *cooldownContainer
+        = new PmContainerWidget(cooldownDelayBox);
+    cooldownContainer->installEventFilter(this);
+    m_tableWidget->setCellWidget(idx, (int)ColOrder::Cooldown,
+                 cooldownContainer);
 
     // result
     QLabel *resultLabel = new PmResultsLabel("--", parent);
@@ -551,132 +572,21 @@ void PmMatchListWidget::constructRow(int idx,
     m_tableWidget->setStyleSheet("QTableWidget::item { padding: 2px };");
 }
 
-void PmMatchListWidget::updateAvailableButtons(
-    size_t currIdx, size_t numConfigs)
+void PmMatchListWidget::updateButtonsState()
 {
+    bool expanded = isExpanded();
+    m_cfgInsertBtn->setVisible(true);
+    m_cfgMoveUpBtn->setVisible(expanded);
+    m_cfgMoveDownBtn->setVisible(expanded);
+    m_cfgRemoveBtn->setVisible(expanded);
+    m_buttonSpacer1->changeSize(expanded ? 20 : 0, 0);
+    m_buttonSpacer2->changeSize(expanded ? 20 : 0, 0);
+    m_buttonsLayout->update();
+
+    int currIdx = currentIndex();
     m_cfgMoveUpBtn->setEnabled(m_core->matchConfigCanMoveUp(currIdx));
     m_cfgMoveDownBtn->setEnabled(m_core->matchConfigCanMoveDown(currIdx));
-    m_cfgRemoveBtn->setEnabled(currIdx < numConfigs);
-    //m_cfgClearBtn->setEnabled(numConfigs > 0);
-}
-
-void PmMatchListWidget::updateTargetChoices(QComboBox* combo,
-    const QList<std::string> &scenes, const QList<std::string> &sceneItems)
-{
-    if (!combo) return;
-
-    auto model = dynamic_cast<QStandardItemModel *>(combo->model());
-
-    combo->blockSignals(true);
-    auto currText = combo->currentText();
-    combo->clear();
-
-    QFont mainFont = font();
-    mainFont.setBold(true);
-
-    int idx = 0;
-
-    combo->addItem(k_dontSwitchStr);
-    combo->setItemData(idx, "", Qt::UserRole);
-    combo->setItemData(idx, mainFont, Qt::FontRole);
-    combo->setItemData(idx, QBrush(k_dontSwitchColor), Qt::TextColorRole);
-    idx++;
-
-    combo->addItem(k_scenesLabelStr);
-    combo->setItemData(idx, QBrush(k_scenesLabelColor), Qt::TextColorRole);
-    model->item(idx)->setEnabled(false);
-    idx++;
-
-    for (const std::string &sceneName : scenes) {
-        combo->addItem(sceneName.data());
-        combo->setItemData(idx, sceneName.data(), Qt::UserRole);
-        combo->setItemData(idx, mainFont, Qt::FontRole);
-        combo->setItemData(idx, QBrush(k_scenesColor), Qt::TextColorRole);
-        idx++;
-    }
-
-    if (sceneItems.size()) {
-        combo->addItem(k_sceneItemsLabelStr);
-        combo->setItemData(
-            idx, QBrush(k_sceneItemsLabelColor), Qt::TextColorRole);
-        model->item(idx)->setEnabled(false);
-        idx++;
-
-        QFont filtersFont = font();
-        filtersFont.setBold(false);
-
-        for (const std::string &siName : sceneItems) {
-            combo->addItem(siName.data());
-            combo->setItemData(idx, siName.data(), Qt::UserRole);
-            combo->setItemData(idx, mainFont, Qt::FontRole);
-            combo->setItemData(
-                idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
-            idx++;
-
-            QList<std::string> filterNames = m_core->filters(siName);
-            for (const std::string& fiName : filterNames) {
-                QString fiLabel
-                    = QString(" ") + QChar(0x25CF) + ' ' + fiName.data();
-                combo->addItem(fiLabel);
-                combo->setItemData(idx, fiName.data(), Qt::UserRole);
-                combo->setItemData(
-                    idx, QBrush(k_sceneItemsColor), Qt::TextColorRole);
-                combo->setItemData(idx, filtersFont, Qt::FontRole);
-                idx++;
-            }
-        }
-    }
-
-    combo->setCurrentText(currText);
-    combo->setToolTip(combo->currentText());
-    combo->blockSignals(false);
-}
-
-void PmMatchListWidget::updateTargetSelection(
-    QComboBox *targetCombo, const PmReaction &reaction, bool transparent)
-{
-    QColor targetColor;
-    std::string targetStr;
-    if (reaction.isSet()) {
-        if (reaction.type == PmReactionType::SwitchScene) {
-            targetStr = reaction.targetScene;
-            targetColor = k_scenesColor;
-        } else if (reaction.type == PmReactionType::ShowSceneItem
-                || reaction.type == PmReactionType::HideSceneItem) {
-            targetStr = reaction.targetSceneItem;
-            targetColor = k_sceneItemsColor;
-        } else {
-            targetStr = reaction.targetFilter;
-            targetColor = k_sceneItemsColor;
-        }
-    } else {
-        targetColor = k_dontSwitchColor;
-        targetStr = "";
-    }
-    QString stylesheet = QString("%1; color: %2")
-        .arg(transparent ? k_transpBgStyle : "")
-        .arg(targetColor.name());
-
-    targetCombo->blockSignals(true);
-    int idx = targetCombo->findData(targetStr.data(), Qt::UserRole);
-    targetCombo->setCurrentIndex(idx);
-    targetCombo->setStyleSheet(stylesheet);
-    targetCombo->setToolTip(targetCombo->currentText());
-    targetCombo->blockSignals(false);
-}
-
-void PmMatchListWidget::updateTransitionChoices(QComboBox* combo)
-{
-    combo->blockSignals(true);
-    auto currText = combo->currentText();
-    combo->clear();
-    auto availableTransitions = m_core->availableTransitions();
-    for (const auto& val : availableTransitions) {
-        combo->addItem(val.data());
-    }
-    combo->setCurrentText(currText);
-    combo->setToolTip(combo->currentText());
-    combo->blockSignals(false);
+    m_cfgRemoveBtn->setEnabled(currIdx < m_tableWidget->rowCount()-1);
 }
 
 int PmMatchListWidget::currentIndex() const
@@ -688,10 +598,14 @@ void PmMatchListWidget::onItemChanged(QTableWidgetItem* item)
 {
     if (item->column() != (int)ColOrder::ConfigName) return;
 
-    size_t matchIndex = (size_t)item->row();
-    PmMatchConfig cfg = m_core->matchConfig(matchIndex);
-    cfg.label = item->text().toUtf8().data();
-    emit sigMatchConfigChanged(matchIndex, cfg);
+    auto flags = item->flags();
+    if ((flags & Qt::ItemIsEditable) && (flags & Qt::ItemIsEnabled)) {
+        // make sure this is the right label item; modify config when so 
+        size_t matchIndex = (size_t)item->row();
+        PmMatchConfig cfg = m_core->matchConfig(matchIndex);
+        cfg.label = item->text().toUtf8().data();
+        emit sigMatchConfigChanged(matchIndex, cfg);
+    }
 }
 
 void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
@@ -699,72 +613,6 @@ void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
     size_t index = (size_t)(idx);
     PmMatchConfig cfg = m_core->matchConfig(index);
     cfg.filterCfg.is_enabled = enable;
-    emit sigMatchConfigChanged(index, cfg);
-}
-
-void PmMatchListWidget::targetSelected(int matchIdx, QComboBox *box)
-{
-    size_t index = (size_t)(matchIdx);
-    PmMatchConfig cfg = m_core->matchConfig(index);
-    PmReaction &reaction = cfg.reaction;
-    QByteArray ba = box->currentData(Qt::UserRole).toByteArray();
-    std::string targetStr(ba.data());
-
-    if (targetStr.empty()) {
-        reaction = PmReaction();
-    } else {
-        QList<std::string> sceneNames = m_core->sceneNames();
-        QList<std::string> sceneItemNames = m_core->sceneItemNames();
-        if (sceneNames.contains(targetStr)) {
-            reaction.type = PmReactionType::SwitchScene;
-            reaction.targetScene = targetStr;
-            reaction.targetSceneItem.clear();
-            reaction.targetFilter.clear();
-        } else if (sceneItemNames.contains(targetStr)) {
-            if (reaction.type == PmReactionType::HideSceneItem
-             || reaction.type == PmReactionType::HideFilter) {
-                reaction.type = PmReactionType::HideSceneItem;
-            } else {
-                reaction.type = PmReactionType::ShowSceneItem;
-            }
-            reaction.targetSceneItem = targetStr;
-            reaction.targetScene.clear();
-            reaction.targetFilter.clear();
-        } else {
-            if (reaction.type == PmReactionType::HideSceneItem
-             || reaction.type == PmReactionType::HideFilter) {
-                reaction.type = PmReactionType::HideFilter;
-            } else {
-                reaction.type = PmReactionType::ShowFilter;
-            }
-            reaction.targetFilter = targetStr;
-            reaction.targetScene.clear();
-            reaction.targetSceneItem.clear();
-        }
-    }
-
-    emit sigMatchConfigChanged(index, cfg);
-}
-
-void PmMatchListWidget::sceneTransitionSelected(
-    int idx, const QString& transStr)
-{
-    size_t index = (size_t)(idx);
-    PmMatchConfig cfg = m_core->matchConfig(index);
-    cfg.reaction.sceneTransition = transStr.toUtf8().data();
-    emit sigMatchConfigChanged(index, cfg);
-}
-
-void PmMatchListWidget::sceneItemActionSelected(
-    int idx, const QString &actionStr)
-{
-    size_t index = (size_t)(idx);
-    PmMatchConfig cfg = m_core->matchConfig(index);
-    if (actionStr == k_showLabelStr) {
-        cfg.reaction.type = PmReactionType::ShowSceneItem;
-    } else if (actionStr == k_hideLabelStr) {
-        cfg.reaction.type = PmReactionType::HideSceneItem;
-    }
     emit sigMatchConfigChanged(index, cfg);
 }
 
@@ -776,10 +624,36 @@ void PmMatchListWidget::lingerDelayChanged(int idx, int lingerMs)
     emit sigMatchConfigChanged(index, cfg);
 }
 
+void PmMatchListWidget::cooldownChanged(int idx, int cooldownMs)
+{
+    size_t index = (size_t)(idx);
+    PmMatchConfig cfg = m_core->matchConfig(index);
+    cfg.reaction.cooldownMs = cooldownMs;
+    emit sigMatchConfigChanged(index, cfg);
+}
+
 void PmMatchListWidget::setMinWidth()
 {
     int width = m_tableWidget->horizontalHeader()->length() + 20;
     m_tableWidget->setMinimumWidth(width);
+}
+
+int PmMatchListWidget::maxContentHeight() const
+{
+    //return PmSpoilerWidget::contentHeight();
+
+    auto vertHeader = m_tableWidget->verticalHeader();
+    auto horizHeader = m_tableWidget->horizontalHeader();
+
+    int count = vertHeader->count();
+    //int scrollBarHeight = m_tableWidget->horizontalScrollBar()->height();
+    int horizontalHeaderHeight = horizHeader->height();
+    int rowTotalHeight = 0;
+    for (int i = 0; i < count; ++i) {
+        rowTotalHeight += vertHeader->sectionSize(i);
+        rowTotalHeight += k_rowPadding;
+    }
+    return rowTotalHeight + horizontalHeaderHeight;
 }
 
 bool PmMatchListWidget::selectRowAtGlobalPos(QPoint globalPos)
@@ -831,17 +705,139 @@ bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
 }
 
 PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
-    : QLabel(text, parentWidget)
+: QLabel(text, parentWidget)
 {
     QFontMetrics fm(font());
     auto m = contentsMargins();
-    m_resultWidth = fm.width("100.0%")
-        + m.left() + m.right() + margin() * 2 + 10;
 };
 
 QSize PmResultsLabel::sizeHint() const
 {
     QSize ret = QLabel::sizeHint();
-    ret.setWidth(m_resultWidth);
+    ret.setWidth(m_resultTextWidth);
     return ret;
+}
+
+//---------------------------------------------------------
+
+PmReactionDisplay::PmReactionDisplay(const QString &text, QWidget *parent)
+: QLabel(parent)
+, m_fontMetrics(font())
+{
+    setTextFormat(Qt::RichText);
+    setText(text);
+    auto m = contentsMargins();
+    m_marginsWidth = m.left() + m.right() + margin() * 2 + 10;
+}
+
+void PmReactionDisplay::updateReaction(
+    const PmReaction &reaction, PmReactionType rtype)
+{
+    int maxLength = 0;
+    const std::vector<PmAction> &actions = (rtype == PmReactionType::Match)
+        ? reaction.matchActions : reaction.unmatchActions;
+    QString line;
+    QString html;
+    QString tmp;
+
+    for (size_t i = 0; i < actions.size(); ++i) {
+        const auto &action = actions[i];
+        if (!action.isSet()) {
+            line = QString("[%1]").arg(PmAction::actionStr(action.actionType));
+        } else {
+            switch (action.actionType) {
+            case PmActionType::Scene:
+                line = QString("[%1] %2")
+                   .arg(action.targetDetails.size() ?
+                        action.targetDetails.data() : obs_module_text("scene"))
+                   .arg(action.targetElement.data());
+                break;
+            case PmActionType::SceneItem:
+            case PmActionType::Filter:
+                line = QString("[%1] %2")
+                    .arg(action.actionCode == (size_t)PmToggleCode::On ?
+                        obs_module_text("show") : obs_module_text("hide"))
+                    .arg(action.targetElement.data());
+                break;
+            case PmActionType::ToggleMute:
+                line = QString("[%1] %2")
+                    .arg(action.actionCode == (size_t)PmToggleCode::On
+                        ? obs_module_text("unmute") : obs_module_text("mute"))
+                    .arg(action.targetElement.data());
+                break;
+            case PmActionType::Hotkey:
+                {
+                    DStr dstr;
+                    obs_key_combination_to_str(action.keyCombo, dstr);
+                    line = dstr;
+                }
+                break;
+            case PmActionType::FrontEndAction:
+                line = PmAction::frontEndActionStr(
+                    (PmFrontEndAction)action.actionCode);
+                break;
+            case PmActionType::File:
+                line = QString("[%1] %2")
+                    .arg(PmAction::fileActionStr(
+                        (PmFileActionType)action.actionCode))
+                    .arg(action.targetElement.data());
+                break;
+            default:
+                line = obs_module_text("<not selected>");
+                break;
+            }
+        }
+        //int col = int((rtype == PmReactionType::Match)
+        //    ? ColOrder::Match : ColOrder::Unmatch);
+        //int maxAllowed = min(200, m_tableWidget->columnWidth(col));
+        line = m_fontMetrics.elidedText(line, Qt::ElideMiddle, 200);
+
+        html += QString("<font color=\"%1\">%2</font>")
+            .arg(action.actionColorStr())
+            .arg(line);
+
+        maxLength = qMax(maxLength, m_fontMetrics.size(0, line).width());
+        if (i < actions.size() - 1) {
+            html += "<br />";
+        }
+    }
+    m_hasActions = actions.size() > 0;
+    updateContents(html, maxLength, (int)actions.size());
+
+    QString reactionStr = (rtype == PmReactionType::Match)
+        ? obs_module_text("a match") : obs_module_text("an unmatch");
+    QString tooltip = QString("(double click to add %1 action)")
+        .arg(reactionStr);
+    if (m_hasActions) {
+        tooltip = html + "<hr />" + tooltip;
+    }
+    setToolTip(tooltip);
+}
+
+QSize PmReactionDisplay::sizeHint() const
+{
+    return QSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
+}
+
+void PmReactionDisplay::updateContents(
+    const QString &html, int textWidthMax, int textRows)
+{
+    setText(html);
+    m_textWidth = textWidthMax;
+    m_textHeight = m_fontMetrics.height() * textRows;
+    setMinimumSize(m_textWidth + m_marginsWidth, m_textHeight + m_marginsWidth);
+    updateGeometry();
+}
+
+PmContainerWidget::PmContainerWidget(QWidget *contained, QWidget *parent)
+: QWidget(parent)
+, m_contained(contained)
+{
+    m_contained->setParent(this);
+    m_mainLayout = new QVBoxLayout;
+    m_mainLayout->addWidget(contained);
+    setLayout(m_mainLayout);
+
+    m_mainLayout->setAlignment(Qt::AlignCenter);
+    m_mainLayout->setContentsMargins(0, 0, 0, 0);
 }
