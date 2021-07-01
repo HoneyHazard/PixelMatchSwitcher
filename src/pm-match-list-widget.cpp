@@ -187,19 +187,24 @@ PmMatchListWidget::PmMatchListWidget(
 
 void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 {
-    size_t oldSz = size_t(m_tableWidget->rowCount());
-    m_tableWidget->setRowCount((int)sz + 1);
-
-    // widgets in the new rows are constructed, when necessary
-    for (size_t i = oldSz ? oldSz-1 : 0; i < sz; ++i) {
-        constructRow((int)i);
-    }
-    // last row below is empty (for insertion)
-    for (int c = 0; c < (int)ColOrder::NUM_COLS; ++c) {
-        m_tableWidget->setCellWidget((int)sz, c, nullptr);
-	    QTableWidgetItem *item = new QTableWidgetItem();
-        item->setFlags(item->flags() ^ Qt::ItemIsEditable);
-        m_tableWidget->setItem((int)sz, c, item);
+    int oldRowCount = size_t(m_tableWidget->rowCount());
+	int newRowCount = (int)sz + 1;
+    if (oldRowCount != newRowCount) {
+	    m_tableWidget->setRowCount(newRowCount);
+	    // widgets in the new rows are constructed, when necessary
+	    for (int i = oldRowCount ? oldRowCount - 1 : 0; i < (int)sz; ++i) {
+		    constructRow(i);
+	    }
+	    // last row below is empty (for insertion)
+	    for (int c = 0; c < (int)ColOrder::NUM_COLS; ++c) {
+		    m_tableWidget->setCellWidget((int)sz, c, nullptr);
+		    QTableWidgetItem *item = new QTableWidgetItem();
+		    auto flags = item->flags();
+		    flags = flags ^ Qt::ItemIsEditable;
+		    flags = flags ^ Qt::ItemIsEnabled;
+		    item->setFlags(flags);
+		    m_tableWidget->setItem((int)sz, c, item);
+	    }
     }
 
     // enable/disable control buttons
@@ -502,8 +507,9 @@ void PmMatchListWidget::constructRow(int idx)
     auto labelItem = new QTableWidgetItem(placeholderName);
     labelItem->setTextAlignment(Qt::AlignVCenter);
     labelItem->setFlags(labelItem->flags() | Qt::ItemIsEditable);
-    m_tableWidget->setItem(
-        idx, (int)ColOrder::ConfigName, labelItem);
+    m_tableWidget->blockSignals(true);
+    m_tableWidget->setItem(idx, (int)ColOrder::ConfigName, labelItem);
+    m_tableWidget->blockSignals(false);
 
     // match actions
     PmReactionDisplay *matchActionsDisplay
@@ -594,10 +600,14 @@ void PmMatchListWidget::onItemChanged(QTableWidgetItem* item)
 {
     if (item->column() != (int)ColOrder::ConfigName) return;
 
-    size_t matchIndex = (size_t)item->row();
-    PmMatchConfig cfg = m_core->matchConfig(matchIndex);
-    cfg.label = item->text().toUtf8().data();
-    emit sigMatchConfigChanged(matchIndex, cfg);
+    auto flags = item->flags();
+    if ((flags & Qt::ItemIsEditable) && (flags & Qt::ItemIsEnabled)) {
+        // make sure this is the right label item; modify config when so 
+	    size_t matchIndex = (size_t)item->row();
+	    PmMatchConfig cfg = m_core->matchConfig(matchIndex);
+	    cfg.label = item->text().toUtf8().data();
+	    emit sigMatchConfigChanged(matchIndex, cfg);
+    }
 }
 
 void PmMatchListWidget::enableConfigToggled(int idx, bool enable)
