@@ -82,10 +82,10 @@ PmActionEntryWidget::PmActionEntryWidget(
     m_fileActionCombo = new QComboBox(this);
     m_fileActionCombo->addItem(
         PmAction::fileActionStr(PmFileActionType::WriteAppend),
-        (size_t)PmFileActionType::WriteAppend);
+        (unsigned int)PmFileActionType::WriteAppend);
     m_fileActionCombo->addItem(
         PmAction::fileActionStr(PmFileActionType::WriteTruncate),
-        (size_t)PmFileActionType::WriteTruncate);
+        (unsigned int)PmFileActionType::WriteTruncate);
     fileLayout->addWidget(m_fileActionCombo, row, 1);
 
     m_fileMarkersHelpButton
@@ -619,7 +619,8 @@ void PmActionEntryWidget::updateHotkeys()
     m_targetCombo->blockSignals(true);
     m_targetCombo->clear();
     int idx = 0;
-    m_targetCombo->addItem(obs_module_text("<select hotkey>"), (unsigned int)-1);
+    m_targetCombo->addItem(
+        obs_module_text("<select hotkey>"), (unsigned int)-1);
     model->item(idx)->setEnabled(false);
     m_targetCombo->setItemData(idx, dimmedBrush, Qt::ForegroundRole);
     idx++;
