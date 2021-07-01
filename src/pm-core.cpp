@@ -1277,6 +1277,7 @@ void PmCore::scanScenes()
         for (const std::string &oldAudioName : oldAudioNames) {
             if (!scanInfo.audioSources.contains(oldAudioName)) {
                 auto ws = m_audioSources[oldAudioName];
+
                 std::string newAudioName = scanInfo.audioSources.key(ws);
                 if (m_multiMatchConfig.noMatchReaction.hasAction(
                     PmActionType::ToggleMute)) {

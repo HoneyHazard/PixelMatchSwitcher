@@ -354,7 +354,7 @@ bool PmReaction::renameElement(PmActionType actionType,
     for (PmAction &action : matchActions) {
         ret |= action.renameElement(actionType, oldName, newName); 
     }
-    for (PmAction &action : matchActions) {
+    for (PmAction &action : unmatchActions) {
         ret |= action.renameElement(actionType, oldName, newName);
     }
     return ret;
@@ -368,7 +368,7 @@ bool PmReaction::hasAction(PmActionType actionType) const
             return true;
         }
     }
-    for (const PmAction &action : matchActions) {
+    for (const PmAction &action : unmatchActions) {
         if (actionType == PmActionType::ANY
          || action.actionType == actionType) {
             return true;
@@ -398,24 +398,6 @@ bool PmReaction::hasUnmatchAction(PmActionType actionType) const
     }
     return nullptr;
 }
-
-
-#if 0
-const char *PmReaction::targetScene() const
-{
-    for (const PmAction& action : matchActions) {
-        const char *ts = action.targetScene();
-        if (ts)
-            return ts;
-    }
-    for (const PmAction &action : unmatchActions) {
-        const char *ts = action.targetScene();
-        if (ts)
-            return ts;
-    }
-    return nullptr;
-}
-#endif
 
 bool PmReaction::isSet() const
 {
