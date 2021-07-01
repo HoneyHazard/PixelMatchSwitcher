@@ -39,8 +39,6 @@ public:
 
     void installEventFilterAll(QObject *obj);
 
-    void updateSizeHints(QList<QSize> &columnSizes);
-
 signals:
     void sigActionChanged(size_t actionIndex, PmAction action);
 

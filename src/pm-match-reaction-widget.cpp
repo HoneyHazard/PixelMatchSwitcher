@@ -709,19 +709,19 @@ void PmActionEntryWidget::onUiChanged()
         break;
     case PmActionType::Scene:
         action.targetElement
-            = m_targetCombo->currentData().toString().toUtf8();
+            = m_targetCombo->currentData().toString().toUtf8().data();
         action.targetDetails
-            = m_transitionsCombo->currentData().toString().toUtf8();
+            = m_transitionsCombo->currentData().toString().toUtf8().data();
         break;
     case PmActionType::SceneItem:
     case PmActionType::Filter:
         action.targetElement
-            = m_targetCombo->currentData().toString().toUtf8();
+            = m_targetCombo->currentData().toString().toUtf8().data();
         action.actionCode = (size_t)m_toggleSourceCombo->currentData().toUInt();
         break;
     case PmActionType::ToggleMute:
         action.targetElement =
-            m_targetCombo->currentData().toString().toUtf8();
+            m_targetCombo->currentData().toString().toUtf8().data();
         action.actionCode = (size_t)m_toggleMuteCombo->currentData().toUInt();
         break;
     case PmActionType::Hotkey:
@@ -735,9 +735,9 @@ void PmActionEntryWidget::onUiChanged()
         break;
     case PmActionType::File:
         action.actionCode = (size_t)m_fileActionCombo->currentData().toUInt();
-        action.targetElement = m_filenameEdit->text().toUtf8();
-        action.targetDetails = m_fileTextEdit->text().toUtf8();
-        action.timeFormat = m_fileTimeFormatEdit->text().toUtf8();
+        action.targetElement = m_filenameEdit->text().toUtf8().data();
+        action.targetDetails = m_fileTextEdit->text().toUtf8().data();
+        action.timeFormat = m_fileTimeFormatEdit->text().toUtf8().data();
         break;
     }
 
