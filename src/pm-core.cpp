@@ -1251,7 +1251,7 @@ void PmCore::scanScenes()
                 auto ws = m_filters[oldFiName];
                 std::string newFiName = scanInfo.filters.key(ws);
                 if (m_multiMatchConfig.noMatchReaction.hasAction(
-                    PmActionType::SceneItem)) {
+                        PmActionType::SceneItem)) {
                     auto noMatchReaction = m_multiMatchConfig.noMatchReaction;
                     if (noMatchReaction.renameElement(
                         PmActionType::SceneItem, oldFiName, newFiName)) {
@@ -1280,14 +1280,13 @@ void PmCore::scanScenes()
 
                 std::string newAudioName = scanInfo.audioSources.key(ws);
                 if (m_multiMatchConfig.noMatchReaction.hasAction(
-                    PmActionType::ToggleMute)) {
+                        PmActionType::ToggleMute)) {
                     auto noMatchReaction =
                         m_multiMatchConfig.noMatchReaction;
                     if (noMatchReaction.renameElement(
-                        PmActionType::ToggleMute,
-                        oldAudioName, newAudioName)) {
-                        onNoMatchReactionChanged(
-                            noMatchReaction);
+                            PmActionType::ToggleMute, 
+                            oldAudioName, newAudioName)) {
+                        onNoMatchReactionChanged(noMatchReaction);
                     }
                 }
                 for (size_t i = 0; i < cfgSize; i++) {
