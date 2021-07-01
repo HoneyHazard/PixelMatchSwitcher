@@ -321,11 +321,23 @@ void PmActionEntryWidget::actionToUi(
     case PmActionType::Scene:
         m_targetCombo->setVisible(true);
         m_targetCombo->blockSignals(true);
-        m_targetCombo->setCurrentText(action.targetElement.data());
+	    if (action.isSet()) {
+            int targetIdx
+                = m_targetCombo->findData(action.targetElement.data());
+		    m_targetCombo->setCurrentIndex(targetIdx);
+	    } else {
+		    m_targetCombo->setCurrentIndex(0);
+        }
         m_targetCombo->blockSignals(false);
 
         m_transitionsCombo->blockSignals(true);
-        m_transitionsCombo->setCurrentText(action.targetDetails.data());
+	    if (action.targetDetails.size()) {
+            int transitionIdx
+                = m_transitionsCombo->findData(action.targetDetails.data());
+		    m_transitionsCombo->setCurrentIndex(transitionIdx);
+	    } else {
+		    m_transitionsCombo->setCurrentIndex(0);
+        }
         m_transitionsCombo->blockSignals(false);
 
         m_detailsStack->setVisible(true);
@@ -336,7 +348,13 @@ void PmActionEntryWidget::actionToUi(
     case PmActionType::Filter:
          m_targetCombo->setVisible(true);
          m_targetCombo->blockSignals(true);
-         m_targetCombo->setCurrentText(action.targetElement.data());
+        if (action.isSet()) {
+            int targetIdx
+                = m_targetCombo->findData(action.targetElement.data());
+		    m_targetCombo->setCurrentIndex(targetIdx);
+	    } else {
+		    m_targetCombo->setCurrentIndex(0);
+        }
          m_targetCombo->blockSignals(false);
 
          m_toggleSourceCombo->blockSignals(true);
@@ -351,7 +369,13 @@ void PmActionEntryWidget::actionToUi(
     case PmActionType::ToggleMute:
         m_targetCombo->setVisible(true);
         m_targetCombo->blockSignals(true);
-        m_targetCombo->setCurrentText(action.targetElement.data());
+        if (action.isSet()) {
+            int targetIdx
+                = m_targetCombo->findData(action.targetElement.data());
+		    m_targetCombo->setCurrentIndex(targetIdx);
+	    } else {
+		    m_targetCombo->setCurrentIndex(0);
+        }
         m_targetCombo->blockSignals(false);
 
         m_toggleMuteCombo->blockSignals(true);

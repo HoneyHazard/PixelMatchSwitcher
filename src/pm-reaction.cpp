@@ -94,6 +94,8 @@ QString PmAction::fileActionStr(PmFileActionType fa)
         return obs_module_text("append");
     case PmFileActionType::WriteTruncate:
         return obs_module_text("truncate");
+    default:
+	    return obs_module_text("unknown");
     }
 }
 
