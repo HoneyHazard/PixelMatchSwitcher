@@ -1587,13 +1587,17 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             continue;
         }
 
-        //uint32_t lingerMs = reaction.lingerMs;
         bool isMatched = newResult.isMatched;
         bool wasMatched = matchResults(matchIndex).isMatched;
+        if (!wasMatched && isMatched
+         && m_cooldownList.contains(matchIndex)) {
+            // prevent "switching on" after a cooldown
+            newResult.isMatched = false;
+            isMatched = false;
+        }
         anythingIsMatched |= isMatched;
-        bool switched = (isMatched != wasMatched);
-
-        if (switched) {
+        bool matchChanged = (isMatched != wasMatched);
+        if (matchChanged) {
             execReaction(
                 sceneSelected, matchIndex, currTime, reaction, isMatched);
         }
@@ -1633,9 +1637,6 @@ void PmCore::execReaction(
     bool &sceneSelected, size_t matchIdx, const QTime &time,
     const PmReaction &reaction, bool switchedOn)
 {
-    // no action on cooldown
-    if (m_cooldownList.contains(matchIdx)) return;
-
     // maintain linger info
     if (switchedOn && reaction.lingerMs > 0) {
 	    QTime futureTime = time.addMSecs(int(reaction.lingerMs));
