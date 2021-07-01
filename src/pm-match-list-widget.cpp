@@ -530,7 +530,7 @@ void PmMatchListWidget::constructRow(int idx)
     // linger delay
     QSpinBox *lingerDelayBox = new QSpinBox();
     lingerDelayBox->setStyleSheet(k_transpBgStyle);
-    lingerDelayBox->setRange(0, 10000);
+    lingerDelayBox->setRange(0, 3600000);
     lingerDelayBox->setSingleStep(10);
     void (QSpinBox::*sigLingerValueChanged)(int value)
         = &QSpinBox::valueChanged;
@@ -545,7 +545,7 @@ void PmMatchListWidget::constructRow(int idx)
     // cooldown delay
     QSpinBox *cooldownDelayBox = new QSpinBox();
     cooldownDelayBox->setStyleSheet(k_transpBgStyle);
-    cooldownDelayBox->setRange(0, 10000);
+    cooldownDelayBox->setRange(0, 3600000);
     cooldownDelayBox->setSingleStep(10);
     void (QSpinBox::*sigcooldownValueChanged)(int value) =
         &QSpinBox::valueChanged;

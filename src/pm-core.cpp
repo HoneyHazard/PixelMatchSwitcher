@@ -1637,6 +1637,8 @@ void PmCore::execReaction(
     bool &sceneSelected, size_t matchIdx, const QTime &time,
     const PmReaction &reaction, bool switchedOn)
 {
+	bool actionsTaken = false;
+
     // maintain linger info
     if (switchedOn && reaction.lingerMs > 0) {
 	    QTime futureTime = time.addMSecs(int(reaction.lingerMs));
@@ -1646,22 +1648,26 @@ void PmCore::execReaction(
 	    emit sigLingerActive(matchIdx, true);
     }
 
-    // activate cooldown
-    if (switchedOn && reaction.cooldownMs > 0) {
-	    m_cooldownList.push_back(
-		    {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
-	    emit sigCooldownActive(matchIdx, true);
-    }
-
     // activate scene match/unmatch action and take note if switched
     if (!sceneSelected) {
         if (execSceneAction(matchIdx, reaction, switchedOn)) {
             sceneSelected = true;
+            actionsTaken = true;
         }
     }
 
     // activate independent match/unmatch actions
-    execIndependentActions(matchConfigLabel(matchIdx), reaction, switchedOn);
+    if (execIndependentActions(
+            matchConfigLabel(matchIdx), reaction, switchedOn)) {
+	    actionsTaken = true;
+    }
+
+    // activate cooldown
+    if (actionsTaken && switchedOn && reaction.cooldownMs > 0) {
+	    m_cooldownList.push_back(
+		    {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
+	    emit sigCooldownActive(matchIdx, true);
+    }
 }
 
 // copied (and slightly simplified) from Advanced Scene Switcher:
@@ -1733,13 +1739,15 @@ bool PmCore::execSceneAction(
     return true;
 }
 
-void PmCore::execIndependentActions(const std::string &cfgName,
+bool PmCore::execIndependentActions(const std::string &cfgName,
     const PmReaction &reaction, bool switchedOn)
 {
+	bool actionsTaken = false;
     const auto &actions
         = switchedOn ? reaction.matchActions : reaction.unmatchActions;
 	for (const auto &action : actions) {
 	    if (!action.isSet()) continue;
+	    actionsTaken = true;
 
 		if (action.actionType == PmActionType::SceneItem) {
 			obs_sceneitem_t *sceneItem = nullptr;
@@ -1871,6 +1879,7 @@ void PmCore::execIndependentActions(const std::string &cfgName,
             }
         }
 	}
+	return actionsTaken;
 }
 
 void PmCore::supplyImageToFilter(
