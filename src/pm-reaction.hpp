@@ -78,7 +78,7 @@ public:
 
     obs_data_t *saveData() const;
     void saveXml(QXmlStreamWriter &writer) const;
-    bool renameElement(PmActionType actionType,
+    bool renameElement(PmActionType aType,
         const std::string &oldName, const std::string &newName);
 
     bool isSet() const;

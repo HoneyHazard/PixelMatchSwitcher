@@ -707,9 +707,7 @@ bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
 PmResultsLabel::PmResultsLabel(const QString &text, QWidget *parentWidget)
 : QLabel(text, parentWidget)
 {
-    QFontMetrics fm(font());
-    auto m = contentsMargins();
-};
+}
 
 QSize PmResultsLabel::sizeHint() const
 {

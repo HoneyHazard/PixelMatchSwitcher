@@ -203,10 +203,10 @@ void PmAction::saveXml(QXmlStreamWriter &writer) const
     writer.writeEndElement();
 }
 
-bool PmAction::renameElement(PmActionType actionType,
+bool PmAction::renameElement(PmActionType aType,
     const std::string &oldName, const std::string &newName)
 {
-    if (actionType == actionType && targetElement == oldName) {
+    if (aType == actionType && targetElement == oldName) {
         targetElement = newName;
         return true;
     }
@@ -252,7 +252,7 @@ std::string PmAction::formattedFileString(const std::string &str,
     const std::string &cfgLabel, const QDateTime &time) const
 {
     // TODO optimize but not super important
-    std::string timeStr = time.toString(timeFormat.data()).toUtf8();
+    std::string timeStr = time.toString(timeFormat.data()).toUtf8().data();
     std::string ret = str;
     size_t find;
     while ((find = ret.find(k_timeMarker)) != std::string::npos) {
@@ -376,7 +376,7 @@ bool PmReaction::hasAction(PmActionType actionType) const
             return true;
         }
     }
-    return nullptr;
+    return false;
 }
 
 bool PmReaction::hasMatchAction(PmActionType actionType) const
@@ -387,7 +387,7 @@ bool PmReaction::hasMatchAction(PmActionType actionType) const
             return true;
         }
     }
-    return nullptr;
+    return false;
 }
 
 bool PmReaction::hasUnmatchAction(PmActionType actionType) const
@@ -398,7 +398,7 @@ bool PmReaction::hasUnmatchAction(PmActionType actionType) const
             return true;
         }
     }
-    return nullptr;
+    return false;
 }
 
 bool PmReaction::isSet() const

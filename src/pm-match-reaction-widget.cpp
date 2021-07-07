@@ -305,7 +305,7 @@ void PmActionEntryWidget::actionToUi(
         m_targetCombo->blockSignals(true);
         if (action.isSet()) {
             int targetIdx = m_targetCombo->findData(
-                (unsigned int)action.targetElement.data());
+                action.targetElement.data());
             m_targetCombo->setCurrentIndex(targetIdx);
         } else {
             m_targetCombo->setCurrentIndex(0);
@@ -554,8 +554,7 @@ void PmActionEntryWidget::updateHotkeys()
             auto source = OBSGetStrongRef(weakSource);
             if (source) {
                 auto name = obs_source_get_name(source);
-                if (obs_scene_t *scene =
-                    obs_scene_from_source(source)) {
+                if (obs_scene_from_source(source) != nullptr) {
                     scenesKeys.insert(name, hkeyData);
                 } else {
                     sourcesKeys.insert(name, hkeyData);
@@ -861,9 +860,10 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     QWidget *parent)
 : PmSpoilerWidget(parent)
 , m_core(core)
-, m_addActionMenu(addActionMenu)
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
+, m_addActionMenu(addActionMenu)
+
 {
     QIcon insertIcon;
     insertIcon.addFile(":/res/images/add.png", QSize(), QIcon::Normal,
