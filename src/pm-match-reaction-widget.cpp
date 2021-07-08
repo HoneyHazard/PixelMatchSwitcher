@@ -442,6 +442,10 @@ void PmActionEntryWidget::actionToUi(
         }
         showFileActionsUi(true);
         break;
+    case PmActionType::ANY:
+    default:
+        blog(LOG_ERROR, "Unknown/unspecified action type");
+        break;
     }
 
     updateUiStyle(action);
@@ -738,6 +742,10 @@ void PmActionEntryWidget::onUiChanged()
         action.targetDetails = m_fileTextEdit->text().toUtf8().data();
         action.timeFormat = m_fileTimeFormatEdit->text().toUtf8().data();
         break;
+    case PmActionType::ANY:
+    default:
+        blog(LOG_ERROR, "Unknown/unspecified action type");
+        break;
     }
 
     emit sigActionChanged(m_actionIndex, action);
@@ -859,9 +867,9 @@ PmMatchReactionWidget::PmMatchReactionWidget(
     PmReactionTarget reactionTarget, PmReactionType reactionType,
     QWidget *parent)
 : PmSpoilerWidget(parent)
-, m_core(core)
 , m_reactionTarget(reactionTarget)
 , m_reactionType(reactionType)
+, m_core(core)
 , m_addActionMenu(addActionMenu)
 
 {
@@ -983,7 +991,7 @@ void PmMatchReactionWidget::reactionToUi(
     for (size_t i = 0; i < listSz; ++i) {
         QListWidgetItem *item = nullptr;
         PmActionEntryWidget *entryWidget = nullptr;
-        if (i >= m_actionListWidget->count()) {
+        if ((int)i >= m_actionListWidget->count()) {
             const auto qc = Qt::QueuedConnection;
             entryWidget = new PmActionEntryWidget(m_core, i, this);
             entryWidget->installEventFilterAll(this);
@@ -996,14 +1004,14 @@ void PmMatchReactionWidget::reactionToUi(
             m_actionListWidget->addItem(item);
             m_actionListWidget->setItemWidget(item, entryWidget);
         } else {
-            item = m_actionListWidget->item(int(i));
+            item = m_actionListWidget->item((int)i);
             entryWidget
                 = (PmActionEntryWidget*) m_actionListWidget->itemWidget(item);
         }
         entryWidget->actionToUi(i, actionList[i], cfgLabel);
         item->setSizeHint(entryWidget->sizeHint());
     }
-    while (m_actionListWidget->count() > listSz) {
+    while (m_actionListWidget->count() > (int)listSz) {
         QListWidgetItem *item = m_actionListWidget->takeItem(
             m_actionListWidget->count() - 1);
         delete item;

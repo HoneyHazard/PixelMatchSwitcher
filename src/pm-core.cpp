@@ -140,9 +140,9 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
 }
 
 PmCore::PmCore()
-: m_filtersMutex(QMutex::Recursive)
-, m_matchConfigMutex(QMutex::Recursive)
+: m_pmFilterMutex(QMutex::Recursive)
 , m_scenesMutex(QMutex::Recursive)
+, m_matchConfigMutex(QMutex::Recursive)
 {
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
@@ -212,7 +212,7 @@ void PmCore::deactivate()
 
     PmFilterRef oldAfr;
     {
-        QMutexLocker locker(&m_filtersMutex);
+        QMutexLocker locker(&m_pmFilterMutex);
         oldAfr = m_activeFilter;
         m_activeFilter.reset();
         activeFilterChanged();
@@ -247,7 +247,7 @@ void PmCore::deactivate()
 
 PmFilterRef PmCore::activeFilterRef() const
 {
-    QMutexLocker locker(&m_filtersMutex);
+    QMutexLocker locker(&m_pmFilterMutex);
     return m_activeFilter;
 }
 
@@ -1319,7 +1319,7 @@ void PmCore::updateActiveFilter(
     using namespace std;
     bool changed = false;
 
-    QMutexLocker locker(&m_filtersMutex);
+    QMutexLocker locker(&m_pmFilterMutex);
     if (m_activeFilter.isValid()) {
         if (activeFilters.contains(m_activeFilter.filterWeakSource())) {
             return;

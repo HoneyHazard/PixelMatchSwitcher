@@ -33,7 +33,7 @@ void PmImageView::showImage(const QImage& image)
     viewScene->addItem(imageItem);
 
     m_activeItem = imageItem;
-    setRenderHints(0); // no-antialiasing
+    setRenderHints(QPainter::RenderHints()); // no-antialiasing
 }
 
 void PmImageView::showMessage(const QString &message, QColor color)
@@ -52,7 +52,7 @@ void PmImageView::showMessage(const QString &message, QColor color)
     QGraphicsRectItem* backdropItem = new QGraphicsRectItem(
         0, 0, backdropWidth, backdropHeight*2.25f, imageItem);
     backdropItem->setPen(QPen(color, 3.f));
-    backdropItem->setBrush(palette().background());
+    backdropItem->setBrush(palette().window());
     backdropItem->setPos(imageItem->boundingRect().center() 
                        - backdropItem->boundingRect().center());
 

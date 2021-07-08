@@ -267,7 +267,7 @@ void PmPresetsRetriever::onDownloadImages()
     // dispatch image retrievers needed to start or resume a failed retrieve
     for (PmFileRetriever *imgRetriever : m_imgRetrievers) {
         if (!imgRetriever->isStarted()
-         || imgRetriever->isFinished() && imgRetriever->result() != CURLE_OK) {
+        || (imgRetriever->isFinished() && imgRetriever->result() != CURLE_OK)) {
             m_workerThreadPool.start(imgRetriever);
         }
     }

@@ -184,6 +184,7 @@ public:
         : QHash<std::string, PmSourceData>(other) {}
 
     QSet<std::string> sourceNames() const;
+    PmSourceHash& operator=(const PmSourceHash &other) = default;
 };
 
 /**
@@ -207,6 +208,7 @@ public:
         : QHash<std::string, PmSceneItemData>(other) {}
 
     QSet<std::string> sceneItemNames() const;
+    PmSceneItemsHash& operator=(const PmSceneItemsHash& other) = default;
 };
 
 /**

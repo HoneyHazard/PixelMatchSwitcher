@@ -206,7 +206,7 @@ protected:
     QPointer<PmDialog> m_dialog = nullptr;
     QTimer* m_periodicUpdateTimer = nullptr;
 
-    mutable QMutex m_filtersMutex;
+    mutable QMutex m_pmFilterMutex;
     PmFilterRef m_activeFilter;
 
     mutable QMutex m_scenesMutex;
