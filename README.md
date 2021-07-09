@@ -1,17 +1,27 @@
 ## Pixel Match Switcher
 
-**Pixel Match Switcher** is an [OBS Studio](https://obsproject.com/) plugin that allows switching scenes or changing scene item visibility in response to pixels of video being matched against image templates.
-- An individual matching image triggers transition to a specific *scene*, and several match entries (each with their own scene target) can be arranged in a priority-ordered list.
-- Alternatively, individual *scene items* can be shown or hidden
-by independent matching rules.
+**Pixel Match Switcher** is an [OBS Studio](https://obsproject.com/) plugin that can trigger switching scenes, changing visibility of scene items and filters, and other actions in response to pixels of video being matched against image templates.
 - Considerable amount of options is available for customizing the matching rules and the switching behavior.
 - Significant effort has been made towards a quick and user-friendly creation of match rules.
+- An individual matching image triggers transition to a specific *scene*, and several match entries (each with their own scene target) can be arranged in a priority-ordered list.
+- Other actions can be triggered independently of each other:
+    - scene item on/off
+    - filter on/off
+    - audio source mute/unmute
+    - simulated hotkeys (must be assigned)
+    - write to file (append or truncate)
+    - frontend actions
+        - streaming start/stop/pause
+        - reacording start/stop/pause/unpause
+        - replay buffer start/save/stop
+        - take screenshot
+        - virtual cam start/stop
 
-The following are some of the foreseeable use cases for the plugin:
+## Foreseeable Use Cases
 - Streamers often like to have displays with a bigger streamer-cam and/or ads when they are in a game menu, or some other “non gameplay” area of the game.
 - Streamers often need to *hide* certain elements of game content, so they don’t get stream-sniped by people who want to gain an advantage by watching their stream while playing against them. Currently, streamers handle these cases manually, by manually switching scenes everytime, either with the OBS UI or by assigning hotkeys.
 - Tournament broadcasters may wish to provide video overlays to identify participants and their team, or to show the game score. These could be activated or hidden automatically, in reaction to specific in-game graphics.
-- Generally speaking, any use case where a region of a video frame will contain predictable pixels that should trigger a scene transition.
+- Generally speaking, any use case where a region of a video frame will contain predictable pixels that should trigger one of the supported actions
 
 Presently, the plugin requires a special [atomic-effects](#Atomic-Effects-Fork-of-OBS) fork of OBS to function. We provide installers of the forked OBS with the plugin included to make everything easier to try out.
 
