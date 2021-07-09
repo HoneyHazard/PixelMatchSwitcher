@@ -95,7 +95,7 @@ QString PmAction::fileActionStr(PmFileActionType fa)
     case PmFileActionType::WriteTruncate:
         return obs_module_text("truncate");
     default:
-	    return obs_module_text("unknown");
+        return obs_module_text("unknown");
     }
 }
 
@@ -162,7 +162,8 @@ obs_data_t *PmAction::saveData() const
 {
     obs_data_t *ret = obs_data_create();
     obs_data_set_int(ret, "action_type", (long long)actionType);
-    obs_data_set_int(ret, "action_code", (long long)actionCode);
+    if (actionCode != (size_t)-1)
+        obs_data_set_int(ret, "action_code", (long long)actionCode);
     if (targetElement.size())
         obs_data_set_string(ret, "target_element", targetElement.data());
     if (targetDetails.size())
@@ -184,7 +185,10 @@ void PmAction::saveXml(QXmlStreamWriter &writer) const
 {
     writer.writeStartElement("action");
     writer.writeTextElement("action_type", QString::number(size_t(actionType)));
-    writer.writeTextElement("action_code", QString::number(size_t(actionCode)));
+    if (actionCode != (size_t)-1) {
+        writer.writeTextElement(
+            "action_code", QString::number(size_t(actionCode)));
+    }
     if (targetElement.size())
         writer.writeTextElement("target_element", targetElement.data());
     if (targetDetails.size())
@@ -216,8 +220,6 @@ bool PmAction::renameElement(PmActionType aType,
 bool PmAction::isSet() const
 {
     switch (actionType) {
-    case PmActionType::None:
-        return false; break;
     case PmActionType::FrontEndAction:
         return actionCode != (size_t)-1; break;
     case PmActionType::Hotkey:
@@ -225,8 +227,14 @@ bool PmAction::isSet() const
             || keyCombo.modifiers != (obs_key_t)-1;
     case PmActionType::File:
         return targetElement.size() > 0 || targetDetails.size() > 0;
+    case PmActionType::Scene:
+    case PmActionType::SceneItem:
+    case PmActionType::Filter:
+    case PmActionType::ToggleMute:
+        return targetElement.size() > 0;
+    case PmActionType::None:
     default:
-        return targetElement.size() > 0; break;
+        return false;
     }
 }
 

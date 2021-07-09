@@ -230,6 +230,8 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
 
 const std::string PmMultiMatchConfig::k_defaultNoMatchTransition = "Cut";
 
+//******************************************************************************
+
 PmMultiMatchConfig::PmMultiMatchConfig(obs_data_t* data)
 {
     obs_data_array_t* matchEntriesArray
@@ -340,6 +342,8 @@ bool PmMultiMatchConfig::containsImage(
     return false;
 }
 
+//******************************************************************************
+
 PmPreviewConfig::PmPreviewConfig(obs_data_t* data)
 {
     obs_data_set_default_int(data, "preview_mode", int(previewMode));
@@ -360,30 +364,7 @@ bool PmPreviewConfig::operator==(const PmPreviewConfig& other) const
     return previewMode == other.previewMode;
 }
 
-bool PmSceneItemData::operator==(const PmSceneItemData &other) const
-{
-    return si == other.si && filtersNames == other.filtersNames;
-}
-
-
-void pmRegisterMetaTypes()
-{
-    qRegisterMetaType<size_t>("size_t");
-    qRegisterMetaType<std::string>("std::string");
-    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
-    qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
-    qRegisterMetaType<PmReaction>("PmReaction");
-    qRegisterMetaType<PmAction>("PmAction");
-    qRegisterMetaType<PmMatchResults>("PmMatchResults");
-    qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
-    qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
-    qRegisterMetaType<PmSourceHash>("PmSourceHash");
-    qRegisterMetaType<PmSceneItemsHash>("PmSceneItemsHash");
-    qRegisterMetaType<PmFilterRef>("PmFilterRef");
-    qRegisterMetaType<PmCaptureState>("PmCaptureState");
-    qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
-    qRegisterMetaType<QList<std::string>>("QList<std::string>");
-}
+//******************************************************************************
 
 PmMatchPresets::PmMatchPresets(const std::string& filename)
 {
@@ -481,10 +462,21 @@ QSet<std::string> PmMatchPresets::orphanedImages(
     return ret;
 }
 
+//******************************************************************************
+
 bool PmSourceData::operator==(const PmSourceData &other) const
 {
     return wsrc == other.wsrc && childNames == other.childNames;
 }
+
+//******************************************************************************
+
+bool PmSceneItemData::operator==(const PmSceneItemData &other) const
+{
+    return si == other.si && filtersNames == other.filtersNames;
+}
+
+//******************************************************************************
 
 QSet<std::string> PmSourceHash::sourceNames() const
 {
@@ -495,6 +487,8 @@ QSet<std::string> PmSourceHash::sourceNames() const
     return ret;
 }
 
+//******************************************************************************
+
 QSet<std::string> PmSceneItemsHash::sceneItemNames() const
 {
     QSet<std::string> ret;
@@ -502,4 +496,25 @@ QSet<std::string> PmSceneItemsHash::sceneItemNames() const
         ret.insert(k);
     }
     return ret;
+}
+
+//******************************************************************************
+
+void pmRegisterMetaTypes()
+{
+    qRegisterMetaType<size_t>("size_t");
+    qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<PmMatchConfig>("PmMatchConfig");
+    qRegisterMetaType<PmMultiMatchConfig>("PmMultiMatchConfig");
+    qRegisterMetaType<PmReaction>("PmReaction");
+    qRegisterMetaType<PmAction>("PmAction");
+    qRegisterMetaType<PmMatchResults>("PmMatchResults");
+    qRegisterMetaType<PmMatchPresets>("PmMatchPresets");
+    qRegisterMetaType<PmPreviewConfig>("PmPreviewConfig");
+    qRegisterMetaType<PmSourceHash>("PmSourceHash");
+    qRegisterMetaType<PmSceneItemsHash>("PmSceneItemsHash");
+    qRegisterMetaType<PmFilterRef>("PmFilterRef");
+    qRegisterMetaType<PmCaptureState>("PmCaptureState");
+    qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
+    qRegisterMetaType<QList<std::string>>("QList<std::string>");
 }
