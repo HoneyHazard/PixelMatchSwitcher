@@ -23,6 +23,8 @@
 - Tournament broadcasters may wish to provide video overlays to identify participants and their team, or to show the game score. These could be activated or hidden automatically, in reaction to specific in-game graphics.
 - Generally speaking, any use case where a region of a video frame will contain predictable pixels that should trigger one of the supported actions
 
+## Requires Features Implemented in the OBS Fork
+
 Presently, the plugin requires a special [atomic-effects](#Atomic-Effects-Fork-of-OBS) fork of OBS to function. We provide installers of the forked OBS with the plugin included to make everything easier to try out.
 
 ## Screenshot
