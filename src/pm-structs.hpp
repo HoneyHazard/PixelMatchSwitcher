@@ -103,6 +103,7 @@ struct PmMatchConfig
     struct pm_match_entry_config filterCfg;
     float totalMatchThresh = 90.f;
     bool invertResult = false;
+    size_t sequenceId = (size_t)-1;
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
     PmReaction reaction;

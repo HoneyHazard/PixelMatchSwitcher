@@ -167,6 +167,7 @@ public slots:
     void onMatchImageRefresh(size_t matchIndex);
 
     void onMatchImagesRemove(QList<std::string> orphanedImages);
+    void onSequenceReset(int sequenceId);
 
 protected slots:
     void onPeriodicUpdate();
@@ -193,6 +194,9 @@ protected:
     void resetMultiMatchConfig(const PmMultiMatchConfig *newCfg = nullptr);
     void activateMultiMatchConfig(const PmMultiMatchConfig& mCfg);
     void activeFilterChanged();
+
+    bool notInSequence(size_t matchIdx) const;
+    void advanceSequence(int sequenceId);
 
     void supplyImageToFilter(
         struct pm_filter_data *data, size_t matchIdx, const QImage &image);
@@ -231,6 +235,7 @@ protected:
 
     mutable QMutex m_resultsMutex;
     PmMultiMatchResults m_results;
+    std::vector<size_t> m_sequences;
 
     mutable QMutex m_previewConfigMutex;
     PmPreviewConfig m_previewConfig;

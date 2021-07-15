@@ -1507,6 +1507,31 @@ void PmCore::activeFilterChanged()
     emit sigActiveFilterChanged(m_activeFilter);
 }
 
+bool PmCore::notInSequence(size_t matchIdx) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+
+    const PmMatchConfig &cfg = m_multiMatchConfig[matchIdx];
+    int seqId = cfg.sequenceId;
+
+    if (seqId == -1) return false;
+
+    auto &sequenceIndex = m_sequences[seqId];
+    return sequenceIndex == matchIdx;
+}
+
+void PmCore::advanceSequence(int sequenceId)
+{
+	QMutexLocker locker(&m_matchConfigMutex);
+    size_t mSz = m_multiMatchConfig.size();
+	int matchIdx = m_sequences[sequenceId] + 1;
+    while (matchIdx < mSz
+        && m_multiMatchConfig[matchIdx].sequenceId != sequenceId) {
+		matchIdx++;
+    }
+    m_sequences[sequenceId] = matchIdx;
+}
+
 void PmCore::onMenuAction()
 {
     // main UI dialog
@@ -1590,14 +1615,20 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         bool isMatched = newResult.isMatched;
         bool wasMatched = matchResults(matchIndex).isMatched;
         if (!wasMatched && isMatched
-         && m_cooldownList.contains(matchIndex)) {
-            // prevent "switching on" after a cooldown
+        && (m_cooldownList.contains(matchIndex) || !notInSequence(matchIndex))) {
+            // prevent "switching on" after a cooldown or out of order sequence cfg
             newResult.isMatched = false;
             isMatched = false;
         }
         anythingIsMatched |= isMatched;
         bool matchChanged = (isMatched != wasMatched);
         if (matchChanged) {
+            // advance sequence when applicable
+            if (cfg.sequenceId != -1) {
+                advanceSequence(cfg.sequenceId);
+            }
+
+            // perform actions
             execReaction(
                 sceneSelected, matchIndex, currTime, reaction, isMatched);
         }
