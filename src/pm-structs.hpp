@@ -6,6 +6,7 @@
 #include <QHash>
 #include <QSet>
 #include <QList>
+#include <QDateTime>
 
 #include <obs.h>
 #include <obs.hpp>
@@ -103,7 +104,7 @@ struct PmMatchConfig
     struct pm_match_entry_config filterCfg;
     float totalMatchThresh = 90.f;
     bool invertResult = false;
-    size_t sequenceId = (size_t)-1;
+    int sequenceId = -1;
 
     PmMaskMode maskMode = PmMaskMode::AlphaMode;
     PmReaction reaction;
@@ -229,6 +230,25 @@ struct PmPreviewConfig
         { return !operator==(other); }
 
     PmPreviewMode previewMode = PmPreviewMode::Video;
+};
+
+/**
+ * @brief Represents individual entry in a progression sequence
+ */
+struct PmSequenceEntry
+{
+	size_t matchIdx;
+    QDateTime latestTime;
+    QDateTime bestTime;
+};
+
+/**
+ * @brief Represents state of a linear progression sequence
+ */
+struct PmSequence
+{
+    size_t currMatchIndex;
+	std::vector<PmSequenceEntry> entries;
 };
 
 /**

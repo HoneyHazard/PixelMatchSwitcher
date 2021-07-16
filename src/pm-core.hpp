@@ -80,6 +80,7 @@ public:
     bool enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg);
     bool matchConfigCanMoveUp(size_t idx) const;
     bool matchConfigCanMoveDown(size_t idx) const;
+    int sequenceId(size_t matchIdx) const;
 
     PmPreviewConfig previewConfig() const;
 
@@ -196,6 +197,7 @@ protected:
     void activeFilterChanged();
 
     bool notInSequence(size_t matchIdx) const;
+    bool sequenceMilestoneReached(size_t matchIdx) const;
     void advanceSequence(int sequenceId);
 
     void supplyImageToFilter(
@@ -235,7 +237,9 @@ protected:
 
     mutable QMutex m_resultsMutex;
     PmMultiMatchResults m_results;
-    std::vector<size_t> m_sequences;
+
+    mutable QMutex m_sequenceMutex;
+    std::vector<PmSequence> m_sequences;
 
     mutable QMutex m_previewConfigMutex;
     PmPreviewConfig m_previewConfig;

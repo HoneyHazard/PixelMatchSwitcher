@@ -388,6 +388,16 @@ bool PmCore::matchConfigCanMoveDown(size_t idx) const
     return true;
 }
 
+int PmCore::sequenceId(size_t matchIdx) const
+{
+    QMutexLocker locker(&m_matchConfigMutex);
+    size_t sz = m_multiMatchConfig.size();
+
+    if (matchIdx >= sz) return -1;
+
+    return m_multiMatchConfig[matchIdx].sequenceId;
+}
+
 bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
 {
     size_t sz = multiMatchConfigSize();
@@ -636,6 +646,14 @@ void PmCore::onMatchImagesRemove(QList<std::string> orphanedImages)
             }
         }
     }
+}
+
+void PmCore::onSequenceReset(int sequenceId)
+{
+	QMutexLocker locker(&m_sequenceMutex);
+	if (sequenceId > m_sequences.size())
+		return;
+	m_sequences[sequenceId].currMatchIndex = 0;
 }
 
 std::string PmCore::activeMatchPresetName() const
@@ -1509,27 +1527,34 @@ void PmCore::activeFilterChanged()
 
 bool PmCore::notInSequence(size_t matchIdx) const
 {
-    QMutexLocker locker(&m_matchConfigMutex);
-
-    const PmMatchConfig &cfg = m_multiMatchConfig[matchIdx];
-    int seqId = cfg.sequenceId;
-
+	int seqId = sequenceId(matchIdx);
     if (seqId == -1) return false;
 
-    auto &sequenceIndex = m_sequences[seqId];
-    return sequenceIndex == matchIdx;
+    QMutexLocker locker(&m_sequenceMutex);
+    size_t currMilestoneIdx = m_sequences[seqId].currMatchIndex;
+    return currMilestoneIdx == matchIdx;
 }
 
-void PmCore::advanceSequence(int sequenceId)
+bool PmCore::sequenceMilestoneReached(size_t matchIdx) const
 {
-	QMutexLocker locker(&m_matchConfigMutex);
-    size_t mSz = m_multiMatchConfig.size();
-	int matchIdx = m_sequences[sequenceId] + 1;
+    int seqId = sequenceId(matchIdx);
+	if (seqId == -1) return false;
+
+    QMutexLocker locker(&m_sequenceMutex);
+	size_t currMilestoneIdx = m_sequences[seqId].currMatchIndex;
+    return matchIdx <= currMilestoneIdx;
+}
+
+void PmCore::advanceSequence(int seqId)
+{
+	size_t mSz = m_multiMatchConfig.size();
+	QMutexLocker locker(&m_sequenceMutex);
+	size_t matchIdx = m_sequences[seqId].currMatchIndex + 1;
     while (matchIdx < mSz
-        && m_multiMatchConfig[matchIdx].sequenceId != sequenceId) {
+        && sequenceId(matchIdx) != seqId) {
 		matchIdx++;
     }
-    m_sequences[sequenceId] = matchIdx;
+    m_sequences[seqId].currMatchIndex = matchIdx;
 }
 
 void PmCore::onMenuAction()
