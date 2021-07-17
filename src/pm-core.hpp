@@ -169,6 +169,7 @@ public slots:
 
     void onMatchImagesRemove(QList<std::string> orphanedImages);
     void onSequenceReset(int sequenceId);
+    void onSequenceStart(int sequenceId);
 
 protected slots:
     void onPeriodicUpdate();
@@ -198,7 +199,7 @@ protected:
 
     bool notInSequence(size_t matchIdx) const;
     bool sequenceMilestoneReached(size_t matchIdx) const;
-    void advanceSequence(int sequenceId);
+    void advanceSequence(int sequenceId, const QTime &now);
     void refreshSequence(int sequenceId);
 
     void supplyImageToFilter(

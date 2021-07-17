@@ -509,6 +509,35 @@ QSet<std::string> PmSceneItemsHash::sceneItemNames() const
 
 //******************************************************************************
 
+void PmSequenceCheckpoint::start(const QTime &now)
+{
+	referenceTime = now;
+	latestTimeMs = 0;
+}
+
+void PmSequenceCheckpoint::pause(const QTime &now)
+{
+	latestTimeMs += referenceTime.msecsTo(now);
+}
+
+void PmSequenceCheckpoint::resume(const QTime &now)
+{
+	referenceTime = now;
+}
+
+void PmSequenceCheckpoint::complete(const QTime &now)
+{
+    latestTimeMs += referenceTime.msecsTo(now);
+    if (shortestTimeMs == (size_t)-1 || latestTimeMs < shortestTimeMs) {
+        shortestTimeMs = latestTimeMs;
+    }
+    if (longestTimeMs == (size_t)-1 || latestTimeMs > longestTimeMs) {
+        longestTimeMs = latestTimeMs;
+    }
+}
+
+//******************************************************************************
+
 void pmRegisterMetaTypes()
 {
     qRegisterMetaType<size_t>("size_t");
@@ -527,3 +556,4 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
     qRegisterMetaType<QList<std::string>>("QList<std::string>");
 }
+

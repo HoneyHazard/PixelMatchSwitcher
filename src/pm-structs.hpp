@@ -235,11 +235,18 @@ struct PmPreviewConfig
 /**
  * @brief Represents individual entry in a progression sequence
  */
-struct PmSequenceEntry
+struct PmSequenceCheckpoint
 {
-	size_t matchIdx;
-    QDateTime latestTime;
-    QDateTime bestTime;
+    size_t matchIdx = 0;
+    QTime referenceTime;
+    size_t latestTimeMs = 0;
+    size_t shortestTimeMs = (size_t)-1;
+    size_t longestTimeMs = (size_t)-1;
+
+    void start(const QTime &now);
+    void pause(const QTime &now);
+    void resume(const QTime &now);
+    void complete(const QTime &now);
 };
 
 /**
@@ -247,8 +254,16 @@ struct PmSequenceEntry
  */
 struct PmSequence
 {
-    size_t currMatchIndex;
-	std::vector<PmSequenceEntry> entries;
+    // TODO: class?
+
+    size_t currMatchIndex = 0;
+    QHash<size_t, PmSequenceCheckpoint> entries; // access entry data by match index
+    bool active = false;
+
+    void start();
+    void resume();
+    void pause();
+    void reset();
 };
 
 /**

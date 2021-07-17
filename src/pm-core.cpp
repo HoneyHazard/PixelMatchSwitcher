@@ -453,9 +453,9 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
 
     // refresh sequence(s) when needed
     if (oldCfg.sequenceId != -1 && newCfg.sequenceId != oldCfg.sequenceId)
-	    refreshSequence(oldCfg.sequenceId);
+        refreshSequence(oldCfg.sequenceId);
     if (newCfg.sequenceId != -1 && newCfg.sequenceId != oldCfg.sequenceId)
-	    refreshSequence(newCfg.sequenceId);
+        refreshSequence(newCfg.sequenceId);
 
     {
         // check for orphaned images
@@ -656,10 +656,15 @@ void PmCore::onMatchImagesRemove(QList<std::string> orphanedImages)
 
 void PmCore::onSequenceReset(int sequenceId)
 {
-	QMutexLocker locker(&m_sequenceMutex);
-	if (sequenceId > m_sequences.size())
-		return;
-	m_sequences[sequenceId].currMatchIndex = 0;
+    QMutexLocker locker(&m_sequenceMutex);
+    if (sequenceId > m_sequences.size())
+        return;
+    m_sequences[sequenceId].currMatchIndex = 0;
+}
+
+void PmCore::onSequenceStart(int sequenceId)
+{
+
 }
 
 std::string PmCore::activeMatchPresetName() const
@@ -1533,10 +1538,15 @@ void PmCore::activeFilterChanged()
 
 bool PmCore::notInSequence(size_t matchIdx) const
 {
-	int seqId = sequenceId(matchIdx);
-    if (seqId == -1) return false;
+    int seqId = sequenceId(matchIdx);
+    if (seqId == -1)
+        return false; // not a sequence entry
 
     QMutexLocker locker(&m_sequenceMutex);
+    const PmSequence &sequence = m_sequences[seqId];
+    if (!sequence.active)
+        return false; // sequence advance disabled while inactive 
+
     size_t currMilestoneIdx = m_sequences[seqId].currMatchIndex;
     return currMilestoneIdx == matchIdx;
 }
@@ -1544,23 +1554,35 @@ bool PmCore::notInSequence(size_t matchIdx) const
 bool PmCore::sequenceMilestoneReached(size_t matchIdx) const
 {
     int seqId = sequenceId(matchIdx);
-	if (seqId == -1) return false;
+    if (seqId == -1) return false;
 
     QMutexLocker locker(&m_sequenceMutex);
-	size_t currMilestoneIdx = m_sequences[seqId].currMatchIndex;
+    size_t currMilestoneIdx = m_sequences[seqId].currMatchIndex;
     return matchIdx <= currMilestoneIdx;
 }
 
-void PmCore::advanceSequence(int seqId)
+void PmCore::advanceSequence(int seqId, const QTime &now)
 {
-	size_t mSz = m_multiMatchConfig.size();
-	QMutexLocker locker(&m_sequenceMutex);
-	size_t matchIdx = m_sequences[seqId].currMatchIndex + 1;
-    while (matchIdx < mSz
-        && sequenceId(matchIdx) != seqId) {
-		matchIdx++;
+    size_t mSz = m_multiMatchConfig.size();
+    QMutexLocker locker(&m_sequenceMutex);
+    PmSequence &seq = m_sequences[seqId];
+    if (!seq.active) return;
+
+    PmSequenceCheckpoint &finishedEntry = seq.entries[seqId];
+    finishedEntry.complete(now);
+
+    size_t nextMatchIdx = seq.currMatchIndex + 1;
+    while (nextMatchIdx < mSz && sequenceId(nextMatchIdx) != seqId) {
+        nextMatchIdx++;
     }
-    m_sequences[seqId].currMatchIndex = matchIdx;
+    if (nextMatchIdx >= mSz) {
+	    nextMatchIdx = 0;
+	    seq.active = false;
+    } else {
+	    PmSequenceCheckpoint &nextEntry = seq.entries[nextMatchIdx];
+	    nextEntry.start(now);
+    }
+    seq.currMatchIndex = nextMatchIdx;
 }
 
 void PmCore::refreshSequence(int sequenceId)
@@ -1651,7 +1673,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         bool isMatched = newResult.isMatched;
         bool wasMatched = matchResults(matchIndex).isMatched;
         if (!wasMatched && isMatched
-        && (m_cooldownList.contains(matchIndex) || !notInSequence(matchIndex))) {
+        && (m_cooldownList.contains(matchIndex) || notInSequence(matchIndex))) {
             // prevent "switching on" after a cooldown or out of order sequence cfg
             newResult.isMatched = false;
             isMatched = false;
@@ -1661,7 +1683,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         if (matchChanged) {
             // advance sequence when applicable
             if (cfg.sequenceId != -1) {
-                advanceSequence(cfg.sequenceId);
+                advanceSequence(cfg.sequenceId, currTime);
             }
 
             // perform actions

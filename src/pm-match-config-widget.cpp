@@ -216,7 +216,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     }
     connect(m_sequenceIdCombo, SIGNAL(currentIndexChanged(int)),
             this, SLOT(onConfigUiChanged()));
-    mainLayout->addRow(obs_module_text("Sequence"), m_sequenceIdCombo);
+    mainLayout->addRow(obs_module_text("Sequence"), m_sequenceIdCombo);                   
 
     // core signals -> local slots
     const Qt::ConnectionType qc = Qt::QueuedConnection;
