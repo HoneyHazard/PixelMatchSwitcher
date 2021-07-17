@@ -201,7 +201,6 @@ protected:
     void advanceSequence(int sequenceId);
     void refreshSequence(int sequenceId);
 
-
     void supplyImageToFilter(
         struct pm_filter_data *data, size_t matchIdx, const QImage &image);
 
@@ -241,7 +240,7 @@ protected:
     PmMultiMatchResults m_results;
 
     mutable QMutex m_sequenceMutex;
-    std::vector<PmSequence> m_sequences;
+    QHash<int, PmSequence> m_sequences;
 
     mutable QMutex m_previewConfigMutex;
     PmPreviewConfig m_previewConfig;

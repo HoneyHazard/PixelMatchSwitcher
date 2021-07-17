@@ -1563,6 +1563,11 @@ void PmCore::advanceSequence(int seqId)
     m_sequences[seqId].currMatchIndex = matchIdx;
 }
 
+void PmCore::refreshSequence(int sequenceId)
+{
+    // TODO
+}
+
 void PmCore::onMenuAction()
 {
     // main UI dialog

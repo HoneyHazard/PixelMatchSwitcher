@@ -66,6 +66,7 @@ protected:
 
 protected:
     static const char* k_failedImgStr;
+	static const int k_numSequences = 10;
 
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;
@@ -89,6 +90,7 @@ protected:
     QDoubleSpinBox *m_perPixelErrorBox;
     QDoubleSpinBox *m_totalMatchThreshBox;
     QCheckBox *m_invertResultCheckbox;
+    QComboBox *m_sequenceIdCombo;
 
     PmCore *m_core;
     PmMatchResults m_prevResults;

@@ -28,44 +28,44 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 : PmSpoilerWidget(parent)
 , m_core(pixelMatcher)
 {   
-    const Qt::ConnectionType qc = Qt::QueuedConnection;
-
     // main layout
     QFormLayout *mainLayout = new QFormLayout;
     mainLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    setContentLayout(mainLayout);
 
     // image control buttons: when not capturing
     QHBoxLayout *imgControlLayout0 = new QHBoxLayout;
     imgControlLayout0->setContentsMargins(0, 0, 0, 0);
 
     m_captureBeginButton = new QPushButton(obs_module_text("Capture"), this);
-    m_captureBeginButton->setFocusPolicy(Qt::NoFocus);
+    //m_captureBeginButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureBeginButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onCaptureBeginButtonReleased);
     imgControlLayout0->addWidget(m_captureBeginButton);
 
     m_openFileButton = new QPushButton(obs_module_text("Open File"), this);
-    m_openFileButton->setFocusPolicy(Qt::NoFocus);
+    //m_openFileButton->setFocusPolicy(Qt::NoFocus);
     connect(m_openFileButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onOpenFileButtonReleased);
     imgControlLayout0->addWidget(m_openFileButton);
     imgControlLayout0->setStretchFactor(m_openFileButton, 1);
 
     m_editFileButton = new QPushButton(obs_module_text("Edit"), this);
-    m_editFileButton->setFocusPolicy(Qt::NoFocus);
+    //m_editFileButton->setFocusPolicy(Qt::NoFocus);
     m_editFileButton->setEnabled(false);
     imgControlLayout0->addWidget(m_editFileButton);
     imgControlLayout0->setStretchFactor(m_editFileButton, 1);
 
     m_openFolderButton = new QPushButton(obs_module_text("Open Folder"), this);
-    m_openFolderButton->setFocusPolicy(Qt::NoFocus);
+    //m_openFolderButton->setFocusPolicy(Qt::NoFocus);
     connect(m_openFolderButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onOpenFolderButtonReleased);
     imgControlLayout0->addWidget(m_openFolderButton);
     imgControlLayout0->setStretchFactor(m_openFolderButton, 1);
 
     m_refreshButton = new QPushButton(obs_module_text("Refresh"), this);
-    m_refreshButton->setFocusPolicy(Qt::NoFocus);
+    //m_refreshButton->setFocusPolicy(Qt::NoFocus);
     connect(m_refreshButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onRefreshButtonReleased);
     imgControlLayout0->addWidget(m_refreshButton);
@@ -77,7 +77,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     m_captureAcceptButton = new QPushButton(
         obs_module_text("Accept Capture"), this);
-    m_captureAcceptButton->setFocusPolicy(Qt::NoFocus);
+    //m_captureAcceptButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureAcceptButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onCaptureAcceptButtonReleased);
     imgControlLayout1->addWidget(m_captureAcceptButton);
@@ -85,14 +85,14 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_captureAutomaskButton = new QPushButton(
         obs_module_text("Begin Auto-Mask"), this);
     m_captureAutomaskButton->setCheckable(true);
-    m_captureAutomaskButton->setFocusPolicy(Qt::NoFocus);
+    //m_captureAutomaskButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureAutomaskButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onCaptureAutomaskButtonReleased);
     imgControlLayout1->addWidget(m_captureAutomaskButton);
 
     m_captureCancelButton = new QPushButton(
         obs_module_text("Cancel Capture"), this);
-    m_captureCancelButton->setFocusPolicy(Qt::NoFocus);
+    //m_captureCancelButton->setFocusPolicy(Qt::NoFocus);
     connect(m_captureCancelButton, &QPushButton::released,
             this, &PmMatchConfigWidget::onCaptureCancelButtonReleased);
     imgControlLayout1->addWidget(m_captureCancelButton);
@@ -135,7 +135,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_maskModeCombo->insertItem(
         int(PmMaskMode::CustomClrMode), obs_module_text("Custom"));
     connect(m_maskModeCombo, SIGNAL(currentIndexChanged(int)),
-        this, SLOT(onConfigUiChanged()), qc);
+        this, SLOT(onConfigUiChanged()));
     colorSubLayout->addWidget(m_maskModeCombo);
 
     m_maskModeDisplay = new QLabel(this);
@@ -144,7 +144,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
 
     m_pickColorButton = new QPushButton(obs_module_text("Pick"), this);
     connect(m_pickColorButton, &QPushButton::released,
-            this, &PmMatchConfigWidget::onPickColorButtonReleased, qc);
+            this, &PmMatchConfigWidget::onPickColorButtonReleased);
     colorSubLayout->addWidget(m_pickColorButton);
 
     mainLayout->addRow(obs_module_text("Mask Mode: "), colorSubLayout);
@@ -159,8 +159,8 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_posXBox->setSuffix(" px");
     m_posXBox->setRange(0, std::numeric_limits<int>::max());
     m_posXBox->setSingleStep(1);
-    connect(m_posXBox, SIGNAL(valueChanged(int)),
-            this, SLOT(onConfigUiChanged()), qc);
+    connect(m_posXBox, SIGNAL(valueChanged(int)), 
+            this, SLOT(onConfigUiChanged()));
     matchLocSubLayout->addWidget(m_posXBox);
     matchLocSubLayout->addItem(new QSpacerItem(10, 1));
 
@@ -171,7 +171,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_posYBox->setRange(0, std::numeric_limits<int>::max());
     m_posYBox->setSingleStep(1);
     connect(m_posYBox, SIGNAL(valueChanged(int)),
-        this, SLOT(onConfigUiChanged()), qc);
+            this, SLOT(onConfigUiChanged()));
     matchLocSubLayout->addWidget(m_posYBox);
 
     mainLayout->addRow(obs_module_text("Location: "), matchLocSubLayout);
@@ -183,7 +183,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_perPixelErrorBox->setSingleStep(1.0);
     m_perPixelErrorBox->setDecimals(1);
     connect(m_perPixelErrorBox, SIGNAL(valueChanged(double)),
-            this, SLOT(onConfigUiChanged()), qc);
+            this, SLOT(onConfigUiChanged()));
 
     mainLayout->addRow(
         obs_module_text("Allowed Pixel Error: "), m_perPixelErrorBox);
@@ -195,7 +195,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     m_totalMatchThreshBox->setSingleStep(1.0);
     m_totalMatchThreshBox->setDecimals(1);
     connect(m_totalMatchThreshBox, SIGNAL(valueChanged(double)),
-            this, SLOT(onConfigUiChanged()), qc);
+            this, SLOT(onConfigUiChanged()));
 
     mainLayout->addRow(
         obs_module_text("Match Threshold: "), m_totalMatchThreshBox);
@@ -203,15 +203,23 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     // invert result checkbox
     m_invertResultCheckbox = new QCheckBox(this);
     m_invertResultCheckbox->setFocusPolicy(Qt::NoFocus);
-    connect(m_invertResultCheckbox, &QCheckBox::toggled, this,
-            &PmMatchConfigWidget::onConfigUiChanged, qc);
+    connect(m_invertResultCheckbox, &QCheckBox::toggled,
+            this, &PmMatchConfigWidget::onConfigUiChanged);
+    mainLayout->addRow(
+        obs_module_text("Invert Result: "), m_invertResultCheckbox);
 
-    mainLayout->addRow(obs_module_text("Invert Result: "), m_invertResultCheckbox);
-
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    setContentLayout(mainLayout);
+    // sequence id
+    m_sequenceIdCombo = new QComboBox(this);
+    m_sequenceIdCombo->addItem(obs_module_text("<no sequence>"), -1);
+    for (int i = 0; i < k_numSequences; i++) {
+        m_sequenceIdCombo->addItem(QString::number(i + 1), i);
+    }
+    connect(m_sequenceIdCombo, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(onConfigUiChanged()));
+    mainLayout->addRow(obs_module_text("Sequence"), m_sequenceIdCombo);
 
     // core signals -> local slots
+    const Qt::ConnectionType qc = Qt::QueuedConnection;
     connect(m_core, &PmCore::sigMatchImageLoadSuccess,
             this, &PmMatchConfigWidget::onMatchImageLoadSuccess, qc);
     connect(m_core, &PmCore::sigMatchImageLoadFailed,
@@ -236,6 +244,10 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
             m_core, &PmCore::onCaptureStateChanged, qc);
     connect(this, &PmMatchConfigWidget::sigRefreshMatchImage,
             m_core, &PmCore::onMatchImageRefresh, qc);
+
+    // disable keyboard focus
+    for (QWidget *childWidget : findChildren<QWidget *>())
+	    childWidget->setFocusPolicy(Qt::NoFocus);
 
     // finish state init
     size_t selIdx = m_core->selectedConfigIndex();
@@ -323,7 +335,8 @@ void PmMatchConfigWidget::maskModeChanged(PmMaskMode mode, vec3 customColor)
     m_maskModeDisplay->setText(color.name(QColor::HexArgb));
 }
 
-void PmMatchConfigWidget::onMatchConfigChanged(size_t matchIdx, PmMatchConfig cfg)
+void PmMatchConfigWidget::onMatchConfigChanged(
+    size_t matchIdx, PmMatchConfig cfg)
 {
     if (matchIdx != m_matchIndex) return;
 
@@ -360,6 +373,10 @@ void PmMatchConfigWidget::onMatchConfigChanged(size_t matchIdx, PmMatchConfig cf
     m_invertResultCheckbox->blockSignals(true);
     m_invertResultCheckbox->setChecked(cfg.invertResult);
     m_invertResultCheckbox->blockSignals(false);
+
+    m_sequenceIdCombo->blockSignals(true);
+	m_sequenceIdCombo->setCurrentIndex(cfg.sequenceId + 1); // works for -1 too
+    m_sequenceIdCombo->blockSignals(false);
 
     roiRangesChanged(m_prevResults.baseWidth, m_prevResults.baseHeight);
     maskModeChanged(cfg.maskMode, m_customColor);
@@ -594,6 +611,7 @@ void PmMatchConfigWidget::onConfigUiChanged()
     config.filterCfg.per_pixel_err_thresh = float(m_perPixelErrorBox->value());
     config.totalMatchThresh = float(m_totalMatchThreshBox->value());
     config.invertResult = m_invertResultCheckbox->isChecked();
+    config.sequenceId = m_sequenceIdCombo->currentIndex() - 1;
 
     config.maskMode = PmMaskMode(m_maskModeCombo->currentIndex());
     switch (config.maskMode) {
