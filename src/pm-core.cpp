@@ -451,6 +451,12 @@ void PmCore::onMatchConfigChanged(size_t matchIdx, PmMatchConfig newCfg)
     // go forward with setting new config state and activation
     activateMatchConfig(matchIdx, newCfg);
 
+    // refresh sequence(s) when needed
+    if (oldCfg.sequenceId != -1 && newCfg.sequenceId != oldCfg.sequenceId)
+	    refreshSequence(oldCfg.sequenceId);
+    if (newCfg.sequenceId != -1 && newCfg.sequenceId != oldCfg.sequenceId)
+	    refreshSequence(newCfg.sequenceId);
+
     {
         // check for orphaned images
         QMutexLocker locker(&m_matchConfigMutex);

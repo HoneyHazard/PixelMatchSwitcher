@@ -60,6 +60,7 @@ bool PmMatchConfig::operator==(const PmMatchConfig &other) const
         && totalMatchThresh == other.totalMatchThresh
         && invertResult == other.invertResult
         && maskMode == other.maskMode
+        && sequenceId == other.sequenceId
         && filterCfg == other.filterCfg
         && reaction == other.reaction;
 }
@@ -96,6 +97,9 @@ PmMatchConfig::PmMatchConfig(obs_data_t *data)
 
     obs_data_set_default_bool(data, "invert_result", invertResult);
     invertResult = obs_data_get_bool(data, "invert_result");
+
+    obs_data_set_default_int(data, "sequence_id", sequenceId);
+    sequenceId = (int)obs_data_get_int(data, "sequence_id");
 
     obs_data_set_default_int(data, "mask_mode", int(maskMode));
     maskMode = PmMaskMode(obs_data_get_int(data, "mask_mode"));
@@ -150,6 +154,8 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
                     totalMatchThresh = elemText.toFloat();
                 } else if (name == "invert_result") {
                     invertResult = (elemText == "true" ? true : false);
+                } else if (name == "sequence_id") {
+                    sequenceId = elemText.toInt();
                 } else if (name == "mask_mode") {
                     maskMode = PmMaskMode(elemText.toInt());
                 } else if (name == "mask_alpha") {
@@ -181,6 +187,7 @@ obs_data_t* PmMatchConfig::save() const
     obs_data_set_double(
         ret, "total_match_threshold", double(totalMatchThresh));
     obs_data_set_bool(ret, "invert_result", invertResult);
+    obs_data_set_int(ret, "sequence_id", sequenceId);
     obs_data_set_int(ret, "mask_mode", int(maskMode));
     obs_data_set_bool(ret, "mask_alpha", filterCfg.mask_alpha);
     obs_data_set_vec3(ret, "mask_color", &filterCfg.mask_color);
@@ -211,6 +218,8 @@ void PmMatchConfig::saveXml(QXmlStreamWriter &writer) const
     writer.writeTextElement("total_match_threshold", 
         QString::number(double(totalMatchThresh)));
     writer.writeTextElement("invert_result", invertResult ? "true" : "false");
+    if (sequenceId != -1)
+	    writer.writeTextElement("sequence_id", QString::number(sequenceId));
     writer.writeTextElement("mask_mode", QString::number(int(maskMode)));
     writer.writeTextElement("mask_alpha",
         filterCfg.mask_alpha ? "true" : "false");

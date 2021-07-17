@@ -199,6 +199,8 @@ protected:
     bool notInSequence(size_t matchIdx) const;
     bool sequenceMilestoneReached(size_t matchIdx) const;
     void advanceSequence(int sequenceId);
+    void refreshSequence(int sequenceId);
+
 
     void supplyImageToFilter(
         struct pm_filter_data *data, size_t matchIdx, const QImage &image);
