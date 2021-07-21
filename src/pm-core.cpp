@@ -2025,7 +2025,8 @@ void PmCore::notifyEntryStateChanges(size_t matchIdx)
 {
 	bool isOnCooldown = m_cooldownList.contains(matchIdx);
 	bool isLingering = m_lingerList.contains(matchIdx);
-	bool isCheckpointOk = !notInSequence(matchIdx);
+	bool isCheckpointOk
+        = sequenceId(matchIdx) != -1 && !notInSequence(matchIdx);
 	emit sigEntryStateChanged(
         matchIdx, isOnCooldown, isLingering, isCheckpointOk);
 }
