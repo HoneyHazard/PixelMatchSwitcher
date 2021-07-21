@@ -664,7 +664,7 @@ void PmCore::onSequenceReset(int sequenceId)
 
 void PmCore::onSequenceStart(int sequenceId)
 {
-
+    // TODO
 }
 
 std::string PmCore::activeMatchPresetName() const
@@ -1536,6 +1536,8 @@ void PmCore::activeFilterChanged()
     emit sigActiveFilterChanged(m_activeFilter);
 }
 
+//******************************************************************************
+
 bool PmCore::notInSequence(size_t matchIdx) const
 {
     int seqId = sequenceId(matchIdx);
@@ -1544,7 +1546,7 @@ bool PmCore::notInSequence(size_t matchIdx) const
 
     QMutexLocker locker(&m_sequenceMutex);
     const PmSequence &sequence = m_sequences[seqId];
-    if (!sequence.active)
+    if (!sequence.isActive)
         return false; // sequence advance disabled while inactive 
 
     size_t currMilestoneIdx = m_sequences[seqId].currMatchIndex;
@@ -1566,9 +1568,9 @@ void PmCore::advanceSequence(int seqId, const QTime &now)
     size_t mSz = m_multiMatchConfig.size();
     QMutexLocker locker(&m_sequenceMutex);
     PmSequence &seq = m_sequences[seqId];
-    if (!seq.active) return;
+    if (!seq.isActive) return;
 
-    PmSequenceCheckpoint &finishedEntry = seq.entries[seqId];
+    PmSequenceCheckpoint &finishedEntry = seq.entries[seq.currMatchIndex];
     finishedEntry.complete(now);
 
     size_t nextMatchIdx = seq.currMatchIndex + 1;
@@ -1577,18 +1579,45 @@ void PmCore::advanceSequence(int seqId, const QTime &now)
     }
     if (nextMatchIdx >= mSz) {
 	    nextMatchIdx = 0;
-	    seq.active = false;
+	    seq.isActive = false;
     } else {
 	    PmSequenceCheckpoint &nextEntry = seq.entries[nextMatchIdx];
 	    nextEntry.start(now);
     }
     seq.currMatchIndex = nextMatchIdx;
+    notifyEntryStateChanges(seq.currMatchIndex);
 }
 
-void PmCore::refreshSequence(int sequenceId)
+void PmCore::refreshSequence(int seqId)
 {
-    // TODO
+	QMutexLocker locker(&m_sequenceMutex);
+	PmSequence &seq = m_sequences[seqId];
+	auto &entries = seq.entries;
+	auto oldKeys = entries.keys();
+
+    size_t mSz = multiMatchConfigSize();
+	for (size_t matchIdx = 0; matchIdx < mSz; matchIdx++) {
+	    const PmMatchConfig &cfg = matchConfig(matchIdx);
+        // remove entries no longer affiliated with a sequence
+		if (cfg.sequenceId != seqId && entries.contains(matchIdx)) {
+		    entries.remove(matchIdx);
+        }
+        // add new entries now affiliated with a sequence
+        if (cfg.sequenceId == seqId && !entries.contains(matchIdx)) {
+            entries.insert(matchIdx, PmSequenceCheckpoint());
+        }
+    }
+
+    // remove entries no longer in the config
+    for (const auto &k : oldKeys) {
+	    if (k >= mSz)
+		    entries.remove(k);
+    }
+
+    seq.reset(); // or not?
 }
+
+//******************************************************************************
 
 void PmCore::onMenuAction()
 {
@@ -1623,7 +1652,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     // expired cooldown info disappers
     std::vector<size_t> expCooldowns = m_cooldownList.removeExpired(currTime);
     for (size_t i : expCooldowns) {
-        emit sigCooldownActive(i, false);
+	    notifyEntryStateChanges(i);
     }
 
     // expired lingers for scenes will disappear, allowing other scenes
@@ -1632,7 +1661,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     // expired lingers for scene items
     std::vector<size_t> expLingers = m_lingerList.removeExpired(currTime);
     for (size_t expIdx : expLingers) {
-        emit sigLingerActive(expIdx, false);
+	    notifyEntryStateChanges(expIdx);
         PmReaction expReaction = reaction(expIdx);
         execIndependentActions(matchConfigLabel(expIdx), expReaction, false);
     }
@@ -1734,7 +1763,7 @@ void PmCore::execReaction(
         m_lingerList.push_back({matchIdx, futureTime});
         if (reaction.hasSceneAction())
             m_sceneLingerQueue.push({matchIdx, futureTime});
-        emit sigLingerActive(matchIdx, true);
+        notifyEntryStateChanges(matchIdx);
     }
 
     // activate scene match/unmatch action and take note if switched
@@ -1755,7 +1784,7 @@ void PmCore::execReaction(
     if (actionsTaken && switchedOn && reaction.cooldownMs > 0) {
         m_cooldownList.push_back(
             {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
-        emit sigCooldownActive(matchIdx, true);
+        notifyEntryStateChanges(matchIdx);
     }
 }
 
@@ -1990,6 +2019,15 @@ void PmCore::supplyImageToFilter(
         entryData->match_img_height = uint32_t(image.height());
         pthread_mutex_unlock(&data->mutex);
     }
+}
+
+void PmCore::notifyEntryStateChanges(size_t matchIdx)
+{
+	bool isOnCooldown = m_cooldownList.contains(matchIdx);
+	bool isLingering = m_lingerList.contains(matchIdx);
+	bool isCheckpointOk = !notInSequence(matchIdx);
+	emit sigEntryStateChanged(
+        matchIdx, isOnCooldown, isLingering, isCheckpointOk);
 }
 
 void PmCore::pmSave(obs_data_t *saveData)

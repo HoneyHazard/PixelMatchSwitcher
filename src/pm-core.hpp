@@ -136,8 +136,8 @@ signals:
 
     void sigMatchImagesOrphaned(QList<std::string> filenames);
 
-    void sigCooldownActive(size_t matchIdx, bool active);
-    void sigLingerActive(size_t matchIdx, bool active);
+    void sigEntryStateChanged(size_t matchIdx,
+        bool isOnCooldown, bool isLingering, bool isCheckpointOk);
 
 public slots:
     void onMenuAction();
@@ -204,6 +204,7 @@ protected:
 
     void supplyImageToFilter(
         struct pm_filter_data *data, size_t matchIdx, const QImage &image);
+    void notifyEntryStateChanges(size_t matchIdx);
 
     void pmSave(obs_data_t *data);
     void pmLoad(obs_data_t *data);

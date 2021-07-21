@@ -538,6 +538,57 @@ void PmSequenceCheckpoint::complete(const QTime &now)
 
 //******************************************************************************
 
+bool PmSequence::start(const QTime &now)
+{
+	if (isActive) return false;
+
+	isActive = true;
+	auto find = entries.find(currMatchIndex);
+	if (find != entries.end()) {
+		find->start(now);
+		return true;
+    }
+	return false;
+}
+
+void PmSequence::pause(const QTime &now)
+{
+	if (!isActive) return;
+
+	auto find = entries.find(currMatchIndex);
+	if (find != entries.end()) {
+		find->pause(now);
+	}
+	isActive = false;
+}
+
+bool PmSequence::resume(const QTime &now)
+{
+	if (isActive) return false;
+
+	auto find = entries.find(currMatchIndex);
+	if (find != entries.end()) {
+		find->resume(now);
+		return true;
+	}
+
+    return false;
+}
+
+void PmSequence::reset()
+{
+	isActive = false;
+	auto keys = entries.keys();
+	for (const auto &k : keys) {
+		auto &val = entries[k];
+		val.referenceTime = QTime();
+		val.latestTimeMs = 0;
+	}
+	currMatchIndex = keys.first();
+}
+
+//******************************************************************************
+
 void pmRegisterMetaTypes()
 {
     qRegisterMetaType<size_t>("size_t");
@@ -556,4 +607,3 @@ void pmRegisterMetaTypes()
     qRegisterMetaType<PmMultiMatchResults>("PmMultiMatchResults");
     qRegisterMetaType<QList<std::string>>("QList<std::string>");
 }
-

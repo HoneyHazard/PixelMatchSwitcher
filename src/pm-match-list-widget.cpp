@@ -62,6 +62,7 @@ const QString PmMatchListWidget::k_lingerTextStyle
     = "color: cyan; background-color: rgba(0, 0, 0, 0)";
 const QColor PmMatchListWidget::k_cooldownBgColor = Qt::darkYellow;
 const QColor PmMatchListWidget::k_lingerBgColor = Qt::blue;
+const QColor PmMatchListWidget::k_checkpointOkColor = Qt::darkGreen;
 
 PmMatchListWidget::PmMatchListWidget(
     PmCore* core, PmAddActionMenu *addActionMenu, QWidget* parent)
@@ -145,10 +146,8 @@ PmMatchListWidget::PmMatchListWidget(
         this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMatchConfigSelect,
         this, &PmMatchListWidget::onMatchConfigSelect, qc);
-    connect(m_core, &PmCore::sigCooldownActive,
-        this, &PmMatchListWidget::onCooldownActive, qc);
-    connect(m_core, &PmCore::sigLingerActive,
-        this, &PmMatchListWidget::onLingerActive, qc);
+    connect(m_core, &PmCore::sigEntryStateChanged,
+        this, &PmMatchListWidget::onEntryStateChanged, qc);
 
     // connections: this -> core
     connect(this, &PmMatchListWidget::sigMatchConfigChanged,
@@ -357,44 +356,44 @@ void PmMatchListWidget::onMatchConfigSelect(
     UNUSED_PARAMETER(config);
 }
 
-void PmMatchListWidget::onCooldownActive(size_t matchIdx, bool active)
+void PmMatchListWidget::onEntryStateChanged(size_t matchIdx,
+    bool isOnCooldown, bool isLingering, bool isCheckpointComplete)
 {
-    auto model = m_tableWidget->model();
-    QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
-    int row = (int)matchIdx;
-    if (row < m_tableWidget->rowCount()) {
-        for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
-            QColor bgColor = active ? k_cooldownBgColor : regBgColor;
-            QModelIndex index = model->index(row, col); 
-            model->setData(index, bgColor, Qt::BackgroundRole);
-        }
-        QWidget *cooldownWidget = m_tableWidget->cellWidget(
-            row, (int)ColOrder::Cooldown);
-        if (cooldownWidget) {
-            cooldownWidget->setStyleSheet(
-                active ? k_cooldownTextStyle : k_transpBgStyle);
-        }
-    }
-}
+	auto model = m_tableWidget->model();
+	int row = (int)matchIdx;
+	if (row < m_tableWidget->rowCount()) {
+		QColor bgColor;
+		if (isLingering) {
+			bgColor = k_lingerBgColor;
+		} else if (isOnCooldown) {
+			bgColor = k_cooldownBgColor;
+		} else if (isCheckpointComplete) {
+			bgColor = k_checkpointOkColor;
+		} else {
+			bgColor = m_tableWidget->palette().color(
+				QPalette::Window);
+		}
+		for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
+			QModelIndex index = model->index(row, col);
+			model->setData(index, bgColor, Qt::BackgroundRole);
+		}
 
-void PmMatchListWidget::onLingerActive(size_t matchIdx, bool active)
-{
-    auto model = m_tableWidget->model();
-    QColor regBgColor = m_tableWidget->palette().color(QPalette::Window);
-    int row = (int)matchIdx;
-    if (row < m_tableWidget->rowCount()) {
-        for (int col = 0; col < (int)ColOrder::NUM_COLS; col++) {
-            QColor bgColor = active ? k_lingerBgColor : regBgColor;
-            QModelIndex index = model->index(row, col); 
-            model->setData(index, bgColor, Qt::BackgroundRole);
-        }
-        QWidget *lingerWidget = m_tableWidget->cellWidget(
-            row, (int)ColOrder::Linger);
-        if (lingerWidget) {
-            lingerWidget->setStyleSheet(
-                active ? k_lingerTextStyle : k_transpBgStyle);
-        }
-    }
+		QWidget *lingerWidget =
+			m_tableWidget->cellWidget(row, (int)ColOrder::Linger);
+		if (lingerWidget) {
+			lingerWidget->setStyleSheet(
+                isLingering ? k_lingerTextStyle : k_transpBgStyle);
+		}
+
+		QWidget *cooldownWidget =
+			m_tableWidget->cellWidget(row, (int)ColOrder::Cooldown);
+		if (cooldownWidget) {
+			cooldownWidget->setStyleSheet(
+				isOnCooldown ? k_cooldownTextStyle : k_transpBgStyle);
+		}
+
+        // TODO: highlight checkpoint times
+	}
 }
 
 void PmMatchListWidget::onRowSelected()

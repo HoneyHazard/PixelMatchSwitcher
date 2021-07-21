@@ -4,6 +4,7 @@
 #include <utility>
 #include <qmetatype.h>
 #include <QHash>
+#include <QMap>
 #include <QSet>
 #include <QList>
 #include <QDateTime>
@@ -251,18 +252,21 @@ struct PmSequenceCheckpoint
 
 /**
  * @brief Represents state of a linear progression sequence
+ * 
+ * states: reset -> start -> pause -> resume -> done
  */
 struct PmSequence
 {
     // TODO: class?
+    // TODO: state enum?
 
     size_t currMatchIndex = 0;
-    QHash<size_t, PmSequenceCheckpoint> entries; // access entry data by match index
-    bool active = false;
+    QMap<size_t, PmSequenceCheckpoint> entries; // access entry data by match index
+    bool isActive = false;
 
-    void start();
-    void resume();
-    void pause();
+    bool start(const QTime &now);
+    void pause(const QTime &now);
+    bool resume(const QTime &now);
     void reset();
 };
 
