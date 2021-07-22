@@ -143,6 +143,7 @@ PmCore::PmCore()
 : m_pmFilterMutex(QMutex::Recursive)
 , m_scenesMutex(QMutex::Recursive)
 , m_matchConfigMutex(QMutex::Recursive)
+, m_sequenceMutex(QMutex::Recursive)
 {
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(
@@ -1550,7 +1551,7 @@ bool PmCore::notInSequence(size_t matchIdx) const
         return false; // sequence advance disabled while inactive 
 
     size_t currMilestoneIdx = m_sequences[seqId].currMatchIndex;
-    return currMilestoneIdx == matchIdx;
+    return currMilestoneIdx != matchIdx;
 }
 
 bool PmCore::sequenceMilestoneReached(size_t matchIdx) const
