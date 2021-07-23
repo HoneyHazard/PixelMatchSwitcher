@@ -34,7 +34,11 @@ enum class PmMatchListWidget::ColOrder : int {
     Linger = 4,
     Cooldown = 5,
     Result = 6,
-    NUM_COLS = 7,
+    SequenceId = 7,
+    CheckpointLatestTime = 8,
+    CheckpointMinTime = 9,
+    CheckpointMaxTime = 10,
+    NUM_COLS = 11,
 };
 
 enum class PmMatchListWidget::ActionStackOrder : int {

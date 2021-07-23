@@ -90,6 +90,7 @@ set(pixel-match-switcher_HEADERS
         src/pm-core.hpp
         src/pm-add-action-menu.hpp
         src/pm-spoiler-widget.hpp
+        src/pm-sequence-widget.hpp
         src/pm-match-config-widget.hpp
         src/pm-match-reaction-widget.hpp
         src/pm-match-results-widget.hpp
@@ -121,6 +122,7 @@ set(pixel-match-switcher_SOURCES
         src/pm-filter-ref.cpp
         src/pm-core.cpp
         src/pm-spoiler-widget.cpp
+        src/pm-sequence-widget.cpp
         src/pm-add-action-menu.cpp
         src/pm-match-config-widget.cpp
         src/pm-match-results-widget.cpp

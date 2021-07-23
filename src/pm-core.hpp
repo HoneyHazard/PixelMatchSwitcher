@@ -81,6 +81,9 @@ public:
     bool matchConfigCanMoveUp(size_t idx) const;
     bool matchConfigCanMoveDown(size_t idx) const;
     int sequenceId(size_t matchIdx) const;
+    bool sequenceExists(int seqId) const;
+    bool sequenceIsActive(int seqId) const;
+    size_t sequenceCurrMatchIndex(int seqId) const;
 
     PmPreviewConfig previewConfig() const;
 
@@ -138,6 +141,7 @@ signals:
 
     void sigEntryStateChanged(size_t matchIdx,
         bool isOnCooldown, bool isLingering, bool isCheckpointOk);
+    void sigSequenceStateChanged(int seqId);
 
 public slots:
     void onMenuAction();
@@ -169,7 +173,8 @@ public slots:
 
     void onMatchImagesRemove(QList<std::string> orphanedImages);
     void onSequenceReset(int sequenceId);
-    void onSequenceStart(int sequenceId);
+    void onSequenceActivate(int sequenceId);
+    void onSequencePause(int sequenceId);
 
 protected slots:
     void onPeriodicUpdate();

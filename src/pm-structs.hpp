@@ -244,9 +244,8 @@ struct PmSequenceCheckpoint
     size_t shortestTimeMs = (size_t)-1;
     size_t longestTimeMs = (size_t)-1;
 
-    void start(const QTime &now);
+    void activate(const QTime &now);
     void pause(const QTime &now);
-    void resume(const QTime &now);
     void complete(const QTime &now);
 };
 
@@ -257,16 +256,12 @@ struct PmSequenceCheckpoint
  */
 struct PmSequence
 {
-    // TODO: class?
-    // TODO: state enum?
-
     size_t currMatchIndex = 0;
     QMap<size_t, PmSequenceCheckpoint> entries; // access entry data by match index
     bool isActive = false;
 
-    bool start(const QTime &now);
+    bool activate(const QTime &now);
     void pause(const QTime &now);
-    bool resume(const QTime &now);
     void reset();
 };
 

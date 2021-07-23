@@ -509,20 +509,14 @@ QSet<std::string> PmSceneItemsHash::sceneItemNames() const
 
 //******************************************************************************
 
-void PmSequenceCheckpoint::start(const QTime &now)
+void PmSequenceCheckpoint::activate(const QTime &now)
 {
 	referenceTime = now;
-	latestTimeMs = 0;
 }
 
 void PmSequenceCheckpoint::pause(const QTime &now)
 {
 	latestTimeMs += referenceTime.msecsTo(now);
-}
-
-void PmSequenceCheckpoint::resume(const QTime &now)
-{
-	referenceTime = now;
 }
 
 void PmSequenceCheckpoint::complete(const QTime &now)
@@ -538,14 +532,14 @@ void PmSequenceCheckpoint::complete(const QTime &now)
 
 //******************************************************************************
 
-bool PmSequence::start(const QTime &now)
+bool PmSequence::activate(const QTime &now)
 {
 	if (isActive) return false;
 
 	isActive = true;
 	auto find = entries.find(currMatchIndex);
 	if (find != entries.end()) {
-		find->start(now);
+		find->activate(now);
 		return true;
     }
 	return false;
@@ -562,19 +556,6 @@ void PmSequence::pause(const QTime &now)
 	isActive = false;
 }
 
-bool PmSequence::resume(const QTime &now)
-{
-	if (isActive) return false;
-
-	auto find = entries.find(currMatchIndex);
-	if (find != entries.end()) {
-		find->resume(now);
-		return true;
-	}
-
-    return false;
-}
-
 void PmSequence::reset()
 {
 	isActive = false;
@@ -585,6 +566,7 @@ void PmSequence::reset()
 		val.latestTimeMs = 0;
 	}
 	currMatchIndex = keys.first();
+	entries[currMatchIndex].latestTimeMs = 0;
 }
 
 //******************************************************************************

@@ -389,6 +389,8 @@ bool PmCore::matchConfigCanMoveDown(size_t idx) const
     return true;
 }
 
+//******************************************************************************
+
 int PmCore::sequenceId(size_t matchIdx) const
 {
     QMutexLocker locker(&m_matchConfigMutex);
@@ -398,6 +400,32 @@ int PmCore::sequenceId(size_t matchIdx) const
 
     return m_multiMatchConfig[matchIdx].sequenceId;
 }
+
+bool PmCore::sequenceExists(int seqId) const
+{
+	QMutexLocker locker(&m_sequenceMutex);
+	return m_sequences.contains(seqId);
+}
+
+bool PmCore::sequenceIsActive(int seqId) const
+{
+	QMutexLocker locker(&m_sequenceMutex);
+	auto find = m_sequences.find(seqId);
+    if (find == m_sequences.end())
+        return false;
+    return find->isActive;
+}
+
+size_t PmCore::sequenceCurrMatchIndex(int seqId) const
+{
+	QMutexLocker locker(&m_sequenceMutex);
+	auto find = m_sequences.find(seqId);
+	if (find == m_sequences.end())
+		return 0; // TODO: -1?
+    return find->currMatchIndex;
+}
+
+//******************************************************************************
 
 bool PmCore::enforceTargetOrder(size_t matchIdx, const PmMatchConfig &newCfg)
 {
@@ -653,19 +681,6 @@ void PmCore::onMatchImagesRemove(QList<std::string> orphanedImages)
             }
         }
     }
-}
-
-void PmCore::onSequenceReset(int sequenceId)
-{
-    QMutexLocker locker(&m_sequenceMutex);
-    if (sequenceId > m_sequences.size())
-        return;
-    m_sequences[sequenceId].currMatchIndex = 0;
-}
-
-void PmCore::onSequenceStart(int sequenceId)
-{
-    // TODO
 }
 
 std::string PmCore::activeMatchPresetName() const
@@ -1570,7 +1585,7 @@ void PmCore::advanceSequence(int seqId, const QTime &now)
     QMutexLocker locker(&m_sequenceMutex);
     PmSequence &seq = m_sequences[seqId];
     if (!seq.isActive) return;
-
+ 
     PmSequenceCheckpoint &finishedEntry = seq.entries[seq.currMatchIndex];
     finishedEntry.complete(now);
 
@@ -1583,10 +1598,12 @@ void PmCore::advanceSequence(int seqId, const QTime &now)
 	    seq.isActive = false;
     } else {
 	    PmSequenceCheckpoint &nextEntry = seq.entries[nextMatchIdx];
-	    nextEntry.start(now);
+	    nextEntry.latestTimeMs = 0;
+	    nextEntry.activate(now);
     }
     seq.currMatchIndex = nextMatchIdx;
     notifyEntryStateChanges(seq.currMatchIndex);
+    emit sigSequenceStateChanged(seqId);
 }
 
 void PmCore::refreshSequence(int seqId)
@@ -1616,6 +1633,38 @@ void PmCore::refreshSequence(int seqId)
     }
 
     seq.reset(); // or not?
+    emit sigSequenceStateChanged(seqId);
+}
+
+void PmCore::onSequenceReset(int sequenceId)
+{
+    QMutexLocker locker(&m_sequenceMutex);
+    if (sequenceId >= m_sequences.size())
+        return;
+    PmSequence &seq = m_sequences[sequenceId];
+    seq.reset();
+    emit sigSequenceStateChanged(sequenceId);
+}
+
+void PmCore::onSequenceActivate(int sequenceId)
+{
+	QMutexLocker locker(&m_sequenceMutex);
+	if (sequenceId >= m_sequences.size())
+		return;
+	PmSequence &seq = m_sequences[sequenceId];
+	QTime now = QTime::currentTime();
+	seq.activate(now);
+	emit sigSequenceStateChanged(sequenceId);
+}
+
+void PmCore::onSequencePause(int sequenceId)
+{
+	QMutexLocker locker(&m_sequenceMutex);
+	if (sequenceId >= m_sequences.size())
+		return;
+	PmSequence &seq = m_sequences[sequenceId];
+	QTime now = QTime::currentTime();
+	seq.pause(now);
 }
 
 //******************************************************************************

@@ -54,7 +54,7 @@ PmPresetsWidget::PmPresetsWidget(PmCore* core, QWidget* parent)
 
     m_presetRevertButton = prepareButton(obs_module_text("Revert Changes"),
         ":/res/images/revert.svg");
-    m_presetRevertButton->setProperty("themeID", QVariant("revertIcon"));
+    //m_presetRevertButton->setProperty("themeID", QVariant("revertIcon"));
     connect(m_presetRevertButton, &QPushButton::released,
             this, &PmPresetsWidget::onPresetRevert, qc);
     presetLayout->addWidget(m_presetRevertButton);
