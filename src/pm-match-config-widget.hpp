@@ -66,7 +66,6 @@ protected:
 
 protected:
     static const char* k_failedImgStr;
-	static const int k_numSequences = 10;
 
     size_t m_matchIndex = 0;
     size_t m_multiConfigSz = 0;

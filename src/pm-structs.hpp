@@ -256,6 +256,8 @@ struct PmSequenceCheckpoint
  */
 struct PmSequence
 {
+	static const int k_numSequences = 10;
+
     size_t currMatchIndex = 0;
     QMap<size_t, PmSequenceCheckpoint> entries; // access entry data by match index
     bool isActive = false;

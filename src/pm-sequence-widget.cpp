@@ -22,6 +22,7 @@ PmSequenceWidget::PmSequenceWidget(PmCore *core, QWidget *parent)
     mainLayout->addWidget(m_startResumeButton);
     mainLayout->addWidget(m_resetButton);
     mainLayout->addWidget(m_statusDisplay);
+    setLayout(mainLayout);
 
     // core -> this
     auto qc = Qt::QueuedConnection;

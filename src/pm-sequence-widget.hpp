@@ -34,5 +34,5 @@ protected:
 	QLabel *m_statusDisplay;
 
     PmCore *m_core;
-	int m_sequenceId = 0;
+	int m_sequenceId = -1;
 };

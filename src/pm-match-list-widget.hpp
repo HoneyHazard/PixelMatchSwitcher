@@ -5,9 +5,11 @@
 
 #include <QSet>
 #include <QLabel>
+#include <functional>
 
 class PmCore;
 class PmReactionWidget;
+class PmSequenceWidget;
 class PmAddActionMenu;
 
 class QTableWidget;
@@ -16,11 +18,12 @@ class QComboBox;
 class QTableWidgetItem;
 class QVBoxLayout;
 class QSpacerItem;
+class QComboBox;
 
 /**
  * @brief Shows a list of match configuration entries and allows changing
  *        some of their parameters
-  */
+ */
 class PmMatchListWidget : public PmSpoilerWidget
 {
     Q_OBJECT
@@ -61,6 +64,7 @@ protected slots:
     void onConfigMoveDownButtonReleased();
     void onCellChanged(int row, int col);
     void onCellDoubleClicked(int row, int column);
+    void onFilterSelectionChanged();
 
 protected:
     enum class ColOrder;
@@ -103,6 +107,10 @@ protected:
 
     int maxContentHeight() const override;
 
+    static bool showAllFilter(const PmMatchConfig &) { return true; }
+    bool showSequenceFilter(const PmMatchConfig &cfg, int seqId)
+        { return seqId == cfg.sequenceId; }
+
     PmCore* m_core;
     PmAddActionMenu *m_addActionMenu;
     QTableWidget *m_tableWidget;
@@ -112,11 +120,18 @@ protected:
     QPushButton* m_cfgInsertBtn;
     QPushButton* m_cfgRemoveBtn;
 
+    QComboBox *m_filterCombo;
+    PmSequenceWidget *m_sequenceWidget;
+    std::function<bool(const PmMatchConfig &cfg)> m_showFilter;
+
+    QSpacerItem *m_filterSpacer;
     QSpacerItem *m_buttonSpacer1;
     QSpacerItem *m_buttonSpacer2;
-    QHBoxLayout *m_buttonsLayout;
+    QHBoxLayout *m_topLayout;
 
     int m_prevMatchIndex = 0;
+
+    int m_sequenceId = -1;
 };
 
 class PmResultsLabel : public QLabel

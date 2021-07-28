@@ -211,7 +211,7 @@ PmMatchConfigWidget::PmMatchConfigWidget(PmCore *pixelMatcher, QWidget *parent)
     // sequence id
     m_sequenceIdCombo = new QComboBox(this);
     m_sequenceIdCombo->addItem(obs_module_text("<no sequence>"), -1);
-    for (int i = 0; i < k_numSequences; i++) {
+    for (int i = 0; i < PmSequence::k_numSequences; i++) {
         m_sequenceIdCombo->addItem(QString::number(i + 1), i);
     }
     connect(m_sequenceIdCombo, SIGNAL(currentIndexChanged(int)),

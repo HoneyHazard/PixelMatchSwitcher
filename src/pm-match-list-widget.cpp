@@ -1,4 +1,5 @@
 #include "pm-match-list-widget.hpp"
+#include "pm-sequence-widget.hpp"
 #include "pm-core.hpp"
 #include "pm-add-action-menu.hpp"
 
@@ -99,18 +100,34 @@ PmMatchListWidget::PmMatchListWidget(
     m_cfgRemoveBtn = prepareButton(obs_module_text("Remove Match Entry"),
         ":/res/images/list_remove.png", "removeIconSmall");
 
+    // filter selection combo
+    m_filterCombo = new QComboBox(this);
+    m_filterCombo->addItem(obs_module_text("<show all>"), -1);
+    for (int i = 0; i < PmSequence::k_numSequences; i++) {
+	    QString seqName =
+		    QString(obs_module_text("Sequence ")) + QString::number(i + 1);
+	    m_filterCombo->addItem(seqName);
+    }
+
+    // sequence control widget
+    m_sequenceWidget = new PmSequenceWidget(m_core, this);
+
+    m_filterSpacer = new QSpacerItem(20, 0);
     m_buttonSpacer1 = new QSpacerItem(20, 0);
     m_buttonSpacer2 = new QSpacerItem(20, 0);
 
-    m_buttonsLayout = new QHBoxLayout;
-    m_buttonsLayout->addWidget(m_cfgInsertBtn);
-    m_buttonsLayout->addItem(m_buttonSpacer1);
-    m_buttonsLayout->addWidget(m_cfgMoveUpBtn);
-    m_buttonsLayout->addWidget(m_cfgMoveDownBtn);
-    m_buttonsLayout->addItem(m_buttonSpacer2);
-    m_buttonsLayout->addWidget(m_cfgRemoveBtn);
-    m_buttonsLayout->setContentsMargins(0, 0, 0, 0);
-    setTopRightLayout(m_buttonsLayout);
+    m_topLayout = new QHBoxLayout;
+    m_topLayout->addWidget(m_filterCombo);
+    m_topLayout->addWidget(m_sequenceWidget);
+    m_topLayout->addWidget(m_cfgInsertBtn);
+    m_topLayout->addItem(m_filterSpacer);
+    m_topLayout->addItem(m_buttonSpacer1);
+    m_topLayout->addWidget(m_cfgMoveUpBtn);
+    m_topLayout->addWidget(m_cfgMoveDownBtn);
+    m_topLayout->addItem(m_buttonSpacer2);
+    m_topLayout->addWidget(m_cfgRemoveBtn);
+    m_topLayout->setContentsMargins(0, 0, 0, 0);
+    setTopRightLayout(m_topLayout);
 
     // top-level layout
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -120,26 +137,8 @@ PmMatchListWidget::PmMatchListWidget(
     m_contentArea->setSizePolicy(
         QSizePolicy::Preferred, QSizePolicy::Expanding);
 
-    // init state
-    auto multiConfig = m_core->multiMatchConfig();
-    size_t cfgSz = multiConfig.size();
-    onMultiMatchConfigSizeChanged(cfgSz);
-
-    for (size_t i = 0; i < multiConfig.size(); ++i) {
-        onMatchConfigChanged(i, multiConfig[i]);
-    }
-    size_t selIdx = m_core->selectedConfigIndex();
-    onMatchConfigSelect(
-        selIdx, selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
-
-    auto multiResults = m_core->multiMatchResults();
-    for (size_t i = 0; i < multiResults.size(); ++i) {
-        onNewMatchResults(i, multiResults[i]);
-    }
-    
-    const Qt::ConnectionType qc = Qt::QueuedConnection;
-
     // connections: core -> this
+    const Qt::ConnectionType qc = Qt::QueuedConnection;
     connect(m_core, &PmCore::sigNewMatchResults,
         this, &PmMatchListWidget::onNewMatchResults, qc);
     connect(m_core, &PmCore::sigMultiMatchConfigSizeChanged,
@@ -186,6 +185,28 @@ PmMatchListWidget::PmMatchListWidget(
         this, &PmMatchListWidget::onConfigInsertButtonReleased);
     connect(m_cfgRemoveBtn, &QPushButton::released,
         this, &PmMatchListWidget::onConfigRemoveButtonReleased);
+
+    connect(m_filterCombo, &QComboBox::currentTextChanged,
+            this, &PmMatchListWidget::onFilterSelectionChanged);
+
+    // init state
+    onFilterSelectionChanged();
+
+    auto multiConfig = m_core->multiMatchConfig();
+    size_t cfgSz = multiConfig.size();
+    onMultiMatchConfigSizeChanged(cfgSz);
+
+    for (size_t i = 0; i < multiConfig.size(); ++i) {
+	    onMatchConfigChanged(i, multiConfig[i]);
+    }
+    size_t selIdx = m_core->selectedConfigIndex();
+    onMatchConfigSelect(selIdx,
+			selIdx < cfgSz ? multiConfig[selIdx] : PmMatchConfig());
+
+    auto multiResults = m_core->multiMatchResults();
+    for (size_t i = 0; i < multiResults.size(); ++i) {
+	    onNewMatchResults(i, multiResults[i]);
+    }
 }
 
 void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
@@ -223,6 +244,14 @@ void PmMatchListWidget::onMultiMatchConfigSizeChanged(size_t sz)
 
 void PmMatchListWidget::onMatchConfigChanged(size_t index, PmMatchConfig cfg)
 {
+    bool show = m_showFilter(cfg);
+    if (!show) {
+        m_tableWidget->hideRow(int(index));
+        return;
+    } else {
+        m_tableWidget->showRow(int(index));
+    }
+
     int idx = (int)index;
 
     int rowHeight = 0;
@@ -472,6 +501,18 @@ void PmMatchListWidget::onCellDoubleClicked(int row, int column)
     m_addActionMenu->popup(QCursor::pos());
 }
 
+void PmMatchListWidget::onFilterSelectionChanged()
+{
+	int dataInt = m_filterCombo->currentData().toInt();
+	if (dataInt == -1) {
+		m_showFilter = showAllFilter;
+	} else {
+         using namespace std::placeholders;
+		 m_showFilter = [dataInt](const PmMatchConfig &cfg)->bool
+            { return cfg.sequenceId == dataInt; };
+    }
+}
+
 QPushButton* PmMatchListWidget::prepareButton(
     const char *tooltip, const char* icoPath, const char* themeId)
 {
@@ -582,9 +623,10 @@ void PmMatchListWidget::updateButtonsState()
     m_cfgMoveUpBtn->setVisible(expanded);
     m_cfgMoveDownBtn->setVisible(expanded);
     m_cfgRemoveBtn->setVisible(expanded);
+    m_filterSpacer->changeSize(expanded ? 20 : 0, 0);
     m_buttonSpacer1->changeSize(expanded ? 20 : 0, 0);
     m_buttonSpacer2->changeSize(expanded ? 20 : 0, 0);
-    m_buttonsLayout->update();
+    m_topLayout->update();
 
     int currIdx = currentIndex();
     m_cfgMoveUpBtn->setEnabled(m_core->matchConfigCanMoveUp(currIdx));
