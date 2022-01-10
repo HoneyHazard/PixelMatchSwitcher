@@ -1772,7 +1772,6 @@ bool PmCore::execIndependentActions(const std::string &cfgName,
                     obs_sceneitem_set_visible(sceneItem,
                                   false);
                 }
-                obs_sceneitem_release(sceneItem);
             }
         } else if (action.actionType == PmActionType::Filter) {
             obs_source_t *filterSrc = nullptr;
