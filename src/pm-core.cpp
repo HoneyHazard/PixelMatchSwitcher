@@ -1761,16 +1761,13 @@ bool PmCore::execIndependentActions(const std::string &cfgName,
                 }
             }
             if (sceneItem) {
-                if (switchedOn &&
-                    action.actionCode ==
-                        (size_t)PmToggleCode::On) {
-                    obs_sceneitem_set_visible(sceneItem,
-                                  true);
-                } else if (!switchedOn &&
-                       action.actionCode ==
-                           (size_t)PmToggleCode::Off) {
-                    obs_sceneitem_set_visible(sceneItem,
-                                  false);
+                bool isVisible = obs_sceneitem_visible(sceneItem);
+                if (action.actionCode == (size_t)PmToggleCode::On
+                 && !isVisible) {
+                    obs_sceneitem_set_visible(sceneItem, true);
+                } else if (action.actionCode == (size_t)PmToggleCode::Off
+                        && isVisible) {
+                    obs_sceneitem_set_visible(sceneItem, false);
                 }
             }
         } else if (action.actionType == PmActionType::Filter) {
@@ -1786,11 +1783,12 @@ bool PmCore::execIndependentActions(const std::string &cfgName,
                 }
             }
             if (filterSrc) {
-                if (switchedOn
-                 && action.actionCode == (size_t)PmToggleCode::On) {
+                bool isEnabled = obs_source_enabled(filterSrc);
+                if (action.actionCode == (size_t)PmToggleCode::On
+                 && !isEnabled) {
                     obs_source_set_enabled(filterSrc, true);
-                } else if (!switchedOn
-                        && action.actionCode == (size_t)PmToggleCode::Off) {
+                } else if (action.actionCode == (size_t)PmToggleCode::Off
+                        && isEnabled) {
                     obs_source_set_enabled(filterSrc, false);
                 }
                 obs_source_release(filterSrc);
@@ -1806,11 +1804,12 @@ bool PmCore::execIndependentActions(const std::string &cfgName,
                 }
             }
             if (audioSrc) {
-                if (switchedOn
-                 && action.actionCode == (size_t)PmToggleCode::On) {
+                bool isOn = !obs_source_muted(audioSrc);
+                if (action.actionCode == (size_t)PmToggleCode::On
+                 && !isOn) {
                     obs_source_set_muted(audioSrc, false);
-                } else if (!switchedOn
-                        && action.actionCode == (size_t)PmToggleCode::Off) {
+                } else if (action.actionCode == (size_t)PmToggleCode::Off
+                        && isOn) {
                     obs_source_set_muted(audioSrc, true);
                 }
                 obs_source_release(audioSrc);
