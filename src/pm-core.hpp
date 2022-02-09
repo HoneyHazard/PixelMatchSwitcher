@@ -218,6 +218,7 @@ protected:
     PmLingerQueue m_sceneLingerQueue;
     PmLingerList m_lingerList;
     PmLingerList m_cooldownList;
+    QSet<size_t> m_expiredLingers;
     bool m_forceSceneItemRefresh = true;
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;

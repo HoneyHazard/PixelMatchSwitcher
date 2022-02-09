@@ -1538,7 +1538,7 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     QTime currTime = QTime::currentTime();
 
     // expired cooldown info disappers
-    std::vector<size_t> expCooldowns = m_cooldownList.removeExpired(currTime);
+    QSet<size_t> expCooldowns = m_cooldownList.removeExpired(currTime);
     for (size_t i : expCooldowns) {
         emit sigCooldownActive(i, false);
     }
@@ -1547,11 +1547,11 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     m_sceneLingerQueue.removeExpired(currTime);
 
     // expired lingers for scene items
-    std::vector<size_t> expLingers = m_lingerList.removeExpired(currTime);
-    for (size_t expIdx : expLingers) {
+    m_expiredLingers = m_lingerList.removeExpired(currTime);
+    for (size_t expIdx : m_expiredLingers) {
         emit sigLingerActive(expIdx, false);
-        PmReaction expReaction = reaction(expIdx);
-        execIndependentActions(matchConfigLabel(expIdx), expReaction, false);
+        //PmReaction expReaction = reaction(expIdx);
+        //execIndependentActions(matchConfigLabel(expIdx), expReaction, false);
     }
 
     bool sceneSelected = false;
@@ -1594,6 +1594,9 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             // prevent "switching on" after a cooldown
             newResult.isMatched = false;
             isMatched = false;
+        } else if (!isMatched && m_expiredLingers.contains(matchIndex)) {
+            // emulate matched -> unmatched when a linger expires
+            wasMatched = true;
         }
         anythingIsMatched |= isMatched;
         bool matchChanged = (isMatched != wasMatched);
@@ -1629,8 +1632,10 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         m_results = newResults;
     }
 
+    // reset temp state variables 
     if (m_forceSceneItemRefresh)
         m_forceSceneItemRefresh = false;
+    m_expiredLingers.clear();
 }
 
 void PmCore::execReaction(
@@ -1638,9 +1643,20 @@ void PmCore::execReaction(
     const PmReaction &reaction, bool switchedOn)
 {
     bool actionsTaken = false;
+	bool lingerActivated = false;
 
-    // maintain linger info
-    if (switchedOn && reaction.lingerMs > 0) {
+    if (switchedOn) {
+        // undo any linger status for anything switched on
+        m_sceneLingerQueue.removeByMatchIndex(matchIdx);
+        if (m_lingerList.removeByMatchIndex(matchIdx)) {
+            emit sigLingerActive(matchIdx, false);
+        }
+    }
+
+    if (!switchedOn && reaction.lingerMs > 0
+     && !m_expiredLingers.contains(matchIdx)) {
+        // activate linger
+        lingerActivated = true;
         QTime futureTime = time.addMSecs(int(reaction.lingerMs));
         m_lingerList.push_back({matchIdx, futureTime});
         if (reaction.hasSceneAction())
@@ -1648,25 +1664,26 @@ void PmCore::execReaction(
         emit sigLingerActive(matchIdx, true);
     }
 
-    // activate scene match/unmatch action and take note if switched
     if (!sceneSelected) {
+        // activate scene match/unmatch action and take note if switched
         if (execSceneAction(matchIdx, reaction, switchedOn)) {
             sceneSelected = true;
             actionsTaken = true;
         }
     }
 
-    // activate independent match/unmatch actions
-    if (execIndependentActions(
-            matchConfigLabel(matchIdx), reaction, switchedOn)) {
-        actionsTaken = true;
-    }
-
-    // activate cooldown
-    if (actionsTaken && switchedOn && reaction.cooldownMs > 0) {
-        m_cooldownList.push_back(
-            {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
-        emit sigCooldownActive(matchIdx, true);
+    if (!lingerActivated) {
+	    // activate independent match/unmatch actions
+        if (execIndependentActions(
+                matchConfigLabel(matchIdx), reaction, switchedOn)) {
+            actionsTaken = true;
+        }
+        // activate cooldown
+        if (actionsTaken && !switchedOn && reaction.cooldownMs > 0) {
+            m_cooldownList.push_back(
+                {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
+            emit sigCooldownActive(matchIdx, true);
+        }
     }
 }
 
