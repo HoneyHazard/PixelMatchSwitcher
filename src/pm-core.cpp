@@ -1551,8 +1551,13 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     m_expiredLingers = m_lingerList.removeExpired(currTime);
     for (size_t expIdx : m_expiredLingers) {
         emit sigLingerActive(expIdx, false);
-        //PmReaction expReaction = reaction(expIdx);
-        //execIndependentActions(matchConfigLabel(expIdx), expReaction, false);
+        PmReaction expReaction = reaction(expIdx);
+        if (expReaction.cooldownMs > 0) {
+            QTime futureTime = currTime.addMSecs(int(expReaction.cooldownMs));
+            m_cooldownList.push_back(
+                {expIdx, currTime.addMSecs(int(expReaction.cooldownMs))});
+            emit sigCooldownActive(expIdx, true);
+        }
     }
 
     // scene reaction index gets determined to select/maintain just one target scene
@@ -1564,8 +1569,6 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     bool anythingWasMatched = false;
     bool anythingIsMatched = false;
     
-
-
     for (size_t matchIndex = 0; matchIndex < m_results.size(); matchIndex++) {
         if (m_results[matchIndex].isMatched) {
             anythingWasMatched = true;
@@ -1597,6 +1600,15 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 
         bool isMatched = newResult.isMatched;
         bool wasMatched = matchResults(matchIndex).isMatched;
+
+        if ((sceneReactionIdx == (size_t)-1 || matchIndex < sceneReactionIdx)
+            && reaction.hasSceneAction()
+            && !m_cooldownList.contains(matchIndex)) {
+            // possible scene actions are always evaluated until target scene is found
+		bool isOn = isMatched || wasMatched && reaction.lingerMs > 0;
+            execSceneAction(matchIndex, reaction, isOn, sceneReactionIdx);
+        }
+
         if (!wasMatched && isMatched
          && m_cooldownList.contains(matchIndex)) {
             // prevent "switching on" after a cooldown
@@ -1617,12 +1629,6 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             // trigger match/unmatch reactions (or activate lingers)
             execReaction(
                 matchIndex, currTime, reaction, isMatched, sceneReactionIdx);
-        } else if (
-            (sceneReactionIdx == (size_t)-1 || matchIndex < sceneReactionIdx)
-                && reaction.hasSceneAction()
-                && !m_cooldownList.contains(matchIndex)) {
-            // possible scene actions are always evaluated until target scene is found
-            execSceneAction(matchIndex, reaction, isMatched, sceneReactionIdx);
         }
     }
 
@@ -1696,15 +1702,14 @@ void PmCore::execReaction(
         emit sigLingerActive(matchIdx, true);
     }
 
-    // process scene match/unmatch actions
-    if (execSceneAction(matchIdx, reaction, switchedOn, sceneReactionIdx)) {
-        actionsTaken = true;
-    }
-
     if (!lingerActivated) {
         // activate independent match/unmatch actions
         if (execIndependentActions(
                 matchConfigLabel(matchIdx), reaction, switchedOn)) {
+            actionsTaken = true;
+        }
+        // process scene match/unmatch actions
+        if (execSceneAction(matchIdx, reaction, switchedOn, sceneReactionIdx)) {
             actionsTaken = true;
         }
         // activate cooldown
@@ -1721,7 +1726,7 @@ bool PmCore::execSceneAction(
     bool switchedOn, size_t &sceneReactionIdx)
 {
     // higher priority scene is active ? => don't switch
-    if (sceneReactionIdx != (size_t)-1 && sceneReactionIdx < matchIdx)
+    if (sceneReactionIdx != (size_t)-1 && matchIdx > sceneReactionIdx)
         return false;
 
     std::string targetSceneName;
@@ -1742,7 +1747,7 @@ bool PmCore::execSceneAction(
     QMutexLocker locker(&m_scenesMutex);
     auto find = m_scenes.find(targetSceneName);
     if (find == m_scenes.end()) {
-	    return false;
+        return false;
     }
 
     sceneReactionIdx = matchIdx;
