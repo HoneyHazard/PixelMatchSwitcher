@@ -3,6 +3,7 @@
 #include <queue>
 #include <deque>
 #include <QTime>
+#include <QSet>
 
 /**
  * @brief Decribes an active linger information for a match entry
@@ -28,8 +29,8 @@ class PmLingerQueue final
                      PmLingerCompare> {
 public:
     PmLingerQueue() {}
-    std::vector<size_t> removeExpired(const QTime &currTime);
-    void removeByMatchIndex(size_t matchIndex);
+    QSet<size_t> removeExpired(const QTime &currTime);
+    bool removeByMatchIndex(size_t matchIndex);
     void removeAll() { c.clear(); }
 };
 
@@ -40,8 +41,8 @@ class PmLingerList final : public std::vector<PmLingerInfo>
 {
 public:
     PmLingerList() {}
-    std::vector<size_t> removeExpired(const QTime &currTime);
-    void removeByMatchIndex(size_t matchIndex);
+    QSet<size_t> removeExpired(const QTime &currTime);
+    bool removeByMatchIndex(size_t matchIndex);
     void removeAll() { clear(); }
     bool contains(const size_t matchIdx) const;
 };

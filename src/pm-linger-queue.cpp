@@ -6,12 +6,12 @@ bool PmLingerCompare::operator()(const PmLingerInfo &left,
     return left.matchIndex > right.matchIndex;
 }
 
-std::vector<size_t> PmLingerQueue::removeExpired(const QTime &currTime)
+QSet<size_t> PmLingerQueue::removeExpired(const QTime &currTime)
 {
-    std::vector<size_t> ret;
+    QSet<size_t> ret;
     for (auto itr = c.begin(); itr != c.end();) {
         if (currTime > itr->endTime) {
-            ret.push_back(itr->matchIndex);
+            ret.insert(itr->matchIndex);
             itr = c.erase(itr);
         } else {
             itr++;
@@ -20,24 +20,25 @@ std::vector<size_t> PmLingerQueue::removeExpired(const QTime &currTime)
     return ret;
 }
 
-void PmLingerQueue::removeByMatchIndex(size_t matchIndex)
+bool PmLingerQueue::removeByMatchIndex(size_t matchIndex)
 {
     for (auto itr = c.begin(); itr != c.end(); itr++) {
         if (itr->matchIndex == matchIndex) {
             c.erase(itr);
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 //--------------------------------------------------------
 
-std::vector<size_t> PmLingerList::removeExpired(const QTime &currTime)
+QSet<size_t> PmLingerList::removeExpired(const QTime &currTime)
 {
-    std::vector<size_t> ret;
+    QSet<size_t> ret;
     for (auto itr = begin(); itr != end();) {
         if (currTime > itr->endTime) {
-            ret.push_back(itr->matchIndex);
+            ret.insert(itr->matchIndex);
             itr = erase(itr);
         } else {
             itr++;
@@ -46,14 +47,15 @@ std::vector<size_t> PmLingerList::removeExpired(const QTime &currTime)
     return ret;
 }
 
-void PmLingerList::removeByMatchIndex(size_t matchIndex)
+bool PmLingerList::removeByMatchIndex(size_t matchIndex)
 {
     for (auto itr = begin(); itr != end(); itr++) {
         if (itr->matchIndex == matchIndex) {
             erase(itr);
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 bool PmLingerList::contains(const size_t matchIdx) const

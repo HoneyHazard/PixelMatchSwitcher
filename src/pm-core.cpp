@@ -1538,26 +1538,37 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
     QTime currTime = QTime::currentTime();
 
     // expired cooldown info disappers
-    std::vector<size_t> expCooldowns = m_cooldownList.removeExpired(currTime);
+    QSet<size_t> expCooldowns = m_cooldownList.removeExpired(currTime);
     for (size_t i : expCooldowns) {
         emit sigCooldownActive(i, false);
     }
 
     // expired lingers for scenes will disappear, allowing other scenes
-    m_sceneLingerQueue.removeExpired(currTime);
+    QSet<size_t> expiredSceneLingers
+        = m_sceneLingerQueue.removeExpired(currTime);
 
-    // expired lingers for scene items
-    std::vector<size_t> expLingers = m_lingerList.removeExpired(currTime);
-    for (size_t expIdx : expLingers) {
+    // expired lingers
+    m_expiredLingers = m_lingerList.removeExpired(currTime);
+    for (size_t expIdx : m_expiredLingers) {
         emit sigLingerActive(expIdx, false);
         PmReaction expReaction = reaction(expIdx);
-        execIndependentActions(matchConfigLabel(expIdx), expReaction, false);
+        if (expReaction.cooldownMs > 0) {
+            QTime futureTime = currTime.addMSecs(int(expReaction.cooldownMs));
+            m_cooldownList.push_back(
+                {expIdx, currTime.addMSecs(int(expReaction.cooldownMs))});
+            emit sigCooldownActive(expIdx, true);
+        }
     }
 
-    bool sceneSelected = false;
+    // scene reaction index gets determined to select/maintain just one target scene
+    size_t sceneReactionIdx = (size_t)-1;
+    if (m_sceneLingerQueue.size()) {
+        sceneReactionIdx = m_sceneLingerQueue.top().matchIndex;
+    }
+
     bool anythingWasMatched = false;
     bool anythingIsMatched = false;
-
+    
     for (size_t matchIndex = 0; matchIndex < m_results.size(); matchIndex++) {
         if (m_results[matchIndex].isMatched) {
             anythingWasMatched = true;
@@ -1589,38 +1600,68 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
 
         bool isMatched = newResult.isMatched;
         bool wasMatched = matchResults(matchIndex).isMatched;
+
         if (!wasMatched && isMatched
          && m_cooldownList.contains(matchIndex)) {
             // prevent "switching on" after a cooldown
             newResult.isMatched = false;
             isMatched = false;
+        } else if (!isMatched && m_expiredLingers.contains(matchIndex)) {
+            // emulate matched -> unmatched when a linger expires
+            wasMatched = true;
         }
+
+        // has anything at all matched?
         anythingIsMatched |= isMatched;
+
+        // "match changed" will trigger match/unmatch reactions
         bool matchChanged = (isMatched != wasMatched);
+
         if (matchChanged) {
+            // trigger match/unmatch reactions (or activate lingers)
             execReaction(
-                sceneSelected, matchIndex, currTime, reaction, isMatched);
+                matchIndex, currTime, reaction, isMatched, sceneReactionIdx);
+        }
+
+        if ((sceneReactionIdx == (size_t)-1 || matchIndex < sceneReactionIdx)
+            && reaction.hasSceneAction()
+            && !m_cooldownList.contains(matchIndex)) {
+            // possible scene actions are always evaluated until target scene is found
+            bool isOn = isMatched || m_lingerList.contains(matchIndex);
+            execSceneAction(matchIndex, reaction, isOn, sceneReactionIdx);
         }
     }
 
     if (m_switchingEnabled) {
         bool everythingSwitched = (anythingWasMatched != anythingIsMatched);
         const PmReaction &nmr = m_multiMatchConfig.noMatchReaction;
+
         if (everythingSwitched) {
-            // no scene selected due to no match or linger
-            if (m_sceneLingerQueue.size()) {
-                // a lingering scene takes precedence
-                const auto &lingerInfo = m_sceneLingerQueue.top();
-                auto reaction = matchConfig(lingerInfo.matchIndex).reaction;
-                execSceneAction(lingerInfo.matchIndex, reaction, true);
-            } else {
-                // nothing matched so we fall back to a no-match scene
-                if (!sceneSelected) {
-                    execSceneAction(0, nmr, anythingIsMatched);
-                }
-            }
+            // independent anything/nothing match actions
             execIndependentActions("global", nmr, anythingIsMatched);
         }
+
+        // finalize target scene evaluation and activation
+        std::string targetSceneName, targetTransition;
+        if (sceneReactionIdx != (size_t)-1) {
+            const PmReaction &reaction
+                = m_multiMatchConfig[sceneReactionIdx].reaction;
+            if (m_lingerList.contains(sceneReactionIdx)
+             || newResults[sceneReactionIdx].isMatched) {
+                // match scene reaction entry
+                reaction.getMatchScene(targetSceneName, targetTransition);
+            } else {
+                reaction.getUnmatchScene(targetSceneName, targetTransition);
+            }
+        } else {
+            if (anythingIsMatched) {
+                nmr.getMatchScene(targetSceneName, targetTransition);
+            } else {
+                nmr.getUnmatchScene(targetSceneName, targetTransition);
+            }
+
+        }
+        switchScene(targetSceneName, targetTransition);
     }
 
     // store new results
@@ -1629,55 +1670,63 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         m_results = newResults;
     }
 
+    // cleanup temp state variables 
     if (m_forceSceneItemRefresh)
         m_forceSceneItemRefresh = false;
+    m_expiredLingers.clear();
 }
 
 void PmCore::execReaction(
-    bool &sceneSelected, size_t matchIdx, const QTime &time,
-    const PmReaction &reaction, bool switchedOn)
+    size_t matchIdx, const QTime &time,
+    const PmReaction &reaction, bool switchedOn, size_t &sceneReactionIdx)
 {
     bool actionsTaken = false;
+    bool lingerActivated = false;
 
-    // maintain linger info
-    if (switchedOn && reaction.lingerMs > 0) {
+    if (switchedOn) {
+        // undo any linger status for anything switched on
+        m_sceneLingerQueue.removeByMatchIndex(matchIdx);
+        if (m_lingerList.removeByMatchIndex(matchIdx)) {
+            emit sigLingerActive(matchIdx, false);
+        }
+    }
+
+    if (!switchedOn && reaction.lingerMs > 0
+     && !m_expiredLingers.contains(matchIdx)) {
+        // activate linger
+        lingerActivated = true;
         QTime futureTime = time.addMSecs(int(reaction.lingerMs));
         m_lingerList.push_back({matchIdx, futureTime});
-        if (reaction.hasSceneAction())
+        if (reaction.hasMatchAction(PmActionType::Scene))
             m_sceneLingerQueue.push({matchIdx, futureTime});
         emit sigLingerActive(matchIdx, true);
     }
 
-    // activate scene match/unmatch action and take note if switched
-    if (!sceneSelected) {
-        if (execSceneAction(matchIdx, reaction, switchedOn)) {
-            sceneSelected = true;
+    if (!lingerActivated) {
+        // activate independent match/unmatch actions
+        if (execIndependentActions(
+                matchConfigLabel(matchIdx), reaction, switchedOn)) {
             actionsTaken = true;
         }
-    }
-
-    // activate independent match/unmatch actions
-    if (execIndependentActions(
-            matchConfigLabel(matchIdx), reaction, switchedOn)) {
-        actionsTaken = true;
-    }
-
-    // activate cooldown
-    if (actionsTaken && switchedOn && reaction.cooldownMs > 0) {
-        m_cooldownList.push_back(
-            {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
-        emit sigCooldownActive(matchIdx, true);
+        // process scene match/unmatch actions
+        if (execSceneAction(matchIdx, reaction, switchedOn, sceneReactionIdx)) {
+            actionsTaken = true;
+        }
+        // activate cooldown
+        if (actionsTaken && !switchedOn && reaction.cooldownMs > 0) {
+            m_cooldownList.push_back(
+                {matchIdx, time.addMSecs(int(reaction.cooldownMs))});
+            emit sigCooldownActive(matchIdx, true);
+        }
     }
 }
 
-// copied (and slightly simplified) from Advanced Scene Switcher:
-// https://github.com/WarmUpTill/SceneSwitcher/blob/05540b61a118f2190bb3fae574c48aea1b436ac7/src/advanced-scene-switcher.cpp#L1066
 bool PmCore::execSceneAction(
-    size_t matchIdx, const PmReaction &reaction, bool switchedOn)
+    size_t matchIdx, const PmReaction &reaction,
+    bool switchedOn, size_t &sceneReactionIdx)
 {
-    // higher priority lingers? => don't switch
-    if (m_sceneLingerQueue.size() > 0
-     && m_sceneLingerQueue.top().matchIndex < matchIdx)
+    // higher priority scene is active ? => don't switch
+    if (sceneReactionIdx != (size_t)-1 && matchIdx > sceneReactionIdx)
         return false;
 
     std::string targetSceneName;
@@ -1694,6 +1743,23 @@ bool PmCore::execSceneAction(
     if (targetSceneName.empty())
         return false;
 
+    // check that scene exists
+    QMutexLocker locker(&m_scenesMutex);
+    auto find = m_scenes.find(targetSceneName);
+    if (find == m_scenes.end()) {
+        return false;
+    }
+
+    sceneReactionIdx = matchIdx;
+    return true;
+}
+
+void PmCore::switchScene(
+    const std::string &targetSceneName, const std::string &targetTransition)
+{
+    if (targetSceneName.empty())
+        return;
+
     obs_source_t *currSceneSrc = obs_frontend_get_current_scene();
     obs_source_t *targetSceneSrc = nullptr;
 
@@ -1708,6 +1774,10 @@ bool PmCore::execSceneAction(
     }
 
     // do the switch when necessary
+
+    // scene activation was copied (and slightly simplified) from Advanced Scene Switcher:
+    // https://github.com/WarmUpTill/SceneSwitcher/blob/05540b61a118f2190bb3fae574c48aea1b436ac7/src/advanced-scene-switcher.cpp#L1066
+
     if (targetSceneSrc) {
         if (targetSceneSrc != currSceneSrc) {
             obs_source_t* transitionSrc = nullptr;
@@ -1735,8 +1805,6 @@ bool PmCore::execSceneAction(
 
     if (currSceneSrc)
         obs_source_release(currSceneSrc);
-
-    return true;
 }
 
 bool PmCore::execIndependentActions(const std::string &cfgName,
