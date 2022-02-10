@@ -1601,14 +1601,6 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
         bool isMatched = newResult.isMatched;
         bool wasMatched = matchResults(matchIndex).isMatched;
 
-        if ((sceneReactionIdx == (size_t)-1 || matchIndex < sceneReactionIdx)
-            && reaction.hasSceneAction()
-            && !m_cooldownList.contains(matchIndex)) {
-            // possible scene actions are always evaluated until target scene is found
-		bool isOn = isMatched || wasMatched && reaction.lingerMs > 0;
-            execSceneAction(matchIndex, reaction, isOn, sceneReactionIdx);
-        }
-
         if (!wasMatched && isMatched
          && m_cooldownList.contains(matchIndex)) {
             // prevent "switching on" after a cooldown
@@ -1629,6 +1621,14 @@ void PmCore::onFrameProcessed(PmMultiMatchResults newResults)
             // trigger match/unmatch reactions (or activate lingers)
             execReaction(
                 matchIndex, currTime, reaction, isMatched, sceneReactionIdx);
+        }
+
+        if ((sceneReactionIdx == (size_t)-1 || matchIndex < sceneReactionIdx)
+            && reaction.hasSceneAction()
+            && !m_cooldownList.contains(matchIndex)) {
+            // possible scene actions are always evaluated until target scene is found
+            bool isOn = isMatched || m_lingerList.contains(matchIndex);
+            execSceneAction(matchIndex, reaction, isOn, sceneReactionIdx);
         }
     }
 
