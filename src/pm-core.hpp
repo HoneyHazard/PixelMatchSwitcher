@@ -178,13 +178,6 @@ protected:
     void activate();
     void deactivate();
 
-    void execReaction(bool &sceneSelected, size_t matchIdx, const QTime &time,
-        const PmReaction &reaction, bool switchedOn);
-    bool execSceneAction(
-        size_t matchIdx, const PmReaction &reaction, bool switchedOn);
-    bool execIndependentActions(const std::string &cfgName,
-        const PmReaction &reaction, bool switchedOn);
-
     void scanScenes();
     void updateActiveFilter(const QSet<OBSWeakSource> &filters);
     void activateMatchConfig(size_t matchIndex, const PmMatchConfig& cfg,
@@ -196,6 +189,15 @@ protected:
 
     void supplyImageToFilter(
         struct pm_filter_data *data, size_t matchIdx, const QImage &image);
+
+    void execReaction(size_t matchIdx, const QTime &time,
+        const PmReaction &reaction, bool switchedOn, size_t &sceneReactionIdx);
+    bool execIndependentActions(const std::string &cfgName,
+        const PmReaction &reaction, bool switchedOn);
+    bool execSceneAction(size_t matchIdx, const PmReaction &reaction,
+        bool switchedOn, size_t &sceneReactionIdx);
+    void switchScene(const std::string &targetSceneName,
+        const std::string &targetTransition);
 
     void pmSave(obs_data_t *data);
     void pmLoad(obs_data_t *data);
