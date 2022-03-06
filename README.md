@@ -12,7 +12,7 @@
     - write to file (append or truncate)
     - frontend actions
         - streaming start/stop/pause
-        - reacording start/stop/pause/unpause
+        - recording start/stop/pause/unpause
         - replay buffer start/save/stop
         - take screenshot
         - virtual cam start/stop
