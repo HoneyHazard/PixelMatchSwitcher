@@ -38,24 +38,20 @@ struct PmSceneScanInfo
 
 PmCore* PmCore::m_instance = nullptr;
 
-extern "C" {
-
-void init_pixel_match_switcher()
+extern "C" void init_pixel_match_switcher(void)
 {
-    pmRegisterMetaTypes();
+    //pmRegisterMetaTypes();
 
-    PmCore::m_instance = new PmCore();
+    //PmCore::m_instance = new PmCore();
 
-    obs_frontend_add_save_callback(
-        pm_save_load_callback, static_cast<void*>(PmCore::m_instance));
+    //obs_frontend_add_save_callback(
+    //    pm_save_load_callback, static_cast<void*>(PmCore::m_instance));
 }
 
-void free_pixel_match_switcher()
+extern "C" void free_pixel_match_switcher(void)
 {
-    delete PmCore::m_instance;
-    PmCore::m_instance = nullptr;
-}
-
+    //delete PmCore::m_instance;
+    //PmCore::m_instance = nullptr;
 }
 
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)

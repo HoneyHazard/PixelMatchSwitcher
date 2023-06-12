@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.5)
 
 project(pixel-match-switcher)
 
-set(LIB_NAME "${PROJECT_NAME}-lib")
+#set(LIB_NAME "${PROJECT_NAME}-lib")
 add_library(${PROJECT_NAME} MODULE)
-add_library(${LIB_NAME} SHARED)
+#add_library(${PROJECT_NAME} SHARED)
 
 # For plugin version info in UI and XML
 if(NOT DEFINED PIXEL_MATCH_SWITCHER_VERSION_OVERRIDE)
@@ -63,7 +63,7 @@ if(BUILD_OUT_OF_TREE)
     find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
     find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
 
-    target_include_directories(${LIB_NAME} PRIVATE
+    target_include_directories(${PROJECT_NAME} PRIVATE
             "${CURL_INCLUDE_DIR}"
             "${LIBOBS_INCLUDE_DIR}"
             "${LIBOBS_FRONTEND_INCLUDE_DIR}"
@@ -84,25 +84,17 @@ endif()
 
 if(UNIX AND NOT APPLE)
     find_package(Qt6X11Extras REQUIRED)
-	target_include_directories(${LIB_NAME} PRIVATE
+	target_include_directories(${PROJECT_NAME} PRIVATE
             "${Qt6X11Extras_DIR}"
             "${Qt6X11Extras_INCLUDE_DIRS}"
     )
 endif()
 
-target_include_directories(${LIB_NAME} PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
 	"${LIBOBS_UI_DIR}"
 	"${CMAKE_CURRENT_BINARY_DIR}")
 
-# Module sources
-target_sources(${PROJECT_NAME} PRIVATE 
-	src/pm-module.h
-	src/pm-filter.h
-	src/pm-switcher.c
-)
-
-# Generic sources
-
+# headers
 set(pixel-match-switcher_HEADERS
         ${VERSION_FILE}
 		src/pm-module.h
@@ -136,9 +128,11 @@ set(pixel-match-switcher_HEADERS
         ${LIBOBS_UI_DIR}/qt-wrappers.hpp
 )
 
+#sources
 set(pixel-match-switcher_SOURCES
 		src/pm-module.c
-        src/pm-filter.c
+		src/pm-filter.c
+		src/pm-switcher.c
         src/pm-filter-ref.cpp
         src/pm-core.cpp
         src/pm-spoiler-widget.cpp
@@ -178,7 +172,7 @@ set(pixel-match-switcher_SOURCES
 #)
 
 target_sources(
-  ${LIB_NAME} PRIVATE
+  ${PROJECT_NAME} PRIVATE
 		${pixel-match-switcher_HEADERS}
 		${pixel-match-switcher_SOURCES})
 
@@ -186,20 +180,18 @@ if(BUILD_OUT_OF_TREE)
   include(cmake/ObsPluginHelpers.cmake)
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_NAME})
-
 find_qt(COMPONENTS Widgets Core)
 find_package(CURL REQUIRED)
 #find_package(Libcurl REQUIRED)
 if(CURL_FOUND)
-    target_include_directories(${LIB_NAME} PRIVATE "${CURL_INCLUDE_DIRS}")
+    target_include_directories(${PROJECT_NAME} PRIVATE "${CURL_INCLUDE_DIRS}")
 elseif(Libcurl_FOUND)
-    target_include_directories(${LIB_NAME} PRIVATE "${LIBCURL_INCLUDE_DIRS}")
+    target_include_directories(${PROJECT_NAME} PRIVATE "${LIBCURL_INCLUDE_DIRS}")
 else()
     message(FATAL_ERROR "Couldn't find CURL or Libcurl - abort")
 endif()
 
-target_link_libraries(${LIB_NAME} PUBLIC
+target_link_libraries(${PROJECT_NAME} PUBLIC
 		OBS::libobs
         OBS::frontend-api
         Qt::Core
@@ -207,18 +199,18 @@ target_link_libraries(${LIB_NAME} PUBLIC
 		CURL::libcurl
         ${LIBCURL_LIBRARIES})
 if(UNIX AND NOT APPLE)
-        target_link_libraries(${LIB_NAME} PRIVATE Qt6::X11Extras)
+        target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::X11Extras)
 endif()
 
 set_target_properties(
-  ${LIB_NAME}
+  ${PROJECT_NAME}
   PROPERTIES AUTOMOC ON
              AUTOUIC ON
              AUTORCC ON)
 
 if(BUILD_OUT_OF_TREE)
         if (MSVC)
-                target_link_libraries(${LIB_NAME} PRIVATE "${W32_PTHREADS_LIB}")
+                target_link_libraries(${PROJECT_NAME} PRIVATE "${W32_PTHREADS_LIB}")
         endif()
         if (UNIX AND NOT APPLE)
             file(GLOB EFFECT_FILES
@@ -230,19 +222,21 @@ if(BUILD_OUT_OF_TREE)
         endif()
 else()
         #if(MSVC)
-        #        target_link_libraries(${LIB_NAME} w32-pthreads)
+        #        target_link_libraries(${PROJECT_NAME} w32-pthreads)
         #endif()
         set_target_properties(pixel-match-switcher PROPERTIES FOLDER "plugins")
-        install_obs_plugin_with_data(pixel-match-switcher data)
+        #install_obs_plugin_with_data(pixel-match-switcher data)
 endif()
+
+setup_plugin_target(${PROJECT_NAME})
 
 if(BROWSER_AVAILABLE_INTERNAL)
-    target_compile_definitions(${LIB_NAME} PUBLIC BROWSER_AVAILABLE=1)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC BROWSER_AVAILABLE=1)
 else()
-    target_compile_definitions(${LIB_NAME} PUBLIC BROWSER_AVAILABLE=0)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC BROWSER_AVAILABLE=0)
 endif()
 
-target_compile_options(${LIB_NAME} PUBLIC
+target_compile_options(${PROJECT_NAME} PUBLIC
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<C_COMPILER_ID:GNU>>:
           -Wno-old-style-cast>
      $<$<CXX_COMPILER_ID:MSVC>:
