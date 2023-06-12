@@ -6,6 +6,7 @@
 #include <QHash>
 #include <QSet>
 #include <QList>
+#include <QRegularExpression>
 
 #include <obs.h>
 #include <obs.hpp>
@@ -243,9 +244,10 @@ namespace PmConstants
         = "TXT (*.txt);; LOG (*.log);; All files (*.*)";
 
     const QString k_problemCharacterStr
-        = QString("[") + QRegExp::escape("\\/:*?\"<>|\"") + QString("]");
-    const QRegExp k_problemCharacterRegex(PmConstants::k_problemCharacterStr);
-};
+        = QString("[") + QRegularExpression::escape("\\/:*?\"<>|\"") + QString("]");
+    const QRegularExpression
+	    k_problemCharacterRegex(PmConstants::k_problemCharacterStr);
+    };
 
 /**
  * @brief Allows our data structures to be propagated through signals and slots.
@@ -253,19 +255,19 @@ namespace PmConstants
 void pmRegisterMetaTypes();
 
 /** @brief Allow OBSWeakSource be a key index into QHash or QSet */
-inline uint qHash(const OBSWeakSource& ws)
+inline size_t qHash(const OBSWeakSource& ws)
 {
     obs_source_t* source = obs_weak_source_get_source(ws);
-    uint ret = qHash(source);
+    size_t ret = qHash(source);
     obs_source_release(source);
     return ret;
 }
 
 namespace std {
     /** @brief Allow std::string to be a key index into QHash or QSet */
-    inline uint qHash(const std::string& str)
+    inline size_t qHash(const std::string& str)
     {
-        return (uint)std::hash<std::string>()(str);
+        return (size_t)std::hash<std::string>()(str);
     }
 }
 

@@ -404,7 +404,9 @@ void PmPreviewDisplayWidget::fixGeometry()
 void PmPreviewDisplayWidget::getImageXY(QMouseEvent *e, int& imgX, int& imgY)
 {
     imgX = int(
-        (float)e->x() * (float)m_baseWidth / (float)m_filterDisplay->width());
+        (float)e->position().x() * (float)m_baseWidth
+            / (float)m_filterDisplay->width());
     imgY = int(
-        (float)e->y() * (float)m_baseHeight / (float)m_filterDisplay->height());
+        (float)e->position().y() * (float)m_baseHeight
+            / (float)m_filterDisplay->height());
 }

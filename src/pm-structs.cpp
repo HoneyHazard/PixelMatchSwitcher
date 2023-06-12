@@ -124,7 +124,7 @@ PmMatchConfig::PmMatchConfig(QXmlStreamReader &reader)
             return;
         }
 
-        QStringRef name = reader.name();
+        QString name = reader.name().toString();
         if (reader.isEndElement()) {
             if (name == "match_config") {
                 return;
@@ -258,7 +258,7 @@ PmMultiMatchConfig::PmMultiMatchConfig(
             return;
         }
 
-        QStringRef name = reader.name();
+        QString name = reader.name().toString();
         if (reader.isEndElement()) {
             if (name == "preset") {
                 return;
@@ -400,7 +400,7 @@ void PmMatchPresets::importXml(QXmlStreamReader &xml)
             break;
         }
 
-        if (xml.name() == "preset" && xml.isStartElement()) {
+        if (xml.name().toString() == "preset" && xml.isStartElement()) {
             std::string presetName;
             PmMultiMatchConfig preset(xml, presetName);
             insert(presetName, preset);

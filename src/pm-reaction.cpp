@@ -1,6 +1,6 @@
 #include "pm-reaction.hpp"
+#include "pm-module.h"
 #include <obs-frontend-api.h>
-#include <obs-module.h>
 #include <QDateTime>
 
 const std::string PmAction::k_timeMarker = "[time]";
@@ -132,7 +132,7 @@ PmAction::PmAction(QXmlStreamReader &reader)
             return;
         }
 
-        QStringRef name = reader.name();
+        QString name = reader.name().toString();
         if (reader.isEndElement()) {
             if (name == "action") {
                 return;
@@ -307,7 +307,7 @@ PmReaction::PmReaction(QXmlStreamReader &reader)
             return;
         }
 
-        QStringRef name = reader.name();
+        QString name = reader.name().toString();
         if (reader.isEndElement()) {
             if (name == "reaction") {
                 return;
@@ -485,7 +485,7 @@ void PmReaction::readActionsXml(QXmlStreamReader &reader,
             return;
         }
 
-        QStringRef name = reader.name();
+        QString name = reader.name().toString();
         if (reader.isEndElement()) {
             if (name == vecName.data()) {
                 return;

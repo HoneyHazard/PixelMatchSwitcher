@@ -97,7 +97,7 @@ protected:
     void cooldownChanged(int idx, int cooldown);
 
     void setMinWidth();
-    bool selectRowAtGlobalPos(QPoint globalPos);
+    bool selectRowAtGlobalPos(QPointF globalPos);
     bool eventFilter(QObject *obj, QEvent *event) override; // for display events
 
     int maxContentHeight() const override;

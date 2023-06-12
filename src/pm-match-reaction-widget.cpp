@@ -305,7 +305,7 @@ void PmActionEntryWidget::actionToUi(
         m_targetCombo->blockSignals(true);
         if (action.isSet()) {
             int targetIdx = m_targetCombo->findData(
-                action.targetElement.data());
+                QString(action.targetElement.data()));
             m_targetCombo->setCurrentIndex(targetIdx);
         } else {
             m_targetCombo->setCurrentIndex(0);
@@ -315,7 +315,8 @@ void PmActionEntryWidget::actionToUi(
         m_transitionsCombo->blockSignals(true);
         if (action.targetDetails.size()) {
             int transitionIdx
-                = m_transitionsCombo->findData(action.targetDetails.data());
+                = m_transitionsCombo->findData(
+                    QString(action.targetDetails.data()));
             m_transitionsCombo->setCurrentIndex(transitionIdx);
         } else {
             m_transitionsCombo->setCurrentIndex(0);
@@ -332,7 +333,7 @@ void PmActionEntryWidget::actionToUi(
          m_targetCombo->blockSignals(true);
         if (action.isSet()) {
             int targetIdx
-                = m_targetCombo->findData(action.targetElement.data());
+                = m_targetCombo->findData(QString(action.targetElement.data()));
             m_targetCombo->setCurrentIndex(targetIdx);
         } else {
             m_targetCombo->setCurrentIndex(0);
@@ -353,7 +354,7 @@ void PmActionEntryWidget::actionToUi(
         m_targetCombo->blockSignals(true);
         if (action.isSet()) {
             int targetIdx
-                = m_targetCombo->findData(action.targetElement.data());
+                = m_targetCombo->findData(QString(action.targetElement.data()));
             m_targetCombo->setCurrentIndex(targetIdx);
         } else {
             m_targetCombo->setCurrentIndex(0);
@@ -1060,7 +1061,7 @@ bool PmMatchReactionWidget::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::MouseButtonPress) {
         auto mouseEvent = (QMouseEvent *)event;
         auto listPos = m_actionListWidget->mapFromGlobal(
-            mouseEvent->globalPos());
+            mouseEvent->globalPosition()).toPoint();
         auto item = m_actionListWidget->itemAt(listPos);
         if (item)
             item->setSelected(true);

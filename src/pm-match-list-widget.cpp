@@ -656,12 +656,13 @@ int PmMatchListWidget::maxContentHeight() const
     return rowTotalHeight + horizontalHeaderHeight;
 }
 
-bool PmMatchListWidget::selectRowAtGlobalPos(QPoint globalPos)
+bool PmMatchListWidget::selectRowAtGlobalPos(QPointF globalPos)
 {
     auto tablePos = m_tableWidget->mapFromGlobal(globalPos);
     tablePos.setY(tablePos.y() -
               m_tableWidget->horizontalHeader()->height());
-    auto tableIndex = m_tableWidget->indexAt(tablePos);
+    QPoint qp((int)tablePos.x(), (int)tablePos.y());
+    auto tableIndex = m_tableWidget->indexAt(qp);
     if (m_core->selectedConfigIndex() != (size_t)tableIndex.row()) {
         m_tableWidget->selectRow(tableIndex.row());
         return true;
@@ -697,7 +698,7 @@ bool PmMatchListWidget::eventFilter(QObject *obj, QEvent *event)
     } else if (event->type() == QEvent::MouseButtonPress) {
         // clicking combo boxes and other elements should select their row
         auto mouseEvent = (QMouseEvent *)event;
-        selectRowAtGlobalPos(mouseEvent->globalPos());
+        selectRowAtGlobalPos(mouseEvent->globalPosition());
     }
 
     // do not interfere with events

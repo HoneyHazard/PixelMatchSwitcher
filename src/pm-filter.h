@@ -7,10 +7,6 @@ extern "C" {
 #include <pthread.h>
 #include <obs-module.h>
 
-#define PIXEL_MATCH_FILTER_ID "pixel_match_filter"
-
-#define PIXEL_MATCH_FILTER_DISPLAY_NAME obs_module_text("Pixel Match Filter")
-
 struct pm_match_entry_config
 {
     // params

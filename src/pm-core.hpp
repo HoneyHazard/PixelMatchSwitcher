@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QMutex>
+#include <QRecursiveMutex>
 #include <QPointer>
 #include <QImage>
 
@@ -208,10 +209,10 @@ protected:
     QPointer<PmDialog> m_dialog = nullptr;
     QTimer* m_periodicUpdateTimer = nullptr;
 
-    mutable QMutex m_pmFilterMutex;
+    mutable QRecursiveMutex m_pmFilterMutex;
     PmFilterRef m_activeFilter;
 
-    mutable QMutex m_scenesMutex;
+    mutable QRecursiveMutex m_scenesMutex;
     PmSourceHash m_scenes;
     PmSceneItemsHash m_sceneItems;
     PmSourceHash m_filters;
@@ -225,7 +226,7 @@ protected:
 
     QHash<std::string, OBSWeakSource> m_availableTransitions;
 
-    mutable QMutex m_matchConfigMutex;
+    mutable QRecursiveMutex m_matchConfigMutex;
     PmMultiMatchConfig m_multiMatchConfig;
     size_t m_selectedMatchIndex = 0;
     

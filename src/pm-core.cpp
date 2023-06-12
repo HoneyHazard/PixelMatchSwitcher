@@ -1,9 +1,9 @@
 #include "pm-core.hpp"
+#include "pm-module.h"
 
 #include <ostream>
 #include <sstream>
 
-#include <obs-module.h>
 #include <obs-frontend-api.h>
 #include <obs-data.h>
 
@@ -39,6 +39,8 @@ struct PmSceneScanInfo
 
 PmCore* PmCore::m_instance = nullptr;
 
+extern "C" {
+
 void init_pixel_match_switcher()
 {
     pmRegisterMetaTypes();
@@ -53,6 +55,8 @@ void free_pixel_match_switcher()
 {
     delete PmCore::m_instance;
     PmCore::m_instance = nullptr;
+}
+
 }
 
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr)
@@ -140,9 +144,6 @@ QHash<std::string, OBSWeakSource> PmCore::getAvailableTransitions()
 }
 
 PmCore::PmCore()
-: m_pmFilterMutex(QMutex::Recursive)
-, m_scenesMutex(QMutex::Recursive)
-, m_matchConfigMutex(QMutex::Recursive)
 {
     // add action item in the Tools menu of the app
     auto action = static_cast<QAction*>(

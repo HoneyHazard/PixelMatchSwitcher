@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 
 project(pixel-match-switcher)
 
+set(LIB_NAME "${PROJECT_NAME}-lib")
+add_library(${PROJECT_NAME} MODULE)
+add_library(${LIB_NAME} SHARED)
+
 # For plugin version info in UI and XML
 if(NOT DEFINED PIXEL_MATCH_SWITCHER_VERSION_OVERRIDE)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -20,13 +24,25 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/pm-version.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp)
 set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/pm-version.hpp")
 
+message(STATUS "CMAKE_PROJECT_NAME is ${CMAKE_PROJECT_NAME}")
+if(${CMAKE_PROJECT_NAME} STREQUAL "obs-studio")
+  if(NOT DEFINED BUILD_OUT_OF_TREE)
+    message(STATUS "${PROJECT_NAME} configured for in-tree build")
+  endif()
+else()
+  set(BUILD_OUT_OF_TREE ON)
+  message(STATUS "${PROJECT_NAME} configured for out-of-tree build")
+endif()
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
+
 if(BUILD_OUT_OF_TREE)
     if(WIN32)
         if (QTDIR OR DEFINED ENV{QTDIR} OR DEFINED ENV{QTDIR32} OR DEFINED ENV{QTDIR64})
             # Qt path set by user or env var
         else()
-            set(QTDIR "" CACHE PATH "Path to Qt (e.g. C:\Qt\5.10.1\msvc2017_64)")
-            message(WARNING "QTDIR variable is missing.  Please set this variable to specify path to Qt (e.g. C:/Qt/5.7/msvc2015_64)")
+            set(QTDIR "" CACHE PATH "Path to Qt (e.g. C:\Qt\6\)")
+            message(WARNING "QTDIR variable is missing.  Please set this variable to specify path to Qt (e.g. C:/Qt/6/msvc2015_64)")
         endif()
         if (DepsPath OR DEFINED ENV{DepsPath} OR DEFINED ENV{DepsPath32} OR DEFINED ENV{DepsPath64})
             # Dependencies path set by user or env var
@@ -38,33 +54,21 @@ if(BUILD_OUT_OF_TREE)
         find_path(CURL_INCLUDE_DIR "${DepsPath}" "/include/curl")
         find_file(CURL_LIB "libcurl.lib" "${DepsPath}/bin")
     else()
-        set(CMAKE_PREFIX_PATH "${QTDIR}")
-
-        FindPackage(Libcurl REQUIRED)
+        find_package(Libcurl REQUIRED)
     endif()
 
-    set(CMAKE_AUTOMOC ON)
-
-    include(external/FindLibObs.cmake)
-    include(external/ObsPluginHelpers.cmake)
-    include(external/FindCEF.cmake)
-
-    find_package(LibObs REQUIRED)
-    find_package(Qt5Core REQUIRED)
-    find_package(Qt5Widgets REQUIRED)
-    find_package(Qt5Network REQUIRED)
-
+    find_package(Qt6 COMPONENTS Core Widgets Networking REQUIRED)
+    
     find_path(LIBOBS_FRONTEND_INCLUDE_DIR HINTS ${LIBOBS_INCLUDE_DIRS})
     find_file(LIBOBS_FRONTEND_API_LIB NAMES libobs-frontend-api.* HINTS ${LIBOBS_LIB})
     find_path(LIBOBS_UI_DIR HINTS ${LIBSOBS_INCLUDE_DIRS})
 
-    include_directories(
+    target_include_directories(${LIB_NAME} PRIVATE
             "${CURL_INCLUDE_DIR}"
             "${LIBOBS_INCLUDE_DIR}"
             "${LIBOBS_FRONTEND_INCLUDE_DIR}"
-            "${CMAKE_CURRENT_BINARY_DIR}"
-            ${Qt5Core_INCLUDES}
-            ${Qt5Widgets_INCLUDES}
+            ${Qt6Core_INCLUDES}
+            ${Qt6Widgets_INCLUDES}
     )
     if(MSVC)
             include_directories("${W32_PTHREADS_INCLUDE_DIR}")
@@ -72,21 +76,42 @@ if(BUILD_OUT_OF_TREE)
 else()
     # for qt-display.hpp:
     set(LIBOBS_UI_DIR "../..")
+	
+	# for linking and including libobs
+	set(LIBOBS_INCLUDE_DIR "../../../libobs")
+	
+	# !!! test !!!
+	#find_package(Libcurl REQUIRED)
 endif()
 
 if(UNIX AND NOT APPLE)
-    find_package(Qt5X11Extras REQUIRED)
-    include_directories(
-            "${Qt5X11Extras_DIR}"
-            "${Qt5X11Extras_INCLUDE_DIRS}"
+    find_package(Qt6X11Extras REQUIRED)
+	target_include_directories(${LIB_NAME} PRIVATE
+            "${Qt6X11Extras_DIR}"
+            "${Qt6X11Extras_INCLUDE_DIRS}"
     )
 endif()
 
-include_directories("${LIBOBS_UI_DIR}")
+target_include_directories(${LIB_NAME} PRIVATE
+	"${LIBOBS_UI_DIR}"
+	"${CMAKE_CURRENT_BINARY_DIR}")
+
+# Module sources
+target_sources(${PROJECT_NAME} PRIVATE 
+	src/pm-module.h
+	src/pm-module.c
+	src/pm-filter.h
+    src/pm-filter.c
+	src/pm-switcher.c
+)
+
+# Generic sources
 
 set(pixel-match-switcher_HEADERS
         ${VERSION_FILE}
-        src/pm-filter.h
+		src/pm-module.h
+		src/pm-module.c
+		src/pm-filter.h
         src/pm-filter-ref.hpp
         src/pm-core.hpp
         src/pm-add-action-menu.hpp
@@ -117,8 +142,8 @@ set(pixel-match-switcher_HEADERS
 )
 
 set(pixel-match-switcher_SOURCES
-        src/pm-switcher.c
-        src/pm-filter.c
+        #src/pm-switcher.c
+        #src/pm-filter.c
         src/pm-filter-ref.cpp
         src/pm-core.cpp
         src/pm-spoiler-widget.cpp
@@ -146,63 +171,83 @@ set(pixel-match-switcher_SOURCES
         src/pm-presets-retriever.cpp
         ${LIBOBS_UI_DIR}/qt-display.cpp
         ${LIBOBS_UI_DIR}/qt-wrappers.cpp
+		pm.qrc
 )
 
-qt5_add_resources(pixel-match-switcher_SOURCES
-        pm.qrc)
+#qt6_add_resources(pixel-match-switcher_SOURCES
+#        pm.qrc)
 
-add_library(pixel-match-switcher MODULE
-        ${pixel-match-switcher_HEADERS}
-        ${pixel-match-switcher_SOURCES}
-)
+#add_library(pixel-match-switcher MODULE
+#        ${pixel-match-switcher_HEADERS}
+        #${pixel-match-switcher_SOURCES}
+#)
 
-target_link_libraries(pixel-match-switcher
-        Qt5::Core
-        Qt5::Widgets
-        ${LIBCURL_LIBRARIES})
-if(UNIX AND NOT APPLE)
-        target_link_libraries(pixel-match-switcher Qt5::X11Extras)
-endif()
+target_sources(
+  ${LIB_NAME} PRIVATE
+		${pixel-match-switcher_HEADERS}
+		${pixel-match-switcher_SOURCES})
 
 if(BUILD_OUT_OF_TREE)
-        target_link_libraries(pixel-match-switcher
-                ${LIBOBS_LIB}
-                ${LIBOBS_FRONTEND_API_LIB}
-        )
+  include(cmake/ObsPluginHelpers.cmake)
+endif()
+#include(cmake/FindLibObs.cmake)
+include(cmake/AdvSSHelpers.cmake)
+
+setup_obs_lib_dependency(${LIB_NAME})
+setup_obs_lib_dependency(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_NAME})
+
+find_qt(COMPONENTS Widgets Core)
+
+target_link_libraries(${LIB_NAME} PUBLIC
+		OBS::libobs
+        OBS::frontend-api
+        Qt::Core
+        Qt::Widgets
+        ${LIBCURL_LIBRARIES})
+if(UNIX AND NOT APPLE)
+        target_link_libraries(${LIB_NAME} PRIVATE Qt6::X11Extras)
+endif()
+
+set_target_properties(
+  ${LIB_NAME}
+  PROPERTIES AUTOMOC ON
+             AUTOUIC ON
+             AUTORCC ON)
+
+if(BUILD_OUT_OF_TREE)
         if (MSVC)
-                target_link_libraries(pixel-match-switcher "${W32_PTHREADS_LIB}")
+                target_link_libraries(${LIB_NAME} PRIVATE "${W32_PTHREADS_LIB}")
         endif()
         if (UNIX AND NOT APPLE)
             file(GLOB EFFECT_FILES
                 data/*.effect)
-            install(TARGETS pixel-match-switcher
+            install(TARGETS ${PROJECT_NAME}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
             install(FILES ${EFFECT_FILES}
                 DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher")
         endif()
 else()
-        target_link_libraries(pixel-match-switcher
-                libobs
-                obs-frontend-api
-        )
-        if(MSVC)
-                target_link_libraries(pixel-match-switcher w32-pthreads)
-        endif()
+        #if(MSVC)
+        #        target_link_libraries(${LIB_NAME} w32-pthreads)
+        #endif()
         set_target_properties(pixel-match-switcher PROPERTIES FOLDER "plugins")
         install_obs_plugin_with_data(pixel-match-switcher data)
 endif()
 
 if(BROWSER_AVAILABLE_INTERNAL)
-    target_compile_definitions(pixel-match-switcher PUBLIC BROWSER_AVAILABLE=1)
+    target_compile_definitions(${LIB_NAME} PUBLIC BROWSER_AVAILABLE=1)
 else()
-    target_compile_definitions(pixel-match-switcher PUBLIC BROWSER_AVAILABLE=0)
+    target_compile_definitions(${LIB_NAME} PUBLIC BROWSER_AVAILABLE=0)
 endif()
 
-target_compile_options(pixel-match-switcher PUBLIC
+target_compile_options(${LIB_NAME} PUBLIC
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<C_COMPILER_ID:GNU>>:
           -Wno-old-style-cast>
      $<$<CXX_COMPILER_ID:MSVC>:
           /wd26812>)
+
+
 
 #file(GLOB ASS_TRANSLATION_FILES
 #  data/locale/*.ini)
