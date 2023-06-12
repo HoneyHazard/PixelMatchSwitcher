@@ -25,8 +25,10 @@ struct pm_filter_data;
 class PmDialog;
 
 // plugin's C functions
-extern "C" void init_pixel_match_switcher();
-extern "C" void free_pixel_match_switcher();
+extern "C" {
+    void init_pixel_match_switcher();
+    void free_pixel_match_switcher();
+}
 
 // event handlers for OBS and filter events
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr);

@@ -80,8 +80,6 @@ else()
 	# for linking and including libobs
 	set(LIBOBS_INCLUDE_DIR "../../../libobs")
 	
-	# !!! test !!!
-	#find_package(Libcurl REQUIRED)
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -195,12 +193,22 @@ setup_obs_lib_dependency(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_NAME})
 
 find_qt(COMPONENTS Widgets Core)
+find_package(CURL REQUIRED)
+#find_package(Libcurl REQUIRED)
+if(CURL_FOUND)
+    target_include_directories(${LIB_NAME} PRIVATE "${CURL_INCLUDE_DIRS}")
+elseif(Libcurl_FOUND)
+    target_include_directories(${LIB_NAME} PRIVATE "${LIBCURL_INCLUDE_DIRS}")
+else()
+    message(FATAL_ERROR "Couldn't find CURL or Libcurl - abort")
+endif()
 
 target_link_libraries(${LIB_NAME} PUBLIC
 		OBS::libobs
         OBS::frontend-api
         Qt::Core
         Qt::Widgets
+		CURL::libcurl
         ${LIBCURL_LIBRARIES})
 if(UNIX AND NOT APPLE)
         target_link_libraries(${LIB_NAME} PRIVATE Qt6::X11Extras)
