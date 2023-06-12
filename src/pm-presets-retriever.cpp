@@ -1,4 +1,5 @@
 #include "pm-presets-retriever.hpp"
+#include "pm-module.h"
 
 #include <util/platform.h>
 

@@ -98,11 +98,20 @@ struct pm_filter_data
 
 void pm_destroy_match_gfx(struct gs_texture *tex, void *img_data);
 
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+extern "C" void pm_supply_match_entry_config(struct pm_filter_data *filter,
+                size_t match_idx, const struct pm_match_entry_config *cfg);
+
+extern "C" void pm_resize_match_entries(
+                struct pm_filter_data *filter, size_t new_size);
+#else
+
 void pm_supply_match_entry_config(struct pm_filter_data *filter,
      size_t match_idx, const struct pm_match_entry_config *cfg);
 
 void pm_resize_match_entries(struct pm_filter_data *filter, size_t new_size);
-
-#ifdef __cplusplus
-}
 #endif

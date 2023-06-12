@@ -1,3 +1,11 @@
+/**
+ * @file
+ *
+ * - help C++ UI+core plugin locate functions in the C module
+ * - help the C module find a few functions defined in the C++ plugin
+ * - define a few shared definitions
+ */
+
 #pragma once
 
 #include <obs-module.h>
@@ -16,7 +24,7 @@ extern "C" bool obs_module_get_string(const char *val, const char **out);
 extern "C" void obs_module_set_locale(const char *locale);
 extern "C" void obs_module_free_locale(void);
 #else
-lookup_t *obs_module_lookup;
+extern lookup_t *obs_module_lookup;
 const char *obs_module_text(const char *val);
 bool obs_module_get_string(const char *val, const char **out);
 void obs_module_set_locale(const char *locale);

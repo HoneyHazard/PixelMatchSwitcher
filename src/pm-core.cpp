@@ -1,5 +1,6 @@
 #include "pm-core.hpp"
 #include "pm-module.h"
+#include "pm-filter.h"
 
 #include <ostream>
 #include <sstream>

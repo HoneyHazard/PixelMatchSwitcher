@@ -5,7 +5,6 @@
 
 #define PIXEL_MATCH_FILTER_DISPLAY_NAME obs_module_text("Pixel Match Filter")
 
-
 const float PM_VISUALIZE_BORDER_THICKNESS = 2.f;
 const float PM_SELECT_REGION_BORDER_THICKNESS = 4.f;
 const float PM_AUTOMASK_BORDER_THICKNESS = 4.f;

@@ -99,9 +99,9 @@ target_include_directories(${LIB_NAME} PRIVATE
 # Module sources
 target_sources(${PROJECT_NAME} PRIVATE 
 	src/pm-module.h
-	src/pm-module.c
+#	src/pm-module.c
 	src/pm-filter.h
-    src/pm-filter.c
+#    src/pm-filter.c
 	src/pm-switcher.c
 )
 
@@ -110,7 +110,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 set(pixel-match-switcher_HEADERS
         ${VERSION_FILE}
 		src/pm-module.h
-		src/pm-module.c
 		src/pm-filter.h
         src/pm-filter-ref.hpp
         src/pm-core.hpp
@@ -142,8 +141,9 @@ set(pixel-match-switcher_HEADERS
 )
 
 set(pixel-match-switcher_SOURCES
+		src/pm-module.c
         #src/pm-switcher.c
-        #src/pm-filter.c
+        src/pm-filter.c
         src/pm-filter-ref.cpp
         src/pm-core.cpp
         src/pm-spoiler-widget.cpp
