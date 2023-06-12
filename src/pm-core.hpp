@@ -25,8 +25,8 @@ struct pm_filter_data;
 class PmDialog;
 
 // plugin's C functions
-extern "C" void init_pixel_match_switcher();
-extern "C" void free_pixel_match_switcher();
+extern "C" void init_pixel_match_switcher(void);
+extern "C" void free_pixel_match_switcher(void);
 
 // event handlers for OBS and filter events
 void pm_save_load_callback(obs_data_t *save_data, bool saving, void *corePtr);
@@ -41,8 +41,8 @@ class PmCore : public QObject
     Q_OBJECT
 
     // interactions with OBS C components
-    friend void init_pixel_match_switcher();
-    friend void free_pixel_match_switcher();
+    //friend void init_pixel_match_switcher();
+    //friend void free_pixel_match_switcher();
     friend void on_frame_processed(pm_filter_data *filterData);
     friend void on_settings_button_released();
     friend void on_match_image_captured(pm_filter_data *filterData);

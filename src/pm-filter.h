@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 #include <pthread.h>
-#include <obs-module.h>
+#include "pm-module.h"
 
 struct pm_match_entry_config
 {
@@ -109,7 +109,6 @@ extern "C" void pm_supply_match_entry_config(struct pm_filter_data *filter,
 extern "C" void pm_resize_match_entries(
                 struct pm_filter_data *filter, size_t new_size);
 #else
-
 void pm_supply_match_entry_config(struct pm_filter_data *filter,
      size_t match_idx, const struct pm_match_entry_config *cfg);
 
