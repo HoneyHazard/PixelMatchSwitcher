@@ -16,6 +16,7 @@
 #include "pm-structs.hpp"
 #include "pm-linger-queue.hpp"
 #include "pm-dialog.hpp"
+#include "pm-module.h"
 #include "pm-filter.h"
 
 struct obs_scene_item;
