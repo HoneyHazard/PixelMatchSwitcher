@@ -1,7 +1,5 @@
 #include "pm-module.h"
 
-OBS_DECLARE_MODULE()
-
 extern struct obs_source_info pixel_match_filter;
 
 bool obs_module_load(void)

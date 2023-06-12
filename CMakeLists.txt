@@ -185,11 +185,7 @@ target_sources(
 if(BUILD_OUT_OF_TREE)
   include(cmake/ObsPluginHelpers.cmake)
 endif()
-#include(cmake/FindLibObs.cmake)
-include(cmake/AdvSSHelpers.cmake)
 
-setup_obs_lib_dependency(${LIB_NAME})
-setup_obs_lib_dependency(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_NAME})
 
 find_qt(COMPONENTS Widgets Core)
