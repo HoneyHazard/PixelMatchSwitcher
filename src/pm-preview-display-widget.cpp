@@ -27,8 +27,8 @@ PmPreviewDisplayWidget::PmPreviewDisplayWidget(PmCore* core, QWidget* parent)
     m_filterDisplay->installEventFilter(this);
     connect(m_filterDisplay, &OBSQTDisplay::DisplayCreated,
             addDrawCallback);
-    connect(m_filterDisplay, &OBSQTDisplay::destroyed,
-            this, &PmPreviewDisplayWidget::onDestroy, Qt::QueuedConnection);
+    //connect(m_filterDisplay, &OBSQTDisplay::destroyed,
+    //        this, &PmPreviewDisplayWidget::onDestroy, Qt::DirectConnection);
 
     // view for displaying match image and messages
     m_imageView = new PmImageView(this);
