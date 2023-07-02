@@ -41,8 +41,8 @@ class PmCore : public QObject
     Q_OBJECT
 
     // interactions with OBS C components
-    //friend void init_pixel_match_switcher();
-    //friend void free_pixel_match_switcher();
+    friend void init_pixel_match_switcher();
+    friend void free_pixel_match_switcher();
     friend void on_frame_processed(pm_filter_data *filterData);
     friend void on_settings_button_released();
     friend void on_match_image_captured(pm_filter_data *filterData);

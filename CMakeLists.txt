@@ -202,6 +202,9 @@ if(UNIX AND NOT APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::X11Extras)
 endif()
 
+file(GLOB ASS_TRANSLATION_FILES "data/locale/*.ini" )
+
+
 set_target_properties(
   ${PROJECT_NAME}
   PROPERTIES AUTOMOC ON
@@ -219,6 +222,9 @@ if(BUILD_OUT_OF_TREE)
                 LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
             install(FILES ${EFFECT_FILES}
                 DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/pixel-match-switcher")
+			install(FILES ${ASS_TRANSLATION_FILES}
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/advanced-scene-switcher/locale")
+
         endif()
 else()
         #if(MSVC)
